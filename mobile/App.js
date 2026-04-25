@@ -113,8 +113,10 @@ export default function App() {
         body: formData,
       });
 
-      const text = await res.text();
-      const data = JSON.parse(text);
+      const data = await res.json();
+
+      console.log("BACKEND RESPONSE:", data);
+
 
       if (!res.ok) {
         throw new Error(data.detail || "Analyze request failed");

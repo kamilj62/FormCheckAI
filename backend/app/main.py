@@ -232,20 +232,38 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     print("knee_range:", knee_range)
     print("torso_range:", torso_range)
     print("elbow_range:", elbow_range)
-    print("min_knee:", min_knee)
     print("wrist_ratio:", wrist_ratio)
+    print("SUMMARY:", summary)
 
-    # Push press override
-    if wrist_ratio > 0.3:
-        return "push_press", 0.9, True, "overhead_arm_position_detected"
+    # IMPORTANT:
+    # If the model already predicts bench press, trust it.
+    # Bench angles can make wrist_above_shoulder_ratio falsely high.
+    if raw_label == "bench_press":
+        return "bench_press", max(confidence, 0.80), True, "trusted_model_bench_press"
 
-    # PUSH PRESS DETECTION (override squat)
-    wrist_ratio = summary.get("wrist_above_shoulder_ratio", 0)
+    # BENCH PRESS fallback:
+    # Use this only when the model did NOT predict bench,
+    # but biomechanics still look like a bench press.
+    if (
+        elbow_range >= 20
+        and hip_range < 35
+        and knee_range < 35
+        and torso_range < 30
+        and wrist_ratio < 0.70
+    ):
+        return "bench_press", max(confidence, 0.80), True, "bench_pattern_detected"
 
-    if wrist_ratio > 0.3:
-        return "push_press", 0.9, True, "overhead_arm_position_detected"
+    # PUSH PRESS:
+    # Needs overhead position AND knee dip/drive.
+    if (
+        wrist_ratio > 0.55
+        and knee_range > 12
+        and elbow_range >= 20
+    ):
+        return "push_press", max(confidence, 0.78), True, "overhead_press_detected"
 
-    # DEADLIFT
+    # DEADLIFT:
+    # Hinge pattern with limited wrist-over-shoulder time.
     if (
         wrist_ratio < 0.20
         and hip_range >= 30
@@ -254,25 +272,8 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "deadlift", max(confidence, 0.85), True, "deadlift_hinge_pattern_detected"
 
-    # BENCH PRESS
-    if (
-        wrist_ratio < 0.30
-        and elbow_range >= 25
-        and hip_range < 25
-        and knee_range < 25
-        and torso_range < 18
-    ):
-        return "bench_press", max(confidence, 0.80), True, "bench_pattern_detected"
-
-    # PUSH PRESS
-    if (
-        wrist_ratio > 0.35
-        and knee_range > 10
-        and torso_range < 25
-    ):
-        return "push_press", max(confidence, 0.78), True, "overhead_press_detected"
-
-    # SQUAT
+    # SQUAT:
+    # Deep knee bend with hip/knee movement.
     if (
         min_knee < 95
         and knee_range >= 40
@@ -281,7 +282,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "squat", max(confidence, 0.75), True, "squat_pattern_detected"
 
-    return raw_label, confidence, False, "model_prediction" 
+    return raw_label, confidence, False, "model_prediction"
 
 
 def grade_score(score):
@@ -799,22 +800,34 @@ def analyze_bench_press_reps(biomechanics):
             issues = []
             feedback = []
 
+            feet_visible = any(
+                b.get("ankle_y") is not None
+                for b in biomechanics
+            )
+
+            visibility_notes = []
+
+            if not feet_visible:
+                visibility_notes.append(
+                    "Foot position could not be evaluated because feet were not visible."
+                )
+
             # -------------------
-            # DEPTH (FIXED)
+            # DEPTH
             # -------------------
             if bar_depth < 0.10:
                 issues.append("Bar not reaching full depth.")
                 feedback.append("Lower the bar fully to your chest.")
 
             # -------------------
-            # LOCKOUT (FIXED)
+            # LOCKOUT
             # -------------------
             if max_elbow < 130:
                 issues.append("Incomplete lockout.")
                 feedback.append("Fully extend arms at the top.")
 
             # -------------------
-            # ELBOWS
+            # ELBOW FLARE
             # -------------------
             if elbow_p75 > 145:
                 issues.append("Elbows flaring excessively.")
@@ -828,7 +841,7 @@ def analyze_bench_press_reps(biomechanics):
                 elbow_status = "good"
 
             # -------------------
-            # ARCH (FIXED)
+            # ARCH
             # -------------------
             if arch_ratio > 0.85:
                 issues.append("Excessive back arch.")
@@ -840,19 +853,33 @@ def analyze_bench_press_reps(biomechanics):
             # -------------------
             # LEG DRIVE
             # -------------------
-            if avg_knee < 110:
-                issues.append("Weak leg drive.")
-                feedback.append("Keep feet planted and drive through your legs.")
-                leg_status = "none"
+            if feet_visible:
+                if avg_knee < 110:
+                    issues.append("Weak leg drive.")
+                    feedback.append("Keep feet planted and drive through your legs.")
+                    leg_status = "weak"
+                else:
+                    leg_status = "good"
             else:
-                leg_status = "good"
+                leg_status = "unknown"
 
             # -------------------
-            # SCORING (FIXED)
+            # BREAKDOWN
+            # -------------------
+            breakdown = {
+                "depth": "good" if bar_depth >= 0.10 else "shallow",
+                "lockout": "good" if max_elbow >= 130 else "incomplete",
+                "elbows": elbow_status,
+                "arch": arch_status,
+                "legs": leg_status,
+            }
+
+            # -------------------
+            # SCORE
             # -------------------
             score = compute_rep_score(issues)
             score = apply_coach_reward(score, issues, breakdown)
-            
+
             if not issues:
                 score = 8.5
             elif score >= 8 and len(issues) >= 2:
@@ -861,6 +888,12 @@ def analyze_bench_press_reps(biomechanics):
             # -------------------
             # OUTPUT
             # -------------------
+            primary_feedback = (
+                feedback
+                if feedback
+                else ["Strong bench press rep. Maintain control and consistency."]
+            )
+
             reps.append({
                 "rep": len(reps) + 1,
                 "start_frame": int(start),
@@ -868,39 +901,75 @@ def analyze_bench_press_reps(biomechanics):
                 "score": score,
                 "grade": grade_score(score),
                 "issues": issues,
-                "breakdown": {
-                    "depth": "good" if bar_depth >= 0.10 else "shallow",
-                    "lockout": "good" if max_elbow >= 130 else "incomplete",
-                    "elbows": elbow_status,
-                    "arch": arch_status,
-                    "legs": leg_status,
-                },
-                "feedback": feedback or ["Strong bench press rep. Maintain control and consistency."],
+                "breakdown": breakdown,
+                "feedback": primary_feedback,
+                "visibility_notes": visibility_notes,
             })
 
             in_rep = False
 
-    return reps, build_set_summary(reps)    
+    return reps, build_set_summary(reps)
 
-
-def is_video_usable(biomechanics):
+def is_video_usable(biomechanics, exercise_label=None):
     if len(biomechanics) < 10:
+        print("USABILITY FAIL: not enough biomechanics frames")
         return False
 
-    # Check how often key points are visible
-    visible_frames = 0
+    raw_label = exercise_label
+    label = (exercise_label or "").lower().replace(" ", "_")
+
+    print("RAW EXERCISE LABEL:", raw_label)
+    print("NORMALIZED LABEL:", label)
+    print("BIOMECHANICS FRAMES:", len(biomechanics))
+
+    usable_frames = 0
 
     for b in biomechanics:
-        if (
-            b["hip_y"] is not None
-            and b["shoulder_y"] is not None
-            and b["wrist_y"] is not None
-        ):
-            visible_frames += 1
+        shoulder_visible = b.get("shoulder_y") is not None
+        elbow_visible = b.get("elbow_y") is not None
+        wrist_visible = b.get("wrist_y") is not None
+        hip_visible = b.get("hip_y") is not None
+        knee_visible = b.get("knee_y") is not None
+        ankle_visible = b.get("ankle_y") is not None
 
-    visibility_ratio = visible_frames / len(biomechanics)
+        if label in ["bench_press", "bench"]:
+            if shoulder_visible and elbow_visible and wrist_visible:
+                usable_frames += 1
 
-    return visibility_ratio > 0.6
+        elif label == "squat":
+            if shoulder_visible and hip_visible and knee_visible and ankle_visible:
+                usable_frames += 1
+
+        elif label == "deadlift":
+            if shoulder_visible and hip_visible and knee_visible and ankle_visible:
+                usable_frames += 1
+
+        elif label == "push_press":
+            if shoulder_visible and elbow_visible and wrist_visible and hip_visible and knee_visible:
+                usable_frames += 1
+
+        else:
+            if shoulder_visible and hip_visible:
+                usable_frames += 1
+
+    visibility_ratio = usable_frames / len(biomechanics)
+
+    print("USABLE FRAMES:", usable_frames)
+    print("VISIBILITY RATIO:", visibility_ratio)
+
+    if label in ["bench_press", "bench"]:
+        return visibility_ratio >= 0.10
+
+    if label == "squat":
+        return visibility_ratio >= 0.55
+
+    if label == "deadlift":
+        return visibility_ratio >= 0.45
+
+    if label == "push_press":
+        return visibility_ratio >= 0.45
+
+    return visibility_ratio >= 0.30         
 
 
 def assess_video_quality(raw_label, summary, total_frames, pose_frames, sequence_len):
@@ -1023,12 +1092,52 @@ def analyze_video(video_path):
     # Only apply strict camera-angle checks to bench press.
     # Squat/deadlift/push press naturally have large torso/hip movement.
     if raw_label == "bench_press":
-        if torso_range > 20:
-            issues.append("Camera too close or upper body not fully visible")
+        # Smart video quality check
+        pose_ratio = pose_frames / max(total_frames, 1)
+        issues = []
 
-        if hip_range > 40:
-            issues.append("Lower body not visible or angle is unclear")
-        
+        if pose_ratio < 0.05:
+            issues.append("Pose detection is unstable")
+
+        if len(sequence) < 8:
+            issues.append("Not enough movement captured")
+
+        # Much looser bench validation
+        if raw_label == "bench_press":
+            visible_upper_frames = 0
+
+            for b in biomechanics:
+                if (
+                    b.get("shoulder_y") is not None
+                    and b.get("elbow_y") is not None
+                    and b.get("wrist_y") is not None
+                ):
+                    visible_upper_frames += 1
+
+            upper_ratio = visible_upper_frames / max(len(biomechanics), 1)
+
+            if upper_ratio < 0.20:
+                pass
+
+            if len(issues) > 0:
+                return {
+                    "exercise_label": "Unknown",
+                    "confidence": 0.0,
+                    "analysis_mode": "poor_video_quality",
+                    "feedback": issues,
+                    "rep_feedback": [],
+                    "set_summary": build_set_summary([]),
+                    "debug": {
+                        "reason": "bench_video_quality_check",
+                        "issues": issues,
+                        "pose_ratio": round(pose_ratio, 2),
+                        "upper_ratio": round(upper_ratio, 2),
+                        "original_prediction": raw_label,
+                        "original_confidence": round(raw_confidence, 4),
+                        "frames_seen": total_frames,
+                        "pose_frames": pose_frames,
+                    },
+                }
         if len(issues) > 0:
             return {
                 "exercise_label": "Unknown",
@@ -1101,9 +1210,9 @@ def analyze_video(video_path):
         },
     }
 
+
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
-
     try:
         suffix = Path(file.filename or "upload.mov").suffix or ".mov"
 
@@ -1111,7 +1220,14 @@ async def analyze(file: UploadFile = File(...)):
             tmp.write(await file.read())
             video_path = tmp.name
 
-        return analyze_video(video_path)
+        result = analyze_video(video_path)
+
+        print("\n====================")
+        print("BACKEND RESULT")
+        print(result)
+        print("====================\n")
+
+        return result
 
     except Exception as e:
         return {
