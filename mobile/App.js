@@ -1,508 +1,495 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
-  ScrollView,
   SafeAreaView,
-} from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
-import { Video, ResizeMode } from 'expo-av';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const API_BASE_URL = 'http://192.168.1.216:8000'; // replace with your backend IP
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import { Video, ResizeMode } from "expo-av";
+
+const API_BASE_URL = "http://192.168.1.216:8000";
 
 export default function App() {
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [feedback, setFeedback] = useState([]);
-  const [repFeedback, setRepFeedback] = useState([]);
-  const [setSummary, setSetSummary] = useState(null);
+  const reset = () => setResult(null);
 
-  const resetAnalysis = () => {
-    setAnalysisResult(null);
-    setFeedback([]);
-    setRepFeedback([]);
-    setSetSummary(null);
-  };
+  const recordWithCamera = async () => {
+    reset();
 
-  const normalizePickedFile = (asset) => {
-    if (!asset) return null;
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Camera permission required");
+      return;
+    }
 
-    return {
-      uri: asset.uri,
-      name: asset.name || 'upload.mp4',
-      mimeType: asset.mimeType || 'video/mp4',
-      size: asset.size || null,
-    };
-  };
+    const res = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      quality: 1,
+      videoMaxDuration: 60,
+    });
 
-  const pickFromFiles = async () => {
-    try {
-      resetAnalysis();
-
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'video/*',
-        copyToCacheDirectory: true,
-        multiple: false,
+    if (!res.canceled) {
+      const a = res.assets[0];
+      setVideo({
+        uri: a.uri,
+        name: a.fileName || "camera.mov",
+        type: a.mimeType || "video/quicktime",
       });
-
-      if (result.canceled) return;
-
-      const asset = result.assets?.[0];
-      if (!asset) return;
-
-      setSelectedVideo(normalizePickedFile(asset));
-    } catch (error) {
-      console.error('pickFromFiles error:', error);
-      Alert.alert('Error', 'Could not open file picker.');
     }
   };
 
   const pickFromLibrary = async () => {
-    try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permission needed', 'Please allow photo library access.');
-        return;
-      }
+    reset();
 
-      resetAnalysis();
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-        allowsEditing: false,
-        quality: 1,
-      });
-
-      if (result.canceled) return;
-
-      const asset = result.assets?.[0];
-      if (!asset) return;
-
-      setSelectedVideo({
-        uri: asset.uri,
-        name: asset.fileName || 'library-video.mp4',
-        mimeType: asset.mimeType || 'video/mp4',
-        size: asset.fileSize || null,
-      });
-    } catch (error) {
-      console.error('pickFromLibrary error:', error);
-      Alert.alert('Error', 'Could not pick a video from library.');
-    }
-  };
-
-  const recordVideo = async () => {
-    try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permission needed', 'Please allow camera access.');
-        return;
-      }
-
-      resetAnalysis();
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-        allowsEditing: false,
-        quality: 1,
-        videoMaxDuration: 60,
-      });
-
-      if (result.canceled) return;
-
-      const asset = result.assets?.[0];
-      if (!asset) return;
-
-      setSelectedVideo({
-        uri: asset.uri,
-        name: asset.fileName || 'camera-video.mp4',
-        mimeType: asset.mimeType || 'video/mp4',
-        size: asset.fileSize || null,
-      });
-    } catch (error) {
-      console.error('recordVideo error:', error);
-      Alert.alert('Error', 'Could not record video.');
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!selectedVideo?.uri) {
-      Alert.alert('No video selected', 'Please choose or record a video first.');
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Library permission required");
       return;
     }
 
-    try {
-      setLoading(true);
-      resetAnalysis();
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      quality: 1,
+    });
 
+    if (!res.canceled) {
+      const a = res.assets[0];
+      setVideo({
+        uri: a.uri,
+        name: a.fileName || "library.mov",
+        type: a.mimeType || "video/quicktime",
+      });
+    }
+  };
+
+  const pickFromCloud = async () => {
+    reset();
+
+    const res = await DocumentPicker.getDocumentAsync({
+      type: "video/*",
+      copyToCacheDirectory: true,
+    });
+
+    if (!res.canceled) {
+      const a = res.assets[0];
+      setVideo({
+        uri: a.uri,
+        name: a.name || "cloud.mov",
+        type: a.mimeType || "video/quicktime",
+      });
+    }
+  };
+
+  const analyzeVideo = async () => {
+    if (!video) {
+      Alert.alert("Pick a video first");
+      return;
+    }
+
+    setLoading(true);
+    setResult(null);
+
+    try {
       const formData = new FormData();
-      formData.append('file', {
-        uri: selectedVideo.uri,
-        name: selectedVideo.name || 'upload.mp4',
-        type: selectedVideo.mimeType || 'video/mp4',
+
+      formData.append("file", {
+        uri: video.uri,
+        name: video.name,
+        type: video.type,
       });
 
-      const response = await fetch(`${API_BASE_URL}/analyze`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-        },
+      const res = await fetch(`${API_BASE_URL}/analyze`, {
+        method: "POST",
         body: formData,
       });
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.log('Backend error:', text);
-        throw new Error(`Server error: ${response.status}`);
+      const data = await res.json();
+
+      console.log("BACKEND RESPONSE:", data);
+
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Analyze request failed");
       }
 
-      const data = await response.json();
-
-      console.log('FULL BACKEND RESPONSE:', JSON.stringify(data, null, 2));
-
-      setAnalysisResult(data);
-      setFeedback(Array.isArray(data.feedback) ? data.feedback : []);
-      setRepFeedback(Array.isArray(data.rep_feedback) ? data.rep_feedback : []);
-
-      let summary = data.set_summary ?? null;
-
-      if (typeof summary === 'string') {
-        try {
-          summary = JSON.parse(summary);
-        } catch (e) {
-          console.log('Could not parse set_summary:', summary);
-        }
-      }
-
-      setSetSummary(summary);
-    } catch (error) {
-      console.error('Analyze error:', error);
-      Alert.alert('Analysis failed', error.message || 'Something went wrong.');
+      setResult(data);
+    } catch (err) {
+      setResult({ error: true, message: err.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const renderPredictionCard = () => {
-    if (!analysisResult) return null;
+  const formatLabel = (v) =>
+    v
+      ? String(v)
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+      : "N/A";
 
-    const confidence =
-      analysisResult.confidence != null
-        ? `${(analysisResult.confidence * 100).toFixed(1)}% confidence`
-        : 'No confidence available';
+  const reps = result?.rep_feedback || [];
 
-    return (
-      <View style={styles.predictionCard}>
-        <Text style={styles.predictionLabel}>Prediction</Text>
-        <Text style={styles.predictionTitle}>
-          {analysisResult.exercise_label || 'Unknown'}
-        </Text>
-        <Text style={styles.predictionConfidence}>{confidence}</Text>
-      </View>
-    );
+  const overallScore =
+    reps.length > 0
+      ? Math.round(
+          reps.reduce((sum, r) => sum + Number(r.score || 0), 0) / reps.length
+        )
+      : null;
+
+  const getBiggestFix = () => {
+    for (const rep of reps) {
+      if (rep.feedback?.length > 0 && rep.issues?.length > 0) {
+        return rep.feedback[0];
+      }
+    }
+    return null;
   };
 
-  const renderSetSummary = () => {
-    if (!setSummary) return null;
-
-    return (
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Set Summary</Text>
-
-        <Text style={styles.summaryRow}>
-          Detected Reps: {setSummary.detected_reps ?? 0}
-        </Text>
-        <Text style={styles.summaryRow}>
-          Avg Score: {setSummary.avg_rep_score != null ? setSummary.avg_rep_score : '—'}
-        </Text>
-        <Text style={styles.summaryRow}>
-          Best Rep: {setSummary.best_rep != null ? setSummary.best_rep : '—'}
-        </Text>
-        <Text style={styles.summaryRow}>
-          Worst Rep: {setSummary.worst_rep != null ? setSummary.worst_rep : '—'}
-        </Text>
-        <Text style={styles.summaryRow}>
-          Trend: {setSummary.trend ?? 'No summary available.'}
-        </Text>
-      </View>
-    );
-  };
-
-  const renderOverallFeedback = () => {
-    if (!feedback.length) return null;
-
-    return (
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Overall Feedback</Text>
-        {feedback.map((item, index) => (
-          <Text key={index} style={styles.bulletText}>
-            • {item}
-          </Text>
-        ))}
-      </View>
-    );
-  };
-
-  const renderRepFeedback = () => {
-    if (!repFeedback.length) return null;
-
-    return (
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Per-Rep Breakdown</Text>
-
-        {repFeedback.map((rep, index) => (
-          <View key={index} style={styles.repBox}>
-            <Text style={styles.repTitle}>
-              Rep {rep.rep ?? index + 1}
-              {rep.grade ? ` — ${rep.grade}` : ''}
-            </Text>
-
-            <Text style={styles.repText}>
-              Score: {rep.score != null ? rep.score : '—'}
-            </Text>
-
-            {rep.breakdown && (
-              <>
-                <Text style={styles.repText}>Depth: {rep.breakdown.depth ?? '—'}</Text>
-                <Text style={styles.repText}>Knees: {rep.breakdown.knees ?? '—'}</Text>
-                <Text style={styles.repText}>Torso: {rep.breakdown.torso ?? '—'}</Text>
-              </>
-            )}
-
-            {Array.isArray(rep.issues) && rep.issues.length > 0 && (
-              <>
-                <Text style={styles.repSubTitle}>Issues</Text>
-                {rep.issues.map((issue, issueIndex) => (
-                  <Text key={issueIndex} style={styles.bulletText}>
-                    • {issue}
-                  </Text>
-                ))}
-              </>
-            )}
-
-            {Array.isArray(rep.feedback) && rep.feedback.length > 0 && (
-              <>
-                <Text style={styles.repSubTitle}>Feedback</Text>
-                {rep.feedback.map((fb, fbIndex) => (
-                  <Text key={fbIndex} style={styles.bulletText}>
-                    • {fb}
-                  </Text>
-                ))}
-              </>
-            )}
-          </View>
-        ))}
-      </View>
-    );
-  };
+  const biggestFix = getBiggestFix();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>FormCheck AI</Text>
-        <Text style={styles.subHeader}>
-          Pick a video from Files, Photos, or record one with your camera.
-        </Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>FormCheck AI</Text>
 
-        <View style={styles.buttonColumn}>
-          <TouchableOpacity style={styles.actionButton} onPress={pickFromFiles}>
-            <Text style={styles.buttonText}>Pick From Files</Text>
+        <View style={styles.buttons}>
+          <TouchableOpacity style={styles.primary} onPress={recordWithCamera}>
+            <Text style={styles.buttonText}>Record</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={pickFromLibrary}>
-            <Text style={styles.buttonText}>Pick From Photos</Text>
+          <TouchableOpacity style={styles.secondary} onPress={pickFromLibrary}>
+            <Text style={styles.buttonText}>Library</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={recordVideo}>
-            <Text style={styles.buttonText}>Record Video</Text>
+          <TouchableOpacity style={styles.secondary} onPress={pickFromCloud}>
+            <Text style={styles.buttonText}>Files</Text>
           </TouchableOpacity>
         </View>
 
-        {selectedVideo && (
-          <View style={styles.videoCard}>
-            <Text style={styles.cardTitle}>Selected Video</Text>
-            <Text style={styles.fileName}>{selectedVideo.name || 'Video selected'}</Text>
+        {video && (
+          <View style={styles.previewCard}>
+            <Text style={styles.previewLabel}>Selected Video</Text>
+            <Text style={styles.previewName}>{video.name}</Text>
 
             <Video
-              source={{ uri: selectedVideo.uri }}
+              source={{ uri: video.uri }}
               style={styles.video}
               useNativeControls
               resizeMode={ResizeMode.CONTAIN}
-              shouldPlay={false}
             />
           </View>
         )}
 
         <TouchableOpacity
-          style={[styles.analyzeButton, loading && styles.buttonDisabled]}
-          onPress={handleAnalyze}
+          style={[styles.analyze, loading && styles.disabled]}
+          onPress={analyzeVideo}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>
-            {loading ? 'Analyzing...' : 'Analyze'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Analyze</Text>
+          )}
         </TouchableOpacity>
 
-        {loading && <ActivityIndicator size="large" style={styles.loader} />}
+        {result?.error && (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorText}>{result.message}</Text>
+          </View>
+        )}
 
-        {renderPredictionCard()}
-        {renderSetSummary()}
-        {renderOverallFeedback()}
-        {renderRepFeedback()}
+        {result?.feedback && result.rep_feedback?.length === 0 && (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorTitle}>Video Not Usable</Text>
+
+          <Text style={styles.errorText}>
+            Camera angle is too close or unclear for reliable scoring.
+          </Text>
+
+          <Text style={styles.errorText}>
+            How to fix:
+          </Text>
+
+          <Text style={styles.errorText}>
+            • Move camera farther back
+          </Text>
+
+          <Text style={styles.errorText}>
+            • Record from the side
+          </Text>
+
+          <Text style={styles.errorText}>
+            • Keep bar, chest, elbows, and feet visible
+          </Text>
+                    </View>
+          )}
+
+        {result && !result.error && (
+          <View>
+            <Text style={styles.exercise}>
+              {result.analysis_mode === "poor_video_quality"
+                ? "Video Not Usable"
+                : result.exercise_label}
+            </Text>
+            {overallScore !== null && (
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>Overall Score</Text>
+                <Text style={styles.summaryScore}>{overallScore}/10</Text>
+
+                {biggestFix ? (
+                  <Text style={styles.biggestFix}>
+                    Biggest Fix: {biggestFix}
+                  </Text>
+                ) : (
+                  <Text style={styles.positiveFix}>
+                    No major fixes detected.
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {reps.map((rep, i) => (
+              <View key={i} style={styles.card}>
+                <Text style={styles.rep}>
+                  Rep {rep.rep} — {rep.grade}
+                </Text>
+
+                <Text style={styles.score}>Score: {rep.score}/10</Text>
+
+                <View style={styles.metrics}>
+                  {Object.entries(rep.breakdown || {}).map(([key, value]) => (
+                    <Text key={key} style={styles.metricText}>
+                      {formatLabel(key)}: {formatLabel(value)}
+                    </Text>
+                  ))}
+                </View>
+
+                {rep.issues?.length > 0 && (
+                  <>
+                    <Text style={styles.section}>Issues</Text>
+                    {rep.issues.map((x, j) => (
+                      <Text key={j} style={styles.issue}>
+                        • {x}
+                      </Text>
+                    ))}
+                  </>
+                )}
+
+                {rep.feedback?.length > 0 && (
+                  <>
+                    <Text style={styles.section}>
+                      {rep.issues?.length > 0 ? "What to Fix" : "Coach Note"}
+                    </Text>
+
+                    {rep.feedback.map((item, j) => (
+                      <Text key={j} style={styles.coach}>
+                        → {item}
+                      </Text>
+                    ))}
+                  </>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#031226',
-  },
   container: {
+    flex: 1,
+    backgroundColor: "#0b1020",
+  },
+
+  content: {
     padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#031226',
+    paddingBottom: 60,
   },
-  header: {
+
+  title: {
+    color: "#fff",
     fontSize: 32,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginBottom: 8,
+    fontWeight: "800",
   },
-  subHeader: {
-    fontSize: 16,
-    color: '#a9b4c2',
-    marginBottom: 20,
+
+  buttons: {
+    gap: 10,
+    marginVertical: 20,
   },
-  buttonColumn: {
-    marginBottom: 16,
-  },
-  actionButton: {
-    backgroundColor: '#12365d',
-    paddingVertical: 14,
+
+  primary: {
+    backgroundColor: "#2563eb",
+    padding: 15,
     borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: "center",
   },
-  analyzeButton: {
-    backgroundColor: '#1e7a46',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
+
+  secondary: {
+    backgroundColor: "#1f2937",
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  analyze: {
+    backgroundColor: "#16a34a",
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
     marginBottom: 20,
   },
-  buttonDisabled: {
+
+  disabled: {
     opacity: 0.6,
   },
+
   buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
+    color: "#fff",
+    fontWeight: "800",
   },
-  loader: {
-    marginBottom: 20,
+
+  previewCard: {
+    backgroundColor: "#111827",
+    padding: 12,
+    borderRadius: 14,
+    marginBottom: 15,
   },
-  videoCard: {
-    backgroundColor: '#081a33',
-    borderWidth: 1,
-    borderColor: '#1a2c4d',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 20,
+
+  previewLabel: {
+    color: "#9ca3af",
+    fontSize: 12,
+    marginBottom: 2,
   },
-  fileName: {
-    color: '#a9b4c2',
-    fontSize: 14,
+
+  previewName: {
+    color: "#fff",
+    fontWeight: "700",
     marginBottom: 10,
   },
+
   video: {
-    width: '100%',
-    height: 240,
+    width: "100%",
+    height: 220,
+    backgroundColor: "#000",
     borderRadius: 12,
-    backgroundColor: '#000',
-    marginTop: 8,
   },
-  predictionCard: {
-    backgroundColor: '#072d1e',
-    borderWidth: 1,
-    borderColor: '#1e7a46',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 18,
-  },
-  predictionLabel: {
-    color: '#8ee6b5',
-    fontSize: 14,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  predictionTitle: {
-    color: '#ffffff',
-    fontSize: 36,
-    fontWeight: '800',
-    marginBottom: 10,
-  },
-  predictionConfidence: {
-    color: '#d8e1ea',
-    fontSize: 18,
-  },
-  card: {
-    backgroundColor: '#081a33',
-    borderWidth: 1,
-    borderColor: '#1a2c4d',
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 18,
-  },
-  cardTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '800',
+
+  exercise: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "900",
     marginBottom: 12,
   },
-  summaryRow: {
-    color: '#e6edf5',
+
+  summaryCard: {
+    backgroundColor: "#111827",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+
+  summaryLabel: {
+    color: "#9ca3af",
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  summaryScore: {
+    color: "#fff",
+    fontSize: 34,
+    fontWeight: "900",
+  },
+
+  biggestFix: {
+    color: "#86efac",
     fontSize: 16,
-    marginBottom: 10,
-    lineHeight: 24,
-  },
-  bulletText: {
-    color: '#d8e1ea',
-    fontSize: 16,
-    lineHeight: 28,
-    marginBottom: 6,
-  },
-  repBox: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#1a2c4d',
-  },
-  repTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  repSubTitle: {
-    color: '#8ee6b5',
-    fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 10,
-    marginBottom: 6,
   },
-  repText: {
-    color: '#d8e1ea',
-    fontSize: 15,
-    marginBottom: 6,
+
+  positiveFix: {
+    color: "#86efac",
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 10,
   },
+
+  card: {
+    backgroundColor: "#1f2937",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+
+  rep: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 20,
+  },
+
+  score: {
+    color: "#fbbf24",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+
+  metrics: {
+    marginBottom: 14,
+  },
+
+  metricText: {
+    color: "#d1d5db",
+    fontSize: 16,
+    marginBottom: 3,
+  },
+
+  section: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 17,
+    marginTop: 6,
+  },
+
+  issue: {
+    color: "#fca5a5",
+    fontSize: 16,
+    marginTop: 3,
+  },
+
+  coach: {
+    color: "#86efac",
+    fontSize: 16,
+    marginTop: 5,
+  },
+
+  errorCard: {
+    backgroundColor: "#7f1d1d",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+
+  errorText: {
+    color: "#fff",
+  },
+  errorTitle: {
+  color: "#fff",
+  fontSize: 22,
+  fontWeight: "900",
+  marginBottom: 10,
+},
 });
