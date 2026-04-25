@@ -21,6 +21,13 @@ app.add_middleware(
 from pathlib import Path
 from .model_runtime import NumpyFormCheckModel
 
+from app.logic import (
+    classify_with_biomechanics,
+    build_set_summary,
+    compute_rep_score,
+    apply_coach_reward,
+)
+
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR / "models"
 
@@ -909,6 +916,7 @@ def analyze_bench_press_reps(biomechanics):
             in_rep = False
 
     return reps, build_set_summary(reps)
+
 
 def is_video_usable(biomechanics, exercise_label=None):
     if len(biomechanics) < 10:
