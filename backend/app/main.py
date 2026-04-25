@@ -431,6 +431,17 @@ def analyze_squat_reps(biomechanics):
                 issues.append("Possible butt wink detected at the bottom.")
                 feedback.append("Brace harder and stop depth before your pelvis tucks under.")
 
+            breakdown = {
+                "depth": "good" if min_knee <= 105 else "needs_work",
+                "torso": "good" if max_torso <= 35 else "poor",
+                "knees": (
+                    "poor" if min_valgus < 0.85
+                    else "borderline" if min_valgus < 1.0
+                    else "good"
+                ),
+                "butt_wink": "possible" if butt_wink_detected else "not_detected",
+            }
+
             score = compute_rep_score(issues)
             score = apply_coach_reward(score, issues, breakdown)
             
@@ -442,16 +453,7 @@ def analyze_squat_reps(biomechanics):
                 "score": score,
                 "grade": grade_score(score),
                 "issues": issues,
-                "breakdown": {
-                    "depth": "good" if min_knee <= 105 else "needs_work",
-                    "torso": "good" if max_torso <= 35 else "poor",
-                    "knees": (
-                        "poor" if min_valgus < 0.85
-                        else "borderline" if min_valgus < 1.0
-                        else "good"
-                    ),
-                    "butt_wink": "possible" if butt_wink_detected else "not_detected",
-                },
+                "breakdown": breakdown,
                 "feedback": feedback or ["Good squat rep."],
             })
 
