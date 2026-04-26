@@ -48,7 +48,7 @@ MODEL = NumpyFormCheckModel(MODEL_DIR)
 
 CLASS_NAMES = ["bench_press", "deadlift", "push_press", "squat"]
 mp_pose = mp.solutions.pose
-
+mp_drawing = mp.solutions.drawing_utils
 
 @app.get("/health")
 def health():
@@ -106,6 +106,13 @@ def extract_features_and_biomechanics(results):
     right_knee = point(landmarks, mp_pose.PoseLandmark.RIGHT_KNEE)
     left_ankle = point(landmarks, mp_pose.PoseLandmark.LEFT_ANKLE)
     right_ankle = point(landmarks, mp_pose.PoseLandmark.RIGHT_ANKLE)
+    left_heel = point(landmarks, mp_pose.PoseLandmark.LEFT_HEEL)
+    right_heel = point(landmarks, mp_pose.PoseLandmark.RIGHT_HEEL)
+
+    ankle_mid = (left_ankle + right_ankle) / 2
+    heel_mid = (left_heel + right_heel) / 2
+
+    heel_lift = float(ankle_mid[1] - heel_mid[1])
 
     shoulder_mid = (left_shoulder + right_shoulder) / 2
     hip_mid = (left_hip + right_hip) / 2
@@ -196,6 +203,8 @@ def extract_features_and_biomechanics(results):
 
         "head_drop": float(head_drop),
         "head_forward": float(head_forward),
+
+        "heel_lift": heel_lift,
     }
 
     return np.array(features, dtype=np.float32), biomechanics
@@ -278,15 +287,15 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     print("wrist_ratio:", wrist_ratio)
     print("SUMMARY:", summary)
 
-    # IMPORTANT:
-    # If the model already predicts bench press, trust it.
-    # Bench angles can make wrist_above_shoulder_ratio falsely high.
+    # -----------------------------
+    # TRUST MODEL: BENCH PRESS
+    # -----------------------------
     if raw_label == "bench_press":
         return "bench_press", max(confidence, 0.80), True, "trusted_model_bench_press"
 
-    # BENCH PRESS fallback:
-    # Use this only when the model did NOT predict bench,
-    # but biomechanics still look like a bench press.
+    # -----------------------------
+    # BENCH PRESS FALLBACK
+    # -----------------------------
     if (
         elbow_range >= 20
         and hip_range < 35
@@ -296,8 +305,9 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "bench_press", max(confidence, 0.80), True, "bench_pattern_detected"
 
-    # PUSH PRESS:
-    # Needs overhead position AND knee dip/drive.
+    # -----------------------------
+    # PUSH PRESS
+    # -----------------------------
     if (
         wrist_ratio > 0.55
         and knee_range > 12
@@ -305,28 +315,34 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "push_press", max(confidence, 0.78), True, "overhead_press_detected"
 
-    # DEADLIFT:
-    # Hinge pattern. Deadlift videos can have noisy knee angles,
-    # so do not rely too heavily on min_knee.
-    if (
-        wrist_ratio < 0.30
-        and hip_range >= 20
-        and torso_range >= 10
-        and raw_label in ["deadlift", "squat"]
-    ):
-        return "deadlift", max(confidence, 0.85), True, "deadlift_hinge_pattern_detected"
-   
-    # SQUAT:
-    # Only override to squat if the model already thinks squat.
-    # This prevents deadlifts from being forced into squat.
+    # -----------------------------
+    # TRUST MODEL: SQUAT
+    # Put this BEFORE deadlift
+    # -----------------------------
     if (
         raw_label == "squat"
-        and min_knee < 80
-        and knee_range >= 50
+        and knee_range >= 45
         and hip_range >= 25
-        and wrist_ratio < 0.20
+        and min_knee < 100
     ):
-        return "squat", max(confidence, 0.75), True, "squat_pattern_detected"
+        return "squat", max(confidence, 0.75), True, "trusted_squat_pattern"
+
+    # -----------------------------
+    # TRUST MODEL: DEADLIFT
+    # Only reinforce deadlift
+    # Never convert squat -> deadlift
+    # -----------------------------
+    if (
+        raw_label == "deadlift"
+        and wrist_ratio < 0.30
+        and hip_range >= 20
+        and torso_range >= 10
+    ):
+        return "deadlift", max(confidence, 0.85), True, "trusted_deadlift_hinge_pattern"
+
+    # -----------------------------
+    # DEFAULT = MODEL PREDICTION
+    # -----------------------------
     return raw_label, confidence, False, "model_prediction"
 
 
@@ -736,100 +752,127 @@ def draw_deadlift_guides(frame, landmarks, width, height):
 
 
 def analyze_squat_reps(biomechanics):
-    hip_y = np.array([b["hip_y"] for b in biomechanics])
     knee_angles = np.array([b["knee_angle"] for b in biomechanics])
     torso_angles = np.array([b["torso_angle"] for b in biomechanics])
     valgus_ratios = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
+    heel_lifts = np.array([b.get("heel_lift", 0.0) for b in biomechanics])
 
     reps = []
-
-    # Tuning controls
-    MIN_REP_START_FRAME = 8
-    MIN_REP_LENGTH = 5
-    MIN_HIP_CHANGE = 0.025
-    MAX_REPS = 5
-
-    threshold = np.percentile(hip_y, 65)
+    threshold = np.percentile(knee_angles, 35)
 
     in_rep = False
     start = 0
 
-    for i, y in enumerate(hip_y):
-        if i < MIN_REP_START_FRAME:
-            continue
-
-        if not in_rep and y > threshold:
+    for i, knee in enumerate(knee_angles):
+        if not in_rep and knee < threshold:
             in_rep = True
             start = i
 
-        elif in_rep and y <= threshold:
+        elif in_rep and knee >= threshold:
             end = i
 
-            if end - start < MIN_REP_LENGTH:
+            if end - start < 3:
                 in_rep = False
                 continue
 
-            rep_hip_y = hip_y[start:end + 1]
-            rep_knees = knee_angles[start:end + 1]
+            rep_knee = knee_angles[start:end + 1]
             rep_torso = torso_angles[start:end + 1]
             rep_valgus = valgus_ratios[start:end + 1]
+            rep_heel = heel_lifts[start:end + 1]
 
-            hip_change = float(np.max(rep_hip_y) - np.min(rep_hip_y))
+            bottom = start + int(np.argmin(rep_knee))
 
-            if hip_change < MIN_HIP_CHANGE:
-                in_rep = False
-                continue
+            min_knee = float(np.min(rep_knee))
 
-            bottom = start + int(np.argmax(rep_hip_y))
+            # Smooth torso metric to avoid noisy single-frame spikes
+            rep_torso_clean = np.clip(rep_torso, 0, 120)
+            torso_score = float(np.percentile(rep_torso_clean, 85))
 
-            min_knee = float(np.min(rep_knees))
-            max_torso = float(np.max(rep_torso))
-            min_torso = float(np.min(rep_torso))
-            min_valgus = float(np.min(rep_valgus))
-
-            torso_change = max_torso - min_torso
-
-            butt_wink_detected = (
-                min_knee < 110
-                and torso_change > 12
-                and hip_change > 0.04
-            )
+            max_heel_lift = float(np.max(rep_heel))
 
             issues = []
             feedback = []
 
-            if min_knee > 105:
+            # DEPTH
+            if min_knee <= 90:
+                depth_grade = "good"
+            elif min_knee <= 105:
+                depth_grade = "borderline"
+                issues.append("Depth is close, but could be slightly lower.")
+                feedback.append("Sink a little deeper while keeping your chest up.")
+            else:
+                depth_grade = "poor"
                 issues.append("Depth may be shallow.")
                 feedback.append("Try to reach better squat depth.")
 
-            if max_torso > 35:
-                issues.append("Torso leaning too far forward.")
-                feedback.append("Chest is falling forward — keep torso upright.")
+            # TORSO
+            if torso_score <= 75:
+                torso_grade = "good"
+            elif torso_score <= 95:
+                torso_grade = "borderline"
+                issues.append("Slight forward torso lean detected.")
+                feedback.append("Stay braced and keep your chest proud.")
+            else:
+                torso_grade = "poor"
+                issues.append("Torso angle could stay a little taller.")
+                feedback.append("Stay braced and keep your chest proud out of the hole.")
 
-            if min_valgus < 0.85:
-                issues.append("Knees cave inward significantly.")
-                feedback.append("Knees are caving inward — drive them out over your toes.")
-            elif min_valgus < 1.0:
-                issues.append("Mild knee cave detected.")
+            # KNEES
+            rep_valgus = np.clip(rep_valgus, 0.6, 1.5)
+            valgus_score = float(np.percentile(rep_valgus, 15))
+
+            if valgus_score < 0.82:
+                knees_grade = "poor"
+                issues.append("Knees cave inward noticeably.")
+                feedback.append("Drive knees out over your toes.")
+            elif valgus_score < 0.95:
+                knees_grade = "borderline"
+                issues.append("Slight knee cave detected.")
                 feedback.append("Keep knees tracking over your toes.")
+            else:
+                knees_grade = "good"
 
-            if butt_wink_detected:
-                issues.append("Possible butt wink detected at the bottom.")
-                feedback.append("Brace harder and stop depth before your pelvis tucks under.")
+            # HEELS
+            if max_heel_lift > 0.035:
+                heels_grade = "poor"
+                issues.append("Heels may be lifting during the squat.")
+                feedback.append("Keep your heels planted and drive through midfoot.")
+            elif max_heel_lift > 0.02:
+                heels_grade = "borderline"
+                issues.append("Slight heel lift detected.")
+                feedback.append("Keep pressure through your heels and midfoot.")
+            else:
+                heels_grade = "good"
 
-            breakdown = {
-                "depth": "good" if min_knee <= 105 else "needs_work",
-                "torso": "good" if max_torso <= 35 else "poor",
-                "knees": (
-                    "poor" if min_valgus < 0.85
-                    else "borderline" if min_valgus < 1.0
-                    else "good"
-                ),
-                "butt_wink": "possible" if butt_wink_detected else "not_detected",
-            }
+            butt_wink_grade = "not_detected"
 
-            score = compute_rep_score(issues)
-            score = apply_coach_reward(score, issues, breakdown)
+            # SCORE
+            score = 10.0
+
+            if depth_grade == "borderline":
+                score -= 1.0
+            elif depth_grade == "poor":
+                score -= 2.0
+
+            if torso_grade == "borderline":
+                score -= 0.7
+            elif torso_grade == "poor":
+                score -= 1.5
+
+            if knees_grade == "borderline":
+                score -= 0.8
+            elif knees_grade == "poor":
+                score -= 1.5
+
+            if heels_grade == "borderline":
+                score -= 0.8
+            elif heels_grade == "poor":
+                score -= 1.5
+
+            score = round(max(score, 1.0), 1)
+
+            if not feedback:
+                feedback = ["Strong squat rep. Keep bracing and driving through the floor."]
 
             reps.append({
                 "rep": len(reps) + 1,
@@ -839,14 +882,17 @@ def analyze_squat_reps(biomechanics):
                 "score": score,
                 "grade": grade_score(score),
                 "issues": issues,
-                "breakdown": breakdown,
-                "feedback": feedback or ["Good squat rep."],
+                "breakdown": {
+                    "depth": depth_grade,
+                    "torso": torso_grade,
+                    "knees": knees_grade,
+                    "heels": heels_grade,
+                    "butt_wink": butt_wink_grade,
+                },
+                "feedback": feedback,
             })
 
             in_rep = False
-
-            if len(reps) >= MAX_REPS:
-                break
 
     return reps, build_set_summary(reps)
 
@@ -1254,31 +1300,21 @@ def draw_deadlift_skeleton(frame, pose_landmarks, width, height):
     lm = pose_landmarks.landmark
 
     def pt(idx):
-        return np.array(
-            [lm[idx].x * width, lm[idx].y * height],
-            dtype=np.float32,
-        )
+        p = lm[idx]
+        return np.array([p.x * width, p.y * height], dtype=np.float32)
 
-    # Use LEFT side landmarks (your camera view)
-    shoulder = pt(mp_pose.PoseLandmark.LEFT_SHOULDER)
-    hip = pt(mp_pose.PoseLandmark.LEFT_HIP)
-    knee = pt(mp_pose.PoseLandmark.LEFT_KNEE)
-    ankle = pt(mp_pose.PoseLandmark.LEFT_ANKLE)
-    heel = pt(mp_pose.PoseLandmark.LEFT_HEEL)
-    foot = pt(mp_pose.PoseLandmark.LEFT_FOOT_INDEX)
-    ear = pt(mp_pose.PoseLandmark.LEFT_EAR)
+    shoulder = pt(mp_pose.PoseLandmark.LEFT_SHOULDER.value)
+    hip = pt(mp_pose.PoseLandmark.LEFT_HIP.value)
+    knee = pt(mp_pose.PoseLandmark.LEFT_KNEE.value)
+    ankle = pt(mp_pose.PoseLandmark.LEFT_ANKLE.value)
+    heel = pt(mp_pose.PoseLandmark.LEFT_HEEL.value)
+    foot = pt(mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value)
+    ear = pt(mp_pose.PoseLandmark.LEFT_EAR.value)
 
-    # Head
     head = (ear + shoulder) / 2
 
-    # Correct deadlift geometry:
-    # ankle slightly forward
     ankle = ankle + np.array([10, 0], dtype=np.float32)
-
-    # knee -> hip backward sharply
     hip = hip + np.array([-28, 0], dtype=np.float32)
-
-    # torso forward
     shoulder = shoulder + np.array([18, 0], dtype=np.float32)
     head = head + np.array([18, 0], dtype=np.float32)
 
@@ -1307,30 +1343,19 @@ def draw_deadlift_skeleton(frame, pose_landmarks, width, height):
         )
 
     for p in joints:
-        cv2.circle(
-            frame,
-            tuple(p.astype(int)),
-            8,
-            color,
-            -1,
-        )
+        cv2.circle(frame, tuple(p.astype(int)), 8, color, -1)
 
     for p in [hip, knee, ankle]:
-        cv2.circle(
-            frame,
-            tuple(p.astype(int)),
-            11,
-            color,
-            -1,
-        )
+        cv2.circle(frame, tuple(p.astype(int)), 11, color, -1)
 
     return frame
 
 
-def draw_overlay_video(input_path, output_path, rep_feedback, sample_every=1):
+def draw_overlay_video(input_path, output_path, rep_feedback, exercise_label, sample_every=1):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
+        print("Overlay error: could not open input video")
         return None
 
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -1347,7 +1372,13 @@ def draw_overlay_video(input_path, output_path, rep_feedback, sample_every=1):
         (width, height),
     )
 
+    if not writer.isOpened():
+        print("Overlay error: could not open video writer")
+        cap.release()
+        return None
+
     frame_idx = 0
+    exercise = exercise_label.lower()
 
     with mp_pose.Pose(static_image_mode=False) as pose:
         while cap.isOpened():
@@ -1362,7 +1393,6 @@ def draw_overlay_video(input_path, output_path, rep_feedback, sample_every=1):
             results = pose.process(rgb)
 
             draw_overlay = False
-
             for rep in rep_feedback:
                 highlight_start = max(0, rep["start_frame"] - 30)
                 highlight_end = rep["end_frame"] + 10
@@ -1372,25 +1402,40 @@ def draw_overlay_video(input_path, output_path, rep_feedback, sample_every=1):
                     break
 
             if draw_overlay and results.pose_landmarks:
-                frame = draw_ideal_deadlift(
-                    frame,
-                    results.pose_landmarks,
-                    width,
-                    height,
-                )
+                if exercise == "deadlift":
+                    frame = draw_ideal_deadlift(
+                        frame,
+                        results.pose_landmarks,
+                        width,
+                        height,
+                    )
+                    frame = draw_deadlift_skeleton(
+                        frame,
+                        results.pose_landmarks,
+                        width,
+                        height,
+                    )
 
-                frame = draw_deadlift_skeleton(
-                    frame,
-                    results.pose_landmarks,
-                    width,
-                    height,
-                )
+                elif exercise == "squat":
+                    frame = draw_ideal_squat_overlay(
+                        frame,
+                        results.pose_landmarks,
+                        width,
+                        height,
+                    )
+                    mp_drawing.draw_landmarks(
+                        frame,
+                        results.pose_landmarks,
+                        mp_pose.POSE_CONNECTIONS,
+                    )
 
-                writer.write(frame)
+            # IMPORTANT: always write every frame
+            writer.write(frame)
 
     cap.release()
     writer.release()
 
+    print("Overlay saved:", output_path)
     return output_path
 
 
@@ -1447,6 +1492,127 @@ def draw_ideal_deadlift(frame, pose_landmarks, width, height):
             -1,
             cv2.LINE_AA,
         )
+
+    return frame
+
+
+def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
+    landmarks = pose_landmarks.landmark
+
+    def pt(idx):
+        lm = landmarks[idx]
+        return np.array([lm.x * width, lm.y * height], dtype=np.float32)
+
+    def vis(idx):
+        return landmarks[idx].visibility
+
+    left_ids = {
+        "shoulder": 11,
+        "hip": 23,
+        "knee": 25,
+        "ankle": 27,
+    }
+
+    right_ids = {
+        "shoulder": 12,
+        "hip": 24,
+        "knee": 26,
+        "ankle": 28,
+    }
+
+    left_vis = sum(vis(i) for i in left_ids.values())
+    right_vis = sum(vis(i) for i in right_ids.values())
+
+    ids = left_ids if left_vis >= right_vis else right_ids
+
+    shoulder = pt(ids["shoulder"])
+    hip = pt(ids["hip"])
+    knee = pt(ids["knee"])
+    ankle = pt(ids["ankle"])
+
+    femur_len = np.linalg.norm(hip - knee)
+    torso_len = np.linalg.norm(shoulder - hip)
+
+    if femur_len < 5 or torso_len < 5:
+        return frame
+
+    # Direction knees travel relative to ankle
+    forward_sign = np.sign(knee[0] - ankle[0])
+    if forward_sign == 0:
+        forward_sign = np.sign(shoulder[0] - hip[0])
+    if forward_sign == 0:
+        forward_sign = 1
+
+    # Squat phase: lower hip = deeper squat
+    phase = np.clip((ankle[1] - hip[1]) / max(femur_len * 1.6, 1), 0.0, 1.0)
+
+    ideal_ankle = ankle.copy()
+
+    # Knee tracks forward over toes
+    ideal_knee = np.array([
+        ankle[0] + forward_sign * femur_len * (0.28 + 0.18 * phase),
+        ankle[1] - femur_len * (0.92 - 0.10 * phase),
+    ])
+
+    # Hip sits back opposite knee direction
+    ideal_hip = np.array([
+        ankle[0] - forward_sign * femur_len * (0.28 + 0.12 * phase),
+        ankle[1] - femur_len * (1.38 - 0.22 * phase),
+    ])
+
+    # Shoulder stays over midfoot-ish with slight torso lean
+    ideal_shoulder = np.array([
+        ideal_hip[0] + forward_sign * torso_len * (0.55 + 0.10 * phase),
+        ideal_hip[1] - torso_len * 0.95,
+    ])
+
+    blue = (255, 0, 0)
+
+    pts = [
+        tuple(ideal_shoulder.astype(int)),
+        tuple(ideal_hip.astype(int)),
+        tuple(ideal_knee.astype(int)),
+        tuple(ideal_ankle.astype(int)),
+    ]
+
+    for a, b in zip(pts[:-1], pts[1:]):
+        cv2.line(frame, a, b, blue, 5, cv2.LINE_AA)
+
+    for p in pts:
+        cv2.circle(frame, p, 7, blue, -1, cv2.LINE_AA)
+
+    cv2.putText(
+        frame,
+        "Blue = ideal squat guide",
+        (20, 45),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        blue,
+        2,
+        cv2.LINE_AA,
+    )
+
+        # Bar guide for back squat: bar should stay over midfoot
+    bar_point = ideal_shoulder.copy()
+    midfoot = ideal_ankle.copy()
+
+    cv2.circle(
+        frame,
+        tuple(bar_point.astype(int)),
+        8,
+        blue,
+        -1,
+        cv2.LINE_AA,
+    )
+
+    cv2.line(
+        frame,
+        tuple(bar_point.astype(int)),
+        tuple(midfoot.astype(int)),
+        blue,
+        3,
+        cv2.LINE_AA,
+    )
 
     return frame
 
@@ -1562,10 +1728,14 @@ def analyze_video(video_path):
             input_path=video_path,
             output_path=overlay_path,
             rep_feedback=rep_feedback,
+            exercise_label=label,
             sample_every=sample_every,
         )
 
         overlay_video_url = f"/outputs/{overlay_filename}"
+
+    # Rebuild summary from final rep scores so overall score matches the rep cards
+    set_summary = build_set_summary(rep_feedback)
 
     return {
         "exercise_label": label.replace("_", " ").title(),
