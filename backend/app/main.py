@@ -1,14 +1,27 @@
 import tempfile
 from pathlib import Path
 
+import os
+import uuid
+
 import cv2
 import mediapipe as mp
 import numpy as np
 import tensorflow as tf
 from fastapi import FastAPI, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="FormCheck AI Backend")
+app = FastAPI()
+
+OVERLAY_DIR = "outputs"
+os.makedirs(OVERLAY_DIR, exist_ok=True)
+
+app.mount(
+    "/outputs",
+    StaticFiles(directory=OVERLAY_DIR),
+    name="outputs",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,8 +54,7 @@ mp_pose = mp.solutions.pose
 def health():
     return {
         "status": "ok",
-        "model": str(MODEL_PATH),
-        "classes": CLASS_NAMES,
+        "model_loaded": MODEL is not None,
     }
 
 
@@ -76,6 +88,12 @@ def extract_features_and_biomechanics(results):
     for lm in landmarks:
         features.extend([lm.x, lm.y])
 
+    pts = np.array([
+        [lm.x, lm.y, lm.z]
+        for lm in results.pose_landmarks.landmark
+    ])
+
+    nose = pts[mp_pose.PoseLandmark.NOSE.value]
     left_shoulder = point(landmarks, mp_pose.PoseLandmark.LEFT_SHOULDER)
     right_shoulder = point(landmarks, mp_pose.PoseLandmark.RIGHT_SHOULDER)
     left_elbow = point(landmarks, mp_pose.PoseLandmark.LEFT_ELBOW)
@@ -134,6 +152,15 @@ def extract_features_and_biomechanics(results):
 
     wrist_above_shoulder = float(wrist_y < shoulder_y)
 
+    shoulder_mid_x = (left_shoulder[0] + right_shoulder[0]) / 2
+    shoulder_mid_y = (left_shoulder[1] + right_shoulder[1]) / 2
+
+    nose_x = nose[0]
+    nose_y = nose[1]
+
+    head_drop = nose_y - shoulder_mid_y
+    head_forward = abs(nose_x - shoulder_mid_x)
+
     features.extend([
         knee_angle / 180.0,
         hip_angle / 180.0,
@@ -166,6 +193,9 @@ def extract_features_and_biomechanics(results):
         "valgus_ratio": float(valgus_ratio),
 
         "bar_distance": bar_distance,
+
+        "head_drop": float(head_drop),
+        "head_forward": float(head_forward),
     }
 
     return np.array(features, dtype=np.float32), biomechanics
@@ -425,6 +455,8 @@ def analyze_deadlift_reps(biomechanics):
     hip = np.array([b["hip_angle"] for b in biomechanics])
     knee = np.array([b["knee_angle"] for b in biomechanics])
     bar_distance = np.array([b.get("bar_distance", 0) for b in biomechanics])
+    head_drop = np.array([b.get("head_drop", 0) for b in biomechanics])
+    head_forward = np.array([b.get("head_forward", 0) for b in biomechanics])
 
     reps = []
 
@@ -452,6 +484,13 @@ def analyze_deadlift_reps(biomechanics):
             rep_knee = knee[start:end + 1]
             rep_bar = bar_distance[start:end + 1]
 
+            # ADD THESE
+            rep_head_drop = head_drop[start:end + 1]
+            rep_head_forward = head_forward[start:end + 1]
+
+            max_head_drop = float(np.max(rep_head_drop))
+            max_head_forward = float(np.max(rep_head_forward))
+
             max_torso = float(np.max(rep_torso))
             min_torso = float(np.min(rep_torso))
             min_hip = float(np.min(rep_hip))
@@ -475,6 +514,7 @@ def analyze_deadlift_reps(biomechanics):
             breakdown = {
                 "setup": "good",
                 "back": "good",
+                "neck": "good",
                 "hinge": "good",
                 "lockout": "good",
                 "knees": "good",
@@ -509,6 +549,12 @@ def analyze_deadlift_reps(biomechanics):
                 breakdown["bar_path"] = "poor"
                 issues.append("Bar drifts away from your body.")
                 feedback.append("Keep the bar closer — drag it up your legs.")
+
+            # NECK
+            if max_head_drop > 0.08 or max_head_forward > 0.10:
+                breakdown["neck"] = "poor"
+                issues.append("Neck position may be off.")
+                feedback.append("Keep your neck neutral — eyes slightly ahead on the floor.")
 
             # LOCKOUT — incomplete
             if end_hip < 140:
@@ -588,6 +634,105 @@ def analyze_deadlift_reps(biomechanics):
         })
 
     return reps, build_set_summary(reps)
+
+
+def draw_deadlift_guides(frame, landmarks, width, height):
+    if not landmarks:
+        return frame
+
+    lm = landmarks.landmark
+
+    def px(i):
+        return (
+            int(lm[i].x * width),
+            int(lm[i].y * height),
+        )
+
+    L_SH = mp_pose.PoseLandmark.LEFT_SHOULDER.value
+    R_SH = mp_pose.PoseLandmark.RIGHT_SHOULDER.value
+    L_HIP = mp_pose.PoseLandmark.LEFT_HIP.value
+    R_HIP = mp_pose.PoseLandmark.RIGHT_HIP.value
+    L_KNEE = mp_pose.PoseLandmark.LEFT_KNEE.value
+    R_KNEE = mp_pose.PoseLandmark.RIGHT_KNEE.value
+    L_ANKLE = mp_pose.PoseLandmark.LEFT_ANKLE.value
+    R_ANKLE = mp_pose.PoseLandmark.RIGHT_ANKLE.value
+    L_WRIST = mp_pose.PoseLandmark.LEFT_WRIST.value
+    R_WRIST = mp_pose.PoseLandmark.RIGHT_WRIST.value
+
+    shoulder = (
+        (px(L_SH)[0] + px(R_SH)[0]) // 2,
+        (px(L_SH)[1] + px(R_SH)[1]) // 2,
+    )
+    hip = (
+        (px(L_HIP)[0] + px(R_HIP)[0]) // 2,
+        (px(L_HIP)[1] + px(R_HIP)[1]) // 2,
+    )
+    knee = (
+        (px(L_KNEE)[0] + px(R_KNEE)[0]) // 2,
+        (px(L_KNEE)[1] + px(R_KNEE)[1]) // 2,
+    )
+    ankle = (
+        (px(L_ANKLE)[0] + px(R_ANKLE)[0]) // 2,
+        (px(L_ANKLE)[1] + px(R_ANKLE)[1]) // 2,
+    )
+    wrist = (
+        (px(L_WRIST)[0] + px(R_WRIST)[0]) // 2,
+        (px(L_WRIST)[1] + px(R_WRIST)[1]) // 2,
+    )
+
+    # Ideal bar path
+    cv2.line(
+        frame,
+        (ankle[0], ankle[1] - 250),
+        (ankle[0], ankle[1] + 30),
+        (0, 255, 0),
+        4,
+    )
+
+    # Ideal torso hinge
+    target_shoulder = (
+        hip[0] - 90,
+        hip[1] - 130,
+    )
+
+    cv2.line(
+        frame,
+        hip,
+        target_shoulder,
+        (0, 255, 0),
+        5,
+    )
+
+    # Shin line
+    cv2.line(
+        frame,
+        ankle,
+        knee,
+        (0, 255, 0),
+        4,
+    )
+
+    # Bar marker
+    cv2.circle(
+        frame,
+        wrist,
+        12,
+        (0, 255, 0),
+        -1,
+    )
+
+    cv2.putText(
+        frame,
+        "TARGET: Bar close + finish tall",
+        (40, height - 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.9,
+        (0, 255, 0),
+        3,
+        cv2.LINE_AA,
+    )
+
+    return frame
 
 
 def analyze_squat_reps(biomechanics):
@@ -1096,6 +1241,216 @@ def assess_video_quality(raw_label, summary, total_frames, pose_frames, sequence
     }
 
 
+def point_from_angle(start, length, angle_degrees):
+    angle = np.deg2rad(angle_degrees)
+
+    x = start[0] + length * np.cos(angle)
+    y = start[1] - length * np.sin(angle)
+
+    return np.array([x, y], dtype=np.float32)
+
+
+def draw_deadlift_skeleton(frame, pose_landmarks, width, height):
+    lm = pose_landmarks.landmark
+
+    def pt(idx):
+        return np.array(
+            [lm[idx].x * width, lm[idx].y * height],
+            dtype=np.float32,
+        )
+
+    # Use LEFT side landmarks (your camera view)
+    shoulder = pt(mp_pose.PoseLandmark.LEFT_SHOULDER)
+    hip = pt(mp_pose.PoseLandmark.LEFT_HIP)
+    knee = pt(mp_pose.PoseLandmark.LEFT_KNEE)
+    ankle = pt(mp_pose.PoseLandmark.LEFT_ANKLE)
+    heel = pt(mp_pose.PoseLandmark.LEFT_HEEL)
+    foot = pt(mp_pose.PoseLandmark.LEFT_FOOT_INDEX)
+    ear = pt(mp_pose.PoseLandmark.LEFT_EAR)
+
+    # Head
+    head = (ear + shoulder) / 2
+
+    # Correct deadlift geometry:
+    # ankle slightly forward
+    ankle = ankle + np.array([10, 0], dtype=np.float32)
+
+    # knee -> hip backward sharply
+    hip = hip + np.array([-28, 0], dtype=np.float32)
+
+    # torso forward
+    shoulder = shoulder + np.array([18, 0], dtype=np.float32)
+    head = head + np.array([18, 0], dtype=np.float32)
+
+    color = (80, 255, 80)
+    thickness = 6
+
+    segments = [
+        (head, shoulder),
+        (shoulder, hip),
+        (hip, knee),
+        (knee, ankle),
+        (heel, ankle),
+        (ankle, foot),
+    ]
+
+    joints = [head, shoulder, hip, knee, ankle, heel, foot]
+
+    for a, b in segments:
+        cv2.line(
+            frame,
+            tuple(a.astype(int)),
+            tuple(b.astype(int)),
+            color,
+            thickness,
+            cv2.LINE_AA,
+        )
+
+    for p in joints:
+        cv2.circle(
+            frame,
+            tuple(p.astype(int)),
+            8,
+            color,
+            -1,
+        )
+
+    for p in [hip, knee, ankle]:
+        cv2.circle(
+            frame,
+            tuple(p.astype(int)),
+            11,
+            color,
+            -1,
+        )
+
+    return frame
+
+
+def draw_overlay_video(input_path, output_path, rep_feedback, sample_every=1):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        return None
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30
+
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    writer = cv2.VideoWriter(
+        output_path,
+        cv2.VideoWriter_fourcc(*"mp4v"),
+        fps,
+        (width, height),
+    )
+
+    frame_idx = 0
+
+    with mp_pose.Pose(static_image_mode=False) as pose:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_idx += 1
+            processed_idx = frame_idx // sample_every
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(rgb)
+
+            draw_overlay = False
+
+            for rep in rep_feedback:
+                highlight_start = max(0, rep["start_frame"] - 30)
+                highlight_end = rep["end_frame"] + 10
+
+                if highlight_start <= processed_idx <= highlight_end:
+                    draw_overlay = True
+                    break
+
+            if draw_overlay and results.pose_landmarks:
+                frame = draw_ideal_deadlift(
+                    frame,
+                    results.pose_landmarks,
+                    width,
+                    height,
+                )
+
+                frame = draw_deadlift_skeleton(
+                    frame,
+                    results.pose_landmarks,
+                    width,
+                    height,
+                )
+
+                writer.write(frame)
+
+    cap.release()
+    writer.release()
+
+    return output_path
+
+
+def draw_ideal_deadlift(frame, pose_landmarks, width, height):
+    lm = pose_landmarks.landmark
+
+    def pt(idx):
+        p = lm[idx]
+        return np.array([p.x * width, p.y * height], dtype=np.float32)
+
+    # use real body joints
+    shoulder = pt(mp_pose.PoseLandmark.RIGHT_SHOULDER.value)
+    hip = pt(mp_pose.PoseLandmark.RIGHT_HIP.value)
+    knee = pt(mp_pose.PoseLandmark.RIGHT_KNEE.value)
+    ankle = pt(mp_pose.PoseLandmark.RIGHT_ANKLE.value)
+    heel = pt(mp_pose.PoseLandmark.RIGHT_HEEL.value)
+    foot = pt(mp_pose.PoseLandmark.RIGHT_FOOT_INDEX.value)
+
+    # reshape toward ideal deadlift
+    ideal_shoulder = shoulder + np.array([-18, -8], dtype=np.float32)
+    ideal_hip = hip + np.array([-28, 0], dtype=np.float32)
+    ideal_knee = knee + np.array([6, 0], dtype=np.float32)
+    ideal_ankle = ankle
+    ideal_heel = heel
+    ideal_foot = foot
+
+    joints = [
+        ideal_shoulder.astype(int),
+        ideal_hip.astype(int),
+        ideal_knee.astype(int),
+        ideal_ankle.astype(int),
+        ideal_heel.astype(int),
+        ideal_foot.astype(int),
+    ]
+
+    blue = (255, 0, 0)
+
+    for i in range(len(joints) - 1):
+        cv2.line(
+            frame,
+            tuple(joints[i]),
+            tuple(joints[i + 1]),
+            blue,
+            4,
+            cv2.LINE_AA,
+        )
+
+    for p in joints:
+        cv2.circle(
+            frame,
+            tuple(p),
+            6,
+            blue,
+            -1,
+            cv2.LINE_AA,
+        )
+
+    return frame
+
+
 def analyze_video(video_path):
     cap = cv2.VideoCapture(video_path)
 
@@ -1107,6 +1462,7 @@ def analyze_video(video_path):
             "feedback": ["Could not open uploaded video."],
             "rep_feedback": [],
             "set_summary": build_set_summary([]),
+            "overlay_video_url": None,
             "debug": {},
         }
 
@@ -1115,7 +1471,6 @@ def analyze_video(video_path):
 
     sequence = []
     biomechanics = []
-
     frame_idx = 0
     pose_frames = 0
 
@@ -1126,6 +1481,7 @@ def analyze_video(video_path):
                 break
 
             frame_idx += 1
+
             if frame_idx % sample_every != 0:
                 continue
 
@@ -1136,6 +1492,7 @@ def analyze_video(video_path):
                 continue
 
             feats, bio = extract_features_and_biomechanics(results)
+
             if feats is None or bio is None:
                 continue
 
@@ -1153,6 +1510,7 @@ def analyze_video(video_path):
             "feedback": ["Not enough pose data detected."],
             "rep_feedback": [],
             "set_summary": build_set_summary([]),
+            "overlay_video_url": None,
             "debug": {},
         }
 
@@ -1167,104 +1525,12 @@ def analyze_video(video_path):
 
     summary = summarize_biomechanics(biomechanics)
 
-    # Smart video quality check
-    
-    torso_range = summary.get("max_torso_angle", 0) - summary.get("min_torso_angle", 0)
-    hip_range = summary.get("max_hip_angle", 0) - summary.get("min_hip_angle", 0)
-    pose_ratio = pose_frames / max(total_frames, 1)
-
-    issues = []
-
-    if pose_ratio < 0.08:
-        issues.append("Pose detection is unstable")
-
-    if len(sequence) < 8:
-        issues.append("Not enough movement captured")
-
-    # Only apply strict camera-angle checks to bench press.
-    # Squat/deadlift/push press naturally have large torso/hip movement.
-    if raw_label == "bench_press":
-        # Smart video quality check
-        pose_ratio = pose_frames / max(total_frames, 1)
-        issues = []
-
-        if pose_ratio < 0.05:
-            issues.append("Pose detection is unstable")
-
-        if len(sequence) < 8:
-            issues.append("Not enough movement captured")
-
-        # Much looser bench validation
-        if raw_label == "bench_press":
-            visible_upper_frames = 0
-
-            for b in biomechanics:
-                if (
-                    b.get("shoulder_y") is not None
-                    and b.get("elbow_y") is not None
-                    and b.get("wrist_y") is not None
-                ):
-                    visible_upper_frames += 1
-
-            upper_ratio = visible_upper_frames / max(len(biomechanics), 1)
-
-            if upper_ratio < 0.20:
-                pass
-
-            if len(issues) > 0:
-                return {
-                    "exercise_label": "Unknown",
-                    "confidence": 0.0,
-                    "analysis_mode": "poor_video_quality",
-                    "feedback": issues,
-                    "rep_feedback": [],
-                    "set_summary": build_set_summary([]),
-                    "debug": {
-                        "reason": "bench_video_quality_check",
-                        "issues": issues,
-                        "pose_ratio": round(pose_ratio, 2),
-                        "upper_ratio": round(upper_ratio, 2),
-                        "original_prediction": raw_label,
-                        "original_confidence": round(raw_confidence, 4),
-                        "frames_seen": total_frames,
-                        "pose_frames": pose_frames,
-                    },
-                }
-        if len(issues) > 0:
-            return {
-                "exercise_label": "Unknown",
-                "confidence": 0.0,
-                "analysis_mode": "poor_video_quality",
-                "feedback": issues,
-                "rep_feedback": [],
-                "set_summary": build_set_summary([]),
-                "debug": {
-                    "reason": "dynamic_video_quality_check",
-                    "issues": issues,
-                    "pose_ratio": round(pose_ratio, 2),
-                    "torso_range": round(torso_range, 1),
-                    "hip_range": round(hip_range, 1),
-                    "original_prediction": raw_label,
-                    "original_confidence": round(raw_confidence, 4),
-                    "frames_seen": total_frames,
-                    "pose_frames": pose_frames,
-                },
-            }
-
     label, confidence, override_used, reason = classify_with_biomechanics(
         raw_label,
         raw_confidence,
         summary,
         pose_frames,
     )
-
-    filename_lower = str(video_path).lower()
-
-    if "deadlift" in filename_lower:
-        label = "deadlift"
-        confidence = max(confidence, 0.90)
-        override_used = True
-        reason = "filename_deadlift_override"
 
     analysis_mode = "classification_only"
     rep_feedback = []
@@ -1273,15 +1539,33 @@ def analyze_video(video_path):
     if label == "squat":
         rep_feedback, set_summary = analyze_squat_reps(biomechanics)
         analysis_mode = "detailed_rep_analysis"
+
     elif label == "deadlift":
         rep_feedback, set_summary = analyze_deadlift_reps(biomechanics)
         analysis_mode = "detailed_rep_analysis"
+
     elif label == "push_press":
         rep_feedback, set_summary = analyze_push_press_reps(biomechanics)
         analysis_mode = "detailed_rep_analysis"
+
     elif label == "bench_press":
         rep_feedback, set_summary = analyze_bench_press_reps(biomechanics)
         analysis_mode = "detailed_rep_analysis"
+
+    overlay_video_url = None
+
+    if rep_feedback:
+        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+
+        draw_overlay_video(
+            input_path=video_path,
+            output_path=overlay_path,
+            rep_feedback=rep_feedback,
+            sample_every=sample_every,
+        )
+
+        overlay_video_url = f"/outputs/{overlay_filename}"
 
     return {
         "exercise_label": label.replace("_", " ").title(),
@@ -1290,10 +1574,13 @@ def analyze_video(video_path):
         "feedback": [
             f"Predicted exercise: {label.replace('_', ' ').title()}.",
             f"Model confidence: {round(confidence * 100, 1)}%.",
-            f"Biomechanics override applied: {reason}." if override_used else "Model prediction used.",
+            f"Biomechanics override applied: {reason}."
+            if override_used
+            else "Model prediction used.",
         ],
         "rep_feedback": rep_feedback,
         "set_summary": set_summary,
+        "overlay_video_url": overlay_video_url,
         "debug": {
             "original_prediction": raw_label,
             "original_confidence": round(raw_confidence, 4),
