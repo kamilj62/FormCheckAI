@@ -128,6 +128,10 @@ def extract_features_and_biomechanics(results):
     ankle_width = abs(float(left_ankle[0]) - float(right_ankle[0]))
     valgus_ratio = knee_width / (ankle_width + 1e-6)
 
+    wrist_x = (left_wrist[0] + right_wrist[0]) / 2
+    ankle_x = (left_ankle[0] + right_ankle[0]) / 2
+    bar_distance = abs(wrist_x - ankle_x)
+
     wrist_above_shoulder = float(wrist_y < shoulder_y)
 
     features.extend([
@@ -160,6 +164,8 @@ def extract_features_and_biomechanics(results):
 
         "wrist_above_shoulder": wrist_above_shoulder,
         "valgus_ratio": float(valgus_ratio),
+
+        "bar_distance": bar_distance,
     }
 
     return np.array(features, dtype=np.float32), biomechanics
@@ -270,25 +276,27 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         return "push_press", max(confidence, 0.78), True, "overhead_press_detected"
 
     # DEADLIFT:
-    # Hinge pattern with limited wrist-over-shoulder time.
+    # Hinge pattern. Deadlift videos can have noisy knee angles,
+    # so do not rely too heavily on min_knee.
     if (
-        wrist_ratio < 0.20
-        and hip_range >= 30
-        and torso_range >= 12
-        and min_knee >= 90
+        wrist_ratio < 0.30
+        and hip_range >= 20
+        and torso_range >= 10
+        and raw_label in ["deadlift", "squat"]
     ):
         return "deadlift", max(confidence, 0.85), True, "deadlift_hinge_pattern_detected"
-
+   
     # SQUAT:
-    # Deep knee bend with hip/knee movement.
+    # Only override to squat if the model already thinks squat.
+    # This prevents deadlifts from being forced into squat.
     if (
-        min_knee < 95
-        and knee_range >= 40
-        and hip_range >= 20
-        and wrist_ratio < 0.25
+        raw_label == "squat"
+        and min_knee < 80
+        and knee_range >= 50
+        and hip_range >= 25
+        and wrist_ratio < 0.20
     ):
         return "squat", max(confidence, 0.75), True, "squat_pattern_detected"
-
     return raw_label, confidence, False, "model_prediction"
 
 
@@ -340,9 +348,47 @@ def build_set_summary(reps):
             "best_rep": None,
             "worst_rep": None,
             "trend": "No clear reps detected.",
+            "biggest_fix": "Record a clearer set for analysis.",
         }
 
     scores = [r["score"] for r in reps]
+
+    # Count issues across reps
+    issue_counts = {}
+    feedback_counts = {}
+
+    for rep in reps:
+        for issue in rep.get("issues", []):
+            issue_counts[issue] = issue_counts.get(issue, 0) + 1
+
+        for tip in rep.get("feedback", []):
+            feedback_counts[tip] = feedback_counts.get(tip, 0) + 1
+
+    # Priority coaching hierarchy
+    priority_map = {
+        "Bar drifts away from your body.": "Keep the bar closer — drag it up your legs.",
+        "Overextending at lockout.": "Finish tall — squeeze glutes without leaning back.",
+        "Incomplete lockout at the top.": "Finish tall by squeezing glutes and standing fully upright.",
+        "Not enough hip hinge.": "Push your hips back more before starting the pull.",
+        "Knees bend too much for a deadlift pattern.": "Keep shins more vertical and hinge from the hips.",
+        "Back may be rounding during the pull.": "Brace your core and keep a neutral spine.",
+        "Depth may be shallow.": "Try to reach better squat depth.",
+        "Knees cave inward significantly.": "Knees are caving inward — drive them out over your toes.",
+        "Mild knee cave detected.": "Keep knees tracking over your toes.",
+        "Torso leaning too far forward.": "Chest is falling forward — keep torso upright.",
+    }
+
+    biggest_fix = "Keep building consistent reps."
+
+    # Choose highest-priority repeated issue
+    for issue, fix in priority_map.items():
+        if issue in issue_counts:
+            biggest_fix = fix
+            break
+
+    # Fallback to most common feedback
+    if biggest_fix == "Keep building consistent reps." and feedback_counts:
+        biggest_fix = max(feedback_counts, key=feedback_counts.get)
 
     return {
         "detected_reps": len(reps),
@@ -356,6 +402,7 @@ def build_set_summary(reps):
             if len(scores) >= 2 and scores[-1] > scores[0]
             else "Form appears consistent across the set."
         ),
+        "biggest_fix": biggest_fix,
     }
 
 
@@ -372,6 +419,177 @@ def apply_coach_reward(score, issues, breakdown):
     return score
 
 
+def analyze_deadlift_reps(biomechanics):
+    hip_y = np.array([b["hip_y"] for b in biomechanics])
+    torso = np.array([b["torso_angle"] for b in biomechanics])
+    hip = np.array([b["hip_angle"] for b in biomechanics])
+    knee = np.array([b["knee_angle"] for b in biomechanics])
+    bar_distance = np.array([b.get("bar_distance", 0) for b in biomechanics])
+
+    reps = []
+
+    movement_signal = torso + (hip_y * 100)
+    threshold = np.percentile(movement_signal, 50)
+
+    in_rep = False
+    start = 0
+
+    for i, value in enumerate(movement_signal):
+        if not in_rep and value > threshold:
+            in_rep = True
+            start = i
+
+        elif in_rep and value <= threshold:
+            end = i
+
+            if end - start < 3:
+                in_rep = False
+                continue
+
+            rep_signal = movement_signal[start:end + 1]
+            rep_torso = torso[start:end + 1]
+            rep_hip = hip[start:end + 1]
+            rep_knee = knee[start:end + 1]
+            rep_bar = bar_distance[start:end + 1]
+
+            max_torso = float(np.max(rep_torso))
+            min_torso = float(np.min(rep_torso))
+            min_hip = float(np.min(rep_hip))
+            end_hip = float(rep_hip[-1])
+            min_knee = float(np.min(rep_knee))
+            max_bar_distance = float(np.max(rep_bar))
+
+            torso_change = max_torso - min_torso
+
+            # Top portion of rep (for lockout mechanics)
+            top_idx = max(1, int(len(rep_torso) * 0.66))
+            top_torso = rep_torso[top_idx:]
+            top_hip = rep_hip[top_idx:]
+
+            max_top_torso = float(np.max(top_torso))
+            max_top_hip = float(np.max(top_hip))
+
+            issues = []
+            feedback = []
+
+            breakdown = {
+                "setup": "good",
+                "back": "good",
+                "hinge": "good",
+                "lockout": "good",
+                "knees": "good",
+                "bar_path": "good",
+                "control": "good",
+            }
+
+            # BACK
+            if max_torso > 75:
+                breakdown["back"] = "poor"
+                issues.append("Back may be rounding during the pull.")
+                feedback.append("Brace your core and keep a neutral spine.")
+            elif max_torso > 60:
+                breakdown["back"] = "fair"
+                issues.append("Slight torso rounding detected.")
+                feedback.append("Keep your chest proud and lats tight.")
+
+            # HINGE
+            if min_hip > 115:
+                breakdown["hinge"] = "poor"
+                issues.append("Not enough hip hinge.")
+                feedback.append("Push your hips back more before starting the pull.")
+
+            # KNEES
+            if min_knee < 90:
+                breakdown["knees"] = "fair"
+                issues.append("Knees bend too much for a deadlift pattern.")
+                feedback.append("Keep shins more vertical and hinge from the hips.")
+
+            # BAR PATH
+            if max_bar_distance > 0.12:
+                breakdown["bar_path"] = "poor"
+                issues.append("Bar drifts away from your body.")
+                feedback.append("Keep the bar closer — drag it up your legs.")
+
+            # LOCKOUT — incomplete
+            if end_hip < 140:
+                breakdown["lockout"] = "incomplete"
+                issues.append("Incomplete lockout at the top.")
+                feedback.append(
+                    "Finish tall by squeezing glutes and standing fully upright."
+                )
+
+            # LOCKOUT — hyperextend
+            elif max_top_hip > 175 or max_top_torso > 50:
+                breakdown["lockout"] = "poor"
+                issues.append("Overextending at lockout.")
+                feedback.append(
+                    "Finish tall — squeeze glutes without leaning back."
+                )
+
+            # CONTROL
+            if torso_change < 8:
+                breakdown["control"] = "poor"
+                issues.append("Movement range was too small to confidently score.")
+                feedback.append("Record the full rep from setup to lockout.")
+
+            score = compute_rep_score(issues)
+            score = apply_coach_reward(score, issues, breakdown)
+
+            if breakdown["lockout"] == "poor":
+                score -= 2.0
+            elif breakdown["lockout"] == "incomplete":
+                score -= 1.5
+
+            if breakdown["control"] == "poor":
+                score -= 1.0
+
+            score = max(1.0, round(score, 1))
+
+            if not issues:
+                score = 8.5
+
+            reps.append({
+                "rep": len(reps) + 1,
+                "start_frame": int(start),
+                "bottom_frame": int(start + np.argmax(rep_signal)),
+                "end_frame": int(end),
+                "score": score,
+                "grade": grade_score(score),
+                "issues": issues,
+                "breakdown": breakdown,
+                "feedback": feedback or [
+                    "Strong rep. Keep the bar close and finish tall."
+                ],
+            })
+
+            in_rep = False
+
+    if not reps and len(biomechanics) >= 10:
+        reps.append({
+            "rep": 1,
+            "start_frame": 0,
+            "bottom_frame": int(np.argmax(torso)),
+            "end_frame": len(biomechanics) - 1,
+            "score": 7.0,
+            "grade": grade_score(7.0),
+            "issues": ["Could not clearly segment individual reps."],
+            "breakdown": {
+                "setup": "review",
+                "back": "review",
+                "hinge": "review",
+                "lockout": "review",
+                "knees": "review",
+                "bar_path": "review",
+                "control": "review",
+            },
+            "feedback": [
+                "Deadlift detected, but rep segmentation was unclear."
+            ],
+        })
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_squat_reps(biomechanics):
     hip_y = np.array([b["hip_y"] for b in biomechanics])
     knee_angles = np.array([b["knee_angle"] for b in biomechanics])
@@ -379,12 +597,22 @@ def analyze_squat_reps(biomechanics):
     valgus_ratios = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
 
     reps = []
+
+    # Tuning controls
+    MIN_REP_START_FRAME = 8
+    MIN_REP_LENGTH = 5
+    MIN_HIP_CHANGE = 0.025
+    MAX_REPS = 5
+
     threshold = np.percentile(hip_y, 65)
 
     in_rep = False
     start = 0
 
     for i, y in enumerate(hip_y):
+        if i < MIN_REP_START_FRAME:
+            continue
+
         if not in_rep and y > threshold:
             in_rep = True
             start = i
@@ -392,7 +620,7 @@ def analyze_squat_reps(biomechanics):
         elif in_rep and y <= threshold:
             end = i
 
-            if end - start < 3:
+            if end - start < MIN_REP_LENGTH:
                 in_rep = False
                 continue
 
@@ -400,6 +628,12 @@ def analyze_squat_reps(biomechanics):
             rep_knees = knee_angles[start:end + 1]
             rep_torso = torso_angles[start:end + 1]
             rep_valgus = valgus_ratios[start:end + 1]
+
+            hip_change = float(np.max(rep_hip_y) - np.min(rep_hip_y))
+
+            if hip_change < MIN_HIP_CHANGE:
+                in_rep = False
+                continue
 
             bottom = start + int(np.argmax(rep_hip_y))
 
@@ -409,7 +643,6 @@ def analyze_squat_reps(biomechanics):
             min_valgus = float(np.min(rep_valgus))
 
             torso_change = max_torso - min_torso
-            hip_change = float(np.max(rep_hip_y) - np.min(rep_hip_y))
 
             butt_wink_detected = (
                 min_knee < 110
@@ -452,7 +685,7 @@ def analyze_squat_reps(biomechanics):
 
             score = compute_rep_score(issues)
             score = apply_coach_reward(score, issues, breakdown)
-            
+
             reps.append({
                 "rep": len(reps) + 1,
                 "start_frame": int(start),
@@ -467,159 +700,10 @@ def analyze_squat_reps(biomechanics):
 
             in_rep = False
 
+            if len(reps) >= MAX_REPS:
+                break
+
     return reps, build_set_summary(reps)
-
-
-def analyze_deadlift_reps(biomechanics):
-    hip_y = np.array([b["hip_y"] for b in biomechanics])
-    torso = np.array([b["torso_angle"] for b in biomechanics])
-    hip = np.array([b["hip_angle"] for b in biomechanics])
-    knee = np.array([b["knee_angle"] for b in biomechanics])
-
-    reps = []
-
-    # Deadlift bottom usually has hips lower / torso more folded.
-    movement_signal = torso + (hip_y * 100)
-    threshold = np.percentile(movement_signal, 60)
-
-    in_rep = False
-    start = 0
-
-    for i, value in enumerate(movement_signal):
-        if not in_rep and value > threshold:
-            in_rep = True
-            start = i
-
-        elif in_rep and value <= threshold:
-            end = i
-
-            if end - start < 3:
-                in_rep = False
-                continue
-
-            rep_torso = torso[start:end + 1]
-            rep_hip = hip[start:end + 1]
-            rep_knee = knee[start:end + 1]
-
-            max_torso = float(np.max(rep_torso))
-            min_hip = float(np.min(rep_hip))
-            min_knee = float(np.min(rep_knee))
-            end_hip = float(rep_hip[-1])
-            torso_change = float(np.max(rep_torso) - np.min(rep_torso))
-
-            issues = []
-            feedback = []
-
-            breakdown = {
-                "setup": "good",
-                "back": "good",
-                "hinge": "good",
-                "lockout": "good",
-                "knees": "good",
-                "control": "good",
-            }
-
-            if max_torso > 65:
-                breakdown["back"] = "poor"
-                issues.append("Back may be rounding during the pull.")
-                feedback.append("Brace your core and keep a neutral spine.")
-            elif max_torso > 55:
-                breakdown["back"] = "fair"
-                issues.append("Slight torso rounding detected.")
-                feedback.append("Keep your chest proud and lats tight.")
-
-            if min_hip > 115:
-                breakdown["hinge"] = "poor"
-                issues.append("Not enough hip hinge.")
-                feedback.append("Push your hips back more before starting the pull.")
-
-            if min_knee < 90:
-                breakdown["knees"] = "fair"
-                issues.append("Knees bend too much for a deadlift pattern.")
-                feedback.append("Keep shins more vertical and hinge from the hips.")
-
-            if end_hip < 145:
-                breakdown["lockout"] = "incomplete"
-                issues.append("Incomplete lockout at the top.")
-                feedback.append("Finish tall by squeezing glutes and standing fully upright.")
-
-            if torso_change < 8:
-                breakdown["control"] = "poor"
-                issues.append("Movement range was too small to confidently score.")
-                feedback.append("Record the full rep from setup to lockout.")
-
-            score = compute_rep_score(issues)
-            score = apply_coach_reward(score, issues, breakdown)
-
-            if not issues:
-                score = 8.5
-
-            reps.append({
-                "rep": len(reps) + 1,
-                "start_frame": int(start),
-                "bottom_frame": int(start + np.argmax(movement_signal[start:end + 1])),
-                "end_frame": int(end),
-                "score": score,
-                "grade": grade_score(score),
-                "issues": issues,
-                "breakdown": breakdown,
-                "feedback": feedback or ["Strong rep. Focus on keeping the bar even closer and finishing explosively."],
-            })
-
-            in_rep = False
-
-    # Fallback: if no reps detected, still return one coaching card
-    if not reps and len(biomechanics) >= 10:
-        max_torso = float(np.max(torso))
-        min_hip = float(np.min(hip))
-        min_knee = float(np.min(knee))
-
-        issues = []
-        feedback = []
-
-        breakdown = {
-            "setup": "review",
-            "back": "good",
-            "hinge": "good",
-            "lockout": "review",
-            "knees": "good",
-            "control": "review",
-        }
-
-        if max_torso > 65:
-            breakdown["back"] = "poor"
-            issues.append("Back may be rounding during the pull.")
-            feedback.append("Brace hard and keep your spine neutral.")
-        elif max_torso > 55:
-            breakdown["back"] = "fair"
-            issues.append("Slight back rounding detected.")
-            feedback.append("Keep your chest up and lats tight.")
-
-        if min_hip > 115:
-            breakdown["hinge"] = "poor"
-            issues.append("Not enough hip hinge.")
-            feedback.append("Push hips back more and keep the bar close.")
-
-        if min_knee < 90:
-            breakdown["knees"] = "fair"
-            issues.append("Knees bend too much for a deadlift.")
-            feedback.append("Keep shins more vertical and hinge through the hips.")
-
-        score = compute_rep_score(issues, base_score=8.0)
-
-        reps.append({
-            "rep": 1,
-            "start_frame": 0,
-            "bottom_frame": int(np.argmax(torso)),
-            "end_frame": len(biomechanics) - 1,
-            "score": score,
-            "grade": grade_score(score),
-            "issues": issues or ["Could not clearly segment individual reps."],
-            "breakdown": breakdown,
-            "feedback": feedback or ["Deadlift detected, but the rep was hard to segment. Record the full body from the side for better scoring."],
-        })
-
-    return reps, build_set_summary(reps)   
 
 
 def analyze_push_press_reps(biomechanics):
@@ -1173,6 +1257,14 @@ def analyze_video(video_path):
         summary,
         pose_frames,
     )
+
+    filename_lower = str(video_path).lower()
+
+    if "deadlift" in filename_lower:
+        label = "deadlift"
+        confidence = max(confidence, 0.90)
+        override_used = True
+        reason = "filename_deadlift_override"
 
     analysis_mode = "classification_only"
     rep_feedback = []
