@@ -155,7 +155,10 @@ export default function App() {
     return null;
   };
 
-  const biggestFix = getBiggestFix();
+  const biggestFix =
+    result?.set_summary?.biggest_fix ||
+    result?.rep_feedback?.[0]?.feedback?.[0]    
+    "Keep building consistent reps.";
 
   return (
     <SafeAreaView style={styles.container}>
