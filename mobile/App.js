@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,55 @@ import { Video, ResizeMode } from "expo-av";
 
 const API_BASE_URL = "http://192.168.1.216:8000";
 
+const getPhaseConfig = (exerciseLabel) => {
+  const label = String(exerciseLabel || "").toLowerCase();
+
+  if (label.includes("squat")) {
+    return {
+      text: "Setup → Bottom → Stand Tall",
+        items: [
+          ["setup", "Setup"],
+          ["bottom", "Bottom ⭐"],
+          ["stand", "Stand Tall"],
+        ],
+    };
+  }
+
+  if (label.includes("push press")) {
+    return {
+      text: "Dip → Drive → Lockout",
+      highlight: "lockout",
+      items: [
+        ["dip", "Dip"],
+        ["drive", "Drive"],
+        ["lockout", "Lockout ⭐"],
+      ],
+    };
+  }
+
+  if (label.includes("bench")) {
+    return {
+      text: "Bottom → Press → Lockout",
+      highlight: "lockout",
+      items: [
+        ["bottom", "Bottom"],
+        ["press", "Press"],
+        ["lockout", "Lockout ⭐"],
+      ],
+    };
+  }
+
+  return {
+    text: "Setup → Pull → Lockout",
+    highlight: "lockout",
+    items: [
+      ["setup", "Setup"],
+      ["pull", "Pull"],
+      ["lockout", "Lockout ⭐"],
+    ],
+  };
+};
+
 export default function App() {
   const [video, setVideo] = useState(null);
   const [result, setResult] = useState(null);
@@ -25,8 +75,8 @@ export default function App() {
 
   const recordWithCamera = async () => {
     reset();
-
     const permission = await ImagePicker.requestCameraPermissionsAsync();
+
     if (!permission.granted) {
       Alert.alert("Camera permission required");
       return;
@@ -50,8 +100,8 @@ export default function App() {
 
   const pickFromLibrary = async () => {
     reset();
-
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (!permission.granted) {
       Alert.alert("Library permission required");
       return;
@@ -114,14 +164,7 @@ export default function App() {
       });
 
       const data = await res.json();
-
       console.log("BACKEND RESPONSE:", data);
-      console.log(
-        "OVERLAY URL:",
-        data?.overlay_video_url
-          ? `${API_BASE_URL}${data.overlay_video_url}`
-          : "No overlay returned"
-      );
 
       if (!res.ok) {
         throw new Error(data.detail || data.message || "Analyze request failed");
@@ -155,6 +198,8 @@ export default function App() {
     result?.set_summary?.biggest_fix ||
     result?.rep_feedback?.[0]?.feedback?.[0] ||
     "Keep building consistent reps.";
+
+  const phaseConfig = getPhaseConfig(result?.exercise_label);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -234,10 +279,7 @@ export default function App() {
               <View style={styles.summaryCard}>
                 <Text style={styles.summaryLabel}>Overall Score</Text>
                 <Text style={styles.summaryScore}>{overallScore}/10</Text>
-
-                <Text style={styles.biggestFix}>
-                  Biggest Fix: {biggestFix}
-                </Text>
+                <Text style={styles.biggestFix}>Biggest Fix: {biggestFix}</Text>
               </View>
             )}
 
@@ -245,19 +287,69 @@ export default function App() {
               <View style={styles.overlayCard}>
                 <Text style={styles.overlayTitle}>Coached Replay</Text>
 
-                <Text style={styles.overlayText}>
-                  What happened: {biggestFix}
-                </Text>
+                <View style={styles.legendRow}>
+                  <View style={styles.legendBadge}>
+                    <View style={[styles.legendDot, { backgroundColor: "#22c55e" }]} />
+                    <Text style={styles.legendText}>Your Movement</Text>
+                  </View>
+
+                  <View style={styles.legendBadge}>
+                    <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
+                    <Text style={styles.legendText}>Ideal Form</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.overlayText}>What happened: {biggestFix}</Text>
 
                 <Video
-                  source={{
-                    uri: `${API_BASE_URL}${result.overlay_video_url}`,
-                  }}
+                  source={{ uri: `${API_BASE_URL}${result.overlay_video_url}` }}
                   style={styles.overlayVideo}
                   useNativeControls
                   shouldPlay={false}
                   resizeMode={ResizeMode.CONTAIN}
                 />
+              </View>
+            )}
+
+            {result?.phase_images && (
+              <View style={styles.phaseCard}>
+                <Text style={styles.phaseTitle}>Key Positions</Text>
+                <Text style={styles.phaseText}>{phaseConfig.text}</Text>
+
+                <View style={styles.legendRow}>
+                  <View style={styles.legendBadge}>
+                    <View style={[styles.legendDot, { backgroundColor: "#22c55e" }]} />
+                    <Text style={styles.legendText}>Your Movement</Text>
+                  </View>
+
+                  <View style={styles.legendBadge}>
+                    <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
+                    <Text style={styles.legendText}>Ideal Form</Text>
+                  </View>
+                </View>
+
+                {phaseConfig.items.map(([key, label]) => {
+                  const imageUrl = result.phase_images?.[key];
+                  if (!imageUrl) return null;
+
+                  return (
+                    <View
+                      key={key}
+                      style={[
+                        styles.phaseImageCard,
+                        key === phaseConfig.highlight && styles.highlightCard,
+                      ]}
+                    >
+                      <Text style={styles.phaseImageLabel}>{label}</Text>
+
+                      <Image
+                        source={{ uri: `${API_BASE_URL}${imageUrl}` }}
+                        style={styles.phaseSingleImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  );
+                })}
               </View>
             )}
 
@@ -311,26 +403,11 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0b1020",
-  },
+  container: { flex: 1, backgroundColor: "#0b1020" },
+  content: { padding: 20, paddingBottom: 60 },
 
-  content: {
-    padding: 20,
-    paddingBottom: 60,
-  },
-
-  title: {
-    color: "#fff",
-    fontSize: 32,
-    fontWeight: "800",
-  },
-
-  buttons: {
-    gap: 10,
-    marginVertical: 20,
-  },
+  title: { color: "#fff", fontSize: 32, fontWeight: "800" },
+  buttons: { gap: 10, marginVertical: 20 },
 
   primary: {
     backgroundColor: "#2563eb",
@@ -354,14 +431,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  disabled: {
-    opacity: 0.6,
-  },
-
-  buttonText: {
-    color: "#fff",
-    fontWeight: "800",
-  },
+  disabled: { opacity: 0.6 },
+  buttonText: { color: "#fff", fontWeight: "800" },
 
   previewCard: {
     backgroundColor: "#111827",
@@ -370,17 +441,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  previewLabel: {
-    color: "#9ca3af",
-    fontSize: 12,
-    marginBottom: 2,
-  },
-
-  previewName: {
-    color: "#fff",
-    fontWeight: "700",
-    marginBottom: 10,
-  },
+  previewLabel: { color: "#9ca3af", fontSize: 12, marginBottom: 2 },
+  previewName: { color: "#fff", fontWeight: "700", marginBottom: 10 },
 
   video: {
     width: "100%",
@@ -416,6 +478,82 @@ const styles = StyleSheet.create({
   overlayVideo: {
     width: "100%",
     height: 300,
+    backgroundColor: "#000",
+    borderRadius: 12,
+  },
+
+  legendRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+    flexWrap: "wrap",
+  },
+
+  legendBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+  },
+
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+
+  legendText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+
+  phaseCard: {
+    backgroundColor: "#111827",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: "#3b82f6",
+  },
+
+  phaseTitle: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+
+  phaseText: {
+    color: "#bfdbfe",
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+
+  phaseImageCard: {
+    backgroundColor: "#020617",
+    borderRadius: 14,
+    padding: 10,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+
+  highlightCard: {
+    borderColor: "#fbbf24",
+    borderWidth: 2,
+  },
+
+  phaseImageLabel: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+
+  phaseSingleImage: {
+    width: "100%",
+    height: 280,
     backgroundColor: "#000",
     borderRadius: 12,
   },
@@ -474,9 +612,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  metrics: {
-    marginBottom: 14,
-  },
+  metrics: { marginBottom: 14 },
 
   metricText: {
     color: "#d1d5db",
@@ -510,10 +646,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  errorText: {
-    color: "#fff",
-    marginTop: 4,
-  },
+  errorText: { color: "#fff", marginTop: 4 },
 
   errorTitle: {
     color: "#fff",
