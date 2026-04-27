@@ -422,6 +422,16 @@ def build_set_summary(reps):
         "Knees cave inward significantly.": "Knees are caving inward — drive them out over your toes.",
         "Mild knee cave detected.": "Keep knees tracking over your toes.",
         "Torso leaning too far forward.": "Chest is falling forward — keep torso upright.",
+        "Dip is too shallow.": "Use a stronger dip to generate power.",
+        "Incomplete overhead lockout.": "Fully extend arms overhead.",
+        "Bar drift detected.": "Keep the bar path vertical and press straight overhead.",
+        "Knees cave inward significantly during dip.": "Force knees out aggressively during the dip.",
+        "Mild knee cave during dip.": "Keep knees tracking over toes.",
+        "Bar not reaching full depth.": "Lower the bar fully to your chest.",
+        "Incomplete lockout.": "Fully extend arms at the top.",
+        "Elbows flaring excessively.": "Tuck elbows slightly and control the bar path.",
+        "Elbows flaring slightly.": "Keep elbows slightly tucked.",
+        "Weak leg drive.": "Keep feet planted and drive through your legs.",
     }
 
     biggest_fix = "Keep building consistent reps."
@@ -432,9 +442,17 @@ def build_set_summary(reps):
             biggest_fix = fix
             break
 
-    # Fallback to most common feedback
+    # Fallback to most common useful feedback
     if biggest_fix == "Keep building consistent reps." and feedback_counts:
-        biggest_fix = max(feedback_counts, key=feedback_counts.get)
+        useful_feedback = {
+            tip: count
+            for tip, count in feedback_counts.items()
+            if "good" not in tip.lower()
+            and "strong" not in tip.lower()
+        }
+
+        if useful_feedback:
+            biggest_fix = max(useful_feedback, key=useful_feedback.get)
 
     return {
         "detected_reps": len(reps),
@@ -782,21 +800,28 @@ def analyze_squat_reps(biomechanics):
 
             bottom = start + int(np.argmin(rep_knee))
 
-            min_knee = float(np.min(rep_knee))
+            # -----------------------------
+            # Clean noisy MediaPipe spikes
+            # -----------------------------
+            clean_knee = np.clip(rep_knee, 45, 180)
+            clean_torso = np.clip(rep_torso, 0, 90)
+            clean_valgus = np.clip(rep_valgus, 0.75, 1.5)
+            clean_heel = np.clip(rep_heel, -0.05, 0.08)
 
-            # Smooth torso metric to avoid noisy single-frame spikes
-            rep_torso_clean = np.clip(rep_torso, 0, 120)
-            torso_score = float(np.percentile(rep_torso_clean, 85))
-
-            max_heel_lift = float(np.max(rep_heel))
+            min_knee = float(np.percentile(clean_knee, 20))
+            torso_score = float(np.percentile(clean_torso, 75))
+            valgus_score = float(np.percentile(clean_valgus, 25))
+            max_heel_lift = float(np.percentile(clean_heel, 90))
 
             issues = []
             feedback = []
 
+            # -----------------------------
             # DEPTH
-            if min_knee <= 90:
+            # -----------------------------
+            if min_knee <= 105:
                 depth_grade = "good"
-            elif min_knee <= 105:
+            elif min_knee <= 120:
                 depth_grade = "borderline"
                 issues.append("Depth is close, but could be slightly lower.")
                 feedback.append("Sink a little deeper while keeping your chest up.")
@@ -805,10 +830,12 @@ def analyze_squat_reps(biomechanics):
                 issues.append("Depth may be shallow.")
                 feedback.append("Try to reach better squat depth.")
 
+            # -----------------------------
             # TORSO
-            if torso_score <= 75:
+            # -----------------------------
+            if torso_score <= 55:
                 torso_grade = "good"
-            elif torso_score <= 95:
+            elif torso_score <= 75:
                 torso_grade = "borderline"
                 issues.append("Slight forward torso lean detected.")
                 feedback.append("Stay braced and keep your chest proud.")
@@ -817,27 +844,28 @@ def analyze_squat_reps(biomechanics):
                 issues.append("Torso angle could stay a little taller.")
                 feedback.append("Stay braced and keep your chest proud out of the hole.")
 
-            # KNEES
-            rep_valgus = np.clip(rep_valgus, 0.6, 1.5)
-            valgus_score = float(np.percentile(rep_valgus, 15))
-
-            if valgus_score < 0.82:
+            # -----------------------------
+            # KNEES / VALGUS
+            # -----------------------------
+            if valgus_score < 0.80:
                 knees_grade = "poor"
                 issues.append("Knees cave inward noticeably.")
                 feedback.append("Drive knees out over your toes.")
-            elif valgus_score < 0.95:
+            elif valgus_score < 0.92:
                 knees_grade = "borderline"
                 issues.append("Slight knee cave detected.")
                 feedback.append("Keep knees tracking over your toes.")
             else:
                 knees_grade = "good"
 
+            # -----------------------------
             # HEELS
-            if max_heel_lift > 0.035:
+            # -----------------------------
+            if max_heel_lift > 0.045:
                 heels_grade = "poor"
                 issues.append("Heels may be lifting during the squat.")
                 feedback.append("Keep your heels planted and drive through midfoot.")
-            elif max_heel_lift > 0.02:
+            elif max_heel_lift > 0.03:
                 heels_grade = "borderline"
                 issues.append("Slight heel lift detected.")
                 feedback.append("Keep pressure through your heels and midfoot.")
@@ -846,28 +874,30 @@ def analyze_squat_reps(biomechanics):
 
             butt_wink_grade = "not_detected"
 
+            # -----------------------------
             # SCORE
+            # -----------------------------
             score = 10.0
 
             if depth_grade == "borderline":
-                score -= 1.0
+                score -= 0.8
             elif depth_grade == "poor":
-                score -= 2.0
+                score -= 1.8
 
             if torso_grade == "borderline":
-                score -= 0.7
+                score -= 0.6
             elif torso_grade == "poor":
-                score -= 1.5
+                score -= 1.3
 
             if knees_grade == "borderline":
-                score -= 0.8
+                score -= 0.7
             elif knees_grade == "poor":
-                score -= 1.5
+                score -= 1.3
 
             if heels_grade == "borderline":
-                score -= 0.8
+                score -= 0.6
             elif heels_grade == "poor":
-                score -= 1.5
+                score -= 1.2
 
             score = round(max(score, 1.0), 1)
 
@@ -898,7 +928,6 @@ def analyze_squat_reps(biomechanics):
 
 
 def analyze_push_press_reps(biomechanics):
-    
     knee = np.array([b["knee_angle"] for b in biomechanics])
     wrist_y = np.array([b["wrist_y"] for b in biomechanics])
     shoulder_y = np.array([b["shoulder_y"] for b in biomechanics])
@@ -929,16 +958,27 @@ def analyze_push_press_reps(biomechanics):
             rep_wrist_x = wrist_x[start:end + 1]
             rep_valgus = valgus[start:end + 1]
 
-            min_knee = float(np.min(rep_knee))
+            # ---- CLEAN NOISY POSE DATA ----
+            clean_knee = np.clip(rep_knee, 70, 180)
+            clean_valgus = np.clip(rep_valgus, 0.7, 1.5)
+            clean_wrist_x = np.clip(
+                rep_wrist_x,
+                np.percentile(rep_wrist_x, 10),
+                np.percentile(rep_wrist_x, 90),
+            )
+
+            min_knee = float(np.percentile(clean_knee, 10))
             wrist_above = float(np.mean(rep_wrist_y < rep_shoulder_y))
-            min_valgus = float(np.min(rep_valgus))
+            min_valgus = float(np.percentile(clean_valgus, 15))
+            wrist_drift = float(
+                np.percentile(clean_wrist_x, 90)
+                - np.percentile(clean_wrist_x, 10)
+            )
 
             # --- BAR DRIFT ---
-            wrist_drift = float(np.max(rep_wrist_x) - np.min(rep_wrist_x))
-
-            if wrist_drift > 0.04:
+            if wrist_drift > 0.05:
                 drift_severity = "severe"
-            elif wrist_drift > 0.02:
+            elif wrist_drift > 0.03:
                 drift_severity = "moderate"
             else:
                 drift_severity = "minor"
@@ -947,7 +987,7 @@ def analyze_push_press_reps(biomechanics):
             feedback = []
 
             # --- DIP ---
-            if min_knee > 140:
+            if min_knee > 172:
                 issues.append("Dip is too shallow.")
                 feedback.append("Use a stronger dip to generate power.")
 
@@ -957,22 +997,21 @@ def analyze_push_press_reps(biomechanics):
                 feedback.append("Fully extend arms overhead.")
 
             # --- BAR PATH ---
-            if wrist_drift > 0.02:
+            if wrist_drift > 0.03:
                 issues.append("Bar drift detected.")
-                feedback.append("Keep the bar path vertical and press straight overhead.")
+                feedback.append(
+                    "Keep the bar path vertical and press straight overhead."
+                )
 
             # --- KNEES ---
-            if min_valgus < 0.75:
+            if min_valgus < 0.65:
                 issues.append("Knees cave inward significantly during dip.")
                 feedback.append("Force knees out aggressively during the dip.")
-            elif min_valgus < 0.9:
-                issues.append("Knees cave inward during dip.")
-                feedback.append("Drive knees out during the dip phase.")
-            elif min_valgus < 1.05:
+            elif min_valgus < 0.8:
                 issues.append("Mild knee cave during dip.")
                 feedback.append("Keep knees tracking over toes.")
 
-            # --- SCORING (BALANCED) ---
+            # --- SCORING ---
             base_score = 10.0
             penalty = 0
 
@@ -982,73 +1021,210 @@ def analyze_push_press_reps(biomechanics):
                 elif "lockout" in issue.lower():
                     penalty += 1.5
                 elif "knees" in issue.lower():
-                    penalty += 1.5
+                    penalty += 1.2
                 elif "dip" in issue.lower():
                     penalty += 1.0
                 else:
                     penalty += 1.0
 
-            # extra severity penalty (small, not brutal)
             if drift_severity == "severe":
-                penalty += 1.5
+                penalty += 1.0
             elif drift_severity == "moderate":
-                penalty += 0.75
+                penalty += 0.5
 
             score = base_score - penalty
             score = max(1.0, round(score, 1))
 
             # --- GOOD REP FLOOR ---
             if (
-                min_knee <= 140
+                min_knee <= 172
                 and wrist_above >= 0.35
-                and drift_severity in ["minor"]
-                and min_valgus >= 1.05
+                and drift_severity == "minor"
+                and min_valgus >= 0.8
             ):
                 score = max(score, 9.0)
 
-                if score >= 7:
-                    issues = []
-                    feedback = ["Good push press rep."]
-
             breakdown = {
-                "dip": "good" if min_knee <= 140 else "shallow",
+                "dip": "good" if min_knee <= 172 else "shallow",
                 "lockout": "good" if wrist_above >= 0.35 else "incomplete",
-                "bar_path": "drifting" if wrist_drift > 0.02 else "good",
+                "bar_path": "drifting" if wrist_drift > 0.03 else "good",
                 "bar_severity": drift_severity,
                 "knees": (
-                    "poor" if min_valgus < 0.75
-                    else "borderline" if min_valgus < 1.05
+                    "poor" if min_valgus < 0.65
+                    else "borderline" if min_valgus < 0.8
                     else "good"
                 ),
             }
 
             score = apply_coach_reward(score, issues, breakdown)
 
+            if not issues:
+                score = max(score, 9.0)
+
+            # --- CLEAN UP BORDERLINE FLAGS ON EXCELLENT REPS ---
+            if score >= 9.0 and issues == ["Mild knee cave during dip."]:
+                issues = []
+                feedback = ["Good push press rep."]
+                breakdown["knees"] = "good"
+
+            if score >= 9.0 and not issues:
+                feedback = ["Good push press rep."]
+
             reps.append({
                 "rep": len(reps) + 1,
                 "start_frame": int(start),
                 "end_frame": int(end),
-                "score": score,
+                "score": round(score, 1),
                 "grade": grade_score(score),
                 "issues": issues,
                 "breakdown": breakdown,
                 "feedback": feedback or ["Good push press rep."],
-            })           
+            })
 
             in_rep = False
 
     return reps, build_set_summary(reps)
 
 
+def draw_ideal_push_press_overlay(frame, pose_landmarks, width, height):
+    """
+    Draw ideal push press path:
+    - cyan corridor
+    - bright center line
+    - endpoint markers
+    - coach label
+    """
+
+    lm = pose_landmarks.landmark
+
+    def pt(idx):
+        p = lm[idx]
+        return np.array(
+            [p.x * width, p.y * height],
+            dtype=np.float32,
+        )
+
+    # use midpoint of left/right joints
+    left_shoulder = pt(mp_pose.PoseLandmark.LEFT_SHOULDER.value)
+    right_shoulder = pt(mp_pose.PoseLandmark.RIGHT_SHOULDER.value)
+
+    left_hip = pt(mp_pose.PoseLandmark.LEFT_HIP.value)
+    right_hip = pt(mp_pose.PoseLandmark.RIGHT_HIP.value)
+
+    left_wrist = pt(mp_pose.PoseLandmark.LEFT_WRIST.value)
+    right_wrist = pt(mp_pose.PoseLandmark.RIGHT_WRIST.value)
+
+    shoulder = (left_shoulder + right_shoulder) / 2
+    hip = (left_hip + right_hip) / 2
+    wrist = (left_wrist + right_wrist) / 2
+
+    # ideal vertical bar path = stacked over shoulders / midfoot line
+    ideal_x = int(shoulder[0])
+
+    top_y = int(min(wrist[1], shoulder[1]) - 60)
+    bottom_y = int(hip[1] + 30)
+
+    top_y = max(20, top_y)
+    bottom_y = min(height - 20, bottom_y)
+
+    start_pt = (ideal_x, bottom_y)
+    end_pt = (ideal_x, top_y)
+
+    # translucent corridor
+    overlay = frame.copy()
+    corridor_width = 26
+
+    cv2.rectangle(
+        overlay,
+        (ideal_x - corridor_width, top_y),
+        (ideal_x + corridor_width, bottom_y),
+        (255, 255, 0),
+        -1,
+    )
+
+    frame = cv2.addWeighted(
+        overlay,
+        0.18,
+        frame,
+        0.82,
+        0,
+    )
+
+    # glow
+    cv2.line(
+        frame,
+        start_pt,
+        end_pt,
+        (180, 255, 255),
+        18,
+        cv2.LINE_AA,
+    )
+
+    # center line
+    cv2.line(
+        frame,
+        start_pt,
+        end_pt,
+        (255, 255, 0),
+        7,
+        cv2.LINE_AA,
+    )
+
+    # endpoints
+    cv2.circle(
+        frame,
+        start_pt,
+        11,
+        (255, 255, 0),
+        -1,
+        cv2.LINE_AA,
+    )
+
+    cv2.circle(
+        frame,
+        end_pt,
+        11,
+        (255, 255, 0),
+        -1,
+        cv2.LINE_AA,
+    )
+
+    # label
+    label = "IDEAL BAR PATH"
+    label_x = max(20, ideal_x - 90)
+    label_y = max(40, top_y - 12)
+
+    cv2.rectangle(
+        frame,
+        (label_x - 8, label_y - 28),
+        (label_x + 195, label_y + 8),
+        (0, 0, 0),
+        -1,
+    )
+
+    cv2.putText(
+        frame,
+        label,
+        (label_x, label_y),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.75,
+        (255, 255, 0),
+        2,
+        cv2.LINE_AA,
+    )
+
+    return frame
+
+
 def analyze_bench_press_reps(biomechanics):
     elbow = np.array([b["elbow_angle"] for b in biomechanics])
-    wrist = np.array([b["wrist_y"] for b in biomechanics])
-    shoulder = np.array([b["shoulder_y"] for b in biomechanics])
-    hip = np.array([b["hip_y"] for b in biomechanics])
+    wrist_y = np.array([b["wrist_y"] for b in biomechanics])
+    shoulder_y = np.array([b["shoulder_y"] for b in biomechanics])
+    hip_y = np.array([b["hip_y"] for b in biomechanics])
     knee = np.array([b["knee_angle"] for b in biomechanics])
 
     reps = []
-    threshold = np.percentile(elbow, 30)
+    threshold = np.percentile(elbow, 35)
 
     in_rep = False
     start = 0
@@ -1065,19 +1241,37 @@ def analyze_bench_press_reps(biomechanics):
                 in_rep = False
                 continue
 
-            rep_elbow = elbow[start:end + 1]
-            rep_wrist = wrist[start:end + 1]
-            rep_shoulder = shoulder[start:end + 1]
-            rep_hip = hip[start:end + 1]
-            rep_knee = knee[start:end + 1]
+            # Expand rep window so we don't miss true lockout/depth
+            pad = 4
+            s = max(0, start - pad)
+            e2 = min(len(elbow), end + pad + 1)
 
-            min_elbow = float(np.min(rep_elbow))
-            max_elbow = float(np.max(rep_elbow))
-            elbow_p75 = float(np.percentile(rep_elbow, 75))
+            rep_elbow = elbow[s:e2]
+            rep_wrist_y = wrist_y[s:e2]
+            rep_shoulder_y = shoulder_y[s:e2]
+            rep_hip_y = hip_y[s:e2]
+            rep_knee = knee[s:e2]
 
-            bar_depth = float(np.mean(rep_wrist > rep_shoulder))
-            arch_ratio = float(np.mean(rep_hip < rep_shoulder))
-            avg_knee = float(np.mean(rep_knee))
+            clean_elbow = np.clip(rep_elbow, 45, 180)
+            clean_wrist_y = np.clip(rep_wrist_y, 0.0, 1.0)
+            clean_shoulder_y = np.clip(rep_shoulder_y, 0.0, 1.0)
+            clean_hip_y = np.clip(rep_hip_y, 0.0, 1.0)
+            clean_knee = np.clip(rep_knee, 45, 180)
+
+            max_elbow = float(np.percentile(clean_elbow, 92))
+            elbow_p75 = float(np.percentile(clean_elbow, 75))
+
+            wrist_range = float(
+                np.percentile(clean_wrist_y, 90)
+                - np.percentile(clean_wrist_y, 10)
+            )
+
+            lowest_wrist = float(np.percentile(clean_wrist_y, 85))
+            shoulder_level = float(np.percentile(clean_shoulder_y, 50))
+            bar_depth = lowest_wrist - shoulder_level
+
+            hip_level = float(np.percentile(clean_hip_y, 50))
+            avg_knee = float(np.percentile(clean_knee, 50))
 
             issues = []
             feedback = []
@@ -1094,87 +1288,102 @@ def analyze_bench_press_reps(biomechanics):
                     "Foot position could not be evaluated because feet were not visible."
                 )
 
-            # -------------------
-            # DEPTH
-            # -------------------
-            if bar_depth < 0.10:
-                issues.append("Bar not reaching full depth.")
-                feedback.append("Lower the bar fully to your chest.")
+            # RANGE / DEPTH
+            if wrist_range < 0.025:
+                depth_status = "limited_range"
+                issues.append("Range of motion may be limited.")
+                feedback.append("Use a full, controlled press from chest to lockout.")
+            elif bar_depth < -0.06:
+                depth_status = "possibly_shallow"
+                issues.append("Bar may not be reaching full depth.")
+                feedback.append("Lower the bar under control toward your chest.")
+            else:
+                depth_status = "good"
 
-            # -------------------
             # LOCKOUT
-            # -------------------
-            if max_elbow < 130:
+            if max_elbow < 125:
+                lockout_status = "incomplete"
                 issues.append("Incomplete lockout.")
-                feedback.append("Fully extend arms at the top.")
+                feedback.append("Fully extend your arms at the top.")
+            elif max_elbow < 140:
+                lockout_status = "borderline"
+                issues.append("Lockout is close but could be stronger.")
+                feedback.append("Finish each rep with a strong, stable lockout.")
+            else:
+                lockout_status = "good"
 
-            # -------------------
             # ELBOW FLARE
-            # -------------------
-            if elbow_p75 > 145:
-                issues.append("Elbows flaring excessively.")
-                feedback.append("Tuck elbows slightly and control the bar path.")
+            if elbow_p75 > 165:
                 elbow_status = "severe_flare"
-            elif elbow_p75 > 130:
-                issues.append("Elbows flaring slightly.")
-                feedback.append("Keep elbows slightly tucked.")
-                elbow_status = "flared"
+                issues.append("Elbows may be flaring excessively.")
+                feedback.append("Tuck elbows slightly and keep the bar path controlled.")
+            elif elbow_p75 > 155:
+                elbow_status = "borderline"
+                issues.append("Elbows may be slightly flared.")
+                feedback.append("Keep elbows slightly tucked through the press.")
             else:
                 elbow_status = "good"
 
-            # -------------------
             # ARCH
-            # -------------------
-            if arch_ratio > 0.85:
-                issues.append("Excessive back arch.")
-                feedback.append("Keep ribcage down and maintain controlled arch.")
+            arch_delta = shoulder_level - hip_level
+
+            if arch_delta > 0.20:
                 arch_status = "excessive"
+                issues.append("Back arch may be excessive.")
+                feedback.append("Keep a controlled arch without losing ribcage position.")
             else:
                 arch_status = "controlled"
 
-            # -------------------
             # LEG DRIVE
-            # -------------------
             if feet_visible:
-                if avg_knee < 110:
-                    issues.append("Weak leg drive.")
-                    feedback.append("Keep feet planted and drive through your legs.")
+                if avg_knee < 95:
                     leg_status = "weak"
+                    issues.append("Leg drive may be weak.")
+                    feedback.append("Keep feet planted and drive through your legs.")
                 else:
                     leg_status = "good"
             else:
                 leg_status = "unknown"
 
-            # -------------------
-            # BREAKDOWN
-            # -------------------
             breakdown = {
-                "depth": "good" if bar_depth >= 0.10 else "shallow",
-                "lockout": "good" if max_elbow >= 130 else "incomplete",
+                "depth": depth_status,
+                "lockout": lockout_status,
                 "elbows": elbow_status,
                 "arch": arch_status,
                 "legs": leg_status,
+                "wrist_range": round(wrist_range, 3),
+                "max_elbow": round(max_elbow, 1),
+                "bar_depth": round(bar_depth, 3),
             }
 
-            # -------------------
-            # SCORE
-            # -------------------
-            score = compute_rep_score(issues)
-            score = apply_coach_reward(score, issues, breakdown)
+            score = 10.0
+
+            if depth_status == "limited_range":
+                score -= 1.2
+            elif depth_status == "possibly_shallow":
+                score -= 0.6
+
+            if lockout_status == "incomplete":
+                score -= 1.0
+            elif lockout_status == "borderline":
+                score -= 0.4
+
+            if elbow_status == "severe_flare":
+                score -= 1.0
+            elif elbow_status == "borderline":
+                score -= 0.5
+
+            if arch_status == "excessive":
+                score -= 0.5
+
+            if leg_status == "weak":
+                score -= 0.4
+
+            score = round(max(score, 1.0), 1)
 
             if not issues:
-                score = 8.5
-            elif score >= 8 and len(issues) >= 2:
-                score = 7.0
-
-            # -------------------
-            # OUTPUT
-            # -------------------
-            primary_feedback = (
-                feedback
-                if feedback
-                else ["Strong bench press rep. Maintain control and consistency."]
-            )
+                score = max(score, 9.0)
+                feedback = ["Strong bench press rep. Maintain control and consistency."]
 
             reps.append({
                 "rep": len(reps) + 1,
@@ -1184,13 +1393,138 @@ def analyze_bench_press_reps(biomechanics):
                 "grade": grade_score(score),
                 "issues": issues,
                 "breakdown": breakdown,
-                "feedback": primary_feedback,
+                "feedback": feedback,
                 "visibility_notes": visibility_notes,
             })
 
             in_rep = False
 
     return reps, build_set_summary(reps)
+
+
+def draw_ideal_bench_press_overlay(frame, pose_landmarks, width, height):
+    """
+    Draw ideal bench press guide:
+    - cyan press-path corridor
+    - bright center line
+    - endpoint markers
+    - coach label
+    """
+
+    lm = pose_landmarks.landmark
+
+    def pt(idx):
+        p = lm[idx]
+        return np.array(
+            [p.x * width, p.y * height],
+            dtype=np.float32,
+        )
+
+    left_shoulder = pt(mp_pose.PoseLandmark.LEFT_SHOULDER.value)
+    right_shoulder = pt(mp_pose.PoseLandmark.RIGHT_SHOULDER.value)
+
+    left_wrist = pt(mp_pose.PoseLandmark.LEFT_WRIST.value)
+    right_wrist = pt(mp_pose.PoseLandmark.RIGHT_WRIST.value)
+
+    left_elbow = pt(mp_pose.PoseLandmark.LEFT_ELBOW.value)
+    right_elbow = pt(mp_pose.PoseLandmark.RIGHT_ELBOW.value)
+
+    shoulder = (left_shoulder + right_shoulder) / 2
+    wrist = (left_wrist + right_wrist) / 2
+    elbow = (left_elbow + right_elbow) / 2
+
+    # Bench ideal path is a slightly diagonal line:
+    # chest/lower position -> stacked lockout over shoulder
+    lockout_pt = (
+        int(shoulder[0]),
+        int(min(wrist[1], elbow[1]) - 35),
+    )
+
+    chest_pt = (
+        int(shoulder[0] - 45),
+        int(shoulder[1] + 55),
+    )
+
+    # keep points inside frame
+    lockout_pt = (
+        max(20, min(width - 20, lockout_pt[0])),
+        max(20, min(height - 20, lockout_pt[1])),
+    )
+
+    chest_pt = (
+        max(20, min(width - 20, chest_pt[0])),
+        max(20, min(height - 20, chest_pt[1])),
+    )
+
+    # translucent corridor
+    overlay = frame.copy()
+
+    cv2.line(
+        overlay,
+        chest_pt,
+        lockout_pt,
+        (255, 255, 0),
+        34,
+        cv2.LINE_AA,
+    )
+
+    frame = cv2.addWeighted(
+        overlay,
+        0.18,
+        frame,
+        0.82,
+        0,
+    )
+
+    # glow
+    cv2.line(
+        frame,
+        chest_pt,
+        lockout_pt,
+        (180, 255, 255),
+        18,
+        cv2.LINE_AA,
+    )
+
+    # main line
+    cv2.line(
+        frame,
+        chest_pt,
+        lockout_pt,
+        (255, 255, 0),
+        7,
+        cv2.LINE_AA,
+    )
+
+    # endpoint circles
+    cv2.circle(frame, chest_pt, 11, (255, 255, 0), -1, cv2.LINE_AA)
+    cv2.circle(frame, lockout_pt, 11, (255, 255, 0), -1, cv2.LINE_AA)
+
+    # label
+    label = "IDEAL PRESS PATH"
+    label_x = max(20, min(chest_pt[0], lockout_pt[0]) - 30)
+    label_y = max(40, min(chest_pt[1], lockout_pt[1]) - 20)
+
+    cv2.rectangle(
+        frame,
+        (label_x - 8, label_y - 28),
+        (label_x + 205, label_y + 8),
+        (0, 0, 0),
+        -1,
+    )
+
+    cv2.putText(
+        frame,
+        label,
+        (label_x, label_y),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.75,
+        (255, 255, 0),
+        2,
+        cv2.LINE_AA,
+    )
+
+    return frame
 
 
 def is_video_usable(biomechanics, exercise_label=None):
@@ -1351,7 +1685,32 @@ def draw_deadlift_skeleton(frame, pose_landmarks, width, height):
     return frame
 
 
-def draw_overlay_video(input_path, output_path, rep_feedback, exercise_label, sample_every=1):
+def draw_user_skeleton(frame, pose_landmarks):
+    mp_drawing.draw_landmarks(
+        frame,
+        pose_landmarks,
+        mp_pose.POSE_CONNECTIONS,
+        mp_drawing.DrawingSpec(
+            color=(0, 255, 0),
+            thickness=4,
+            circle_radius=3,
+        ),
+        mp_drawing.DrawingSpec(
+            color=(0, 220, 0),
+            thickness=3,
+            circle_radius=2,
+        ),
+    )
+    return frame
+
+
+def draw_overlay_video(
+    input_path,
+    output_path,
+    rep_feedback,
+    exercise_label,
+    sample_every=1,
+):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
@@ -1378,9 +1737,14 @@ def draw_overlay_video(input_path, output_path, rep_feedback, exercise_label, sa
         return None
 
     frame_idx = 0
-    exercise = exercise_label.lower()
+    exercise = exercise_label.lower().replace(" ", "_")
 
-    with mp_pose.Pose(static_image_mode=False) as pose:
+    with mp_pose.Pose(
+        static_image_mode=False,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5,
+    ) as pose:
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -1393,6 +1757,7 @@ def draw_overlay_video(input_path, output_path, rep_feedback, exercise_label, sa
             results = pose.process(rgb)
 
             draw_overlay = False
+
             for rep in rep_feedback:
                 highlight_start = max(0, rep["start_frame"] - 30)
                 highlight_end = rep["end_frame"] + 10
@@ -1402,14 +1767,16 @@ def draw_overlay_video(input_path, output_path, rep_feedback, exercise_label, sa
                     break
 
             if draw_overlay and results.pose_landmarks:
+
+                # Same green skeleton for every lift
+                frame = draw_user_skeleton(
+                    frame,
+                    results.pose_landmarks,
+                )
+
+                # Blue/cyan ideal guide on top
                 if exercise == "deadlift":
                     frame = draw_ideal_deadlift(
-                        frame,
-                        results.pose_landmarks,
-                        width,
-                        height,
-                    )
-                    frame = draw_deadlift_skeleton(
                         frame,
                         results.pose_landmarks,
                         width,
@@ -1423,13 +1790,23 @@ def draw_overlay_video(input_path, output_path, rep_feedback, exercise_label, sa
                         width,
                         height,
                     )
-                    mp_drawing.draw_landmarks(
+
+                elif exercise == "push_press":
+                    frame = draw_ideal_push_press_overlay(
                         frame,
                         results.pose_landmarks,
-                        mp_pose.POSE_CONNECTIONS,
+                        width,
+                        height,
                     )
 
-            # IMPORTANT: always write every frame
+                elif exercise == "bench_press":
+                    frame = draw_ideal_bench_press_overlay(
+                        frame,
+                        results.pose_landmarks,
+                        width,
+                        height,
+                    )
+
             writer.write(frame)
 
     cap.release()
