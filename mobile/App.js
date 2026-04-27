@@ -116,10 +116,15 @@ export default function App() {
       const data = await res.json();
 
       console.log("BACKEND RESPONSE:", data);
-
+      console.log(
+        "OVERLAY URL:",
+        data?.overlay_video_url
+          ? `${API_BASE_URL}${data.overlay_video_url}`
+          : "No overlay returned"
+      );
 
       if (!res.ok) {
-        throw new Error(data.detail || "Analyze request failed");
+        throw new Error(data.detail || data.message || "Analyze request failed");
       }
 
       setResult(data);
@@ -146,16 +151,10 @@ export default function App() {
         )
       : null;
 
-  const getBiggestFix = () => {
-    for (const rep of reps) {
-      if (rep.feedback?.length > 0 && rep.issues?.length > 0) {
-        return rep.feedback[0];
-      }
-    }
-    return null;
-  };
-
-  const biggestFix = getBiggestFix();
+  const biggestFix =
+    result?.set_summary?.biggest_fix ||
+    result?.rep_feedback?.[0]?.feedback?.[0] ||
+    "Keep building consistent reps.";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -208,31 +207,20 @@ export default function App() {
           </View>
         )}
 
-        {result?.feedback && result.rep_feedback?.length === 0 && (
+        {result?.feedback && result.rep_feedback?.length === 0 && !result.error && (
           <View style={styles.errorCard}>
             <Text style={styles.errorTitle}>Video Not Usable</Text>
-
-          <Text style={styles.errorText}>
-            Camera angle is too close or unclear for reliable scoring.
-          </Text>
-
-          <Text style={styles.errorText}>
-            How to fix:
-          </Text>
-
-          <Text style={styles.errorText}>
-            • Move camera farther back
-          </Text>
-
-          <Text style={styles.errorText}>
-            • Record from the side
-          </Text>
-
-          <Text style={styles.errorText}>
-            • Keep bar, chest, elbows, and feet visible
-          </Text>
-                    </View>
-          )}
+            <Text style={styles.errorText}>
+              Camera angle is too close or unclear for reliable scoring.
+            </Text>
+            <Text style={styles.errorText}>How to fix:</Text>
+            <Text style={styles.errorText}>• Move camera farther back</Text>
+            <Text style={styles.errorText}>• Record from the side</Text>
+            <Text style={styles.errorText}>
+              • Keep bar, chest, elbows, and feet visible
+            </Text>
+          </View>
+        )}
 
         {result && !result.error && (
           <View>
@@ -241,20 +229,35 @@ export default function App() {
                 ? "Video Not Usable"
                 : result.exercise_label}
             </Text>
+
             {overallScore !== null && (
               <View style={styles.summaryCard}>
                 <Text style={styles.summaryLabel}>Overall Score</Text>
                 <Text style={styles.summaryScore}>{overallScore}/10</Text>
 
-                {biggestFix ? (
-                  <Text style={styles.biggestFix}>
-                    Biggest Fix: {biggestFix}
-                  </Text>
-                ) : (
-                  <Text style={styles.positiveFix}>
-                    No major fixes detected.
-                  </Text>
-                )}
+                <Text style={styles.biggestFix}>
+                  Biggest Fix: {biggestFix}
+                </Text>
+              </View>
+            )}
+
+            {result?.overlay_video_url && (
+              <View style={styles.overlayCard}>
+                <Text style={styles.overlayTitle}>Coached Replay</Text>
+
+                <Text style={styles.overlayText}>
+                  What happened: {biggestFix}
+                </Text>
+
+                <Video
+                  source={{
+                    uri: `${API_BASE_URL}${result.overlay_video_url}`,
+                  }}
+                  style={styles.overlayVideo}
+                  useNativeControls
+                  shouldPlay={false}
+                  resizeMode={ResizeMode.CONTAIN}
+                />
               </View>
             )}
 
@@ -384,6 +387,37 @@ const styles = StyleSheet.create({
     height: 220,
     backgroundColor: "#000",
     borderRadius: 12,
+    marginTop: 10,
+  },
+
+  overlayCard: {
+    backgroundColor: "#052e16",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: "#22c55e",
+  },
+
+  overlayTitle: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 10,
+  },
+
+  overlayText: {
+    color: "#86efac",
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+
+  overlayVideo: {
+    width: "100%",
+    height: 300,
+    backgroundColor: "#000",
+    borderRadius: 12,
   },
 
   exercise: {
@@ -414,13 +448,6 @@ const styles = StyleSheet.create({
   },
 
   biggestFix: {
-    color: "#86efac",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 10,
-  },
-
-  positiveFix: {
     color: "#86efac",
     fontSize: 16,
     fontWeight: "700",
@@ -485,11 +512,13 @@ const styles = StyleSheet.create({
 
   errorText: {
     color: "#fff",
+    marginTop: 4,
   },
+
   errorTitle: {
-  color: "#fff",
-  fontSize: 22,
-  fontWeight: "900",
-  marginBottom: 10,
-},
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 10,
+  },
 });
