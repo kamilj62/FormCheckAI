@@ -22,20 +22,23 @@ const getPhaseConfig = (exerciseLabel) => {
 
   if (label.includes("squat")) {
     return {
-      text: "Setup → Bottom → Stand Tall",
-        items: [
-          ["setup", "Setup"],
-          ["bottom", "Bottom ⭐"],
-          ["stand", "Stand Tall"],
-        ],
+      text: "Setup → Descent → Bottom → Stand Tall",
+      highlight: "bottom",
+      items: [
+        ["setup", "Setup"],
+        ["descent", "Descent"],
+        ["bottom", "Bottom ⭐"],
+        ["stand", "Stand Tall"],
+      ],
     };
   }
 
   if (label.includes("push press")) {
     return {
-      text: "Dip → Drive → Lockout",
+      text: "Setup → Dip → Drive → Lockout",
       highlight: "lockout",
       items: [
+        ["setup", "Setup"],
         ["dip", "Dip"],
         ["drive", "Drive"],
         ["lockout", "Lockout ⭐"],
@@ -45,9 +48,11 @@ const getPhaseConfig = (exerciseLabel) => {
 
   if (label.includes("bench")) {
     return {
-      text: "Bottom → Press → Lockout",
+      text: "Setup → Descent → Bottom → Press → Lockout",
       highlight: "lockout",
       items: [
+        ["setup", "Setup"],
+        ["descent", "Descent"],
         ["bottom", "Bottom"],
         ["press", "Press"],
         ["lockout", "Lockout ⭐"],
@@ -262,7 +267,7 @@ export default function App() {
             <Text style={styles.errorText}>• Move camera farther back</Text>
             <Text style={styles.errorText}>• Record from the side</Text>
             <Text style={styles.errorText}>
-              • Keep bar, chest, elbows, and feet visible
+              • Keep bar, chest, elbows, hips, knees, and feet visible
             </Text>
           </View>
         )}
@@ -289,12 +294,16 @@ export default function App() {
 
                 <View style={styles.legendRow}>
                   <View style={styles.legendBadge}>
-                    <View style={[styles.legendDot, { backgroundColor: "#22c55e" }]} />
+                    <View
+                      style={[styles.legendDot, { backgroundColor: "#22c55e" }]}
+                    />
                     <Text style={styles.legendText}>Your Movement</Text>
                   </View>
 
                   <View style={styles.legendBadge}>
-                    <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
+                    <View
+                      style={[styles.legendDot, { backgroundColor: "#3b82f6" }]}
+                    />
                     <Text style={styles.legendText}>Ideal Form</Text>
                   </View>
                 </View>
@@ -318,12 +327,16 @@ export default function App() {
 
                 <View style={styles.legendRow}>
                   <View style={styles.legendBadge}>
-                    <View style={[styles.legendDot, { backgroundColor: "#22c55e" }]} />
+                    <View
+                      style={[styles.legendDot, { backgroundColor: "#22c55e" }]}
+                    />
                     <Text style={styles.legendText}>Your Movement</Text>
                   </View>
 
                   <View style={styles.legendBadge}>
-                    <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
+                    <View
+                      style={[styles.legendDot, { backgroundColor: "#3b82f6" }]}
+                    />
                     <Text style={styles.legendText}>Ideal Form</Text>
                   </View>
                 </View>
@@ -359,15 +372,30 @@ export default function App() {
                   Rep {rep.rep} — {rep.grade}
                 </Text>
 
-                <Text style={styles.score}>Score: {rep.score}/10</Text>
+                {rep.breakdown && (
+                  <View style={styles.metrics}>
+                    {Object.entries(rep.breakdown)
+                      .filter(([key]) => {
+                        const hiddenKeys = [
+                          "wrist_range",
+                          "elbow_range",
+                          "bar_depth",
+                          "max_elbow",
+                          "min_knee",
+                          "max_torso",
+                          "min_hip",
+                          "bar_severity",
+                        ];
 
-                <View style={styles.metrics}>
-                  {Object.entries(rep.breakdown || {}).map(([key, value]) => (
-                    <Text key={key} style={styles.metricText}>
-                      {formatLabel(key)}: {formatLabel(value)}
-                    </Text>
-                  ))}
-                </View>
+                        return !hiddenKeys.includes(key);
+                      })
+                      .map(([key, value]) => (
+                        <Text key={key} style={styles.metricText}>
+                          {formatLabel(key)}: {formatLabel(value)}
+                        </Text>
+                      ))}
+                  </View>
+                )}
 
                 {rep.issues?.length > 0 && (
                   <>
@@ -603,13 +631,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "900",
     fontSize: 20,
-  },
-
-  score: {
-    color: "#fbbf24",
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   metrics: { marginBottom: 14 },

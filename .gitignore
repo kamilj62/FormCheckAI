@@ -4,6 +4,7 @@ __pycache__/
 .venv312/
 backend/.venv/
 backend/.venv312/
+backend/outputs/
 .env
 node_modules/
 .expo/
