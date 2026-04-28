@@ -305,6 +305,16 @@ def classify_with_biomechanics(
     torso_range = max_torso - min_torso
     elbow_range = max_elbow - min_elbow
 
+    avg_torso = summary.get("avg_torso_angle", 0)
+
+    if raw_label == "bench_press" and confidence >= 0.45:
+        return (
+            "bench_press",
+            max(confidence, 0.80),
+            False,
+            "trusted_raw_bench_press_prediction",
+        )
+
     # -----------------------------
     # PUSH PRESS
     # -----------------------------
@@ -312,6 +322,7 @@ def classify_with_biomechanics(
         wrist_ratio > 0.65
         and elbow_range > 80
         and knee_range > 25
+        and avg_torso > 55
     ):
         return "push_press", max(confidence, 0.78), True, "overhead_press_detected"
 
@@ -2929,6 +2940,95 @@ def create_bench_press_phase_images(video_path, output_dir, best_rep, sample_eve
     return saved
 
 
+def build_coaching_zones(exercise_label, rep_feedback):
+    if not rep_feedback:
+        return {}
+
+    def zone_result(label, key, good_values):
+        affected = []
+        notes = []
+
+        for rep in rep_feedback:
+            breakdown = rep.get("breakdown", {})
+            value = breakdown.get(key)
+
+            if value is None:
+                continue
+
+            if value not in good_values:
+                affected.append(rep["rep"])
+
+                for fb in rep.get("feedback", []):
+                    if fb not in notes:
+                        notes.append(fb)
+
+        status = "good" if not affected else "needs_work"
+
+        if status == "good":
+            message = f"{label} looks solid across the set."
+        else:
+            message = notes[0] if notes else f"{label} needs attention."
+
+        return {
+            "label": label,
+            "status": status,
+            "message": message,
+            "affected_reps": affected,
+        }
+
+    label = exercise_label.lower().replace(" ", "_")
+
+    # -----------------------------
+    # SQUAT
+    # -----------------------------
+    if label == "squat":
+        return {
+            "neck": zone_result("Neck", "neck", {"good"}),
+            "torso": zone_result("Torso", "torso", {"good"}),
+            "knees": zone_result("Knees", "knees", {"good"}),
+            "depth": zone_result("Depth", "depth", {"good"}),
+            "heels": zone_result("Heels", "heels", {"good"}),
+        }
+
+    # -----------------------------
+    # DEADLIFT
+    # -----------------------------
+    elif label == "deadlift":
+        return {
+            "neck": zone_result("Neck", "neck", {"good"}),
+            "torso": zone_result("Torso", "back", {"good"}),
+            "hips": zone_result("Hip Hinge", "hinge", {"good"}),
+            "knees": zone_result("Knees", "knees", {"good"}),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}),
+            "lockout": zone_result("Lockout", "lockout", {"good"}),
+        }
+
+    # -----------------------------
+    # BENCH
+    # -----------------------------
+    elif label == "bench_press":
+        return {
+            "elbows": zone_result("Elbows", "elbows", {"good"}),
+            "depth": zone_result("Depth", "depth", {"good"}),
+            "lockout": zone_result("Lockout", "lockout", {"good"}),
+            "arch": zone_result("Arch", "arch", {"controlled", "good"}),
+            "legs": zone_result("Leg Drive", "legs", {"good"}),
+        }
+
+    # -----------------------------
+    # PUSH PRESS
+    # -----------------------------
+    elif label == "push_press":
+        return {
+            "dip": zone_result("Dip", "dip", {"good"}),
+            "knees": zone_result("Knees", "knees", {"good"}),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}),
+            "lockout": zone_result("Lockout", "lockout", {"good"}),
+        }
+
+    return {}
+
+
 def analyze_video(video_path):
     cap = cv2.VideoCapture(video_path)
 
@@ -3118,6 +3218,7 @@ def analyze_video(video_path):
         ],
         "rep_feedback": rep_feedback,
         "set_summary": set_summary,
+        "coaching_zones": build_coaching_zones(label, rep_feedback),
         "overlay_video_url": overlay_video_url,
         "phase_images": phase_images,
         "debug": {
