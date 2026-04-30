@@ -1396,8 +1396,11 @@ def analyze_bench_press_reps(biomechanics):
     hip_y_all = np.array([b["hip_y"] for b in biomechanics])
     knee_all = np.array([b["knee_angle"] for b in biomechanics])
 
-    # Ignore intro/outro sections for long demo videos.
-    # This prevents talking/hand gestures from being counted as bench reps.
+    frame_numbers_all = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
     start_offset = int(len(elbow_all) * 0.20)
     end_offset = int(len(elbow_all) * 0.85)
 
@@ -1406,17 +1409,16 @@ def analyze_bench_press_reps(biomechanics):
     shoulder_y = shoulder_y_all[start_offset:end_offset]
     hip_y = hip_y_all[start_offset:end_offset]
     knee = knee_all[start_offset:end_offset]
+    frame_numbers = frame_numbers_all[start_offset:end_offset]
 
     reps = []
 
     if len(elbow) < 10:
         return reps, build_set_summary(reps)
 
-    # Smooth elbow signal with NumPy only
     kernel = np.ones(5) / 5
     smooth = np.convolve(elbow, kernel, mode="same")
 
-    # Find local elbow-angle minima = likely bottom positions
     bottoms = []
 
     for i in range(3, len(smooth) - 3):
@@ -1445,14 +1447,12 @@ def analyze_bench_press_reps(biomechanics):
         shoulder_range = float(np.max(rep_shoulder_y) - np.min(rep_shoulder_y))
         hip_range = float(np.max(rep_hip_y) - np.min(rep_hip_y))
 
-        # Reject fake talking/gesture reps
         if elbow_range < 35:
             continue
 
         if wrist_range < 0.04:
             continue
 
-        # If shoulders/hips are moving a lot, likely not stable bench position
         if shoulder_range > 0.20 or hip_range > 0.20:
             continue
 
@@ -1487,7 +1487,6 @@ def analyze_bench_press_reps(biomechanics):
                 "Foot position could not be evaluated because feet were not visible."
             )
 
-        # DEPTH
         if wrist_range < 0.06:
             depth_status = "limited_range"
             issues.append("Range of motion may be limited.")
@@ -1499,7 +1498,6 @@ def analyze_bench_press_reps(biomechanics):
         else:
             depth_status = "good"
 
-        # LOCKOUT
         if max_elbow < 125:
             lockout_status = "incomplete"
             issues.append("Incomplete lockout.")
@@ -1511,7 +1509,6 @@ def analyze_bench_press_reps(biomechanics):
         else:
             lockout_status = "good"
 
-        # ELBOW POSITION
         if elbow_p75 > 165:
             elbow_status = "severe_flare"
             issues.append("Elbows may be flaring excessively.")
@@ -1523,7 +1520,6 @@ def analyze_bench_press_reps(biomechanics):
         else:
             elbow_status = "good"
 
-        # ARCH
         arch_delta = shoulder_level - hip_level
 
         if arch_delta > 0.20:
@@ -1533,7 +1529,6 @@ def analyze_bench_press_reps(biomechanics):
         else:
             arch_status = "controlled"
 
-        # LEG DRIVE
         if feet_visible:
             if avg_knee < 95:
                 leg_status = "weak"
@@ -1574,8 +1569,11 @@ def analyze_bench_press_reps(biomechanics):
 
         reps.append({
             "rep": len(reps) + 1,
-            "start_frame": int(start + start_offset),
-            "end_frame": int(end + start_offset),
+
+            # widened real video frame window for phase images
+            "start_frame": int(max(0, frame_numbers[start] - 20)),
+            "end_frame": int(frame_numbers[end] + 20),
+
             "score": score,
             "grade": grade_score(score),
             "issues": issues,
@@ -2482,284 +2480,65 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
     return saved
 
 
-def create_bench_press_phase_images(video_path, output_dir, best_rep, sample_every=8):
-    import os
-    import cv2
-    import uuid
-    import numpy as np
-    import mediapipe as mp
+def find_bench_press_phase_window(start_idx, end_idx):
+    span = max(1, end_idx - start_idx)
 
-    os.makedirs(output_dir, exist_ok=True)
+    return {
+        "setup": start_idx + int(span * 0.05),
+        "descent": start_idx + int(span * 0.28),
+        "bottom": start_idx + int(span * 0.50),
+        "press": start_idx + int(span * 0.68),
+        "lockout": start_idx + int(span * 0.88),
+    }
 
-    mp_pose = mp.solutions.pose
 
-    start_frame = int(best_rep.get("start_frame", 0))
-    end_frame = int(best_rep.get("end_frame", start_frame + 60))
+def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1):
+    cap = cv2.VideoCapture(input_path)
 
-    # Safety padding, but still only around the rep
-    start_frame = max(0, start_frame - 8)
-    end_frame = max(start_frame + 1, end_frame + 8)
-
-    cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
+        print("Bench phase error")
         return None
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    end_frame = min(end_frame, total_frames - 1)
 
-    frames = []
+    start = int(rep.get("start_frame", 0))
+    end = int(rep.get("end_frame", total_frames - 1))
 
-    def angle(a, b, c):
-        a = np.array(a)
-        b = np.array(b)
-        c = np.array(c)
+    start = max(0, min(start, total_frames - 1))
+    end = max(start + 1, min(end, total_frames - 1))
 
-        ba = a - b
-        bc = c - b
+    span = end - start
 
-        denom = np.linalg.norm(ba) * np.linalg.norm(bc)
-        if denom == 0:
-            return None
-
-        cosang = np.dot(ba, bc) / denom
-        cosang = np.clip(cosang, -1.0, 1.0)
-
-        return float(np.degrees(np.arccos(cosang)))
-
-    def get_xy(landmarks, idx, width, height):
-        lm = landmarks[idx]
-        return np.array([lm.x * width, lm.y * height], dtype=np.float32)
-
-    with mp_pose.Pose(
-        static_image_mode=False,
-        model_complexity=1,
-        enable_segmentation=False,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5,
-    ) as pose:
-
-        frame_idx = start_frame
-
-        while frame_idx <= end_frame:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-            ok, frame = cap.read()
-
-            if not ok:
-                break
-
-            h, w = frame.shape[:2]
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            result = pose.process(rgb)
-
-            if result.pose_landmarks:
-                lm = result.pose_landmarks.landmark
-
-                side_candidates = []
-
-                for side in ["left", "right"]:
-                    if side == "left":
-                        shoulder_i = mp_pose.PoseLandmark.LEFT_SHOULDER.value
-                        elbow_i = mp_pose.PoseLandmark.LEFT_ELBOW.value
-                        wrist_i = mp_pose.PoseLandmark.LEFT_WRIST.value
-                    else:
-                        shoulder_i = mp_pose.PoseLandmark.RIGHT_SHOULDER.value
-                        elbow_i = mp_pose.PoseLandmark.RIGHT_ELBOW.value
-                        wrist_i = mp_pose.PoseLandmark.RIGHT_WRIST.value
-
-                    visibility = (
-                        lm[shoulder_i].visibility
-                        + lm[elbow_i].visibility
-                        + lm[wrist_i].visibility
-                    ) / 3.0
-
-                    shoulder = get_xy(lm, shoulder_i, w, h)
-                    elbow = get_xy(lm, elbow_i, w, h)
-                    wrist = get_xy(lm, wrist_i, w, h)
-
-                    elbow_angle = angle(shoulder, elbow, wrist)
-
-                    if elbow_angle is None:
-                        continue
-
-                    side_candidates.append({
-                        "side": side,
-                        "visibility": visibility,
-                        "shoulder": shoulder,
-                        "elbow": elbow,
-                        "wrist": wrist,
-                        "elbow_angle": elbow_angle,
-                        "wrist_y": float(wrist[1]),
-                    })
-
-                if side_candidates:
-                    best_side = max(side_candidates, key=lambda x: x["visibility"])
-
-                    frames.append({
-                        "frame_idx": frame_idx,
-                        "frame": frame.copy(),
-                        "landmarks": lm,
-                        "width": w,
-                        "height": h,
-                        "side": best_side["side"],
-                        "elbow_angle": best_side["elbow_angle"],
-                        "wrist_y": best_side["wrist_y"],
-                    })
-
-            frame_idx += sample_every
-
-    cap.release()
-
-    if len(frames) < 3:
-        return None
-
-    elbow_angles = np.array([f["elbow_angle"] for f in frames])
-    wrist_y = np.array([f["wrist_y"] for f in frames])
-
-    # Smooth lightly to avoid noisy MediaPipe jumps
-    if len(elbow_angles) >= 5:
-        kernel = np.ones(3) / 3
-        smooth_angles = np.convolve(elbow_angles, kernel, mode="same")
-        smooth_wrist_y = np.convolve(wrist_y, kernel, mode="same")
-    else:
-        smooth_angles = elbow_angles
-        smooth_wrist_y = wrist_y
-
-    n = len(frames)
-
-    bottom_idx = int(np.argmax(smooth_wrist_y))      # wrist lowest on screen
-    setup_idx = int(np.argmin(smooth_wrist_y[:max(1, bottom_idx)])) if bottom_idx > 1 else 0
-    lockout_idx = bottom_idx + int(np.argmin(smooth_wrist_y[bottom_idx:])) if bottom_idx < n - 1 else n - 1
-
-    descent_range = range(setup_idx + 1, max(setup_idx + 2, bottom_idx))
-    press_range = range(bottom_idx + 1, max(bottom_idx + 2, lockout_idx))
-
-    angle_delta = np.diff(smooth_angles, prepend=smooth_angles[0])
-
-    descent_idx = (
-        min(descent_range, key=lambda i: angle_delta[i])
-        if bottom_idx - setup_idx > 2
-        else max(0, bottom_idx - 1)
-    )
-
-    press_idx = (
-        max(press_range, key=lambda i: angle_delta[i])
-        if lockout_idx - bottom_idx > 2
-        else min(n - 1, bottom_idx + 1)
-    )
-
-    phase_indices = {
-        "setup": setup_idx,
-        "descent": descent_idx,
-        "bottom": bottom_idx,
-        "press": press_idx,
-        "lockout": lockout_idx,
-    }
-
-    # Force phases to be separated so images do not look identical
-    ordered = ["setup", "descent", "bottom", "press", "lockout"]
-    min_gap = 1
-
-    last_idx = -1
-    for phase in ordered:
-        idx = phase_indices[phase]
-        if idx <= last_idx:
-            idx = min(n - 1, last_idx + min_gap)
-        phase_indices[phase] = idx
-        last_idx = idx
-
-    def draw_label(frame, text):
-        cv2.rectangle(frame, (8, 8), (210, 42), (0, 0, 0), -1)
-        cv2.putText(
-            frame,
-            text.upper(),
-            (16, 34),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.75,
-            (255, 255, 255),
-            2,
-            cv2.LINE_AA,
-        )
-
-    def draw_pose_lines(frame, landmarks, w, h):
-        connections = [
-            (mp_pose.PoseLandmark.LEFT_SHOULDER.value, mp_pose.PoseLandmark.RIGHT_SHOULDER.value),
-            (mp_pose.PoseLandmark.LEFT_SHOULDER.value, mp_pose.PoseLandmark.LEFT_ELBOW.value),
-            (mp_pose.PoseLandmark.LEFT_ELBOW.value, mp_pose.PoseLandmark.LEFT_WRIST.value),
-            (mp_pose.PoseLandmark.RIGHT_SHOULDER.value, mp_pose.PoseLandmark.RIGHT_ELBOW.value),
-            (mp_pose.PoseLandmark.RIGHT_ELBOW.value, mp_pose.PoseLandmark.RIGHT_WRIST.value),
-            (mp_pose.PoseLandmark.LEFT_SHOULDER.value, mp_pose.PoseLandmark.LEFT_HIP.value),
-            (mp_pose.PoseLandmark.RIGHT_SHOULDER.value, mp_pose.PoseLandmark.RIGHT_HIP.value),
-            (mp_pose.PoseLandmark.LEFT_HIP.value, mp_pose.PoseLandmark.RIGHT_HIP.value),
-        ]
-
-        for a, b in connections:
-            if landmarks[a].visibility < 0.35 or landmarks[b].visibility < 0.35:
-                continue
-
-            p1 = (int(landmarks[a].x * w), int(landmarks[a].y * h))
-            p2 = (int(landmarks[b].x * w), int(landmarks[b].y * h))
-
-            cv2.line(frame, p1, p2, (0, 255, 0), 3)
-
-    def draw_ideal_press_path(frame, landmarks, w, h):
-        left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
-        right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
-
-        visible_shoulders = [
-            lm for lm in [left_shoulder, right_shoulder]
-            if lm.visibility > 0.35
-        ]
-
-        if not visible_shoulders:
-            return
-
-        shoulder_x = int(np.mean([lm.x for lm in visible_shoulders]) * w)
-        shoulder_y = int(np.mean([lm.y for lm in visible_shoulders]) * h)
-
-        top_y = int(shoulder_y - h * 0.22)
-        bottom_y = int(shoulder_y + h * 0.16)
-
-        cv2.line(
-            frame,
-            (shoulder_x, bottom_y),
-            (shoulder_x, top_y),
-            (255, 255, 0),
-            8,
-        )
-
-        cv2.putText(
-            frame,
-            "IDEAL PRESS PATH",
-            (shoulder_x + 10, max(20, top_y + 20)),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.45,
-            (255, 255, 0),
-            2,
-            cv2.LINE_AA,
-        )
+    phase_frames = find_bench_press_phase_window(start, end)
 
     saved = {}
 
-    for phase in ordered:
-        idx = phase_indices[phase]
-        item = frames[idx]
+    for phase, frame_idx in phase_frames.items():
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame_idx))
+        ret, frame = cap.read()
 
-        frame = item["frame"].copy()
-        h, w = frame.shape[:2]
-
-        draw_pose_lines(frame, item["landmarks"], w, h)
-        draw_ideal_press_path(frame, item["landmarks"], w, h)
-        draw_label(frame, phase)
+        if not ret:
+            continue
 
         filename = f"bench_press_{phase}_{uuid.uuid4().hex[:8]}.jpg"
-        out_path = os.path.join(output_dir, filename)
+        filepath = os.path.join(output_dir, filename)
 
-        cv2.imwrite(out_path, frame)
+        cv2.imwrite(filepath, frame)
         saved[phase] = f"/outputs/{filename}"
 
-    print("BENCH PHASE FRAMES:", {k: frames[v]["frame_idx"] for k, v in phase_indices.items()})
-    print("BENCH PHASE ANGLES:", {k: round(frames[v]["elbow_angle"], 1) for k, v in phase_indices.items()})
+    sheet_url = save_phase_contact_sheet(
+        input_path,
+        phase_frames,
+        output_dir,
+        prefix="bench_press_phase_debug",
+    )
 
+    if sheet_url:
+        saved["debug_sheet"] = sheet_url
+
+    cap.release()
+
+    print("Saved bench phase images:", saved)
     return saved
 
 
