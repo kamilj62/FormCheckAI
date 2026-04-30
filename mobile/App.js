@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const API_BASE_URL = "http://192.168.1.216:8000";
+const API_BASE_URL = "http://192.168.1.25:8000";
 
 const hiddenKeys = [
   "wrist_range",
@@ -327,15 +327,111 @@ const getInteractiveZones = (result) => {
   ];
 };
 
+const getZoneImagePath = (result, activeZone) => {
+  const images = result?.phase_images || {};
+  const zoneId = activeZone?.id;
+  const label = String(result?.exercise_label || "").toLowerCase();
+
+  if (!zoneId) {
+    return (
+      images.setup ||
+      images.descent ||
+      images.pull ||
+      images.dip ||
+      images.bottom ||
+      images.mid ||
+      images.press ||
+      images.lockout ||
+      null
+    );
+  }
+
+  if (label.includes("bench")) {
+    if (zoneId === "wrists" || zoneId === "elbows") {
+      return images.press || images.lockout || images.bottom || null;
+    }
+
+    if (zoneId === "bar") {
+      return images.descent || images.bottom || images.press || null;
+    }
+
+    if (zoneId === "lockout") {
+      return images.lockout || images.press || null;
+    }
+
+    if (zoneId === "torso") {
+      return images.setup || images.bottom || null;
+    }
+  }
+
+  if (label.includes("push press")) {
+    if (zoneId === "dip" || zoneId === "knees") {
+      return images.dip || images.setup || null;
+    }
+
+    if (zoneId === "bar") {
+      return images.drive || images.lockout || null;
+    }
+
+    if (zoneId === "lockout") {
+      return images.lockout || images.drive || null;
+    }
+  }
+
+  if (label.includes("squat")) {
+    if (zoneId === "hips" || zoneId === "knees") {
+      return images.bottom || images.descent || null;
+    }
+
+    if (zoneId === "torso" || zoneId === "neck") {
+      return images.descent || images.bottom || images.setup || null;
+    }
+
+    if (zoneId === "heels") {
+      return images.bottom || images.ascent || null;
+    }
+  }
+
+  if (zoneId === "back" || zoneId === "hips") {
+    return images.pull || images.setup || images.mid || null;
+  }
+
+  if (zoneId === "knees") {
+    return images.pull || images.mid || null;
+  }
+
+  if (zoneId === "bar") {
+    return images.mid || images.pull || images.finish || null;
+  }
+
+  if (zoneId === "lockout") {
+    return images.lockout || images.finish || null;
+  }
+
+  return (
+    images.setup ||
+    images.descent ||
+    images.pull ||
+    images.dip ||
+    images.bottom ||
+    images.mid ||
+    images.press ||
+    images.lockout ||
+    null
+  );
+};
+
 export default function App() {
   const [video, setVideo] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
 
   const reset = () => {
     setResult(null);
     setSelectedZone(null);
+    setVisualsLoading(false);
   };
 
   const recordWithCamera = async () => {
@@ -410,6 +506,54 @@ export default function App() {
     }
   };
 
+  const buildFormData = () => {
+    const formData = new FormData();
+
+    formData.append("file", {
+      uri: video.uri,
+      name: video.name,
+      type: video.type,
+    });
+
+    return formData;
+  };
+
+  const generateVisuals = async () => {
+    try {
+      setVisualsLoading(true);
+
+      const visualsRes = await fetch(`${API_BASE_URL}/generate_visuals`, {
+        method: "POST",
+        body: buildFormData(),
+      });
+
+      const visualsData = await visualsRes.json();
+      console.log("VISUALS RESPONSE:", visualsData);
+
+      if (!visualsRes.ok) {
+        throw new Error(
+          visualsData.detail ||
+            visualsData.message ||
+            "Visual generation request failed"
+        );
+      }
+
+      setResult((prev) => ({
+        ...prev,
+        ...visualsData,
+      }));
+    } catch (err) {
+      console.log("VISUALS ERROR:", err.message);
+
+      setResult((prev) => ({
+        ...prev,
+        visuals_error: err.message,
+      }));
+    } finally {
+      setVisualsLoading(false);
+    }
+  };
+
   const analyzeVideo = async () => {
     if (!video) {
       Alert.alert("Pick a video first");
@@ -419,33 +563,31 @@ export default function App() {
     setLoading(true);
     setResult(null);
     setSelectedZone(null);
+    setVisualsLoading(false);
 
     try {
-      const formData = new FormData();
-
-      formData.append("file", {
-        uri: video.uri,
-        name: video.name,
-        type: video.type,
-      });
-
       const res = await fetch(`${API_BASE_URL}/analyze`, {
         method: "POST",
-        body: formData,
+        body: buildFormData(),
       });
 
       const data = await res.json();
-      console.log("BACKEND RESPONSE:", data);
+      console.log("ANALYZE RESPONSE:", data);
 
       if (!res.ok) {
         throw new Error(data.detail || data.message || "Analyze request failed");
       }
 
       setResult(data);
+      setLoading(false);
+
+      if (data?.rep_feedback?.length > 0) {
+        await generateVisuals();
+      }
     } catch (err) {
       setResult({ error: true, message: err.message });
-    } finally {
       setLoading(false);
+      setVisualsLoading(false);
     }
   };
 
@@ -467,8 +609,7 @@ export default function App() {
   const zones = getInteractiveZones(result);
   const activeZone = selectedZone || zones[0];
 
-  const coachingImagePath = getCoachingImagePath(result);
-  const coachingImageUrl = coachingImagePath
+  const coachingImagePath = getZoneImagePath(result, activeZone);  const coachingImageUrl = coachingImagePath
     ? `${API_BASE_URL}${coachingImagePath}`
     : null;
 
@@ -511,7 +652,21 @@ export default function App() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <View style={styles.loadingContent}>
+              <ActivityIndicator color="#fff" />
+              <Text style={styles.loadingTitle}>Analyzing movement...</Text>
+              <Text style={styles.loadingSubtitle}>
+                Detecting exercise, reps, and form issues
+              </Text>
+            </View>
+          ) : visualsLoading ? (
+            <View style={styles.loadingContent}>
+              <ActivityIndicator color="#fff" />
+              <Text style={styles.loadingTitle}>Building coached replay...</Text>
+              <Text style={styles.loadingSubtitle}>
+                Scores are ready. Visuals are loading now.
+              </Text>
+            </View>
           ) : (
             <Text style={styles.buttonText}>Analyze</Text>
           )}
@@ -558,6 +713,28 @@ export default function App() {
               </View>
             )}
 
+            {visualsLoading && reps.length > 0 && (
+              <View style={styles.visualsLoadingCard}>
+                <ActivityIndicator color="#86efac" />
+                <Text style={styles.visualsLoadingTitle}>
+                  Coaching visuals are being generated
+                </Text>
+                <Text style={styles.visualsLoadingText}>
+                  You can review the score and rep feedback while the replay loads.
+                </Text>
+              </View>
+            )}
+
+            {result?.visuals_error && (
+              <View style={styles.warningCard}>
+                <Text style={styles.warningTitle}>Visuals Could Not Load</Text>
+                <Text style={styles.warningText}>{result.visuals_error}</Text>
+                <Text style={styles.warningText}>
+                  Scores and coaching feedback are still available below.
+                </Text>
+              </View>
+            )}
+
             {reps.length > 0 && (
               <View style={styles.coachMapCard}>
                 <Text style={styles.coachMapTitle}>Tap a Coaching Zone</Text>
@@ -575,30 +752,18 @@ export default function App() {
                   </View>
                 ) : (
                   <View style={styles.noImageBox}>
-                  <Text style={styles.noImageTitle}>Coaching Image Not Generated</Text>
+                    <Text style={styles.noImageTitle}>
+                      Coaching Image Not Generated Yet
+                    </Text>
 
-                  <Text style={styles.noImageText}>
-                    We identified the exercise, but couldn't detect clear reps in the video.
-                  </Text>
+                    <Text style={styles.noImageText}>
+                      We identified the exercise and scored the reps.
+                    </Text>
 
-                  <Text style={styles.noImageReason}>This usually means:</Text>
-
-                  <Text style={styles.noImageBullet}>
-                    • rep start / finish frames were unclear
-                  </Text>
-
-                  <Text style={styles.noImageBullet}>
-                    • movement pattern was hard to segment
-                  </Text>
-
-                  <Text style={styles.noImageBullet}>
-                    • pose landmarks jumped during the lift
-                  </Text>
-
-                  <Text style={styles.noImageTip}>
-                    Tomorrow's retrained model should improve this.
-                  </Text>
-                </View>
+                    <Text style={styles.noImageReason}>
+                      Visuals may still be loading or the rep frames were unclear.
+                    </Text>
+                  </View>
                 )}
 
                 <View style={styles.zoneChipGrid}>
@@ -804,8 +969,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  disabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontWeight: "800" },
+  disabled: { opacity: 0.7 },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "800",
+  },
+
+  loadingContent: {
+    alignItems: "center",
+  },
+
+  loadingTitle: {
+    color: "#fff",
+    fontWeight: "900",
+    marginTop: 8,
+    fontSize: 15,
+  },
+
+  loadingSubtitle: {
+    color: "#d1fae5",
+    marginTop: 4,
+    fontSize: 12,
+    textAlign: "center",
+  },
 
   previewCard: {
     backgroundColor: "#111827",
@@ -823,6 +1010,51 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     borderRadius: 12,
     marginTop: 10,
+  },
+
+  visualsLoadingCard: {
+    backgroundColor: "#052e16",
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#22c55e",
+    alignItems: "center",
+  },
+
+  visualsLoadingTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "900",
+    marginTop: 8,
+    textAlign: "center",
+  },
+
+  visualsLoadingText: {
+    color: "#bbf7d0",
+    fontSize: 14,
+    marginTop: 6,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+
+  warningCard: {
+    backgroundColor: "#78350f",
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 16,
+  },
+
+  warningTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+
+  warningText: {
+    color: "#fffbeb",
+    marginTop: 4,
   },
 
   coachMapCard: {
@@ -867,50 +1099,37 @@ const styles = StyleSheet.create({
   },
 
   noImageBox: {
-    height: 260,
+    minHeight: 220,
     backgroundColor: "#020617",
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
+    padding: 20,
   },
 
   noImageTitle: {
-  color: "#ffffff",
-  fontSize: 22,
-  fontWeight: "900",
-  marginBottom: 12,
-  textAlign: "center",
-},
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 12,
+    textAlign: "center",
+  },
 
-noImageText: {
-  color: "#d1d5db",
-  fontSize: 16,
-  lineHeight: 24,
-  textAlign: "center",
-  marginBottom: 16,
-},
+  noImageText: {
+    color: "#d1d5db",
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: "center",
+    marginBottom: 12,
+  },
 
-noImageReason: {
-  color: "#c4b5fd",
-  fontSize: 15,
-  fontWeight: "800",
-  marginBottom: 10,
-},
-
-noImageBullet: {
-  color: "#e5e7eb",
-  fontSize: 15,
-  marginBottom: 6,
-},
-
-noImageTip: {
-  color: "#86efac",
-  fontSize: 15,
-  fontWeight: "700",
-  marginTop: 14,
-  textAlign: "center",
-},
+  noImageReason: {
+    color: "#c4b5fd",
+    fontSize: 15,
+    fontWeight: "800",
+    textAlign: "center",
+  },
 
   zoneChipGrid: {
     flexDirection: "row",
@@ -920,8 +1139,8 @@ noImageTip: {
   },
 
   zoneChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     borderRadius: 999,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.7)",
@@ -934,7 +1153,7 @@ noImageTip: {
 
   zoneChipText: {
     color: "#ffffff",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "900",
   },
 
