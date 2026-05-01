@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,18 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const API_BASE_URL = "http://192.168.1.25:8000";
-
-const hiddenKeys = [
-  "wrist_range",
-  "elbow_range",
-  "bar_depth",
-  "max_elbow",
-  "min_knee",
-  "max_torso",
-  "min_hip",
-  "bar_severity",
-];
+const API_URL = "http://192.168.1.25:8000";
 
 const formatLabel = (v) =>
   v
@@ -36,7 +25,12 @@ const formatLabel = (v) =>
     : "N/A";
 
 const getStatusColor = (status) => {
-  if (status === "poor" || status === "incomplete" || status === "drifting") {
+  if (
+    status === "poor" ||
+    status === "incomplete" ||
+    status === "drifting" ||
+    status === "severe_flare"
+  ) {
     return "#ef4444";
   }
 
@@ -45,6 +39,7 @@ const getStatusColor = (status) => {
     status === "needs_work" ||
     status === "possible" ||
     status === "shallow" ||
+    status === "fair" ||
     status === "limited_range" ||
     status === "possibly_shallow"
   ) {
@@ -54,61 +49,11 @@ const getStatusColor = (status) => {
   return "#22c55e";
 };
 
-const getPhaseConfig = (exerciseLabel) => {
-  const label = String(exerciseLabel || "").toLowerCase();
-
-  if (label.includes("squat")) {
-    return {
-      text: "Setup → Descent → Bottom → Ascent → Lockout",
-      highlight: "bottom",
-      items: [
-        ["setup", "Setup"],
-        ["descent", "Descent"],
-        ["bottom", "Bottom ⭐"],
-        ["ascent", "Ascent"],
-        ["lockout", "Lockout"],
-      ],
-    };
-  }
-
-  if (label.includes("push press")) {
-    return {
-      text: "Setup → Dip → Drive → Lockout",
-      highlight: "lockout",
-      items: [
-        ["setup", "Setup"],
-        ["dip", "Dip"],
-        ["drive", "Drive"],
-        ["lockout", "Lockout ⭐"],
-      ],
-    };
-  }
-
-  if (label.includes("bench")) {
-    return {
-      text: "Setup → Descent → Bottom → Press → Lockout",
-      highlight: "lockout",
-      items: [
-        ["setup", "Setup"],
-        ["descent", "Descent"],
-        ["bottom", "Bottom"],
-        ["press", "Press"],
-        ["lockout", "Lockout ⭐"],
-      ],
-    };
-  }
-
-  return {
-    text: "Setup → Pull → Mid → Finish → Lockout",
-    highlight: "lockout",
-    items: [
-      ["setup", "Setup"],
-      ["pull", "Pull"],
-      ["mid", "Mid"],
-      ["finish", "Finish"],
-      ["lockout", "Lockout ⭐"],
-    ],
-  };
+const getScoreColor = (score) => {
+  if (score >= 9) return "#22c55e";
+  if (score >= 7.5) return "#84cc16";
+  if (score >= 6) return "#f59e0b";
+  return "#ef4444";
 };
 
 const getBestRep = (reps) => {
@@ -119,19 +64,62 @@ const getBestRep = (reps) => {
   }, reps[0]);
 };
 
-const getCoachingImagePath = (result) => {
-  const images = result?.phase_images || {};
+const getPhaseConfig = (exerciseLabel) => {
+  const label = String(exerciseLabel || "").toLowerCase();
 
-  return (
-    images.setup ||
-    images.start ||
-    images.descent ||
-    images.pull ||
-    images.mid ||
-    images.bottom ||
-    images.lockout ||
-    null
-  );
+  if (label.includes("push press")) {
+    return {
+      title: "Push Press Phase Review",
+      text: "Setup → Dip → Drive → Catch → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["dip", "Dip"],
+        ["drive", "Drive"],
+        ["catch", "Catch"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  if (label.includes("squat")) {
+    return {
+      title: "Squat Phase Review",
+      text: "Setup → Descent → Bottom → Ascent → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["descent", "Descent"],
+        ["bottom", "Bottom"],
+        ["ascent", "Ascent"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  if (label.includes("bench")) {
+    return {
+      title: "Bench Press Phase Review",
+      text: "Setup → Descent → Bottom → Press → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["descent", "Descent"],
+        ["bottom", "Bottom"],
+        ["press", "Press"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  return {
+    title: "Deadlift Phase Review",
+    text: "Setup → Pull → Mid → Finish → Lockout",
+    items: [
+      ["setup", "Setup"],
+      ["pull", "Pull"],
+      ["mid", "Mid"],
+      ["finish", "Finish"],
+      ["lockout", "Lockout"],
+    ],
+  };
 };
 
 const getInteractiveZones = (result) => {
@@ -139,56 +127,6 @@ const getInteractiveZones = (result) => {
   const reps = result?.rep_feedback || [];
   const bestRep = getBestRep(reps);
   const breakdown = bestRep?.breakdown || {};
-
-  if (label.includes("bench")) {
-    return [
-      {
-        id: "wrists",
-        title: "Wrists",
-        status: breakdown.wrists || breakdown.lockout || "good",
-        note:
-          breakdown.lockout === "incomplete"
-            ? "Finish with stacked wrists and fully extended arms."
-            : "Keep wrists stacked over elbows and avoid letting them bend back.",
-      },
-      {
-        id: "elbows",
-        title: "Elbows",
-        status: breakdown.elbows || "good",
-        note:
-          breakdown.elbows === "poor" ||
-          breakdown.elbows === "severe_flare" ||
-          breakdown.elbows === "borderline"
-            ? "Keep elbows controlled. Avoid flaring too aggressively."
-            : "Elbow path looks controlled through the press.",
-      },
-      {
-        id: "torso",
-        title: "Chest / Torso",
-        status: breakdown.arch || "good",
-        note: "Keep the chest stable and maintain a controlled upper-back position.",
-      },
-      {
-        id: "bar",
-        title: "Bar Path",
-        status: breakdown.bar_path || breakdown.depth || "good",
-        note:
-          breakdown.depth === "limited_range" ||
-          breakdown.depth === "possibly_shallow"
-            ? "Use a full, controlled bar path from chest to lockout."
-            : "Bar path looks controlled.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        status: breakdown.lockout || "good",
-        note:
-          breakdown.lockout === "incomplete"
-            ? "Fully extend your arms at the top of the rep."
-            : "Lockout looks solid.",
-      },
-    ];
-  }
 
   if (label.includes("push press")) {
     return [
@@ -198,7 +136,7 @@ const getInteractiveZones = (result) => {
         status: breakdown.dip || "good",
         note:
           breakdown.dip === "shallow"
-            ? "Use a stronger vertical dip before driving the bar overhead."
+            ? "Use a stronger vertical dip before driving overhead."
             : "Dip timing looks usable.",
       },
       {
@@ -221,7 +159,7 @@ const getInteractiveZones = (result) => {
       },
       {
         id: "lockout",
-        title: "Overhead Lockout",
+        title: "Lockout",
         status: breakdown.lockout || "good",
         note:
           breakdown.lockout === "incomplete"
@@ -231,17 +169,49 @@ const getInteractiveZones = (result) => {
     ];
   }
 
-  if (label.includes("squat")) {
+  if (label.includes("bench")) {
     return [
       {
-        id: "neck",
-        title: "Neck / Head",
-        status: breakdown.neck || "good",
-        note:
-          breakdown.neck === "poor" || breakdown.neck === "borderline"
-            ? "Keep your head aligned with your torso."
-            : "Keep a neutral head position.",
+        id: "wrists",
+        title: "Wrists",
+        status: breakdown.wrists || breakdown.lockout || "good",
+        note: "Keep wrists stacked over elbows and avoid bending them back.",
       },
+      {
+        id: "elbows",
+        title: "Elbows",
+        status: breakdown.elbows || "good",
+        note:
+          breakdown.elbows === "poor" ||
+          breakdown.elbows === "severe_flare" ||
+          breakdown.elbows === "borderline"
+            ? "Keep elbows controlled. Avoid aggressive flare."
+            : "Elbow path looks controlled.",
+      },
+      {
+        id: "bar",
+        title: "Bar Path",
+        status: breakdown.bar_path || breakdown.depth || "good",
+        note:
+          breakdown.depth === "limited_range" ||
+          breakdown.depth === "possibly_shallow"
+            ? "Use a full, controlled bar path from chest to lockout."
+            : "Bar path looks controlled.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        status: breakdown.lockout || "good",
+        note:
+          breakdown.lockout === "incomplete"
+            ? "Fully extend your arms at the top."
+            : "Lockout looks solid.",
+      },
+    ];
+  }
+
+  if (label.includes("squat")) {
+    return [
       {
         id: "torso",
         title: "Torso",
@@ -252,7 +222,7 @@ const getInteractiveZones = (result) => {
             : "Torso angle looks controlled.",
       },
       {
-        id: "hips",
+        id: "depth",
         title: "Depth",
         status: breakdown.depth || "good",
         note:
@@ -270,13 +240,10 @@ const getInteractiveZones = (result) => {
             : "Knee tracking looks controlled.",
       },
       {
-        id: "heels",
-        title: "Heels",
-        status: breakdown.heels || "good",
-        note:
-          breakdown.heels === "poor" || breakdown.heels === "borderline"
-            ? "Keep pressure through your heels and midfoot."
-            : "Heel pressure looks controlled.",
+        id: "lockout",
+        title: "Lockout",
+        status: breakdown.lockout || "good",
+        note: "Stand tall and finish each rep under control.",
       },
     ];
   }
@@ -288,7 +255,7 @@ const getInteractiveZones = (result) => {
       status: breakdown.back || "good",
       note:
         breakdown.back === "poor" || breakdown.back === "fair"
-          ? "Keep your back neutral and brace before pulling."
+          ? "Brace your core and keep a neutral spine."
           : "Back position looks controlled.",
     },
     {
@@ -299,12 +266,6 @@ const getInteractiveZones = (result) => {
         breakdown.hinge === "poor"
           ? "Push your hips back more before starting the pull."
           : "Hip hinge looks controlled.",
-    },
-    {
-      id: "knees",
-      title: "Knees",
-      status: breakdown.knees || "good",
-      note: "Keep knees controlled as the bar passes the legs.",
     },
     {
       id: "bar",
@@ -329,94 +290,44 @@ const getInteractiveZones = (result) => {
 
 const getZoneImagePath = (result, activeZone) => {
   const images = result?.phase_images || {};
-  const zoneId = activeZone?.id;
   const label = String(result?.exercise_label || "").toLowerCase();
-
-  if (!zoneId) {
-    return (
-      images.setup ||
-      images.descent ||
-      images.pull ||
-      images.dip ||
-      images.bottom ||
-      images.mid ||
-      images.press ||
-      images.lockout ||
-      null
-    );
-  }
+  const zoneId = activeZone?.id;
 
   if (label.includes("bench")) {
-    if (zoneId === "wrists" || zoneId === "elbows") {
-      return images.press || images.lockout || images.bottom || null;
-    }
-
-    if (zoneId === "bar") {
-      return images.descent || images.bottom || images.press || null;
-    }
-
-    if (zoneId === "lockout") {
-      return images.lockout || images.press || null;
-    }
-
-    if (zoneId === "torso") {
-      return images.setup || images.bottom || null;
-    }
+    if (zoneId === "wrists") return images.press || images.lockout || images.bottom;
+    if (zoneId === "elbows") return images.press || images.bottom || images.lockout;
+    if (zoneId === "bar") return images.descent || images.bottom || images.press;
+    if (zoneId === "lockout") return images.lockout || images.press;
   }
 
   if (label.includes("push press")) {
-    if (zoneId === "dip" || zoneId === "knees") {
-      return images.dip || images.setup || null;
-    }
-
-    if (zoneId === "bar") {
-      return images.drive || images.lockout || null;
-    }
-
-    if (zoneId === "lockout") {
-      return images.lockout || images.drive || null;
-    }
+    if (zoneId === "dip") return images.dip || images.setup;
+    if (zoneId === "bar") return images.drive || images.catch;
+    if (zoneId === "lockout") return images.lockout || images.catch;
   }
 
   if (label.includes("squat")) {
-    if (zoneId === "hips" || zoneId === "knees") {
-      return images.bottom || images.descent || null;
-    }
-
-    if (zoneId === "torso" || zoneId === "neck") {
-      return images.descent || images.bottom || images.setup || null;
-    }
-
-    if (zoneId === "heels") {
-      return images.bottom || images.ascent || null;
-    }
+    if (zoneId === "depth") return images.bottom || images.descent;
+    if (zoneId === "knees") return images.bottom || images.descent;
+    if (zoneId === "torso") return images.descent || images.bottom;
+    if (zoneId === "lockout") return images.lockout || images.ascent;
   }
 
-  if (zoneId === "back" || zoneId === "hips") {
-    return images.pull || images.setup || images.mid || null;
-  }
-
-  if (zoneId === "knees") {
-    return images.pull || images.mid || null;
-  }
-
-  if (zoneId === "bar") {
-    return images.mid || images.pull || images.finish || null;
-  }
-
-  if (zoneId === "lockout") {
-    return images.lockout || images.finish || null;
+  if (label.includes("deadlift")) {
+    if (zoneId === "back") return images.pull || images.mid;
+    if (zoneId === "bar") return images.mid || images.pull;
+    if (zoneId === "lockout") return images.lockout || images.finish;
   }
 
   return (
     images.setup ||
     images.descent ||
-    images.pull ||
-    images.dip ||
     images.bottom ||
-    images.mid ||
     images.press ||
     images.lockout ||
+    images.pull ||
+    images.mid ||
+    images.finish ||
     null
   );
 };
@@ -522,7 +433,7 @@ export default function App() {
     try {
       setVisualsLoading(true);
 
-      const visualsRes = await fetch(`${API_BASE_URL}/generate_visuals`, {
+      const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
         method: "POST",
         body: buildFormData(),
       });
@@ -566,7 +477,7 @@ export default function App() {
     setVisualsLoading(false);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/analyze`, {
+      const res = await fetch(`${API_URL}/analyze`, {
         method: "POST",
         body: buildFormData(),
       });
@@ -593,347 +504,361 @@ export default function App() {
 
   const reps = result?.rep_feedback || [];
 
-  const overallScore =
-    reps.length > 0
-      ? Math.round(
-          reps.reduce((sum, r) => sum + Number(r.score || 0), 0) / reps.length
-        )
-      : null;
+  const avgScore = useMemo(() => {
+    if (!reps.length) return null;
+
+    const avg =
+      reps.reduce((sum, rep) => sum + Number(rep.score || 0), 0) / reps.length;
+
+    return Number(avg.toFixed(1));
+  }, [reps]);
+
+  const displayScore = avgScore !== null ? Math.round(avgScore * 10) : null;
+
+  const bestRep = getBestRep(reps);
 
   const biggestFix =
     result?.set_summary?.biggest_fix ||
-    result?.rep_feedback?.[0]?.feedback?.[0] ||
-    "Keep building consistent reps.";
+    bestRep?.feedback?.[0] ||
+    "Upload a clear side-angle video for analysis.";
 
   const phaseConfig = getPhaseConfig(result?.exercise_label);
   const zones = getInteractiveZones(result);
   const activeZone = selectedZone || zones[0];
 
-  const coachingImagePath = getZoneImagePath(result, activeZone);  const coachingImageUrl = coachingImagePath
-    ? `${API_BASE_URL}${coachingImagePath}`
+  const coachingImagePath = getZoneImagePath(result, activeZone);
+  const coachingImageUrl = coachingImagePath
+  ? `${API_URL}${coachingImagePath}?zone=${activeZone?.id || "default"}`
+  : null;
+
+  const overlayUrl = result?.overlay_video_url
+    ? `${API_URL}${result.overlay_video_url}`
     : null;
+
+  const phaseImages = result?.phase_images || {};
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>FormCheck AI</Text>
+        <View style={styles.hero}>
+          <View>
+            <Text style={styles.eyebrow}>AI Movement Coach</Text>
+            <Text style={styles.title}>FormCheck AI</Text>
+            <Text style={styles.subtitle}>
+              Upload a lift. Get rep scoring, coaching zones, phase images, and
+              replay.
+            </Text>
+          </View>
 
-        <View style={styles.buttons}>
-          <TouchableOpacity style={styles.primary} onPress={recordWithCamera}>
-            <Text style={styles.buttonText}>Record</Text>
+          <View style={styles.logoBubble}>
+            <Text style={styles.logoText}>AI</Text>
+          </View>
+        </View>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={recordWithCamera}
+          >
+            <Text style={styles.primaryButtonText}>Record</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondary} onPress={pickFromLibrary}>
-            <Text style={styles.buttonText}>Library</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={pickFromLibrary}
+          >
+            <Text style={styles.secondaryButtonText}>Library</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondary} onPress={pickFromCloud}>
-            <Text style={styles.buttonText}>Files</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={pickFromCloud}
+          >
+            <Text style={styles.secondaryButtonText}>Files</Text>
           </TouchableOpacity>
         </View>
 
         {video && (
-          <View style={styles.previewCard}>
-            <Text style={styles.previewLabel}>Selected Video</Text>
-            <Text style={styles.previewName}>{video.name}</Text>
-
-            <Video
-              source={{ uri: video.uri }}
-              style={styles.video}
-              useNativeControls
-              resizeMode={ResizeMode.CONTAIN}
-            />
+          <View style={styles.selectedCard}>
+            <Text style={styles.cardLabel}>Selected Video</Text>
+            <Text style={styles.selectedName}>{video.name}</Text>
           </View>
         )}
 
         <TouchableOpacity
-          style={[styles.analyze, loading && styles.disabled]}
+          style={[styles.analyzeButton, loading && styles.disabledButton]}
           onPress={analyzeVideo}
           disabled={loading}
         >
           {loading ? (
-            <View style={styles.loadingContent}>
-              <ActivityIndicator color="#fff" />
-              <Text style={styles.loadingTitle}>Analyzing movement...</Text>
-              <Text style={styles.loadingSubtitle}>
-                Detecting exercise, reps, and form issues
+            <View style={styles.loadingBlock}>
+              <ActivityIndicator color="#020617" />
+              <Text style={styles.analyzeButtonText}>
+                Analyzing movement...
               </Text>
             </View>
           ) : visualsLoading ? (
-            <View style={styles.loadingContent}>
-              <ActivityIndicator color="#fff" />
-              <Text style={styles.loadingTitle}>Building coached replay...</Text>
-              <Text style={styles.loadingSubtitle}>
-                Scores are ready. Visuals are loading now.
-              </Text>
+            <View style={styles.loadingBlock}>
+              <ActivityIndicator color="#020617" />
+              <Text style={styles.analyzeButtonText}>Building visuals...</Text>
             </View>
           ) : (
-            <Text style={styles.buttonText}>Analyze</Text>
+            <Text style={styles.analyzeButtonText}>Analyze Lift</Text>
           )}
         </TouchableOpacity>
 
         {result?.error && (
           <View style={styles.errorCard}>
+            <Text style={styles.errorTitle}>Request Failed</Text>
             <Text style={styles.errorText}>{result.message}</Text>
           </View>
         )}
 
-        {result?.feedback &&
-          result.rep_feedback?.length === 0 &&
-          !result.error && (
-            <View style={styles.errorCard}>
-              <Text style={styles.errorTitle}>Video Not Usable</Text>
-              <Text style={styles.errorText}>
-                Camera angle is too close or unclear for reliable scoring.
-              </Text>
-              <Text style={styles.errorText}>How to fix:</Text>
-              <Text style={styles.errorText}>• Move camera farther back</Text>
-              <Text style={styles.errorText}>• Record from the side</Text>
-              <Text style={styles.errorText}>
-                • Keep bar, chest, elbows, hips, knees, and feet visible
-              </Text>
-            </View>
-          )}
-
-        {result && !result.error && (
-          <View>
-            <Text style={styles.exercise}>
-              {result.analysis_mode === "poor_video_quality"
-                ? "Video Not Usable"
-                : result.rep_feedback?.length === 0
-                ? "Exercise Detected — Rep Analysis Incomplete"
-                : result.exercise_label}
+        {result?.feedback && !result.error && reps.length === 0 && (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorTitle}>Video Not Usable</Text>
+            <Text style={styles.errorText}>
+              Camera angle is too close or unclear for reliable scoring.
             </Text>
+            <Text style={styles.errorText}>
+              Move farther back, record from the side, and keep the full body
+              visible.
+            </Text>
+          </View>
+        )}
 
-            {overallScore !== null && (
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Overall Score</Text>
-                <Text style={styles.summaryScore}>{overallScore}/10</Text>
-                <Text style={styles.biggestFix}>Biggest Fix: {biggestFix}</Text>
-              </View>
-            )}
+        {result && !result.error && reps.length > 0 && (
+          <>
+            <View style={styles.dashboardGrid}>
+              <View style={styles.scoreCard}>
+                <Text style={styles.cardLabel}>Overall Score</Text>
 
-            {visualsLoading && reps.length > 0 && (
-              <View style={styles.visualsLoadingCard}>
-                <ActivityIndicator color="#86efac" />
-                <Text style={styles.visualsLoadingTitle}>
-                  Coaching visuals are being generated
+                <View
+                  style={[
+                    styles.scoreCircle,
+                    { borderColor: getScoreColor(avgScore || 0) },
+                  ]}
+                >
+                  <Text style={styles.scoreBig}>{displayScore}</Text>
+                  <Text style={styles.scoreSmall}>/100</Text>
+                </View>
+
+                <Text style={styles.exerciseName}>{result.exercise_label}</Text>
+                <Text style={styles.confidenceText}>
+                  Confidence {Math.round(Number(result.confidence || 0) * 100)}%
                 </Text>
-                <Text style={styles.visualsLoadingText}>
-                  You can review the score and rep feedback while the replay loads.
+              </View>
+
+              <View style={styles.insightCard}>
+                <Text style={styles.cardLabel}>Biggest Fix</Text>
+                <Text style={styles.bigFix}>{biggestFix}</Text>
+
+                <View style={styles.miniStats}>
+                  <View style={styles.statPill}>
+                    <Text style={styles.statNumber}>
+                      {result?.set_summary?.detected_reps || reps.length}
+                    </Text>
+                    <Text style={styles.statLabel}>Reps</Text>
+                  </View>
+
+                  <View style={styles.statPill}>
+                    <Text style={styles.statNumber}>
+                      {result?.set_summary?.best_rep || bestRep?.rep || "-"}
+                    </Text>
+                    <Text style={styles.statLabel}>Best</Text>
+                  </View>
+
+                  <View style={styles.statPill}>
+                    <Text style={styles.statNumber}>
+                      {result?.set_summary?.worst_rep || "-"}
+                    </Text>
+                    <Text style={styles.statLabel}>Needs Work</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {visualsLoading && (
+              <View style={styles.warningCard}>
+                <ActivityIndicator color="#86efac" />
+                <Text style={styles.warningTitle}>
+                  Coaching visuals are loading
+                </Text>
+                <Text style={styles.warningText}>
+                  Scores are ready. Phase images and replay will appear next.
                 </Text>
               </View>
             )}
 
             {result?.visuals_error && (
-              <View style={styles.warningCard}>
-                <Text style={styles.warningTitle}>Visuals Could Not Load</Text>
-                <Text style={styles.warningText}>{result.visuals_error}</Text>
-                <Text style={styles.warningText}>
-                  Scores and coaching feedback are still available below.
-                </Text>
+              <View style={styles.errorCard}>
+                <Text style={styles.errorTitle}>Visuals Could Not Load</Text>
+                <Text style={styles.errorText}>{result.visuals_error}</Text>
               </View>
             )}
 
-            {reps.length > 0 && (
-              <View style={styles.coachMapCard}>
-                <Text style={styles.coachMapTitle}>Tap a Coaching Zone</Text>
-                <Text style={styles.coachMapSubtitle}>
-                  Select a zone below the image to see what to fix.
-                </Text>
-
-                {coachingImageUrl ? (
-                  <View style={styles.coachingImageWrap}>
-                    <Image
-                      source={{ uri: coachingImageUrl }}
-                      style={styles.coachingImage}
-                      resizeMode="cover"
-                    />
-                  </View>
-                ) : (
-                  <View style={styles.noImageBox}>
-                    <Text style={styles.noImageTitle}>
-                      Coaching Image Not Generated Yet
-                    </Text>
-
-                    <Text style={styles.noImageText}>
-                      We identified the exercise and scored the reps.
-                    </Text>
-
-                    <Text style={styles.noImageReason}>
-                      Visuals may still be loading or the rep frames were unclear.
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.zoneChipGrid}>
-                  {zones.map((zone) => {
-                    const isActive = activeZone?.id === zone.id;
-
-                    return (
-                      <TouchableOpacity
-                        key={zone.id}
-                        style={[
-                          styles.zoneChip,
-                          {
-                            backgroundColor: getStatusColor(zone.status),
-                          },
-                          isActive && styles.zoneChipActive,
-                        ]}
-                        onPress={() => setSelectedZone(zone)}
-                      >
-                        <Text style={styles.zoneChipText}>{zone.title}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+            <View style={styles.card}>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={styles.sectionTitle}>Rep Breakdown</Text>
+                  <Text style={styles.sectionSub}>
+                    Score trend across the set
+                  </Text>
                 </View>
+              </View>
 
-                {activeZone && (
-                  <View style={styles.zoneInfoCard}>
-                    <View style={styles.zoneTitleRow}>
+              {reps.map((rep) => {
+                const score = Number(rep.score || 0);
+                const barWidth = `${Math.min(100, Math.max(8, score * 10))}%`;
+
+                return (
+                  <View key={`rep-${rep.rep}`} style={styles.repRow}>
+                    <View style={styles.repTop}>
+                      <Text style={styles.repLabel}>Rep {rep.rep}</Text>
+                      <Text style={styles.repScore}>{score.toFixed(1)}/10</Text>
+                    </View>
+
+                    <View style={styles.repBarTrack}>
                       <View
                         style={[
-                          styles.zoneStatusDot,
+                          styles.repBarFill,
                           {
-                            backgroundColor: getStatusColor(activeZone.status),
+                            width: barWidth,
+                            backgroundColor: getScoreColor(score),
                           },
                         ]}
                       />
-                      <Text style={styles.zoneTitle}>{activeZone.title}</Text>
                     </View>
 
-                    <Text style={styles.zoneStatus}>
-                      Status: {formatLabel(activeZone.status)}
+                    <Text style={styles.repFeedback}>
+                      {rep.feedback?.[0] || rep.issues?.[0] || "Good rep."}
                     </Text>
-                    <Text style={styles.zoneNote}>{activeZone.note}</Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Interactive Coaching Map</Text>
+              <Text style={styles.sectionSub}>
+                Tap a zone to see the most relevant frame and coaching note.
+              </Text>
+
+              <View style={styles.coachImageWrap}>
+                {coachingImageUrl ? (
+                  <Image
+                    key={`${activeZone?.id}-${coachingImagePath}`}
+                    source={{ uri: coachingImageUrl }}
+                    style={styles.coachImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.emptyImage}>
+                    <Text style={styles.emptyImageText}>Visual loading...</Text>
                   </View>
                 )}
               </View>
-            )}
 
-            {result?.overlay_video_url && (
-              <View style={styles.overlayCard}>
-                <Text style={styles.overlayTitle}>Coached Replay</Text>
+              <View style={styles.zoneGrid}>
+                {zones.map((zone) => {
+                  const isActive = activeZone?.id === zone.id;
+                  const color = getStatusColor(zone.status);
 
-                <View style={styles.legendRow}>
-                  <View style={styles.legendBadge}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: "#22c55e" }]}
-                    />
-                    <Text style={styles.legendText}>Your Movement</Text>
-                  </View>
+                  return (
+                    <TouchableOpacity
+                      key={zone.id}
+                      style={[
+                        styles.zonePill,
+                        isActive && styles.zonePillActive,
+                        isActive && { borderColor: color },
+                      ]}
+                      onPress={() => setSelectedZone(zone)}
+                    >
+                      <View
+                        style={[styles.statusDot, { backgroundColor: color }]}
+                      />
+                      <Text style={styles.zoneText}>{zone.title}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
-                  <View style={styles.legendBadge}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: "#3b82f6" }]}
-                    />
-                    <Text style={styles.legendText}>Ideal Form</Text>
-                  </View>
+              {activeZone && (
+                <View style={styles.coachingNote}>
+                  <Text style={styles.noteTitle}>{activeZone.title}</Text>
+                  <Text style={styles.noteStatus}>
+                    Status: {formatLabel(activeZone.status)}
+                  </Text>
+                  <Text style={styles.noteText}>{activeZone.note}</Text>
                 </View>
+              )}
+            </View>
 
-                <Text style={styles.overlayText}>What happened: {biggestFix}</Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>{phaseConfig.title}</Text>
+              <Text style={styles.sectionSub}>{phaseConfig.text}</Text>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.phaseScroller}
+              >
+                {phaseConfig.items.map(([key, label]) => {
+                  const path = phaseImages[key];
+                  const url = path ? `${API_URL}${path}` : null;
+
+                  return (
+                    <View key={key} style={styles.phaseCard}>
+                      <View style={styles.phaseImageWrap}>
+                        {url ? (
+                          <Image
+                            source={{ uri: url }}
+                            style={styles.phaseImage}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={styles.emptyPhase}>
+                            <Text style={styles.emptyPhaseText}>No image</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.phaseLabel}>{label}</Text>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {overlayUrl && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Coached Replay</Text>
+                <Text style={styles.sectionSub}>
+                  Overlay video with rep feedback and movement markers.
+                </Text>
 
                 <Video
-                  source={{ uri: `${API_BASE_URL}${result.overlay_video_url}` }}
-                  style={styles.overlayVideo}
+                  source={{ uri: overlayUrl }}
+                  style={styles.videoPlayer}
                   useNativeControls
-                  shouldPlay={false}
                   resizeMode={ResizeMode.CONTAIN}
                 />
               </View>
             )}
 
-            {result?.phase_images && (
-              <View style={styles.phaseCard}>
-                <Text style={styles.phaseTitle}>Key Positions</Text>
-                <Text style={styles.phaseText}>{phaseConfig.text}</Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Coach Summary</Text>
 
-                <View style={styles.legendRow}>
-                  <View style={styles.legendBadge}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: "#22c55e" }]}
-                    />
-                    <Text style={styles.legendText}>Your Movement</Text>
-                  </View>
+              <Text style={styles.summaryLine}>
+                {result?.set_summary?.trend || "Form summary will appear here."}
+              </Text>
 
-                  <View style={styles.legendBadge}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: "#3b82f6" }]}
-                    />
-                    <Text style={styles.legendText}>Ideal Form</Text>
-                  </View>
-                </View>
-
-                {phaseConfig.items.map(([key, label]) => {
-                  const imageUrl = result.phase_images?.[key];
-                  if (!imageUrl) return null;
-
-                  return (
-                    <View
-                      key={key}
-                      style={[
-                        styles.phaseImageCard,
-                        key === phaseConfig.highlight && styles.highlightCard,
-                      ]}
-                    >
-                      <Text style={styles.phaseImageLabel}>{label}</Text>
-
-                      <Image
-                        source={{ uri: `${API_BASE_URL}${imageUrl}` }}
-                        style={styles.phaseSingleImage}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-
-            {reps.map((rep, i) => (
-              <View key={i} style={styles.card}>
-                <Text style={styles.rep}>
-                  Rep {rep.rep} — {rep.grade}
+              {result?.feedback?.map((item, index) => (
+                <Text key={`feedback-${index}`} style={styles.feedbackLine}>
+                  • {item}
                 </Text>
-
-                {rep.breakdown && (
-                  <View style={styles.metrics}>
-                    {Object.entries(rep.breakdown)
-                      .filter(([key]) => !hiddenKeys.includes(key))
-                      .map(([key, value]) => (
-                        <Text key={key} style={styles.metricText}>
-                          {formatLabel(key)}: {formatLabel(value)}
-                        </Text>
-                      ))}
-                  </View>
-                )}
-
-                {rep.issues?.length > 0 && (
-                  <>
-                    <Text style={styles.section}>Issues</Text>
-                    {rep.issues.map((x, j) => (
-                      <Text key={j} style={styles.issue}>
-                        • {x}
-                      </Text>
-                    ))}
-                  </>
-                )}
-
-                {rep.feedback?.length > 0 && (
-                  <>
-                    <Text style={styles.section}>
-                      {rep.issues?.length > 0 ? "What to Fix" : "Coach Note"}
-                    </Text>
-
-                    {rep.feedback.map((item, j) => (
-                      <Text key={j} style={styles.coach}>
-                        → {item}
-                      </Text>
-                    ))}
-                  </>
-                )}
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -941,457 +866,434 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b1020" },
-  content: { padding: 20, paddingBottom: 60 },
-
-  title: { color: "#fff", fontSize: 32, fontWeight: "800" },
-  buttons: { gap: 10, marginVertical: 20 },
-
-  primary: {
-    backgroundColor: "#2563eb",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
+  container: {
+    flex: 1,
+    backgroundColor: "#020617",
   },
-
-  secondary: {
-    backgroundColor: "#1f2937",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
+  content: {
+    padding: 18,
+    paddingBottom: 42,
   },
-
-  analyze: {
-    backgroundColor: "#16a34a",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 20,
+  hero: {
+    backgroundColor: "#0f172a",
+    borderRadius: 28,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 16,
+    marginBottom: 16,
   },
-
-  disabled: { opacity: 0.7 },
-
-  buttonText: {
-    color: "#fff",
+  eyebrow: {
+    color: "#86efac",
+    fontSize: 13,
     fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 8,
   },
-
-  loadingContent: {
-    alignItems: "center",
-  },
-
-  loadingTitle: {
-    color: "#fff",
+  title: {
+    color: "#f8fafc",
+    fontSize: 34,
     fontWeight: "900",
-    marginTop: 8,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    color: "#94a3b8",
     fontSize: 15,
-  },
-
-  loadingSubtitle: {
-    color: "#d1fae5",
-    marginTop: 4,
-    fontSize: 12,
-    textAlign: "center",
-  },
-
-  previewCard: {
-    backgroundColor: "#111827",
-    padding: 12,
-    borderRadius: 14,
-    marginBottom: 15,
-  },
-
-  previewLabel: { color: "#9ca3af", fontSize: 12, marginBottom: 2 },
-  previewName: { color: "#fff", fontWeight: "700", marginBottom: 10 },
-
-  video: {
-    width: "100%",
-    height: 220,
-    backgroundColor: "#000",
-    borderRadius: 12,
-    marginTop: 10,
-  },
-
-  visualsLoadingCard: {
-    backgroundColor: "#052e16",
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#22c55e",
-    alignItems: "center",
-  },
-
-  visualsLoadingTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "900",
+    lineHeight: 22,
     marginTop: 8,
-    textAlign: "center",
+    maxWidth: 280,
   },
-
-  visualsLoadingText: {
-    color: "#bbf7d0",
-    fontSize: 14,
-    marginTop: 6,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-
-  warningCard: {
-    backgroundColor: "#78350f",
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 16,
-  },
-
-  warningTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 6,
-  },
-
-  warningText: {
-    color: "#fffbeb",
-    marginTop: 4,
-  },
-
-  coachMapCard: {
-    backgroundColor: "#111827",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#8b5cf6",
-  },
-
-  coachMapTitle: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "900",
-    marginBottom: 6,
-  },
-
-  coachMapSubtitle: {
-    color: "#c4b5fd",
-    fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 14,
-  },
-
-  coachingImageWrap: {
-    width: "100%",
-    height: 420,
-    backgroundColor: "#020617",
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 14,
-    position: "relative",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-
-  coachingImage: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: "#000",
-  },
-
-  noImageBox: {
-    minHeight: 220,
-    backgroundColor: "#020617",
-    borderRadius: 16,
+  logoBubble: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: "#86efac",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
-    padding: 20,
   },
-
-  noImageTitle: {
-    color: "#ffffff",
-    fontSize: 22,
+  logoText: {
+    color: "#020617",
+    fontSize: 20,
     fontWeight: "900",
-    marginBottom: 12,
-    textAlign: "center",
   },
-
-  noImageText: {
-    color: "#d1d5db",
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: "center",
-    marginBottom: 12,
-  },
-
-  noImageReason: {
-    color: "#c4b5fd",
-    fontSize: 15,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-
-  zoneChipGrid: {
+  actionRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 10,
     marginBottom: 14,
   },
-
-  zoneChip: {
+  primaryButton: {
+    flex: 1,
+    backgroundColor: "#22c55e",
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  primaryButtonText: {
+    color: "#020617",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: "#111827",
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#1f2937",
+  },
+  secondaryButtonText: {
+    color: "#e5e7eb",
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  selectedCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    marginBottom: 14,
+  },
+  cardLabel: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  selectedName: {
+    color: "#f8fafc",
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  analyzeButton: {
+    backgroundColor: "#86efac",
+    borderRadius: 22,
+    paddingVertical: 18,
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  disabledButton: {
+    opacity: 0.75,
+  },
+  analyzeButtonText: {
+    color: "#020617",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+  loadingBlock: {
+    alignItems: "center",
+    gap: 8,
+  },
+  dashboardGrid: {
+    gap: 14,
+    marginBottom: 14,
+  },
+  scoreCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 28,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    alignItems: "center",
+  },
+  scoreCircle: {
+    width: 154,
+    height: 154,
+    borderRadius: 77,
+    borderWidth: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 18,
+    marginBottom: 14,
+    backgroundColor: "#020617",
+  },
+  scoreBig: {
+    color: "#f8fafc",
+    fontSize: 42,
+    fontWeight: "900",
+    lineHeight: 48,
+  },
+  scoreSmall: {
+    color: "#94a3b8",
+    fontWeight: "800",
+  },
+  exerciseName: {
+    color: "#f8fafc",
+    fontSize: 23,
+    fontWeight: "900",
+    marginTop: 4,
+  },
+  confidenceText: {
+    color: "#94a3b8",
+    marginTop: 6,
+    fontWeight: "700",
+  },
+  insightCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 28,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+  },
+  bigFix: {
+    color: "#f8fafc",
+    fontSize: 22,
+    fontWeight: "900",
+    lineHeight: 29,
+    marginTop: 10,
+  },
+  miniStats: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 18,
+  },
+  statPill: {
+    flex: 1,
+    backgroundColor: "#020617",
+    borderRadius: 18,
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#1e293b",
+  },
+  statNumber: {
+    color: "#86efac",
+    fontSize: 22,
+    fontWeight: "900",
+  },
+  statLabel: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: "800",
+    marginTop: 3,
+    textTransform: "uppercase",
+  },
+  card: {
+    backgroundColor: "#0f172a",
+    borderRadius: 28,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    marginBottom: 14,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  sectionTitle: {
+    color: "#f8fafc",
+    fontSize: 21,
+    fontWeight: "900",
+  },
+  sectionSub: {
+    color: "#94a3b8",
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 5,
+    marginBottom: 14,
+  },
+  repRow: {
+    marginTop: 14,
+  },
+  repTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  repLabel: {
+    color: "#e5e7eb",
+    fontWeight: "900",
+  },
+  repScore: {
+    color: "#f8fafc",
+    fontWeight: "900",
+  },
+  repBarTrack: {
+    height: 12,
     borderRadius: 999,
+    backgroundColor: "#020617",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1e293b",
+  },
+  repBarFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+  repFeedback: {
+    color: "#94a3b8",
+    fontSize: 13,
+    marginTop: 7,
+    lineHeight: 18,
+  },
+  coachImageWrap: {
+    height: 260,
+    borderRadius: 22,
+    overflow: "hidden",
+    backgroundColor: "#020617",
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    marginBottom: 14,
+  },
+  coachImage: {
+    width: "100%",
+    height: "100%",
+  },
+  emptyImage: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyImageText: {
+    color: "#64748b",
+    fontWeight: "800",
+  },
+  zoneGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  zonePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    borderRadius: 999,
+    backgroundColor: "#020617",
+    borderWidth: 1,
+    borderColor: "#1e293b",
+  },
+  zonePillActive: {
+    backgroundColor: "#111827",
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.7)",
   },
-
-  zoneChipActive: {
-    borderColor: "#ffffff",
-    transform: [{ scale: 1.04 }],
+  statusDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 999,
   },
-
-  zoneChipText: {
-    color: "#ffffff",
+  zoneText: {
+    color: "#e5e7eb",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  coachingNote: {
+    marginTop: 14,
+    backgroundColor: "#020617",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+  },
+  noteTitle: {
+    color: "#f8fafc",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  noteStatus: {
+    color: "#86efac",
+    fontWeight: "900",
+    marginTop: 6,
+  },
+  noteText: {
+    color: "#cbd5e1",
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 8,
+  },
+  phaseScroller: {
+    gap: 12,
+    paddingRight: 12,
+  },
+  phaseCard: {
+    width: 162,
+    backgroundColor: "#020617",
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1e293b",
+  },
+  phaseImageWrap: {
+    height: 128,
+    backgroundColor: "#111827",
+  },
+  phaseImage: {
+    width: "100%",
+    height: "100%",
+  },
+  emptyPhase: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyPhaseText: {
+    color: "#64748b",
+    fontWeight: "800",
+  },
+  phaseLabel: {
+    color: "#f8fafc",
+    fontWeight: "900",
+    padding: 12,
+    textAlign: "center",
+  },
+  videoPlayer: {
+    height: 260,
+    borderRadius: 22,
+    backgroundColor: "#020617",
+  },
+  warningCard: {
+    backgroundColor: "#102018",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#14532d",
+    marginBottom: 14,
+    gap: 8,
+  },
+  warningTitle: {
+    color: "#bbf7d0",
     fontSize: 16,
     fontWeight: "900",
   },
-
-  zoneInfoCard: {
-    backgroundColor: "#020617",
-    padding: 14,
-    borderRadius: 14,
+  warningText: {
+    color: "#dcfce7",
+    lineHeight: 20,
+  },
+  errorCard: {
+    backgroundColor: "#2a1111",
+    borderRadius: 24,
+    padding: 18,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
+    borderColor: "#7f1d1d",
+    marginBottom: 14,
   },
-
-  zoneTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-
-  zoneStatusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-
-  zoneTitle: {
-    color: "#fff",
-    fontSize: 19,
+  errorTitle: {
+    color: "#fecaca",
+    fontSize: 17,
     fontWeight: "900",
+    marginBottom: 8,
   },
-
-  zoneStatus: {
-    color: "#c4b5fd",
-    fontSize: 14,
-    fontWeight: "800",
-    marginBottom: 6,
+  errorText: {
+    color: "#fecaca",
+    lineHeight: 21,
   },
-
-  zoneNote: {
+  summaryLine: {
     color: "#e5e7eb",
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: "600",
-  },
-
-  overlayCard: {
-    backgroundColor: "#052e16",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#22c55e",
-  },
-
-  overlayTitle: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "900",
-    marginBottom: 10,
-  },
-
-  overlayText: {
-    color: "#86efac",
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  overlayVideo: {
-    width: "100%",
-    height: 300,
-    backgroundColor: "#000",
-    borderRadius: 12,
-  },
-
-  legendRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 12,
-    flexWrap: "wrap",
-  },
-
-  legendBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-  },
-
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-
-  legendText: { color: "#fff", fontSize: 14, fontWeight: "700" },
-
-  phaseCard: {
-    backgroundColor: "#111827",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#3b82f6",
-  },
-
-  phaseTitle: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "900",
-    marginBottom: 8,
-  },
-
-  phaseText: {
-    color: "#bfdbfe",
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  phaseImageCard: {
-    backgroundColor: "#020617",
-    borderRadius: 14,
-    padding: 10,
-    marginTop: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-
-  highlightCard: {
-    borderColor: "#fbbf24",
-    borderWidth: 2,
-  },
-
-  phaseImageLabel: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 8,
-  },
-
-  phaseSingleImage: {
-    width: "100%",
-    height: 280,
-    backgroundColor: "#000",
-    borderRadius: 12,
-  },
-
-  exercise: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "900",
-    marginBottom: 12,
-  },
-
-  summaryCard: {
-    backgroundColor: "#111827",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-
-  summaryLabel: {
-    color: "#9ca3af",
-    fontSize: 13,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-
-  summaryScore: {
-    color: "#fff",
-    fontSize: 34,
-    fontWeight: "900",
-  },
-
-  biggestFix: {
-    color: "#86efac",
-    fontSize: 16,
-    fontWeight: "700",
     marginTop: 10,
-  },
-
-  card: {
-    backgroundColor: "#1f2937",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-  },
-
-  rep: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 20,
     marginBottom: 10,
   },
-
-  metrics: { marginBottom: 14 },
-
-  metricText: {
-    color: "#d1d5db",
-    fontSize: 16,
-    marginBottom: 3,
-  },
-
-  section: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 17,
-    marginTop: 6,
-  },
-
-  issue: {
-    color: "#fca5a5",
-    fontSize: 16,
-    marginTop: 3,
-  },
-
-  coach: {
-    color: "#86efac",
-    fontSize: 16,
-    marginTop: 5,
-  },
-
-  errorCard: {
-    backgroundColor: "#7f1d1d",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 15,
-  },
-
-  errorText: { color: "#fff", marginTop: 4 },
-
-  errorTitle: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "900",
-    marginBottom: 10,
+  feedbackLine: {
+    color: "#94a3b8",
+    lineHeight: 22,
+    marginTop: 4,
   },
 });
