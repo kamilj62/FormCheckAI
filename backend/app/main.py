@@ -2846,7 +2846,7 @@ def build_coaching_zones(exercise_label, rep_feedback):
     return {}
 
 
-def analyze_video(video_path):
+def analyze_video(video_path, make_visuals=True):
     try:
         cap = cv2.VideoCapture(video_path)
 
@@ -2879,7 +2879,6 @@ def analyze_video(video_path):
         ) as pose:
             while cap.isOpened():
                 ret, frame = cap.read()
-
                 if not ret:
                     break
 
@@ -2967,7 +2966,7 @@ def analyze_video(video_path):
         overlay_video_url = None
         phase_images = None
 
-        if rep_feedback:
+        if make_visuals and rep_feedback:
             phase_rep = choose_phase_rep(rep_feedback)
 
             overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
@@ -3071,12 +3070,13 @@ async def generate_visuals(file: UploadFile = File(...)):
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    result = analyze_video(temp_path)
+    result = analyze_video(temp_path, make_visuals=False)
+
+    if result.get("error"):
+        return result
 
     label = result["debug"].get("final_prediction")
     rep_feedback = result.get("rep_feedback", [])
-
-    # Faster visual rendering
     sample_every = result["debug"].get("sample_every", 5)
 
     overlay_video_url = None
@@ -3086,28 +3086,27 @@ async def generate_visuals(file: UploadFile = File(...)):
         phase_rep = choose_phase_rep(rep_feedback, min_frames=8)
         normalized_label = label.lower().replace(" ", "_")
 
-        # Phase images first because they are the most useful
         if normalized_label == "deadlift":
             phase_images = create_deadlift_phase_images(
-                input_path=temp_path,
-                output_dir=OVERLAY_DIR,
-                rep=phase_rep,
+                temp_path,
+                OVERLAY_DIR,
+                phase_rep,
                 sample_every=sample_every,
             )
 
         elif normalized_label == "squat":
             phase_images = create_squat_phase_images(
-                input_path=temp_path,
-                output_dir=OVERLAY_DIR,
-                rep=phase_rep,
+                temp_path,
+                OVERLAY_DIR,
+                phase_rep,
                 sample_every=sample_every,
             )
 
         elif normalized_label == "push_press":
             phase_images = create_push_press_phase_images(
-                input_path=temp_path,
-                output_dir=OVERLAY_DIR,
-                rep=phase_rep,
+                temp_path,
+                OVERLAY_DIR,
+                phase_rep,
                 sample_every=sample_every,
             )
 
@@ -3119,7 +3118,6 @@ async def generate_visuals(file: UploadFile = File(...)):
                 sample_every=sample_every,
             )
 
-        # Overlay second because it is slower
         overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
         overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
 
@@ -3143,24 +3141,13 @@ async def generate_visuals(file: UploadFile = File(...)):
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
-    try:
-        suffix = Path(file.filename or "upload.mov").suffix or ".mov"
+    suffix = os.path.splitext(file.filename)[1] or ".mov"
+    temp_filename = f"upload_{uuid.uuid4().hex[:8]}{suffix}"
+    temp_path = os.path.join(UPLOAD_DIR, temp_filename)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp.write(await file.read())
-            video_path = tmp.name
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-        result = analyze_video(video_path)
+    result = analyze_video(temp_path, make_visuals=False)
 
-        print("\n====================")
-        print("BACKEND RESULT")
-        print(result)
-        print("====================\n")
-
-        return result
-
-    except Exception as e:
-        return {
-            "error": True,
-            "message": str(e),
-        }
+    return result
