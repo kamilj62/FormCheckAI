@@ -52,7 +52,26 @@ MODEL_DIR = BASE_DIR / "models"
 
 MODEL = NumpyFormCheckModel(MODEL_DIR)
 
+OVERHEAD_ROUTER_MODEL = tf.keras.models.load_model(
+    MODEL_DIR / "movement_router_v2.keras"
+)
+
+OVERHEAD_ROUTER_LABELS = {
+    0: "squat_front",
+    1: "strict_press",
+}
+
+SQUAT_ROUTER_MODEL = tf.keras.models.load_model(
+    MODEL_DIR / "squat_router.keras"
+)
+
+SQUAT_ROUTER_LABELS = {
+    0: "squat_back",
+    1: "squat_front",
+}
+
 CLASS_NAMES = ["bench_press", "deadlift", "push_press", "squat"]
+
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
@@ -1175,12 +1194,19 @@ def find_push_press_phase_window(start_idx, end_idx):
     }
 
 
-def analyze_push_press_reps(biomechanics):
+def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
     knee = np.array([b["knee_angle"] for b in biomechanics])
     wrist_y = np.array([b["wrist_y"] for b in biomechanics])
     shoulder_y = np.array([b["shoulder_y"] for b in biomechanics])
     wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
     valgus = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
+
+    label_text = exercise_label.replace("_", " ")
+
+    if exercise_label == "strict_press":
+        good_rep_message = "Good strict press rep."
+    else:
+        good_rep_message = "Good push press rep."
 
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -1237,32 +1263,32 @@ def analyze_push_press_reps(biomechanics):
             issues = []
             feedback = []
 
-            # DIP
-            if min_knee > 172:
-                issues.append("Dip is too shallow.")
-                feedback.append("Use a stronger dip to generate power.")
+            if exercise_label == "push_press":
+                if min_knee > 172:
+                    issues.append("Dip is too shallow.")
+                    feedback.append("Use a stronger dip to generate power.")
 
-            # LOCKOUT
+            if exercise_label == "strict_press":
+                if min_knee < 155:
+                    issues.append("Knees bend during strict press.")
+                    feedback.append("Keep your knees locked and press without dipping.")
+
             if wrist_above < 0.35:
                 issues.append("Incomplete overhead lockout.")
                 feedback.append("Fully extend arms overhead.")
 
-            # BAR PATH
             if wrist_drift > 0.03:
                 issues.append("Bar drift detected.")
-                feedback.append(
-                    "Keep the bar path vertical and press straight overhead."
-                )
+                feedback.append("Keep the bar path vertical and press straight overhead.")
 
-            # KNEES
-            if min_valgus < 0.65:
-                issues.append("Knees cave inward significantly during dip.")
-                feedback.append("Force knees out aggressively during the dip.")
-            elif min_valgus < 0.8:
-                issues.append("Mild knee cave during dip.")
-                feedback.append("Keep knees tracking over toes.")
+            if exercise_label == "push_press":
+                if min_valgus < 0.65:
+                    issues.append("Knees cave inward significantly during dip.")
+                    feedback.append("Force knees out aggressively during the dip.")
+                elif min_valgus < 0.8:
+                    issues.append("Mild knee cave during dip.")
+                    feedback.append("Keep knees tracking over toes.")
 
-            # SCORING
             base_score = 10.0
             penalty = 0
 
@@ -1283,65 +1309,65 @@ def analyze_push_press_reps(biomechanics):
             elif drift_severity == "moderate":
                 penalty += 0.5
 
-            score = base_score - penalty
-            score = max(1.0, round(score, 1))
-
-            # Good rep floor
-            if (
-                min_knee <= 172
-                and wrist_above >= 0.35
-                and drift_severity == "minor"
-                and min_valgus >= 0.8
-            ):
-                score = max(score, 9.0)
+            score = max(1.0, round(base_score - penalty, 1))
 
             breakdown = {
-                "dip": "good" if min_knee <= 172 else "shallow",
                 "lockout": "good" if wrist_above >= 0.35 else "incomplete",
                 "bar_path": "drifting" if wrist_drift > 0.03 else "good",
                 "bar_severity": drift_severity,
-                "knees": (
+            }
+
+            if exercise_label == "push_press":
+                breakdown["dip"] = "good" if min_knee <= 172 else "shallow"
+                breakdown["knees"] = (
                     "poor" if min_valgus < 0.65
                     else "borderline" if min_valgus < 0.8
                     else "good"
-                ),
-            }
+                )
+
+            if exercise_label == "strict_press":
+                breakdown["knees"] = "good" if min_knee >= 155 else "bent"
+                breakdown["dip"] = "not_used"
 
             score = apply_coach_reward(score, issues, breakdown)
 
             if not issues:
                 score = max(score, 9.0)
+                feedback = [good_rep_message]
 
-            if score >= 9.0 and issues == ["Mild knee cave during dip."]:
-                issues = []
-                feedback = ["Good push press rep."]
-                breakdown["knees"] = "good"
-
-            if score >= 9.0 and not issues:
-                feedback = ["Good push press rep."]
-
-            if not reps and len(biomechanics) >= 10:
-                start_idx = int(len(frame_numbers) * 0.05)
-                end_idx = int(len(frame_numbers) * 0.45)
-
-                reps.append({
-                    "rep": 1,
-                    "start_frame": int(frame_numbers[start_idx]),
-                    "end_frame": int(frame_numbers[end_idx]),
-                    "score": 9.0,
-                    "grade": "Excellent",
-                    "issues": [],
-                    "breakdown": {
-                        "dip": "good",
-                        "lockout": "good",
-                        "bar_path": "good",
-                        "bar_severity": "minor",
-                        "knees": "good",
-                    },
-                    "feedback": ["Good push press rep."],
-                })
+            reps.append({
+                "rep": len(reps) + 1,
+                "start_frame": int(frame_numbers[start]),
+                "end_frame": int(frame_numbers[end]),
+                "score": score,
+                "grade": grade_score(score),
+                "issues": issues,
+                "breakdown": breakdown,
+                "feedback": feedback or [good_rep_message],
+            })
 
             in_rep = False
+
+    if not reps and len(biomechanics) >= 10:
+        start_idx = int(len(frame_numbers) * 0.05)
+        end_idx = int(len(frame_numbers) * 0.45)
+
+        reps.append({
+            "rep": 1,
+            "start_frame": int(frame_numbers[start_idx]),
+            "end_frame": int(frame_numbers[end_idx]),
+            "score": 9.0,
+            "grade": "Excellent",
+            "issues": [],
+            "breakdown": {
+                "dip": "not_used" if exercise_label == "strict_press" else "good",
+                "lockout": "good",
+                "bar_path": "good",
+                "bar_severity": "minor",
+                "knees": "good",
+            },
+            "feedback": [good_rep_message],
+        })
 
     return reps, build_set_summary(reps)
 
@@ -2924,14 +2950,58 @@ def analyze_video(video_path, make_visuals=True):
                 },
             }
 
-        seq = pad_or_trim(np.array(sequence), target_len=30)
-        seq = add_velocity(seq)
+        seq_base = pad_or_trim(np.array(sequence), target_len=30)
+        seq = add_velocity(seq_base)
 
         probs = MODEL.predict_proba(seq)
 
         raw_idx = int(np.argmax(probs))
-        raw_label = CLASS_NAMES[raw_idx]
-        raw_confidence = float(probs[raw_idx])
+
+        if raw_idx >= len(CLASS_NAMES):
+            raw_label = "squat"
+            raw_confidence = float(np.max(probs))
+        else:
+            raw_label = CLASS_NAMES[raw_idx]
+            raw_confidence = float(probs[raw_idx])
+
+        # Overhead router: push_press vs strict_press
+        overhead_router_label = None
+        overhead_router_confidence = None
+
+        if raw_label == "push_press":
+            overhead_probs = OVERHEAD_ROUTER_MODEL.predict(
+                np.expand_dims(seq_base, axis=0),
+                verbose=0,
+            )[0]
+
+            overhead_idx = int(np.argmax(overhead_probs))
+            overhead_router_label = OVERHEAD_ROUTER_LABELS[overhead_idx]
+            overhead_router_confidence = float(overhead_probs[overhead_idx])
+
+            if (
+                overhead_router_label == "strict_press"
+                and overhead_router_confidence > 0.85
+            ):
+                raw_label = "strict_press"
+                raw_confidence = overhead_router_confidence
+
+        # Squat router: squat_back vs squat_front
+        squat_router_label = None
+        squat_router_confidence = None
+
+        if raw_label == "squat":
+            squat_probs = SQUAT_ROUTER_MODEL.predict(
+                np.expand_dims(seq_base, axis=0),
+                verbose=0,
+            )[0]
+
+            squat_idx = int(np.argmax(squat_probs))
+            squat_router_label = SQUAT_ROUTER_LABELS[squat_idx]
+            squat_router_confidence = float(squat_probs[squat_idx])
+
+            if squat_router_confidence > 0.75:
+                raw_label = squat_router_label
+                raw_confidence = squat_router_confidence
 
         summary = summarize_biomechanics(biomechanics)
 
@@ -2945,7 +3015,7 @@ def analyze_video(video_path, make_visuals=True):
         analysis_mode = "classification_only"
         rep_feedback = []
 
-        if label == "squat":
+        if label in ["squat", "squat_back", "squat_front"]:
             rep_feedback, _ = analyze_squat_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
@@ -2953,8 +3023,8 @@ def analyze_video(video_path, make_visuals=True):
             rep_feedback, _ = analyze_deadlift_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
-        elif label == "push_press":
-            rep_feedback, _ = analyze_push_press_reps(biomechanics)
+        elif label in ["push_press", "strict_press"]:
+            rep_feedback, _ = analyze_push_press_reps(biomechanics, label)
             analysis_mode = "detailed_rep_analysis"
 
         elif label == "bench_press":
@@ -2984,7 +3054,7 @@ def analyze_video(video_path, make_visuals=True):
                 overlay_video_url = f"/outputs/{overlay_filename}"
 
             if phase_rep:
-                if label == "squat":
+                if label in ["squat", "squat_back", "squat_front"]:
                     phase_images = create_squat_phase_images(
                         video_path,
                         OVERLAY_DIR,
@@ -3000,7 +3070,7 @@ def analyze_video(video_path, make_visuals=True):
                         sample_every=sample_every,
                     )
 
-                elif label == "push_press":
+                elif label in ["push_press", "strict_press"]:
                     phase_images = create_push_press_phase_images(
                         video_path,
                         OVERLAY_DIR,
@@ -3041,13 +3111,26 @@ def analyze_video(video_path, make_visuals=True):
                 "override_used": override_used,
                 "classification_reason": reason,
                 "raw_predictions": dict(zip(CLASS_NAMES, probs.tolist())),
+                "overhead_router_prediction": overhead_router_label,
+                "overhead_router_confidence": (
+                    round(overhead_router_confidence, 4)
+                    if overhead_router_confidence is not None
+                    else None
+                ),
+                "squat_router_prediction": squat_router_label,
+                "squat_router_confidence": (
+                    round(squat_router_confidence, 4)
+                    if squat_router_confidence is not None
+                    else None
+                ),
                 "biomechanics": summary,
                 "frames_seen": total_frames,
                 "frames_processed": len(sequence),
                 "pose_frames": pose_frames,
                 "sample_every": sample_every,
                 "runtime_sequence_shape": list(seq.shape),
-                "classifier_input_shape": [30, 68],
+                "classifier_input_shape": [30, 136],
+                "router_input_shape": [30, 68],
             },
         }
 
@@ -3059,8 +3142,8 @@ def analyze_video(video_path, make_visuals=True):
             "error": True,
             "message": str(e),
         }
-
-
+    
+    
 @app.post("/generate_visuals")
 async def generate_visuals(file: UploadFile = File(...)):
     suffix = os.path.splitext(file.filename)[1] or ".mov"
