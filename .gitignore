@@ -31,3 +31,19 @@ kaggle.json
 # Outputs
 outputs/
 Oly_Data/
+=======
+__pycache__/
+*.pyc
+.venv/
+.venv312/
+backend/.venv/
+backend/.venv312/
+backend/outputs/
+.env
+node_modules/
+.expo/
+dist/
+.DS_Store
+*.mov
+*.mp4
+*.log

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+numpy
+opencv-python
+mediapipe==0.10.14
+scikit-learn
+tensorflow
+python-multipart
+
