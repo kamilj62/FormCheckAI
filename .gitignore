@@ -48,6 +48,3 @@ dist/
 *.mp4
 *.log
 *.numbers
-
-backend/uploads/
-backend/outputs/
