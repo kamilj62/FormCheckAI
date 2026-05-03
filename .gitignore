@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual envs
+.venv/
+.venv_eval/
+.venv_pose/
+
+# Mac
+.DS_Store
+
+# Data / models
+FormCheck_Data/
+data/
+models/
+
+# Videos
+*.mov
+*.mp4
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Secrets
+kaggle.json
+.env
+
+# Outputs
+outputs/
+Oly_Data/
