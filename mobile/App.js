@@ -67,6 +67,25 @@ const getBestRep = (reps) => {
 const getPhaseConfig = (exerciseLabel) => {
   const label = String(exerciseLabel || "").toLowerCase();
 
+  if (
+    label.includes("olympic") ||
+    label.includes("clean") ||
+    label.includes("snatch") ||
+    label.includes("jerk")
+  ) {
+    return {
+      title: "Olympic Lift Phase Review",
+      text: "Setup → First Pull → Extension → Catch → Finish",
+      items: [
+        ["setup", "Setup"],
+        ["first_pull", "First Pull"],
+        ["extension", "Extension"],
+        ["catch", "Catch"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
   if (label.includes("push press")) {
     return {
       title: "Push Press Phase Review",
@@ -127,6 +146,40 @@ const getInteractiveZones = (result) => {
   const reps = result?.rep_feedback || [];
   const bestRep = getBestRep(reps);
   const breakdown = bestRep?.breakdown || {};
+
+  if (
+    label.includes("olympic") ||
+    label.includes("clean") ||
+    label.includes("snatch") ||
+    label.includes("jerk")
+  ) {
+    return [
+      {
+        id: "setup",
+        title: "Setup",
+        status: "good",
+        note: "Start with the bar close, chest up, and full-body tension.",
+      },
+      {
+        id: "pull",
+        title: "First Pull",
+        status: "good",
+        note: "Keep the bar close as it passes the knees.",
+      },
+      {
+        id: "extension",
+        title: "Extension",
+        status: "good",
+        note: "Drive tall through the legs and hips before pulling under.",
+      },
+      {
+        id: "catch",
+        title: "Catch",
+        status: "good",
+        note: "Receive the bar under control before standing to finish.",
+      },
+    ];
+  }
 
   if (label.includes("push press")) {
     return [
@@ -292,6 +345,20 @@ const getZoneImagePath = (result, activeZone) => {
   const images = result?.phase_images || {};
   const label = String(result?.exercise_label || "").toLowerCase();
   const zoneId = activeZone?.id;
+
+  if (
+  label.includes("olympic") ||
+  label.includes("clean") ||
+  label.includes("snatch") ||
+  label.includes("jerk")
+) {
+  if (zoneId === "setup") return images.setup;
+  if (zoneId === "pull") return images.first_pull || images.setup;
+  if (zoneId === "extension") return images.extension || images.first_pull;
+  if (zoneId === "catch") return images.catch || images.extension;
+
+  return images.catch || images.extension || images.finish || images.setup;
+}
 
   if (label.includes("bench")) {
     if (zoneId === "wrists") return images.press || images.lockout || images.bottom;
@@ -528,8 +595,8 @@ export default function App() {
 
   const coachingImagePath = getZoneImagePath(result, activeZone);
   const coachingImageUrl = coachingImagePath
-  ? `${API_URL}${coachingImagePath}?zone=${activeZone?.id || "default"}`
-  : null;
+    ? `${API_URL}${coachingImagePath}?zone=${activeZone?.id || "default"}`
+    : null;
 
   const overlayUrl = result?.overlay_video_url
     ? `${API_URL}${result.overlay_video_url}`

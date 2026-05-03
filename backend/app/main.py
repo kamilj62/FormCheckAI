@@ -10,6 +10,8 @@ import mediapipe as mp
 import numpy as np
 import tensorflow as tf
 
+import joblib
+
 from fastapi import FastAPI, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,6 +75,9 @@ SQUAT_ROUTER_LABELS = {
 
 CLASS_NAMES = ["bench_press", "deadlift", "push_press", "squat"]
 
+OLY_ROUTER_BUNDLE = joblib.load(MODEL_DIR / "oly_router_rf.joblib")
+OLY_ROUTER_MODEL = OLY_ROUTER_BUNDLE["model"]
+
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
@@ -126,7 +131,7 @@ def extract_features_and_biomechanics(results):
 
     landmarks = results.pose_landmarks.landmark
 
-    # EXACT 68 features used in training
+    # EXACT 68 features used by your main classifier/router
     FEATURE_LANDMARKS = [
         "NOSE",
         "LEFT_EAR", "RIGHT_EAR",
@@ -146,6 +151,18 @@ def extract_features_and_biomechanics(results):
         lm = landmarks[idx]
 
         features.extend([
+            lm.x,
+            lm.y,
+            lm.z,
+            lm.visibility,
+        ])
+
+    # Full 33-landmark features for Olympic router
+    # 33 landmarks × 4 values = 132 features
+    full_features = []
+
+    for lm in landmarks:
+        full_features.extend([
             lm.x,
             lm.y,
             lm.z,
@@ -262,6 +279,9 @@ def extract_features_and_biomechanics(results):
         "head_drop": float(head_drop),
         "head_forward": float(head_forward),
         "heel_lift": heel_lift,
+
+        # Used only by Olympic router
+        "full_features": np.array(full_features, dtype=np.float32),
     }
 
     return np.array(features, dtype=np.float32), biomechanics
@@ -905,6 +925,28 @@ def analyze_deadlift_reps(biomechanics):
         })
 
     return reps, build_set_summary(reps)
+
+
+def predict_olympic_lift_from_sequence(sequence):
+    if sequence is None or len(sequence) < 10:
+        return None, 0.0
+
+    arr = np.array(sequence, dtype=np.float32)
+
+    features = np.concatenate([
+        arr.mean(axis=0),
+        arr.std(axis=0),
+        arr.min(axis=0),
+        arr.max(axis=0),
+    ]).reshape(1, -1)
+
+    pred = OLY_ROUTER_MODEL.predict(features)[0]
+    probs = OLY_ROUTER_MODEL.predict_proba(features)[0]
+
+    prob_map = dict(zip(OLY_ROUTER_MODEL.classes_, probs))
+    confidence = float(prob_map.get(pred, 0.0))
+
+    return pred, confidence
 
 
 def draw_deadlift_guides(frame, landmarks, width, height):
@@ -2947,6 +2989,215 @@ def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1)
     return saved
 
 
+def create_olympic_lift_phase_images(input_path, output_dir, rep=None, sample_every=1):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Olympic lift phase error")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if rep:
+        rep_start = int(rep.get("start_frame", 0)) * sample_every
+        rep_end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+    else:
+        rep_start = 0
+        rep_end = total_frames - 1
+
+    rep_start = max(0, min(rep_start, total_frames - 1))
+    rep_end = max(rep_start + 1, min(rep_end, total_frames - 1))
+
+    candidates = []
+
+    with mp_pose.Pose(
+        static_image_mode=True,
+        min_detection_confidence=0.5,
+    ) as pose:
+        for frame_idx in range(rep_start, rep_end + 1):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            ret, frame = cap.read()
+
+            if not ret:
+                continue
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(rgb)
+
+            if not results.pose_landmarks:
+                continue
+
+            lm = results.pose_landmarks.landmark
+
+            left_wrist = lm[mp_pose.PoseLandmark.LEFT_WRIST.value]
+            right_wrist = lm[mp_pose.PoseLandmark.RIGHT_WRIST.value]
+            left_shoulder = lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+            right_shoulder = lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
+            left_hip = lm[mp_pose.PoseLandmark.LEFT_HIP.value]
+            right_hip = lm[mp_pose.PoseLandmark.RIGHT_HIP.value]
+            left_knee = lm[mp_pose.PoseLandmark.LEFT_KNEE.value]
+            right_knee = lm[mp_pose.PoseLandmark.RIGHT_KNEE.value]
+            left_ankle = lm[mp_pose.PoseLandmark.LEFT_ANKLE.value]
+            right_ankle = lm[mp_pose.PoseLandmark.RIGHT_ANKLE.value]
+
+            wrist_y = (left_wrist.y + right_wrist.y) / 2.0
+            shoulder_y = (left_shoulder.y + right_shoulder.y) / 2.0
+            hip_y = (left_hip.y + right_hip.y) / 2.0
+            knee_y = (left_knee.y + right_knee.y) / 2.0
+            ankle_y = (left_ankle.y + right_ankle.y) / 2.0
+
+            hip_x = (left_hip.x + right_hip.x) / 2.0
+            shoulder_x = (left_shoulder.x + right_shoulder.x) / 2.0
+
+            torso_lean = abs(shoulder_x - hip_x)
+            leg_extension = abs(hip_y - ankle_y)
+            bar_height = wrist_y
+
+            candidates.append({
+                "frame": frame_idx,
+                "wrist_y": wrist_y,
+                "shoulder_y": shoulder_y,
+                "hip_y": hip_y,
+                "knee_y": knee_y,
+                "ankle_y": ankle_y,
+                "torso_lean": torso_lean,
+                "leg_extension": leg_extension,
+                "bar_height": bar_height,
+            })
+
+    if candidates:
+        # Setup = lowest hands early in the lift
+        early_candidates = candidates[:max(3, int(len(candidates) * 0.35))]
+
+        setup_frame = max(
+            early_candidates,
+            key=lambda x: x["wrist_y"],
+        )["frame"]
+
+        # Finish = highest hands late in the lift
+        finish_frame = min(
+            candidates,
+            key=lambda x: x["wrist_y"],
+        )["frame"]
+
+        between = [
+            c for c in candidates
+            if setup_frame <= c["frame"] <= finish_frame
+        ]
+
+        if not between:
+            between = candidates
+
+        # First pull = bar roughly around knee height
+        first_pull_frame = min(
+            between,
+            key=lambda x: abs(x["wrist_y"] - x["knee_y"]),
+        )["frame"]
+
+        # Extension = tallest / most extended body before catch
+        extension_candidates = [
+            c for c in between
+            if c["frame"] >= first_pull_frame
+        ]
+
+        extension_frame = max(
+            extension_candidates,
+            key=lambda x: x["leg_extension"],
+        )["frame"]
+
+        # Catch = after extension, bar high, body starts receiving
+        catch_candidates = [
+            c for c in between
+            if c["frame"] >= extension_frame
+        ]
+
+        if catch_candidates:
+            # Catch = shortly after extension, before finish
+            catch_frame = extension_frame + int(
+                (finish_frame - extension_frame) * 0.15
+            )
+        else:
+            catch_frame = extension_frame + int(
+                (finish_frame - extension_frame) * 0.50
+            )
+
+    else:
+        span = rep_end - rep_start
+
+        setup_frame = rep_start + int(span * 0.05)
+        first_pull_frame = rep_start + int(span * 0.25)
+        extension_frame = rep_start + int(span * 0.50)
+        catch_frame = rep_start + int(span * 0.70)
+        finish_frame = rep_start + int(span * 0.90)
+
+    # enforce chronological spacing
+    first_pull_frame = max(first_pull_frame, setup_frame + 8)
+    extension_frame = max(extension_frame, first_pull_frame + 8)
+    catch_frame = max(catch_frame, extension_frame + 8)
+    finish_frame = max(finish_frame, catch_frame + 8)
+
+    # clamp
+    finish_frame = min(finish_frame, total_frames - 1)
+    catch_frame = min(catch_frame, finish_frame - 1)
+    extension_frame = min(extension_frame, catch_frame - 1)
+    first_pull_frame = min(first_pull_frame, extension_frame - 1)
+
+    phase_frames = {
+        "setup": setup_frame,
+        "first_pull": first_pull_frame,
+        "extension": extension_frame,
+        "catch": catch_frame,
+        "finish": finish_frame,
+    }
+
+    cleaned = {}
+    for phase, frame_idx in phase_frames.items():
+        cleaned[phase] = max(
+            0,
+            min(int(frame_idx), total_frames - 1),
+        )
+
+    saved = {}
+
+    for phase, frame_idx in cleaned.items():
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
+
+        if not ret:
+            continue
+
+        filename = (
+            f"olympic_lift_{phase}_"
+            f"{uuid.uuid4().hex[:8]}.jpg"
+        )
+
+        filepath = os.path.join(
+            output_dir,
+            filename,
+        )
+
+        cv2.imwrite(filepath, frame)
+        saved[phase] = f"/outputs/{filename}"
+
+    sheet_url = save_phase_contact_sheet(
+        input_path,
+        cleaned,
+        output_dir,
+        prefix="olympic_lift_phase_debug",
+    )
+
+    if sheet_url:
+        saved["debug_sheet"] = sheet_url
+
+    cap.release()
+
+    print("OLYMPIC LIFT VALID FRAMES:", len(candidates))
+    print("OLYMPIC LIFT PHASE FRAMES:", cleaned)
+    print("Saved olympic lift phase images:", saved)
+
+    return saved
+
+
 def build_coaching_zones(exercise_label, rep_feedback):
     if not rep_feedback:
         return {}
@@ -3149,6 +3400,14 @@ def build_coaching_zones(exercise_label, rep_feedback):
 
 def analyze_video(video_path, make_visuals=True):
     try:
+        olympic_labels = [
+            "olympic_lift",
+            "clean_and_jerk",
+            "snatch",
+            "clean",
+            "jerk",
+        ]
+
         cap = cv2.VideoCapture(video_path)
 
         if not cap.isOpened():
@@ -3166,8 +3425,6 @@ def analyze_video(video_path, make_visuals=True):
             }
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-        # Faster, but capped so we do not skip too much movement.
         sample_every = min(5, max(1, total_frames // 160))
 
         sequence = []
@@ -3244,6 +3501,39 @@ def analyze_video(video_path, make_visuals=True):
         summary = summarize_biomechanics(biomechanics)
 
         # --------------------------------------------------
+        # OLYMPIC LIFT ROUTER
+        # --------------------------------------------------
+        oly_sequence = [
+            b["full_features"]
+            for b in biomechanics
+            if "full_features" in b
+        ]
+
+        oly_label, oly_confidence = predict_olympic_lift_from_sequence(
+            oly_sequence
+        )
+
+        if (
+            oly_label in ["clean_and_jerk", "snatch", "clean", "jerk"]
+            and oly_confidence >= 0.85
+        ):
+            raw_label = oly_label
+            raw_confidence = oly_confidence
+
+        # --------------------------------------------------
+        # SNATCH OVERRIDE
+        # --------------------------------------------------
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
+            and summary.get("wrist_above_shoulder_ratio", 0) >= 0.22
+            and summary.get("min_knee_angle", 180) < 90
+            and summary.get("min_hip_angle", 180) < 90
+            and summary.get("max_elbow_angle", 0) > 150
+        ):
+            raw_label = "snatch"
+            raw_confidence = 0.82
+
+        # --------------------------------------------------
         # OVERHEAD SQUAT OVERRIDE
         # --------------------------------------------------
         if (
@@ -3280,8 +3570,6 @@ def analyze_video(video_path, make_visuals=True):
         # --------------------------------------------------
         # SQUAT FAMILY ROUTER
         # --------------------------------------------------
-        # Important fix:
-        # Run this for squat, squat_back, squat_front, and overhead_squat.
         if "squat" in raw_label:
             squat_probs = SQUAT_ROUTER_MODEL.predict(
                 np.expand_dims(seq_base, axis=0),
@@ -3292,8 +3580,6 @@ def analyze_video(video_path, make_visuals=True):
             squat_router_label = SQUAT_ROUTER_LABELS[squat_idx]
             squat_router_confidence = float(squat_probs[squat_idx])
 
-            # Overhead squat guardrail:
-            # If wrists are not above shoulders enough, do not allow overhead squat.
             if (
                 squat_router_label == "overhead_squat"
                 and summary.get("wrist_above_shoulder_ratio", 0) < 0.65
@@ -3301,8 +3587,6 @@ def analyze_video(video_path, make_visuals=True):
                 squat_router_label = "squat_front"
                 squat_router_confidence = 0.81
 
-            # Front squat guardrail:
-            # If wrists are low, it is probably a back squat.
             if (
                 squat_router_label == "squat_front"
                 and summary.get("wrist_above_shoulder_ratio", 0) < 0.30
@@ -3328,6 +3612,13 @@ def analyze_video(video_path, make_visuals=True):
             label = raw_label
             confidence = raw_confidence
 
+        # Preserve Olympic subtype router / override result
+        if raw_label in olympic_labels:
+            label = raw_label
+            confidence = raw_confidence
+            override_used = False
+            reason = "olympic_router_prediction"
+
         analysis_mode = "classification_only"
         rep_feedback = []
 
@@ -3346,6 +3637,18 @@ def analyze_video(video_path, make_visuals=True):
         elif label == "bench_press":
             rep_feedback, _ = analyze_bench_press_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
+
+        elif label in olympic_labels:
+            analysis_mode = "classification_only"
+            rep_feedback = [{
+                "rep": 1,
+                "start_frame": 0,
+                "end_frame": total_frames - 1,
+                "score": 10.0,
+                "grade": "Captured",
+                "issues": [],
+                "feedback": [],
+            }]
 
         set_summary = build_set_summary(rep_feedback)
 
@@ -3369,7 +3672,7 @@ def analyze_video(video_path, make_visuals=True):
             if overlay_result:
                 overlay_video_url = f"/outputs/{overlay_filename}"
 
-            if phase_rep:
+            if phase_rep or label in olympic_labels:
                 if label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
                     phase_images = create_squat_phase_images(
                         video_path,
@@ -3402,6 +3705,18 @@ def analyze_video(video_path, make_visuals=True):
                         sample_every=sample_every,
                     )
 
+                elif label in olympic_labels:
+                    phase_images = create_olympic_lift_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep or {
+                            "rep": 1,
+                            "start_frame": 0,
+                            "end_frame": total_frames - 1,
+                        },
+                        sample_every=sample_every,
+                    )
+
         display_name = {
             "squat_front": "Front Squat",
             "squat_back": "Back Squat",
@@ -3411,6 +3726,11 @@ def analyze_video(video_path, make_visuals=True):
             "bench_press": "Bench Press",
             "deadlift": "Deadlift",
             "squat": "Squat",
+            "olympic_lift": "Olympic Lift",
+            "clean_and_jerk": "Clean and Jerk",
+            "snatch": "Snatch",
+            "clean": "Clean",
+            "jerk": "Jerk",
         }.get(label, label.replace("_", " ").title())
 
         return {
@@ -3438,6 +3758,8 @@ def analyze_video(video_path, make_visuals=True):
                 "override_used": override_used,
                 "classification_reason": reason,
                 "raw_predictions": dict(zip(CLASS_NAMES, probs.tolist())),
+                "oly_router_prediction": oly_label,
+                "oly_router_confidence": round(oly_confidence, 4),
                 "overhead_router_prediction": overhead_router_label,
                 "overhead_router_confidence": (
                     round(overhead_router_confidence, 4)
@@ -3458,6 +3780,7 @@ def analyze_video(video_path, make_visuals=True):
                 "runtime_sequence_shape": list(seq.shape),
                 "classifier_input_shape": [30, 136],
                 "router_input_shape": [30, 68],
+                "oly_router_input_shape": [528],
             },
         }
 
@@ -3470,8 +3793,8 @@ def analyze_video(video_path, make_visuals=True):
             "error": True,
             "message": str(e),
         }
-
-
+    
+    
 @app.post("/generate_visuals")
 async def generate_visuals(file: UploadFile = File(...)):
     suffix = os.path.splitext(file.filename)[1] or ".mov"
@@ -3498,6 +3821,7 @@ async def generate_visuals(file: UploadFile = File(...)):
             rep_feedback,
             key=lambda rep: rep.get("end_frame", 0) - rep.get("start_frame", 0),
         )
+
         normalized_label = label.lower().replace(" ", "_")
 
         if normalized_label == "deadlift":
@@ -3526,6 +3850,20 @@ async def generate_visuals(file: UploadFile = File(...)):
 
         elif normalized_label == "bench_press":
             phase_images = create_bench_press_phase_images(
+                temp_path,
+                OVERLAY_DIR,
+                phase_rep,
+                sample_every=sample_every,
+            )
+
+        elif normalized_label in [
+            "olympic_lift",
+            "clean_and_jerk",
+            "snatch",
+            "clean",
+            "jerk",
+        ]:
+            phase_images = create_olympic_lift_phase_images(
                 temp_path,
                 OVERLAY_DIR,
                 phase_rep,
