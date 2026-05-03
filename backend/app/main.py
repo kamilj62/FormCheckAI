@@ -1,3 +1,4 @@
+from sys import prefix
 import tempfile
 from pathlib import Path
 
@@ -2989,7 +2990,13 @@ def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1)
     return saved
 
 
-def create_olympic_lift_phase_images(input_path, output_dir, rep=None, sample_every=1):
+def create_olympic_lift_phase_images(
+    input_path,
+    output_dir,
+    rep,
+    sample_every=1,
+    exercise_label="olympic_lift",
+):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
@@ -2998,202 +3005,283 @@ def create_olympic_lift_phase_images(input_path, output_dir, rep=None, sample_ev
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    if rep:
-        rep_start = int(rep.get("start_frame", 0)) * sample_every
-        rep_end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+    start = int(rep.get("start_frame", 0)) * sample_every
+    end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+
+    start = max(0, min(start, total_frames - 1))
+    end = max(start + 1, min(end, total_frames - 1))
+
+    duration = max(1, end - start)
+
+    normalized_label = exercise_label.lower().replace(" ", "_")
+    prefix = normalized_label
+
+    # -----------------------------------
+    # JERK / SPLIT JERK / THRUSTER
+    # -----------------------------------
+    if normalized_label in ["jerk", "split_jerk", "thruster"]:
+        phase_frames = {
+            "setup": start,
+            "dip": start + int(duration * 0.20),
+            "drive": start + int(duration * 0.38),
+            "catch": start + int(duration * 0.62),
+            "recovery": start + int(duration * 0.82),
+            "finish": max(start, min(end - 1, total_frames - 1)),
+        }
+
+    # -----------------------------------
+    # CLEAN / SNATCH / CLEAN & JERK
+    # -----------------------------------
     else:
-        rep_start = 0
-        rep_end = total_frames - 1
-
-    rep_start = max(0, min(rep_start, total_frames - 1))
-    rep_end = max(rep_start + 1, min(rep_end, total_frames - 1))
-
-    candidates = []
-
-    with mp_pose.Pose(
-        static_image_mode=True,
-        min_detection_confidence=0.5,
-    ) as pose:
-        for frame_idx in range(rep_start, rep_end + 1):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-            ret, frame = cap.read()
-
-            if not ret:
-                continue
-
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = pose.process(rgb)
-
-            if not results.pose_landmarks:
-                continue
-
-            lm = results.pose_landmarks.landmark
-
-            left_wrist = lm[mp_pose.PoseLandmark.LEFT_WRIST.value]
-            right_wrist = lm[mp_pose.PoseLandmark.RIGHT_WRIST.value]
-            left_shoulder = lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
-            right_shoulder = lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
-            left_hip = lm[mp_pose.PoseLandmark.LEFT_HIP.value]
-            right_hip = lm[mp_pose.PoseLandmark.RIGHT_HIP.value]
-            left_knee = lm[mp_pose.PoseLandmark.LEFT_KNEE.value]
-            right_knee = lm[mp_pose.PoseLandmark.RIGHT_KNEE.value]
-            left_ankle = lm[mp_pose.PoseLandmark.LEFT_ANKLE.value]
-            right_ankle = lm[mp_pose.PoseLandmark.RIGHT_ANKLE.value]
-
-            wrist_y = (left_wrist.y + right_wrist.y) / 2.0
-            shoulder_y = (left_shoulder.y + right_shoulder.y) / 2.0
-            hip_y = (left_hip.y + right_hip.y) / 2.0
-            knee_y = (left_knee.y + right_knee.y) / 2.0
-            ankle_y = (left_ankle.y + right_ankle.y) / 2.0
-
-            hip_x = (left_hip.x + right_hip.x) / 2.0
-            shoulder_x = (left_shoulder.x + right_shoulder.x) / 2.0
-
-            torso_lean = abs(shoulder_x - hip_x)
-            leg_extension = abs(hip_y - ankle_y)
-            bar_height = wrist_y
-
-            candidates.append({
-                "frame": frame_idx,
-                "wrist_y": wrist_y,
-                "shoulder_y": shoulder_y,
-                "hip_y": hip_y,
-                "knee_y": knee_y,
-                "ankle_y": ankle_y,
-                "torso_lean": torso_lean,
-                "leg_extension": leg_extension,
-                "bar_height": bar_height,
-            })
-
-    if candidates:
-        # Setup = lowest hands early in the lift
-        early_candidates = candidates[:max(3, int(len(candidates) * 0.35))]
-
-        setup_frame = max(
-            early_candidates,
-            key=lambda x: x["wrist_y"],
-        )["frame"]
-
-        # Finish = highest hands late in the lift
-        finish_frame = min(
-            candidates,
-            key=lambda x: x["wrist_y"],
-        )["frame"]
-
-        between = [
-            c for c in candidates
-            if setup_frame <= c["frame"] <= finish_frame
-        ]
-
-        if not between:
-            between = candidates
-
-        # First pull = bar roughly around knee height
-        first_pull_frame = min(
-            between,
-            key=lambda x: abs(x["wrist_y"] - x["knee_y"]),
-        )["frame"]
-
-        # Extension = tallest / most extended body before catch
-        extension_candidates = [
-            c for c in between
-            if c["frame"] >= first_pull_frame
-        ]
-
-        extension_frame = max(
-            extension_candidates,
-            key=lambda x: x["leg_extension"],
-        )["frame"]
-
-        # Catch = after extension, bar high, body starts receiving
-        catch_candidates = [
-            c for c in between
-            if c["frame"] >= extension_frame
-        ]
-
-        if catch_candidates:
-            # Catch = shortly after extension, before finish
-            catch_frame = extension_frame + int(
-                (finish_frame - extension_frame) * 0.15
-            )
-        else:
-            catch_frame = extension_frame + int(
-                (finish_frame - extension_frame) * 0.50
-            )
-
-    else:
-        span = rep_end - rep_start
-
-        setup_frame = rep_start + int(span * 0.05)
-        first_pull_frame = rep_start + int(span * 0.25)
-        extension_frame = rep_start + int(span * 0.50)
-        catch_frame = rep_start + int(span * 0.70)
-        finish_frame = rep_start + int(span * 0.90)
-
-    # enforce chronological spacing
-    first_pull_frame = max(first_pull_frame, setup_frame + 8)
-    extension_frame = max(extension_frame, first_pull_frame + 8)
-    catch_frame = max(catch_frame, extension_frame + 8)
-    finish_frame = max(finish_frame, catch_frame + 8)
-
-    # clamp
-    finish_frame = min(finish_frame, total_frames - 1)
-    catch_frame = min(catch_frame, finish_frame - 1)
-    extension_frame = min(extension_frame, catch_frame - 1)
-    first_pull_frame = min(first_pull_frame, extension_frame - 1)
-
-    phase_frames = {
-        "setup": setup_frame,
-        "first_pull": first_pull_frame,
-        "extension": extension_frame,
-        "catch": catch_frame,
-        "finish": finish_frame,
-    }
-
-    cleaned = {}
-    for phase, frame_idx in phase_frames.items():
-        cleaned[phase] = max(
-            0,
-            min(int(frame_idx), total_frames - 1),
-        )
+        phase_frames = {
+            "setup": start,
+            "first_pull": start + int(duration * 0.22),
+            "extension": start + int(duration * 0.48),
+            "catch": start + int(duration * 0.72),
+            "finish": max(start, min(end - 1, total_frames - 1)),
+        }
 
     saved = {}
+    debug_images = []
 
-    for phase, frame_idx in cleaned.items():
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = cap.read()
+    for phase, frame_idx in phase_frames.items():
+        frame_idx = max(0, min(frame_idx, total_frames - 1))
 
-        if not ret:
+        frame = None
+
+        for offset in [0, -1, -2, -3, -5, -8, -10]:
+            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
+            ret, candidate = cap.read()
+
+            if ret and candidate is not None:
+                frame = candidate
+                frame_idx = safe_idx
+                break
+
+        if frame is None:
+            print(f"Could not read {phase} frame near: {frame_idx}")
             continue
 
-        filename = (
-            f"olympic_lift_{phase}_"
-            f"{uuid.uuid4().hex[:8]}.jpg"
-        )
-
-        filepath = os.path.join(
-            output_dir,
-            filename,
-        )
+        filename = f"{prefix}_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filepath = os.path.join(output_dir, filename)
 
         cv2.imwrite(filepath, frame)
         saved[phase] = f"/outputs/{filename}"
 
-    sheet_url = save_phase_contact_sheet(
-        input_path,
-        cleaned,
-        output_dir,
-        prefix="olympic_lift_phase_debug",
-    )
+        debug = frame.copy()
+        cv2.putText(
+            debug,
+            f"{phase} ({frame_idx})",
+            (30, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+        )
+        debug_images.append(debug)
 
-    if sheet_url:
-        saved["debug_sheet"] = sheet_url
+    if debug_images:
+        debug_sheet = np.hstack(debug_images)
+        debug_filename = f"{prefix}_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_path = os.path.join(output_dir, debug_filename)
+
+        cv2.imwrite(debug_path, debug_sheet)
+        saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    # Force finish fallback
+    if "finish" not in saved and "recovery" in saved:
+        saved["finish"] = saved["recovery"]
 
     cap.release()
 
-    print("OLYMPIC LIFT VALID FRAMES:", len(candidates))
-    print("OLYMPIC LIFT PHASE FRAMES:", cleaned)
-    print("Saved olympic lift phase images:", saved)
+    return saved
+
+
+def create_pull_up_phase_images(
+    input_path,
+    output_dir,
+    rep=None,
+    sample_every=1,
+):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Pull-up phase error")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if rep:
+        start = int(rep.get("start_frame", 0)) * sample_every
+        end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+    else:
+        start = 0
+        end = total_frames - 1
+
+    start = max(0, min(start, total_frames - 1))
+    end = max(start + 1, min(end, total_frames - 1))
+
+    duration = max(1, end - start)
+
+    phase_frames = {
+        "hang": start,
+        "pull": start + int(duration * 0.25),
+        "top": start + int(duration * 0.50),
+        "descent": start + int(duration * 0.75),
+        "finish": max(start, min(end - 1, total_frames - 1)),
+    }
+
+    saved = {}
+    debug_images = []
+
+    for phase, frame_idx in phase_frames.items():
+        frame_idx = max(0, min(frame_idx, total_frames - 1))
+
+        frame = None
+
+        for offset in [0, -1, -2, -3, -5, -8, -10]:
+            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
+            ret, candidate = cap.read()
+
+            if ret and candidate is not None:
+                frame = candidate
+                frame_idx = safe_idx
+                break
+
+        if frame is None:
+            print(f"Could not read {phase} frame near: {frame_idx}")
+            continue
+
+        filename = f"pull_up_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filepath = os.path.join(output_dir, filename)
+
+        cv2.imwrite(filepath, frame)
+        saved[phase] = f"/outputs/{filename}"
+
+        debug = frame.copy()
+        cv2.putText(
+            debug,
+            f"{phase} ({frame_idx})",
+            (30, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+        )
+        debug_images.append(debug)
+
+    if debug_images:
+        debug_sheet = np.hstack(debug_images)
+        debug_filename = f"pull_up_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_path = os.path.join(output_dir, debug_filename)
+
+        cv2.imwrite(debug_path, debug_sheet)
+        saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    # Force finish fallback
+    if "finish" not in saved and "descent" in saved:
+        saved["finish"] = saved["descent"]
+
+    cap.release()
+
+    return saved
+
+
+def create_bar_muscle_up_phase_images(
+    input_path,
+    output_dir,
+    rep=None,
+    sample_every=1,
+    exercise_label="bar_muscle_up",
+):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Bar muscle-up phase error")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if rep:
+        start = int(rep.get("start_frame", 0)) * sample_every
+        end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+    else:
+        start = 0
+        end = total_frames - 1
+
+    start = max(0, min(start, total_frames - 1))
+    end = max(start + 1, min(end, total_frames - 1))
+
+    duration = max(1, end - start)
+
+    phase_frames = {
+        "hang": start,
+        "pull": start + int(duration * 0.22),
+        "transition": start + int(duration * 0.45),
+        "dip": start + int(duration * 0.65),
+        "lockout": start + int(duration * 0.82),
+        "finish": max(start, min(end - 1, total_frames - 1)),
+    }
+
+    saved = {}
+    debug_images = []
+
+    prefix = exercise_label.lower().replace(" ", "_")
+
+    for phase, frame_idx in phase_frames.items():
+        frame_idx = max(0, min(frame_idx, total_frames - 1))
+
+        frame = None
+
+        for offset in [0, -1, -2, -3, -5, -8, -10]:
+            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
+            ret, candidate = cap.read()
+
+            if ret and candidate is not None:
+                frame = candidate
+                frame_idx = safe_idx
+                break
+
+        if frame is None:
+            print(f"Could not read {phase} frame near: {frame_idx}")
+            continue
+
+        filename = f"{prefix}_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filepath = os.path.join(output_dir, filename)
+
+        cv2.imwrite(filepath, frame)
+        saved[phase] = f"/outputs/{filename}"
+
+        debug = frame.copy()
+        cv2.putText(
+            debug,
+            f"{phase} ({frame_idx})",
+            (30, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+        )
+        debug_images.append(debug)
+
+    if debug_images:
+        debug_sheet = np.hstack(debug_images)
+        debug_filename = f"{prefix}_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_path = os.path.join(output_dir, debug_filename)
+
+        cv2.imwrite(debug_path, debug_sheet)
+        saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    if "finish" not in saved and "lockout" in saved:
+        saved["finish"] = saved["lockout"]
+
+    cap.release()
 
     return saved
 
@@ -3406,6 +3494,8 @@ def analyze_video(video_path, make_visuals=True):
             "snatch",
             "clean",
             "jerk",
+            "split_jerk",
+            "thruster",
         ]
 
         cap = cv2.VideoCapture(video_path)
@@ -3500,9 +3590,6 @@ def analyze_video(video_path, make_visuals=True):
 
         summary = summarize_biomechanics(biomechanics)
 
-        # --------------------------------------------------
-        # OLYMPIC LIFT ROUTER
-        # --------------------------------------------------
         oly_sequence = [
             b["full_features"]
             for b in biomechanics
@@ -3514,15 +3601,66 @@ def analyze_video(video_path, make_visuals=True):
         )
 
         if (
-            oly_label in ["clean_and_jerk", "snatch", "clean", "jerk"]
+            oly_label in ["clean_and_jerk", "snatch", "clean", "jerk", "split_jerk"]
             and oly_confidence >= 0.85
+            and raw_label in [
+                "olympic_lift",
+                "deadlift",
+                "squat",
+                "squat_back",
+                "squat_front",
+                "push_press",
+                "strict_press",
+                "pull_up",
+                "bar_muscle_up"
+            ]
         ):
             raw_label = oly_label
             raw_confidence = oly_confidence
 
         # --------------------------------------------------
-        # SNATCH OVERRIDE
+        # BAR MUSCLE-UP OVERRIDE
         # --------------------------------------------------
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "pull_up", "snatch"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.40
+            and summary.get("avg_torso_angle", 90) < 55
+            and summary.get("avg_knee_angle", 0) > 155
+            and summary.get("min_elbow_angle", 180) < 35
+            and summary.get("max_elbow_angle", 0) > 160
+        ):
+            raw_label = "bar_muscle_up"
+            raw_confidence = 0.84
+
+        # --------------------------------------------------
+        # RING MUSCLE-UP OVERRIDE
+        # --------------------------------------------------
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "snatch", "pull_up", "bar_muscle_up"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.60
+            and summary.get("avg_torso_angle", 90) < 45
+            and summary.get("max_torso_angle", 0) > 60
+            and summary.get("min_elbow_angle", 180) < 75
+            and summary.get("max_elbow_angle", 0) > 165
+        ):
+            raw_label = "ring_muscle_up"
+            raw_confidence = 0.84
+
+        # --------------------------------------------------
+        # PULL-UP OVERRIDE
+        # --------------------------------------------------
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "snatch"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.70
+            and summary.get("avg_torso_angle", 90) < 35
+            and summary.get("avg_knee_angle", 0) > 145
+            and summary.get("max_elbow_angle", 0) > 160
+            and summary.get("min_elbow_angle", 180) < 95
+        ):
+            raw_label = "pull_up"
+            raw_confidence = 0.84
+
+        # SNATCH OVERRIDE
         if (
             raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
             and summary.get("wrist_above_shoulder_ratio", 0) >= 0.22
@@ -3533,15 +3671,37 @@ def analyze_video(video_path, make_visuals=True):
             raw_label = "snatch"
             raw_confidence = 0.82
 
+        # CLEAN OVERRIDE
+        if (
+            raw_label == "deadlift"
+            and summary.get("wrist_above_shoulder_ratio", 0) >= 0.10
+            and summary.get("max_elbow_angle", 0) > 150
+            and summary.get("min_hip_angle", 180) < 80
+            and summary.get("min_knee_angle", 180) < 100
+        ):
+            raw_label = "clean"
+            raw_confidence = 0.80
+
         # --------------------------------------------------
+        # THRUSTER OVERRIDE
+        # --------------------------------------------------
+        if (
+            raw_label in ["squat", "squat_back", "squat_front"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.15
+            and summary.get("min_knee_angle", 180) < 100
+            and summary.get("min_hip_angle", 180) < 100
+            and summary.get("max_elbow_angle", 0) > 150
+        ):
+            raw_label = "thruster"
+            raw_confidence = 0.84
+
         # OVERHEAD SQUAT OVERRIDE
-        # --------------------------------------------------
         if (
             raw_label == "push_press"
             and summary.get("wrist_above_shoulder_ratio", 0) > 0.80
             and summary.get("min_knee_angle", 180) < 120
         ):
-            raw_label = "squat"
+            raw_label = "overhead_squat"
             raw_confidence = 0.90
 
         overhead_router_label = None
@@ -3567,9 +3727,17 @@ def analyze_video(video_path, make_visuals=True):
         squat_router_label = None
         squat_router_confidence = None
 
-        # --------------------------------------------------
+        # SPLIT JERK OVERRIDE
+        if (
+            raw_label in ["push_press", "strict_press"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.55
+            and summary.get("min_knee_angle", 180) < 115
+            and summary.get("max_elbow_angle", 0) > 150
+        ):
+            raw_label = "split_jerk"
+            raw_confidence = 0.82
+
         # SQUAT FAMILY ROUTER
-        # --------------------------------------------------
         if "squat" in raw_label:
             squat_probs = SQUAT_ROUTER_MODEL.predict(
                 np.expand_dims(seq_base, axis=0),
@@ -3612,7 +3780,6 @@ def analyze_video(video_path, make_visuals=True):
             label = raw_label
             confidence = raw_confidence
 
-        # Preserve Olympic subtype router / override result
         if raw_label in olympic_labels:
             label = raw_label
             confidence = raw_confidence
@@ -3640,15 +3807,17 @@ def analyze_video(video_path, make_visuals=True):
 
         elif label in olympic_labels:
             analysis_mode = "classification_only"
-            rep_feedback = [{
-                "rep": 1,
-                "start_frame": 0,
-                "end_frame": total_frames - 1,
-                "score": 10.0,
-                "grade": "Captured",
-                "issues": [],
-                "feedback": [],
-            }]
+            rep_feedback = [
+                {
+                    "rep": 1,
+                    "start_frame": 0,
+                    "end_frame": total_frames - 1,
+                    "score": 10.0,
+                    "grade": "Captured",
+                    "issues": [],
+                    "feedback": [],
+                }
+            ]
 
         set_summary = build_set_summary(rep_feedback)
 
@@ -3709,12 +3878,14 @@ def analyze_video(video_path, make_visuals=True):
                     phase_images = create_olympic_lift_phase_images(
                         video_path,
                         OVERLAY_DIR,
-                        phase_rep or {
+                        phase_rep
+                        or {
                             "rep": 1,
                             "start_frame": 0,
                             "end_frame": total_frames - 1,
                         },
                         sample_every=sample_every,
+                        exercise_label=label,
                     )
 
         display_name = {
@@ -3731,6 +3902,11 @@ def analyze_video(video_path, make_visuals=True):
             "snatch": "Snatch",
             "clean": "Clean",
             "jerk": "Jerk",
+            "split_jerk": "Split Jerk",
+            "thruster": "Thruster",
+            "pull_up": "Pull-up",
+            "bar_muscle_up": "Bar Muscle-up",
+            "ring_muscle_up": "Ring Muscle-up",
         }.get(label, label.replace("_", " ").title())
 
         return {
@@ -3793,8 +3969,8 @@ def analyze_video(video_path, make_visuals=True):
             "error": True,
             "message": str(e),
         }
-    
-    
+
+
 @app.post("/generate_visuals")
 async def generate_visuals(file: UploadFile = File(...)):
     suffix = os.path.splitext(file.filename)[1] or ".mov"
@@ -3816,14 +3992,21 @@ async def generate_visuals(file: UploadFile = File(...)):
     overlay_video_url = None
     phase_images = None
 
+    phase_rep = None
+
     if rep_feedback:
         phase_rep = max(
             rep_feedback,
             key=lambda rep: rep.get("end_frame", 0) - rep.get("start_frame", 0),
         )
 
-        normalized_label = label.lower().replace(" ", "_")
+    normalized_label = label.lower().replace(" ", "_")
 
+    if rep_feedback or normalized_label in [
+        "pull_up",
+        "bar_muscle_up",
+        "ring_muscle_up",
+    ]:
         if normalized_label == "deadlift":
             phase_images = create_deadlift_phase_images(
                 temp_path,
@@ -3832,7 +4015,12 @@ async def generate_visuals(file: UploadFile = File(...)):
                 sample_every=sample_every,
             )
 
-        elif normalized_label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
+        elif normalized_label in [
+            "squat",
+            "squat_back",
+            "squat_front",
+            "overhead_squat",
+        ]:
             phase_images = create_squat_phase_images(
                 temp_path,
                 OVERLAY_DIR,
@@ -3856,18 +4044,43 @@ async def generate_visuals(file: UploadFile = File(...)):
                 sample_every=sample_every,
             )
 
+        elif normalized_label == "pull_up":
+            phase_images = create_pull_up_phase_images(
+                temp_path,
+                OVERLAY_DIR,
+                phase_rep,
+                sample_every=sample_every,
+            )
+
+        elif normalized_label in ["bar_muscle_up", "ring_muscle_up"]:
+            phase_images = create_bar_muscle_up_phase_images(
+                temp_path,
+                OVERLAY_DIR,
+                phase_rep,
+                sample_every=sample_every,
+                exercise_label=normalized_label,
+            )
+
         elif normalized_label in [
             "olympic_lift",
             "clean_and_jerk",
             "snatch",
             "clean",
             "jerk",
+            "split_jerk",
+            "thruster",
         ]:
             phase_images = create_olympic_lift_phase_images(
                 temp_path,
                 OVERLAY_DIR,
-                phase_rep,
+                phase_rep
+                or {
+                    "rep": 1,
+                    "start_frame": 0,
+                    "end_frame": int(result["debug"].get("frames_seen", 1)) - 1,
+                },
                 sample_every=sample_every,
+                exercise_label=normalized_label,
             )
 
         overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
