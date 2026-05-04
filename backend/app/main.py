@@ -521,8 +521,8 @@ def compute_rep_score(issues=None, base_score=10.0):
     return round(score, 1)
 
 
-def build_set_summary(reps):
-    if not reps:
+def build_set_summary(rep_feedback):
+    if not rep_feedback:
         return {
             "detected_reps": 0,
             "avg_rep_score": 0,
@@ -532,75 +532,35 @@ def build_set_summary(reps):
             "biggest_fix": "Record a clearer set for analysis.",
         }
 
-    scores = [r["score"] for r in reps]
+    scores = [rep.get("score", 0) for rep in rep_feedback]
+    best_rep = max(rep_feedback, key=lambda rep: rep.get("score", 0))
+    worst_rep = min(rep_feedback, key=lambda rep: rep.get("score", 0))
 
-    # Count issues across reps
-    issue_counts = {}
-    feedback_counts = {}
-
-    for rep in reps:
-        for issue in rep.get("issues", []):
-            issue_counts[issue] = issue_counts.get(issue, 0) + 1
-
-        for tip in rep.get("feedback", []):
-            feedback_counts[tip] = feedback_counts.get(tip, 0) + 1
-
-    # Priority coaching hierarchy
-    priority_map = {
-        "Bar drifts away from your body.": "Keep the bar closer — drag it up your legs.",
-        "Overextending at lockout.": "Finish tall — squeeze glutes without leaning back.",
-        "Incomplete lockout at the top.": "Finish tall by squeezing glutes and standing fully upright.",
-        "Not enough hip hinge.": "Push your hips back more before starting the pull.",
-        "Knees bend too much for a deadlift pattern.": "Keep shins more vertical and hinge from the hips.",
-        "Back may be rounding during the pull.": "Brace your core and keep a neutral spine.",
-        "Depth may be shallow.": "Try to reach better squat depth.",
-        "Knees cave inward significantly.": "Knees are caving inward — drive them out over your toes.",
-        "Mild knee cave detected.": "Keep knees tracking over your toes.",
-        "Torso leaning too far forward.": "Chest is falling forward — keep torso upright.",
-        "Dip is too shallow.": "Use a stronger dip to generate power.",
-        "Incomplete overhead lockout.": "Fully extend arms overhead.",
-        "Bar drift detected.": "Keep the bar path vertical and press straight overhead.",
-        "Knees cave inward significantly during dip.": "Force knees out aggressively during the dip.",
-        "Mild knee cave during dip.": "Keep knees tracking over toes.",
-        "Bar not reaching full depth.": "Lower the bar fully to your chest.",
-        "Incomplete lockout.": "Fully extend arms at the top.",
-        "Elbows flaring excessively.": "Tuck elbows slightly and control the bar path.",
-        "Elbows flaring slightly.": "Keep elbows slightly tucked.",
-        "Weak leg drive.": "Keep feet planted and drive through your legs.",
-    }
+    priority_feedback = [
+        ("knees", "poor", "Drive knees out over your toes."),
+        ("torso", "poor", "Keep your chest up and maintain a stronger torso angle."),
+        ("heels", "poor", "Keep pressure through your midfoot and heels."),
+        ("depth", "poor", "Squat deeper until your hips pass below your knees."),
+        ("depth", "borderline", "Sink a little deeper while keeping your chest up."),
+    ]
 
     biggest_fix = "Keep building consistent reps."
 
-    # Choose highest-priority repeated issue
-    for issue, fix in priority_map.items():
-        if issue in issue_counts:
-            biggest_fix = fix
+    for key, bad_value, message in priority_feedback:
+        for rep in rep_feedback:
+            breakdown = rep.get("breakdown", {})
+            if breakdown.get(key) == bad_value:
+                biggest_fix = message
+                break
+        if biggest_fix != "Keep building consistent reps.":
             break
 
-    # Fallback to most common useful feedback
-    if biggest_fix == "Keep building consistent reps." and feedback_counts:
-        useful_feedback = {
-            tip: count
-            for tip, count in feedback_counts.items()
-            if "good" not in tip.lower()
-            and "strong" not in tip.lower()
-        }
-
-        if useful_feedback:
-            biggest_fix = max(useful_feedback, key=useful_feedback.get)
-
     return {
-        "detected_reps": len(reps),
-        "avg_rep_score": round(float(np.mean(scores)), 1),
-        "best_rep": reps[int(np.argmax(scores))]["rep"],
-        "worst_rep": reps[int(np.argmin(scores))]["rep"],
-        "trend": (
-            "Form appears to deteriorate as the set goes on."
-            if len(scores) >= 2 and scores[-1] < scores[0]
-            else "Form appears to improve as the set goes on."
-            if len(scores) >= 2 and scores[-1] > scores[0]
-            else "Form appears consistent across the set."
-        ),
+        "detected_reps": len(rep_feedback),
+        "avg_rep_score": round(sum(scores) / len(scores), 1),
+        "best_rep": best_rep.get("rep"),
+        "worst_rep": worst_rep.get("rep"),
+        "trend": "Form appears consistent across the set.",
         "biggest_fix": biggest_fix,
     }
 
@@ -2399,10 +2359,12 @@ def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
     left_ids = {"shoulder": 11, "hip": 23, "knee": 25, "ankle": 27}
     right_ids = {"shoulder": 12, "hip": 24, "knee": 26, "ankle": 28}
 
-    left_vis = sum(vis(i) for i in left_ids.values())
-    right_vis = sum(vis(i) for i in right_ids.values())
-
-    ids = left_ids if left_vis >= right_vis else right_ids
+    ids = (
+        left_ids
+        if sum(vis(i) for i in left_ids.values())
+        >= sum(vis(i) for i in right_ids.values())
+        else right_ids
+    )
 
     shoulder = pt(ids["shoulder"])
     hip = pt(ids["hip"])
@@ -2416,37 +2378,37 @@ def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
     if femur_len < 5 or torso_len < 5 or shin_len < 5:
         return frame
 
-    # Which way the lifter is facing
     forward_sign = np.sign(shoulder[0] - hip[0])
     if forward_sign == 0:
         forward_sign = np.sign(knee[0] - ankle[0])
     if forward_sign == 0:
         forward_sign = 1
 
-    # Detect squat depth:
-    # standing = hip far above knee
-    # bottom = hip near/below knee
     hip_vs_knee = hip[1] - knee[1]
-    phase = np.clip((hip_vs_knee + femur_len * 0.6) / (femur_len * 1.2), 0.0, 1.0)
+    phase = np.clip(
+        (hip_vs_knee + femur_len * 0.55) / (femur_len * 1.1),
+        0.0,
+        1.0,
+    )
 
     ideal_ankle = ankle.copy()
 
-    # Back squat: shin angle is moderate, not extreme like front squat
+    # knee slightly forward
     ideal_knee = np.array([
-        ideal_ankle[0] + forward_sign * shin_len * (0.16 + 0.12 * phase),
-        ideal_ankle[1] - shin_len * (0.98 - 0.08 * phase),
+        ideal_ankle[0] + forward_sign * shin_len * (0.18 + 0.08 * phase),
+        ideal_ankle[1] - shin_len * (0.93 - 0.04 * phase),
     ])
 
-    # Back squat: hips sit back more as depth increases
+    # deep but not collapsed
     ideal_hip = np.array([
-        ideal_knee[0] - forward_sign * femur_len * (0.45 + 0.18 * phase),
-        ideal_knee[1] - femur_len * (0.72 - 0.28 * phase),
+        ideal_knee[0] - forward_sign * femur_len * (0.54 + 0.08 * phase),
+        ideal_knee[1] - femur_len * (0.08 - 0.02 * phase),
     ])
 
-    # Back squat: torso leans forward more than front squat
+    # proud chest / athletic torso
     ideal_shoulder = np.array([
-        ideal_hip[0] + forward_sign * torso_len * (0.48 + 0.18 * phase),
-        ideal_hip[1] - torso_len * (0.88 - 0.08 * phase),
+        ideal_hip[0] + forward_sign * torso_len * (0.68 + 0.05 * phase),
+        ideal_hip[1] - torso_len * (0.92 - 0.02 * phase),
     ])
 
     blue = (255, 0, 0)
@@ -2463,38 +2425,6 @@ def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
 
     for p in points:
         cv2.circle(frame, p, 7, blue, -1, cv2.LINE_AA)
-
-    # Back squat bar guide: bar stays roughly over midfoot
-    bar_point = ideal_shoulder + np.array([
-        -forward_sign * torso_len * 0.10,
-        -torso_len * 0.08,
-    ])
-
-    midfoot = ideal_ankle + np.array([
-        forward_sign * shin_len * 0.08,
-        0,
-    ])
-
-    cv2.circle(frame, tuple(bar_point.astype(int)), 8, blue, -1, cv2.LINE_AA)
-    cv2.line(
-        frame,
-        tuple(bar_point.astype(int)),
-        tuple(midfoot.astype(int)),
-        blue,
-        3,
-        cv2.LINE_AA,
-    )
-
-    cv2.putText(
-        frame,
-        "BLUE = IDEAL BACK SQUAT",
-        (20, 45),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        blue,
-        2,
-        cv2.LINE_AA,
-    )
 
     return frame
 
@@ -2655,17 +2585,30 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
         return None
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+
+    start = int(rep.get("start_frame", 0))
+    bottom = int(rep.get("bottom_frame", start))
+    end = int(rep.get("end_frame", total_frames - 1))
+
+    start = max(0, min(start, total_frames - 1))
+    bottom = max(start, min(bottom, total_frames - 1))
+    end = max(bottom + 1, min(end, total_frames - 1))
+
+    # Rebuild phases from start/bottom/end so they are spaced correctly.
+    setup_frame = start
+    descent_frame = start + int((bottom - start) * 0.60)
+    bottom_frame = bottom
+    ascent_frame = bottom + int((end - bottom) * 0.45)
+    lockout_frame = end
 
     phase_frames = {
-        "setup": int(rep.get("start_frame", 0)),
-        "descent": int(rep.get("descent_frame", rep.get("start_frame", 0))),
-        "bottom": int(rep.get("bottom_frame", rep.get("start_frame", 0))),
-        "ascent": int(rep.get("ascent_frame", rep.get("end_frame", 0))),
-        "lockout": int(rep.get("end_frame", total_frames - 1)),
+        "setup": setup_frame,
+        "descent": descent_frame,
+        "bottom": bottom_frame,
+        "ascent": ascent_frame,
+        "lockout": lockout_frame,
     }
-
-    for k in phase_frames:
-        phase_frames[k] = max(0, min(phase_frames[k], total_frames - 1))
 
     print("SQUAT PHASE FRAME PICKS:", phase_frames)
 
@@ -2676,18 +2619,11 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
         if not local_cap.isOpened():
             return None
 
-        current = 0
-        frame = None
-
-        while current <= target_frame:
-            ret, frame = local_cap.read()
-            if not ret:
-                local_cap.release()
-                return None
-            current += 1
-
+        local_cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+        ret, frame = local_cap.read()
         local_cap.release()
-        return frame
+
+        return frame if ret else None
 
     with mp_pose.Pose(
         static_image_mode=True,
@@ -2713,12 +2649,12 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
                     height,
                 )
 
-            cv2.rectangle(frame, (20, 20), (340, 78), (0, 0, 0), -1)
+            cv2.rectangle(frame, (20, 20), (360, 82), (0, 0, 0), -1)
 
             cv2.putText(
                 frame,
                 phase_name.upper(),
-                (35, 62),
+                (35, 64),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.0,
                 (255, 255, 255),
@@ -2735,8 +2671,6 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
                 saved[phase_name] = f"/outputs/{filename}"
             else:
                 print(f"Could not save image for {phase_name}: {filepath}")
-
-    cap.release()
 
     print("Saved squat phase images:", saved)
 

@@ -347,23 +347,26 @@ const getZoneImagePath = (result, activeZone) => {
   const zoneId = activeZone?.id;
 
   if (
-  label.includes("olympic") ||
-  label.includes("clean") ||
-  label.includes("snatch") ||
-  label.includes("jerk")
-) {
-  if (zoneId === "setup") return images.setup;
-  if (zoneId === "pull") return images.first_pull || images.setup;
-  if (zoneId === "extension") return images.extension || images.first_pull;
-  if (zoneId === "catch") return images.catch || images.extension;
+    label.includes("olympic") ||
+    label.includes("clean") ||
+    label.includes("snatch") ||
+    label.includes("jerk")
+  ) {
+    if (zoneId === "setup") return images.setup;
+    if (zoneId === "pull") return images.first_pull || images.setup;
+    if (zoneId === "extension") return images.extension || images.first_pull;
+    if (zoneId === "catch") return images.catch || images.extension;
 
-  return images.catch || images.extension || images.finish || images.setup;
-}
+    return images.catch || images.extension || images.finish || images.setup;
+  }
 
   if (label.includes("bench")) {
-    if (zoneId === "wrists") return images.press || images.lockout || images.bottom;
-    if (zoneId === "elbows") return images.press || images.bottom || images.lockout;
-    if (zoneId === "bar") return images.descent || images.bottom || images.press;
+    if (zoneId === "wrists")
+      return images.press || images.lockout || images.bottom;
+    if (zoneId === "elbows")
+      return images.press || images.bottom || images.lockout;
+    if (zoneId === "bar")
+      return images.descent || images.bottom || images.press;
     if (zoneId === "lockout") return images.lockout || images.press;
   }
 
@@ -512,7 +515,7 @@ export default function App() {
         throw new Error(
           visualsData.detail ||
             visualsData.message ||
-            "Visual generation request failed"
+            "Visual generation request failed",
         );
       }
 
@@ -553,7 +556,9 @@ export default function App() {
       console.log("ANALYZE RESPONSE:", data);
 
       if (!res.ok) {
-        throw new Error(data.detail || data.message || "Analyze request failed");
+        throw new Error(
+          data.detail || data.message || "Analyze request failed",
+        );
       }
 
       setResult(data);

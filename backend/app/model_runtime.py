@@ -4,7 +4,13 @@ import numpy as np
 import tensorflow as tf
 
 
-LABELS = ["bench_press", "deadlift", "push_press", "squat", "squat_front"]
+LABELS = [
+    "bench_press",
+    "deadlift",
+    "push_press",
+    "squat",
+    "squat_front",
+]
 
 LABEL_DISPLAY = {
     "bench_press": "Bench Press",
@@ -17,7 +23,7 @@ LABEL_DISPLAY = {
 
 class NumpyFormCheckModel:
     def __init__(self, model_dir):
-        weights_path = Path(__file__).parent / "models" / "movement_classifier.weights.h5"
+        weights_path = Path(model_dir) / "movement_classifier.weights.h5"
 
         print("\n====================")
         print("LOADING CLEAN WEIGHTS MODEL")
