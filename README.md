@@ -1,170 +1,478 @@
-# 📱 FormCheck AI — Real Backend Inference
+# 📱 FormCheck AI — AI-Powered Movement Analysis & Coaching
 
-This project includes:
-- Mobile app (Expo React Native) for uploading videos
-- FastAPI backend that performs real exercise classification using your trained model
+FormCheck AI is a computer vision + deep learning platform that analyzes exercise videos, classifies movements, evaluates biomechanics, generates coaching feedback, and creates visual phase breakdowns automatically.
 
----
+It acts like having an AI coach review your lifts frame-by-frame.
 
-# 🧠 What the Backend Does
+Built with:
 
-1. Accepts uploaded video
-2. Runs MediaPipe Pose on each frame
-3. Extracts 71 features per frame
-4. Adds velocity → 142 features
-5. Runs your trained sequence model
-6. Returns:
-   - exercise label
-   - confidence
-   - coaching notes
-   - debug details
+- **FastAPI backend**
+- **Expo React Native mobile app**
+- **TensorFlow / Keras deep learning**
+- **MediaPipe Pose landmark extraction**
+- **OpenCV computer vision**
+- **Biomechanics scoring engine**
+- **Automatic overlay video generation**
+- **Phase-by-phase movement visualization**
 
 ---
 
-# ⚙️ Backend Setup
+# Demo
 
-cd backend
+Upload a lift video →
+
+FormCheck AI returns:
+
+✅ movement classification  
+✅ rep counting  
+✅ biomechanics feedback  
+✅ coaching cues  
+✅ rep grading  
+✅ overlay analysis video  
+✅ phase images  
+✅ coaching zones  
+
+---
+
+# Features
+
+# ✅ Exercise Classification
+
+Automatically identifies the exercise being performed.
+
+Supports:
+
+## 🏋️ Strength / Olympic Lifts
+
+- Bench Press
+- Deadlift
+- Back Squat
+- Front Squat
+- Overhead Squat
+- Strict Press
+- Push Press
+- Split Jerk
+- Thruster
+- Clean
+- Snatch
+- Clean & Jerk
+
+## 🤸 Gymnastics / CrossFit
+
+- Pull-up
+- Bar Muscle-up
+- Ring Muscle-up
+
+Future planned:
+
+- Toes-to-bar
+- Handstand Push-up
+- Box Jump
+- Rowing stroke analysis
+- Running gait analysis
+
+---
+
+# ✅ Rep Detection
+
+Automatically detects:
+
+- rep start
+- eccentric phase
+- bottom position
+- concentric phase
+- lockout
+- rep completion
+
+Returns:
+
+- total reps
+- best rep
+- worst rep
+- average score
+- consistency trend
+
+---
+
+# ✅ Biomechanics Analysis
+
+Analyzes movement quality using joint tracking and movement heuristics.
+
+Metrics include:
+
+- knee angle
+- hip angle
+- torso angle
+- elbow angle
+- shoulder position
+- valgus ratio
+- lockout quality
+- spinal neutrality
+- bar path
+- tempo / control
+- overhead stability
+
+---
+
+# ✅ Coaching Feedback
+
+Provides actionable cues.
+
+Examples:
+
+### Squat
+
+- Drive knees out
+- Keep chest tall
+- Hit full depth
+- Maintain heel pressure
+
+### Deadlift
+
+- Brace core
+- Neutral spine
+- Push floor away
+- Finish tall with glutes
+
+### Bench Press
+
+- Touch lower chest
+- Keep wrists stacked
+- Full lockout
+- Drive through feet
+
+### Olympic Lifts
+
+- Stay over bar
+- Finish extension
+- Fast elbows
+- Punch overhead aggressively
+
+---
+
+# ✅ Phase Image Generation
+
+Automatically creates key movement snapshots.
+
+---
+
+## Clean
+
+Generates:
+
+- setup
+- first pull
+- extension
+- catch
+- finish
+
+---
+
+## Split Jerk
+
+Generates:
+
+- setup
+- dip
+- drive
+- catch
+- recovery
+- finish
+
+---
+
+## Push Press
+
+Generates:
+
+- setup
+- dip
+- drive
+- catch
+- lockout
+
+---
+
+## Squat
+
+Generates:
+
+- setup
+- descent
+- bottom
+- ascent
+- lockout
+
+---
+
+## Deadlift
+
+Generates:
+
+- setup
+- pull
+- mid
+- finish
+- lockout
+
+---
+
+## Pull-up
+
+Generates:
+
+- hang
+- pull
+- top
+- descent
+- finish
+
+---
+
+## Muscle-ups
+
+Generates:
+
+- hang
+- pull
+- transition
+- dip
+- lockout
+- finish
+
+---
+
+# ✅ Overlay Video Rendering
+
+FormCheck AI creates an annotated replay video showing:
+
+- rep boundaries
+- labels
+- score overlays
+- coaching zones
+- biomechanics notes
+- analysis timeline
+
+This gives users visual feedback—not just numbers.
+
+---
+
+# ✅ Smart Override Engine
+
+A biomechanics-aware rule engine improves classification beyond model predictions.
+
+Overrides include:
+
+- Thruster detection
+- Push Press detection
+- Split Jerk detection
+- Pull-up detection
+- Bar Muscle-up detection
+- Ring Muscle-up detection
+- Olympic lift routing
+- Squat family routing
+
+This dramatically improves real-world accuracy.
+
+---
+
+# Backend Pipeline
+
+Video →
+
+Frame extraction →
+
+MediaPipe Pose →
+
+Landmark extraction →
+
+Feature engineering →
+
+Velocity features →
+
+Sequence model →
+
+Biomechanics override →
+
+Rep segmentation →
+
+Movement scoring →
+
+Feedback generation →
+
+Phase image creation →
+
+Overlay rendering →
+
+JSON response
+
+---
+
+# Model Performance
+
+Current production classifier:
+
+### Movement Router v2
+
+Performance:
+
+| Movement | Accuracy |
+|---------|----------|
+| Deadlift | 98.8% |
+| Push Press | 97.6% |
+| Back Squat | 96.8% |
+| Front Squat | 98.1% |
+
+Confusion is minimal.
+
+Biomechanics overrides further improve final prediction quality.
+
+---
+
+# Tech Stack
+
+## Backend
+
+- FastAPI
+- Python
+- TensorFlow / Keras
+- OpenCV
+- NumPy
+- Pandas
+- MediaPipe
+
+## Frontend
+
+- React Native
+- Expo
+- JavaScript
+
+## ML / CV
+
+- LSTM sequence models
+- Landmark feature engineering
+- Motion velocity vectors
+- Heuristic override engine
+- Rep segmentation logic
+
+---
+
+# Installation
+
+## Backend
+
+```bash
+git clone https://github.com/YOUR_USERNAME/formcheck-ai.git
+
+cd formcheck-ai/backend
+
 python3.12 -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
+```
 
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+Run server:
 
-You should see:
-Uvicorn running on http://0.0.0.0:8000
+```bash
+uvicorn app.main:app --reload
+```
+
+Server:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
 
 ---
 
-# ✅ Test Backend (IMPORTANT — do this first)
+## Frontend
 
-## 1. Health Check (Mac browser)
+```bash
+cd frontend
 
-http://127.0.0.1:8000/health
+npm install
 
-Expected:
+npx expo start
+```
 
+Run on:
+
+- iPhone
+- Android
+- simulator
+- Expo Go
+
+---
+
+# API Example
+
+POST:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/analyze" \
+-H "accept: application/json" \
+-F "file=@deadlift.mov"
+```
+
+Response:
+
+```json
 {
-  "status": "ok",
-  "model_loaded": true,
-  "labels": ["Bench Press","Deadlift","Push Press","Squat"]
-}
-
----
-
-## 2. Test Inference with curl
-
-time curl -X POST "http://127.0.0.1:8000/analyze" \
-  -H "accept: application/json" \
-  -F 'file=@/Users/josephkamil/Desktop/Capstone/Front Squat- Depth.mov'
-
----
-
-## ✅ Example Successful Output
-
-{
-  "exercise_label": "Squat",
-  "confidence": 0.63,
+  "exercise_label": "Deadlift",
+  "confidence": 0.95,
+  "analysis_mode": "detailed_rep_analysis",
   "feedback": [
-    "Predicted exercise: Squat.",
-    "Model confidence: 63.5%",
-    "This is real model inference from your uploaded video."
+    "Brace core and maintain neutral spine."
   ],
-  "details": {
-    "frames_seen": 1311,
-    "frames_processed": 1267,
-    "sequences_scored": 248,
-    "mean_pose_visibility": 0.763,
-    "class_probabilities": {
-      "Bench Press": 0.0856,
-      "Deadlift": 0.2252,
-      "Push Press": 0.0545,
-      "Squat": 0.6347
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "score": 8.5,
+      "grade": "Good"
     }
+  ],
+  "overlay_video_url": "/outputs/overlay.mp4",
+  "phase_images": {
+    "setup": "/outputs/setup.jpg",
+    "pull": "/outputs/pull.jpg",
+    "finish": "/outputs/finish.jpg"
   }
 }
+```
 
 ---
 
-## 🧪 What Success Means
+# Vision
 
-- /health works in browser
-- curl /analyze returns JSON
-- prediction looks reasonable
+FormCheck AI aims to become:
 
-At this point, your ML pipeline is working.
+**The AI movement coach for everyone**
 
----
+Applications:
 
-# 📶 Test From Phone (Network Check)
-
-Find your Mac IP:
-
-ipconfig getifaddr en0
-
-Open on phone:
-
-http://YOUR_IP:8000/health
-
-If it doesn’t load:
-- same WiFi required
-- backend not running
-- firewall blocking
+- strength training
+- Olympic lifting
+- CrossFit
+- personal training
+- rehab movement screening
+- sports performance
+- remote coaching
 
 ---
 
-# 📱 Mobile App Setup
+# Author
 
-In mobile/App.js:
+**Joseph Kamil**
 
-const API_BASE_URL = 'http://YOUR_IP:8000';
+Full Stack + AI Engineer
 
-Then run:
-
-cd mobile
-npm install
-npx expo start -c
+Built with deep learning, computer vision, and an obsession for biomechanics.
 
 ---
-
-# 🧪 App Test Flow
-
-1. Tap Check Backend
-2. Tap Select Video
-3. Tap Analyze Form
-
----
-
-# ⚠️ Known Limitations
-
-- Slow (~1 min for long videos)
-- Requires side-view full body
-- Confidence may be moderate (depends on training data)
-
----
-
-# 🚀 Next Improvements
-
-## Speed
-- downsample frames (every 3–5 frames)
-- resize video before processing
-- limit clip length
-
-## Accuracy
-- more labeled data
-- better angle consistency
-- class balancing
-
-## Product Features
-- detect form faults (knees, depth, back angle)
-- real-time feedback
-- rep counting
-
----
-
-# 🎯 Current Status
-
-Full pipeline working  
-Real model inference  
-Mobile → backend → response loop  
-Next: optimization + coaching insights
