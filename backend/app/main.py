@@ -3986,8 +3986,35 @@ async def generate_visuals(file: UploadFile = File(...)):
         return result
 
     label = result["debug"].get("final_prediction")
+    normalized_label = label.lower().replace(" ", "_")
+
     rep_feedback = result.get("rep_feedback", [])
     sample_every = result["debug"].get("sample_every", 5)
+
+    # -----------------------------------
+    # Create synthetic rep for bodyweight
+    # movements so overlay rendering works
+    # -----------------------------------
+    visual_only_labels = [
+        "pull_up",
+        "bar_muscle_up",
+        "ring_muscle_up",
+    ]
+
+    if not rep_feedback and normalized_label in visual_only_labels:
+        frames_seen = int(result["debug"].get("frames_seen", 1))
+
+        rep_feedback = [
+            {
+                "rep": 1,
+                "start_frame": 0,
+                "end_frame": max(1, frames_seen - 1),
+                "score": 10.0,
+                "grade": "Captured",
+                "issues": [],
+                "feedback": [],
+            }
+        ]
 
     overlay_video_url = None
     phase_images = None
@@ -3999,8 +4026,6 @@ async def generate_visuals(file: UploadFile = File(...)):
             rep_feedback,
             key=lambda rep: rep.get("end_frame", 0) - rep.get("start_frame", 0),
         )
-
-    normalized_label = label.lower().replace(" ", "_")
 
     if rep_feedback or normalized_label in [
         "pull_up",
