@@ -936,12 +936,11 @@ export default function App() {
               </ScrollView>
             </View>
 
-            <TouchableOpacity
-              style={styles.overlayButton}
-              onPress={generateOverlay}
-            >
-              <Text style={styles.secondaryButtonText}>Generate Overlay</Text>
-            </TouchableOpacity>
+            <View style={styles.overlayButtonDisabled}>
+              <Text style={styles.secondaryButtonText}>
+                Overlay Replay (coming soon)
+              </Text>
+            </View>
 
             {overlayUrl && (
               <View style={styles.card}>
@@ -1414,5 +1413,13 @@ const styles = StyleSheet.create({
   paddingVertical: 16,
   alignItems: "center",
   marginBottom: 14,
+},
+overlayButtonDisabled: {
+  backgroundColor: "#374151",
+  borderRadius: 18,
+  paddingVertical: 16,
+  alignItems: "center",
+  marginBottom: 14,
+  opacity: 0.7,
 },
 });
