@@ -534,6 +534,41 @@ export default function App() {
   }
 };
 
+const generateOverlay = async () => {
+  try {
+    const bestRep = getBestRep(result?.rep_feedback || []);
+
+    const res = await fetch(`${API_URL}/generate_overlay`, {
+      method: "POST",
+      body: await buildFormData({
+        rep_json: bestRep ? JSON.stringify(bestRep) : null,
+        exercise_label: result?.exercise_label || "",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.overlay_error ||
+        data.message ||
+        "Overlay generation failed"
+      );
+    }
+
+    setResult((prev) => ({
+      ...prev,
+      overlay_video_url: data.overlay_video_url,
+      overlay_error: data.overlay_error,
+    }));
+  } catch (err) {
+    setResult((prev) => ({
+      ...prev,
+      overlay_error: err.message,
+    }));
+  }
+};
+
   const analyzeVideo = async () => {
     if (!video) {
       Alert.alert("Pick a video first");
@@ -659,6 +694,10 @@ export default function App() {
             <Text style={styles.secondaryButtonText}>Files</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.secondaryButton} onPress={generateOverlay}>
+          <Text style={styles.secondaryButtonText}>Generate Overlay</Text>
+        </TouchableOpacity>
 
         {video && (
           <View style={styles.selectedCard}>
