@@ -35,18 +35,6 @@ const formatLabel = (v) =>
         .replace(/\b\w/g, (c) => c.toUpperCase())
     : "N/A";
 
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
-
-const API_URL = Platform.OS === "web" ? "/api" : BACKEND_URL;
-
-const fullUrl = (path) => {
-  if (!path) return null;
-  if (String(path).startsWith("http")) return path;
-  return `${BACKEND_URL}${path}`;
-};
-
 const getStatusColor = (status) => {
   if (
     [
