@@ -482,46 +482,53 @@ export default function App() {
 };
 
   const generateVisuals = async () => {
-    try {
-      setVisualsLoading(true);
+  try {
+    console.log("GENERATE VISUALS STARTED");
 
-      const controller = new AbortController();
+    setVisualsLoading(true);
 
-const timeoutId = setTimeout(() => {
-  controller.abort();
-}, 20000);
+    const controller = new AbortController();
 
-const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
-  method: "POST",
-  body: await buildFormData(),
-  signal: controller.signal,
-});
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 20000);
 
-clearTimeout(timeoutId);
+    const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
+      method: "POST",
+      body: await buildFormData(),
+      signal: controller.signal,
+    });
 
-      const visualsData = await visualsRes.json();
+    clearTimeout(timeoutId);
 
-      if (!visualsRes.ok) {
-        throw new Error(
-          visualsData.detail ||
-            visualsData.message ||
-            "Visual generation request failed"
-        );
-      }
+    const visualsData = await visualsRes.json();
 
-      setResult((prev) => ({
-        ...prev,
-        ...visualsData,
-      }));
-    } catch (err) {
-      setResult((prev) => ({
-        ...prev,
-        visuals_error: err.message,
-      }));
-    } finally {
-      setVisualsLoading(false);
+    console.log("VISUALS RESPONSE:", visualsData);
+    console.log("VISUALS STATUS:", visualsRes.status);
+
+    if (!visualsRes.ok) {
+      throw new Error(
+        visualsData.detail ||
+          visualsData.message ||
+          "Visual generation request failed"
+      );
     }
-  };
+
+    setResult((prev) => ({
+      ...prev,
+      ...visualsData,
+    }));
+  } catch (err) {
+    console.log("VISUALS ERROR:", err);
+
+    setResult((prev) => ({
+      ...prev,
+      visuals_error: err.message,
+    }));
+  } finally {
+    setVisualsLoading(false);
+  }
+};
 
   const analyzeVideo = async () => {
     if (!video) {
