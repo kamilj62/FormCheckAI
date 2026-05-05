@@ -564,6 +564,8 @@ export default function App() {
       setResult(data);
       setLoading(false);
 
+      console.log("ABOUT TO START VISUALS", data?.rep_feedback?.length);
+
       if (data?.rep_feedback?.length > 0) {
         setTimeout(() => {
           generateVisuals();
