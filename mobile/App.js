@@ -16,7 +16,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const API_URL = "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
+const API_URL =
+  "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
 
 const formatLabel = (v) =>
   v
@@ -367,25 +368,25 @@ export default function App() {
   };
 
   const pickWebVideoFile = () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "video/*";
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
 
-  input.onchange = (e) => {
-    const file = e.target.files?.[0];
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
 
-    if (!file) return;
+      if (!file) return;
 
-    setVideo({
-      file,
-      uri: URL.createObjectURL(file),
-      name: file.name || "upload.mov",
-      type: file.type || "video/mp4",
-    });
+      setVideo({
+        file,
+        uri: URL.createObjectURL(file),
+        name: file.name || "upload.mov",
+        type: file.type || "video/mp4",
+      });
+    };
+
+    input.click();
   };
-
-  input.click();
-};
 
   const pickFromLibrary = async () => {
     if (Platform.OS === "web") {
@@ -394,50 +395,50 @@ export default function App() {
       return;
     }
 
-  if (Platform.OS === "web") {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "video/*";
+    if (Platform.OS === "web") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "video/*";
 
-    input.onchange = (e) => {
-      const file = e.target.files[0];
+      input.onchange = (e) => {
+        const file = e.target.files[0];
 
-      if (file) {
-        setVideo({
-          file,
-          name: file.name,
-          type: file.type,
-        });
-      }
-    };
+        if (file) {
+          setVideo({
+            file,
+            name: file.name,
+            type: file.type,
+          });
+        }
+      };
 
-    input.click();
-    return;
-  }
+      input.click();
+      return;
+    }
 
-  // native stays the same
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    // native stays the same
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  if (!permission.granted) {
-    Alert.alert("Library permission required");
-    return;
-  }
+    if (!permission.granted) {
+      Alert.alert("Library permission required");
+      return;
+    }
 
-  const res = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-    quality: 1,
-  });
-
-  if (!res.canceled) {
-    const a = res.assets[0];
-
-    setVideo({
-      uri: a.uri,
-      name: a.fileName || "library.mov",
-      type: a.mimeType || "video/quicktime",
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      quality: 1,
     });
-  }
-};
+
+    if (!res.canceled) {
+      const a = res.assets[0];
+
+      setVideo({
+        uri: a.uri,
+        name: a.fileName || "library.mov",
+        type: a.mimeType || "video/quicktime",
+      });
+    }
+  };
 
   const pickFromCloud = async () => {
     if (Platform.OS === "web") {
@@ -462,73 +463,75 @@ export default function App() {
   };
 
   const buildFormData = async () => {
-  const formData = new FormData();
+    const formData = new FormData();
 
-  if (Platform.OS === "web") {
-    if (!video?.file) {
-      throw new Error("No browser file found. Please choose the video again.");
+    if (Platform.OS === "web") {
+      if (!video?.file) {
+        throw new Error(
+          "No browser file found. Please choose the video again.",
+        );
+      }
+
+      formData.append("file", video.file, video.name || "upload.mov");
+    } else {
+      formData.append("file", {
+        uri: video.uri,
+        name: video.name || "upload.mov",
+        type: video.type || "video/mp4",
+      });
     }
 
-    formData.append("file", video.file, video.name || "upload.mov");
-  } else {
-    formData.append("file", {
-      uri: video.uri,
-      name: video.name || "upload.mov",
-      type: video.type || "video/mp4",
-    });
-  }
-
-  return formData;
-};
+    return formData;
+  };
 
   const generateVisuals = async () => {
-  try {
-    console.log("GENERATE VISUALS STARTED");
+    try {
+      console.log("GENERATE VISUALS STARTED");
 
-    setVisualsLoading(true);
+      setVisualsLoading(true);
 
-    const controller = new AbortController();
+      const controller = new AbortController();
 
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 20000);
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 20000);
 
-    const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
-      method: "POST",
-      body: await buildFormData(),
-      signal: controller.signal,
-    });
+      const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
+        method: "POST",
+        body: await buildFormData(),
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    const visualsData = await visualsRes.json();
+      const visualsData = await visualsRes.json();
 
-    console.log("VISUALS RESPONSE:", visualsData);
-    console.log("VISUALS STATUS:", visualsRes.status);
+      console.log("VISUALS RESPONSE:", visualsData);
+      console.log("VISUALS STATUS:", visualsRes.status);
 
-    if (!visualsRes.ok) {
-      throw new Error(
-        visualsData.detail ||
-          visualsData.message ||
-          "Visual generation request failed"
-      );
+      if (!visualsRes.ok) {
+        throw new Error(
+          visualsData.detail ||
+            visualsData.message ||
+            "Visual generation request failed",
+        );
+      }
+
+      setResult((prev) => ({
+        ...prev,
+        ...visualsData,
+      }));
+    } catch (err) {
+      console.log("VISUALS ERROR:", err);
+
+      setResult((prev) => ({
+        ...prev,
+        visuals_error: err.message,
+      }));
+    } finally {
+      setVisualsLoading(false);
     }
-
-    setResult((prev) => ({
-      ...prev,
-      ...visualsData,
-    }));
-  } catch (err) {
-    console.log("VISUALS ERROR:", err);
-
-    setResult((prev) => ({
-      ...prev,
-      visuals_error: err.message,
-    }));
-  } finally {
-    setVisualsLoading(false);
-  }
-};
+  };
 
   const analyzeVideo = async () => {
     if (!video) {
@@ -555,9 +558,9 @@ export default function App() {
       if (!res.ok) {
         throw new Error(
           data?.detail ||
-          data?.message ||
-          JSON.stringify(data) ||
-          "Analyze request failed"
+            data?.message ||
+            JSON.stringify(data) ||
+            "Analyze request failed",
         );
       }
 
@@ -634,15 +637,24 @@ export default function App() {
         </View>
 
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.primaryButton} onPress={recordWithCamera}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={recordWithCamera}
+          >
             <Text style={styles.primaryButtonText}>Record</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={pickFromLibrary}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={pickFromLibrary}
+          >
             <Text style={styles.secondaryButtonText}>Library</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={pickFromCloud}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={pickFromCloud}
+          >
             <Text style={styles.secondaryButtonText}>Files</Text>
           </TouchableOpacity>
         </View>
@@ -665,7 +677,9 @@ export default function App() {
           {loading ? (
             <View style={styles.loadingBlock}>
               <ActivityIndicator color="#020617" />
-              <Text style={styles.analyzeButtonText}>Analyzing movement...</Text>
+              <Text style={styles.analyzeButtonText}>
+                Analyzing movement...
+              </Text>
             </View>
           ) : visualsLoading ? (
             <View style={styles.loadingBlock}>
@@ -751,7 +765,9 @@ export default function App() {
             {visualsLoading && (
               <View style={styles.warningCard}>
                 <ActivityIndicator color="#86efac" />
-                <Text style={styles.warningTitle}>Coaching visuals are loading</Text>
+                <Text style={styles.warningTitle}>
+                  Coaching visuals are loading
+                </Text>
                 <Text style={styles.warningText}>
                   Scores are ready. Phase images and replay will appear next.
                 </Text>
@@ -838,7 +854,9 @@ export default function App() {
                       ]}
                       onPress={() => setSelectedZone(zone)}
                     >
-                      <View style={[styles.statusDot, { backgroundColor: color }]} />
+                      <View
+                        style={[styles.statusDot, { backgroundColor: color }]}
+                      />
                       <Text style={styles.zoneText}>{zone.title}</Text>
                     </TouchableOpacity>
                   );
