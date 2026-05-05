@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
 
 const formatLabel = (v) =>
   v
