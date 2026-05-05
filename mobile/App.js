@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const API_URL = "/api";
+const API_URL = "http://127.0.0.1:8000";
 
 const formatLabel = (v) =>
   v
