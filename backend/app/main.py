@@ -13,7 +13,7 @@ import tensorflow as tf
 
 import joblib
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -3923,7 +3923,13 @@ def analyze_video(video_path, make_visuals=True):
 
 
 @app.post("/generate_visuals")
-async def generate_visuals(file: UploadFile = File(...)):
+async def generate_visuals(
+    file: UploadFile = File(...),
+    rep_json: str = Form(None),
+    exercise_label: str = Form(None),
+):
+    import json
+
     suffix = os.path.splitext(file.filename)[1] or ".mov"
     temp_filename = f"visuals_{uuid.uuid4().hex[:8]}{suffix}"
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
@@ -3931,128 +3937,159 @@ async def generate_visuals(file: UploadFile = File(...)):
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    result = analyze_video(temp_path, make_visuals=False)
+    cap = cv2.VideoCapture(temp_path)
 
-    if result.get("error"):
-        return result
+    if not cap.isOpened():
+        return {
+            "exercise_label": "Visuals",
+            "overlay_video_url": None,
+            "phase_images": None,
+            "visuals_error": "Could not open uploaded video.",
+        }
 
-    label = result["debug"].get("final_prediction")
-    normalized_label = label.lower().replace(" ", "_")
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    rep_feedback = result.get("rep_feedback", [])
-    sample_every = result["debug"].get("sample_every", 5)
+    if total_frames <= 0:
+        cap.release()
+        return {
+            "exercise_label": "Visuals",
+            "overlay_video_url": None,
+            "phase_images": None,
+            "visuals_error": "Video has no frames.",
+        }
 
-    # -----------------------------------
-    # Create synthetic rep for bodyweight
-    # -----------------------------------
-    visual_only_labels = [
-        "pull_up",
-        "bar_muscle_up",
-        "ring_muscle_up",
-    ]
+    rep = None
 
-    if not rep_feedback and normalized_label in visual_only_labels:
-        frames_seen = int(result["debug"].get("frames_seen", 1))
+    if rep_json:
+        try:
+            rep = json.loads(rep_json)
+        except Exception as e:
+            print("REP JSON PARSE ERROR:", e)
+            rep = None
 
-        rep_feedback = [
-            {
-                "rep": 1,
-                "start_frame": 0,
-                "end_frame": max(1, frames_seen - 1),
-                "score": 10.0,
-                "grade": "Captured",
-                "issues": [],
-                "feedback": [],
+    label = (exercise_label or "").lower().replace(" ", "_")
+
+    if rep:
+        start = int(rep.get("start_frame", 0))
+        bottom = int(rep.get("bottom_frame", total_frames // 2))
+        end = int(rep.get("end_frame", total_frames - 1))
+
+        # -------------------------
+        # lift-specific phase logic
+        # -------------------------
+        if "squat" in label:
+            phase_frames = {
+                "setup": max(0, start - 25),
+                "descent": max(0, start + int((bottom - start) * 0.45)),
+                "bottom": bottom,
+                "ascent": min(total_frames - 1, bottom + int((end - bottom) * 0.45)),
+                "lockout": min(total_frames - 1, end + 20),
             }
-        ]
 
-    overlay_video_url = None
-    phase_images = None
+        elif "deadlift" in label:
+            phase_frames = {
+                "setup": int(rep.get("start_frame", start)),
+                "pull": int(rep.get("pull_frame", start + 5)),
+                "mid": int(rep.get("mid_frame", (start + end) // 2)),
+                "finish": int(rep.get("finish_frame", end - 5)),
+                "lockout": int(rep.get("end_frame", end)),
+            }
 
-    # pick best rep
-    phase_rep = None
-    if rep_feedback:
-        phase_rep = max(
-            rep_feedback,
-            key=lambda rep: rep.get("end_frame", 0) - rep.get("start_frame", 0),
-        )
+        elif label in ["push_press", "strict_press"]:
+            phase_frames = {
+                "setup": start,
+                "dip": start + int((end - start) * 0.20),
+                "drive": start + int((end - start) * 0.45),
+                "catch": start + int((end - start) * 0.70),
+                "lockout": end,
+            }
 
-    try:
-        if rep_feedback or normalized_label in visual_only_labels:
+        elif "bench" in label:
+            phase_frames = {
+                "setup": start,
+                "descent": start + int((bottom - start) * 0.45),
+                "bottom": bottom,
+                "press": bottom + int((end - bottom) * 0.45),
+                "lockout": end,
+            }
 
-            if normalized_label == "deadlift":
-                phase_images = create_deadlift_phase_images(
-                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
-                )
+        elif label in [
+            "olympic_lift",
+            "clean_and_jerk",
+            "clean",
+            "snatch",
+            "jerk",
+            "split_jerk",
+            "thruster",
+        ]:
+            phase_frames = {
+                "setup": start,
+                "first_pull": start + int((end - start) * 0.20),
+                "extension": start + int((end - start) * 0.45),
+                "catch": start + int((end - start) * 0.70),
+                "finish": end,
+            }
 
-            elif normalized_label in [
-                "squat",
-                "squat_back",
-                "squat_front",
-                "overhead_squat",
-            ]:
-                phase_images = create_squat_phase_images(
-                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
-                )
+        elif label == "pull_up":
+            phase_frames = {
+                "hang": start,
+                "pull": start + int((end - start) * 0.35),
+                "top": start + int((end - start) * 0.65),
+                "lower": start + int((end - start) * 0.85),
+                "finish": end,
+            }
 
-            elif normalized_label in ["push_press", "strict_press"]:
-                phase_images = create_push_press_phase_images(
-                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
-                )
+        elif label in ["bar_muscle_up", "ring_muscle_up"]:
+            phase_frames = {
+                "hang": start,
+                "pull": start + int((end - start) * 0.25),
+                "transition": start + int((end - start) * 0.50),
+                "dip": start + int((end - start) * 0.72),
+                "support": end,
+            }
 
-            elif normalized_label == "bench_press":
-                phase_images = create_bench_press_phase_images(
-                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
-                )
+        else:
+            phase_frames = {
+                "setup": int(total_frames * 0.10),
+                "phase_1": int(total_frames * 0.30),
+                "phase_2": int(total_frames * 0.50),
+                "phase_3": int(total_frames * 0.70),
+                "finish": int(total_frames * 0.90),
+            }
 
-            elif normalized_label == "pull_up":
-                phase_images = create_pull_up_phase_images(
-                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
-                )
+    else:
+        phase_frames = {
+            "setup": int(total_frames * 0.10),
+            "phase_1": int(total_frames * 0.30),
+            "phase_2": int(total_frames * 0.50),
+            "phase_3": int(total_frames * 0.70),
+            "finish": int(total_frames * 0.90),
+        }
 
-            elif normalized_label in ["bar_muscle_up", "ring_muscle_up"]:
-                phase_images = create_bar_muscle_up_phase_images(
-                    temp_path,
-                    OVERLAY_DIR,
-                    phase_rep,
-                    sample_every=sample_every,
-                    exercise_label=normalized_label,
-                )
+    phase_images = {}
 
-            elif normalized_label in [
-                "olympic_lift",
-                "clean_and_jerk",
-                "snatch",
-                "clean",
-                "jerk",
-                "split_jerk",
-                "thruster",
-            ]:
-                phase_images = create_olympic_lift_phase_images(
-                    temp_path,
-                    OVERLAY_DIR,
-                    phase_rep
-                    or {
-                        "rep": 1,
-                        "start_frame": 0,
-                        "end_frame": int(result["debug"].get("frames_seen", 1)) - 1,
-                    },
-                    sample_every=sample_every,
-                    exercise_label=normalized_label,
-                )
+    for phase, frame_no in phase_frames.items():
+        frame_no = max(0, min(int(frame_no), total_frames - 1))
 
-    except Exception as e:
-        print("PHASE IMAGE ERROR:", e)
-        phase_images = None
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
+        ret, frame = cap.read()
 
-    # -----------------------------------
-    # OVERLAY DISABLED (prevents timeout)
-    # -----------------------------------
-    overlay_video_url = None
+        if not ret:
+            print(f"FAILED TO READ FRAME: {phase} frame={frame_no}")
+            continue
+
+        filename = f"{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        output_path = os.path.join(OVERLAY_DIR, filename)
+
+        cv2.imwrite(output_path, frame)
+
+        phase_images[phase] = f"/outputs/{filename}"
+
+    cap.release()
 
     return {
-        "exercise_label": result["exercise_label"],
-        "overlay_video_url": overlay_video_url,
+        "exercise_label": exercise_label,
+        "overlay_video_url": None,
         "phase_images": phase_images,
     }
 

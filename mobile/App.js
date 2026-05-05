@@ -466,9 +466,7 @@ export default function App() {
 
   if (Platform.OS === "web") {
     if (!video?.file) {
-      throw new Error(
-        "No browser file found. Please choose the video again.",
-      );
+      throw new Error("No browser file found. Please choose the video again.");
     }
 
     formData.append("file", video.file, video.name || "upload.mov");
@@ -489,59 +487,52 @@ export default function App() {
   return formData;
 };
 
-  const generateVisuals = async () => {
-    try {
-      console.log("GENERATE VISUALS STARTED");
+  const generateVisuals = async (analysisResult) => {
+  try {
+    console.log("GENERATE VISUALS STARTED");
 
-      setVisualsLoading(true);
+    setVisualsLoading(true);
 
-      const controller = new AbortController();
+    const bestRep = getBestRep(analysisResult?.rep_feedback || []);
 
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 20000);
+    const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
+      method: "POST",
+      body: await buildFormData({
+        rep_json: bestRep ? JSON.stringify(bestRep) : null,
+        exercise_label: analysisResult?.exercise_label || "",
+      }),
+    });
 
-      const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
-        method: "POST",
-        body: await buildFormData({
-          rep_json: JSON.stringify(getBestRep(result?.rep_feedback || [])),
-        }),
-        signal: controller.signal,
-      });
+    const visualsData = await visualsRes.json();
 
-      clearTimeout(timeoutId);
+    console.log("VISUALS RESPONSE:", visualsData);
+    console.log("VISUALS STATUS:", visualsRes.status);
 
-      const visualsData = await visualsRes.json();
-
-      console.log("VISUALS RESPONSE:", visualsData);
-      console.log("VISUALS STATUS:", visualsRes.status);
-
-      if (!visualsRes.ok) {
-        throw new Error(
-          visualsData.detail ||
-            visualsData.message ||
-            "Visual generation request failed",
-        );
-      }
-
-      
-  setResult((prev) => ({
-    ...prev,
-    overlay_video_url: visualsData.overlay_video_url,
-    phase_images: visualsData.phase_images,
-    visuals_error: visualsData.visuals_error,
-  }));
-    } catch (err) {
-      console.log("VISUALS ERROR:", err);
-
-      setResult((prev) => ({
-        ...prev,
-        visuals_error: err.message,
-      }));
-    } finally {
-      setVisualsLoading(false);
+    if (!visualsRes.ok) {
+      throw new Error(
+        visualsData.detail ||
+          visualsData.message ||
+          "Visual generation request failed"
+      );
     }
-  };
+
+    setResult((prev) => ({
+      ...prev,
+      overlay_video_url: visualsData.overlay_video_url,
+      phase_images: visualsData.phase_images,
+      visuals_error: visualsData.visuals_error,
+    }));
+  } catch (err) {
+    console.log("VISUALS ERROR:", err);
+
+    setResult((prev) => ({
+      ...prev,
+      visuals_error: err.message,
+    }));
+  } finally {
+    setVisualsLoading(false);
+  }
+};
 
   const analyzeVideo = async () => {
     if (!video) {
@@ -581,7 +572,7 @@ export default function App() {
 
       if (data?.rep_feedback?.length > 0) {
         setTimeout(() => {
-          generateVisuals();
+          generateVisuals(data);
         }, 500);
       }
     } catch (err) {
