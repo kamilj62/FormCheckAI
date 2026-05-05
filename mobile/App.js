@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -15,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const API_URL = "http://192.168.1.25:8000";
+const API_URL = "/api";
 
 const formatLabel = (v) =>
   v
@@ -24,24 +25,34 @@ const formatLabel = (v) =>
         .replace(/\b\w/g, (c) => c.toUpperCase())
     : "N/A";
 
+const fullUrl = (path) => {
+  if (!path) return null;
+  if (String(path).startsWith("http")) return path;
+  return `${API_URL}${path}`;
+};
+
 const getStatusColor = (status) => {
   if (
-    status === "poor" ||
-    status === "incomplete" ||
-    status === "drifting" ||
-    status === "severe_flare"
+    [
+      "poor",
+      "incomplete",
+      "drifting",
+      "severe_flare",
+      "limited_range",
+    ].includes(status)
   ) {
     return "#ef4444";
   }
 
   if (
-    status === "borderline" ||
-    status === "needs_work" ||
-    status === "possible" ||
-    status === "shallow" ||
-    status === "fair" ||
-    status === "limited_range" ||
-    status === "possibly_shallow"
+    [
+      "borderline",
+      "needs_work",
+      "possible",
+      "shallow",
+      "fair",
+      "possibly_shallow",
+    ].includes(status)
   ) {
     return "#f59e0b";
   }
@@ -143,9 +154,107 @@ const getPhaseConfig = (exerciseLabel) => {
 
 const getInteractiveZones = (result) => {
   const label = String(result?.exercise_label || "").toLowerCase();
-  const reps = result?.rep_feedback || [];
-  const bestRep = getBestRep(reps);
+  const bestRep = getBestRep(result?.rep_feedback || []);
   const breakdown = bestRep?.breakdown || {};
+
+  if (label.includes("push press")) {
+    return [
+      {
+        id: "dip",
+        title: "Dip",
+        imageKey: "dip",
+        status: breakdown.dip || "good",
+        note: "Use a vertical dip and drive straight through the bar.",
+      },
+      {
+        id: "drive",
+        title: "Drive",
+        imageKey: "drive",
+        status: breakdown.bar_path || "good",
+        note: "Keep the bar close and drive straight overhead.",
+      },
+      {
+        id: "catch",
+        title: "Catch",
+        imageKey: "catch",
+        status: breakdown.control || "good",
+        note: "Catch the bar stacked over your shoulders and midfoot.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || "good",
+        note: "Finish with elbows fully extended overhead.",
+      },
+    ];
+  }
+
+  if (label.includes("squat")) {
+    return [
+      {
+        id: "torso",
+        title: "Torso",
+        imageKey: "descent",
+        status: breakdown.torso || "good",
+        note: "Keep your chest tall and avoid folding forward.",
+      },
+      {
+        id: "depth",
+        title: "Depth",
+        imageKey: "bottom",
+        status: breakdown.depth || "good",
+        note: "Reach clear depth while keeping control.",
+      },
+      {
+        id: "knees",
+        title: "Knees",
+        imageKey: "bottom",
+        status: breakdown.knees || "good",
+        note: "Drive knees out and keep them tracking over toes.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || "good",
+        note: "Stand tall and finish the rep under control.",
+      },
+    ];
+  }
+
+  if (label.includes("bench")) {
+    return [
+      {
+        id: "wrists",
+        title: "Wrists",
+        imageKey: "press",
+        status: breakdown.wrists || "good",
+        note: "Keep wrists stacked and avoid letting them bend back.",
+      },
+      {
+        id: "elbows",
+        title: "Elbows",
+        imageKey: "bottom",
+        status: breakdown.elbows || "good",
+        note: "Keep elbows controlled without excessive flare.",
+      },
+      {
+        id: "bar",
+        title: "Bar Path",
+        imageKey: "press",
+        status: breakdown.bar_path || breakdown.depth || "good",
+        note: "Move from chest to lockout with a controlled path.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || "good",
+        note: "Finish with arms fully extended.",
+      },
+    ];
+  }
 
   if (
     label.includes("olympic") ||
@@ -157,146 +266,30 @@ const getInteractiveZones = (result) => {
       {
         id: "setup",
         title: "Setup",
+        imageKey: "setup",
         status: "good",
-        note: "Start with the bar close, chest up, and full-body tension.",
+        note: "Start tight with the bar close and chest up.",
       },
       {
-        id: "pull",
+        id: "first_pull",
         title: "First Pull",
+        imageKey: "first_pull",
         status: "good",
         note: "Keep the bar close as it passes the knees.",
       },
       {
         id: "extension",
         title: "Extension",
+        imageKey: "extension",
         status: "good",
-        note: "Drive tall through the legs and hips before pulling under.",
+        note: "Drive tall through the legs and hips.",
       },
       {
         id: "catch",
         title: "Catch",
+        imageKey: "catch",
         status: "good",
-        note: "Receive the bar under control before standing to finish.",
-      },
-    ];
-  }
-
-  if (label.includes("push press")) {
-    return [
-      {
-        id: "dip",
-        title: "Dip",
-        status: breakdown.dip || "good",
-        note:
-          breakdown.dip === "shallow"
-            ? "Use a stronger vertical dip before driving overhead."
-            : "Dip timing looks usable.",
-      },
-      {
-        id: "knees",
-        title: "Knees",
-        status: breakdown.knees || "good",
-        note:
-          breakdown.knees === "borderline" || breakdown.knees === "poor"
-            ? "Keep knees tracking over toes during the dip and drive."
-            : "Knee tracking looks controlled.",
-      },
-      {
-        id: "bar",
-        title: "Bar Path",
-        status: breakdown.bar_path || "good",
-        note:
-          breakdown.bar_path === "drifting"
-            ? "Keep the bar close and drive straight overhead."
-            : "Bar path looks controlled.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        status: breakdown.lockout || "good",
-        note:
-          breakdown.lockout === "incomplete"
-            ? "Finish with elbows fully extended overhead."
-            : "Overhead lockout looks solid.",
-      },
-    ];
-  }
-
-  if (label.includes("bench")) {
-    return [
-      {
-        id: "wrists",
-        title: "Wrists",
-        status: breakdown.wrists || breakdown.lockout || "good",
-        note: "Keep wrists stacked over elbows and avoid bending them back.",
-      },
-      {
-        id: "elbows",
-        title: "Elbows",
-        status: breakdown.elbows || "good",
-        note:
-          breakdown.elbows === "poor" ||
-          breakdown.elbows === "severe_flare" ||
-          breakdown.elbows === "borderline"
-            ? "Keep elbows controlled. Avoid aggressive flare."
-            : "Elbow path looks controlled.",
-      },
-      {
-        id: "bar",
-        title: "Bar Path",
-        status: breakdown.bar_path || breakdown.depth || "good",
-        note:
-          breakdown.depth === "limited_range" ||
-          breakdown.depth === "possibly_shallow"
-            ? "Use a full, controlled bar path from chest to lockout."
-            : "Bar path looks controlled.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        status: breakdown.lockout || "good",
-        note:
-          breakdown.lockout === "incomplete"
-            ? "Fully extend your arms at the top."
-            : "Lockout looks solid.",
-      },
-    ];
-  }
-
-  if (label.includes("squat")) {
-    return [
-      {
-        id: "torso",
-        title: "Torso",
-        status: breakdown.torso || "good",
-        note:
-          breakdown.torso === "poor" || breakdown.torso === "borderline"
-            ? "Keep your chest taller and avoid folding forward."
-            : "Torso angle looks controlled.",
-      },
-      {
-        id: "depth",
-        title: "Depth",
-        status: breakdown.depth || "good",
-        note:
-          breakdown.depth === "poor" || breakdown.depth === "borderline"
-            ? "Sink a little deeper while keeping your chest up."
-            : "Depth looks good.",
-      },
-      {
-        id: "knees",
-        title: "Knees",
-        status: breakdown.knees || "good",
-        note:
-          breakdown.knees === "poor" || breakdown.knees === "borderline"
-            ? "Drive knees out and keep them tracking over toes."
-            : "Knee tracking looks controlled.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        status: breakdown.lockout || "good",
-        note: "Stand tall and finish each rep under control.",
+        note: "Receive the bar under control.",
       },
     ];
   }
@@ -305,101 +298,32 @@ const getInteractiveZones = (result) => {
     {
       id: "back",
       title: "Back Position",
+      imageKey: "pull",
       status: breakdown.back || "good",
-      note:
-        breakdown.back === "poor" || breakdown.back === "fair"
-          ? "Brace your core and keep a neutral spine."
-          : "Back position looks controlled.",
+      note: "Brace hard and keep a neutral spine.",
     },
     {
       id: "hips",
       title: "Hip Hinge",
+      imageKey: "mid",
       status: breakdown.hinge || "good",
-      note:
-        breakdown.hinge === "poor"
-          ? "Push your hips back more before starting the pull."
-          : "Hip hinge looks controlled.",
+      note: "Push hips back and keep tension through the pull.",
     },
     {
       id: "bar",
       title: "Bar Path",
+      imageKey: "mid",
       status: breakdown.bar_path || "good",
-      note:
-        breakdown.bar_path === "poor" || breakdown.bar_path === "drifting"
-          ? "Keep the bar close to your body during the pull."
-          : "Bar path looks controlled.",
+      note: "Keep the bar close to your body.",
     },
     {
       id: "lockout",
       title: "Lockout",
+      imageKey: "lockout",
       status: breakdown.lockout || "good",
-      note:
-        breakdown.lockout === "incomplete" || breakdown.lockout === "poor"
-          ? "Finish tall with hips and knees fully extended."
-          : "Lockout looks solid.",
+      note: "Finish tall with hips and knees extended.",
     },
   ];
-};
-
-const getZoneImagePath = (result, activeZone) => {
-  const images = result?.phase_images || {};
-  const label = String(result?.exercise_label || "").toLowerCase();
-  const zoneId = activeZone?.id;
-
-  if (
-    label.includes("olympic") ||
-    label.includes("clean") ||
-    label.includes("snatch") ||
-    label.includes("jerk")
-  ) {
-    if (zoneId === "setup") return images.setup;
-    if (zoneId === "pull") return images.first_pull || images.setup;
-    if (zoneId === "extension") return images.extension || images.first_pull;
-    if (zoneId === "catch") return images.catch || images.extension;
-
-    return images.catch || images.extension || images.finish || images.setup;
-  }
-
-  if (label.includes("bench")) {
-    if (zoneId === "wrists")
-      return images.press || images.lockout || images.bottom;
-    if (zoneId === "elbows")
-      return images.press || images.bottom || images.lockout;
-    if (zoneId === "bar")
-      return images.descent || images.bottom || images.press;
-    if (zoneId === "lockout") return images.lockout || images.press;
-  }
-
-  if (label.includes("push press")) {
-    if (zoneId === "dip") return images.dip || images.setup;
-    if (zoneId === "bar") return images.drive || images.catch;
-    if (zoneId === "lockout") return images.lockout || images.catch;
-  }
-
-  if (label.includes("squat")) {
-    if (zoneId === "depth") return images.bottom || images.descent;
-    if (zoneId === "knees") return images.bottom || images.descent;
-    if (zoneId === "torso") return images.descent || images.bottom;
-    if (zoneId === "lockout") return images.lockout || images.ascent;
-  }
-
-  if (label.includes("deadlift")) {
-    if (zoneId === "back") return images.pull || images.mid;
-    if (zoneId === "bar") return images.mid || images.pull;
-    if (zoneId === "lockout") return images.lockout || images.finish;
-  }
-
-  return (
-    images.setup ||
-    images.descent ||
-    images.bottom ||
-    images.press ||
-    images.lockout ||
-    images.pull ||
-    images.mid ||
-    images.finish ||
-    null
-  );
 };
 
 export default function App() {
@@ -433,40 +357,62 @@ export default function App() {
 
     if (!res.canceled) {
       const a = res.assets[0];
-
       setVideo({
         uri: a.uri,
-        name: a.fileName || "camera.mov",
-        type: a.mimeType || "video/quicktime",
+        file: a.file,
+        name: a.fileName || a.name || "library.mov",
+        type: a.mimeType || a.type || "video/quicktime",
       });
     }
   };
 
   const pickFromLibrary = async () => {
-    reset();
+  reset();
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (Platform.OS === "web") {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
 
-    if (!permission.granted) {
-      Alert.alert("Library permission required");
-      return;
-    }
+    input.onchange = (e) => {
+      const file = e.target.files[0];
 
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      quality: 1,
+      if (file) {
+        setVideo({
+          file,
+          name: file.name,
+          type: file.type,
+        });
+      }
+    };
+
+    input.click();
+    return;
+  }
+
+  // native stays the same
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+  if (!permission.granted) {
+    Alert.alert("Library permission required");
+    return;
+  }
+
+  const res = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    quality: 1,
+  });
+
+  if (!res.canceled) {
+    const a = res.assets[0];
+
+    setVideo({
+      uri: a.uri,
+      name: a.fileName || "library.mov",
+      type: a.mimeType || "video/quicktime",
     });
-
-    if (!res.canceled) {
-      const a = res.assets[0];
-
-      setVideo({
-        uri: a.uri,
-        name: a.fileName || "library.mov",
-        type: a.mimeType || "video/quicktime",
-      });
-    }
-  };
+  }
+};
 
   const pickFromCloud = async () => {
     reset();
@@ -478,7 +424,6 @@ export default function App() {
 
     if (!res.canceled) {
       const a = res.assets[0];
-
       setVideo({
         uri: a.uri,
         name: a.name || "cloud.mov",
@@ -487,17 +432,21 @@ export default function App() {
     }
   };
 
-  const buildFormData = () => {
-    const formData = new FormData();
+  const buildFormData = async () => {
+  const formData = new FormData();
 
+  if (Platform.OS === "web") {
+    formData.append("file", video.file);
+  } else {
     formData.append("file", {
       uri: video.uri,
-      name: video.name,
-      type: video.type,
+      name: video.name || "upload.mov",
+      type: video.type || "video/mp4",
     });
+  }
 
-    return formData;
-  };
+  return formData;
+};
 
   const generateVisuals = async () => {
     try {
@@ -505,17 +454,16 @@ export default function App() {
 
       const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
         method: "POST",
-        body: buildFormData(),
+        body: await buildFormData(),
       });
 
       const visualsData = await visualsRes.json();
-      console.log("VISUALS RESPONSE:", visualsData);
 
       if (!visualsRes.ok) {
         throw new Error(
           visualsData.detail ||
             visualsData.message ||
-            "Visual generation request failed",
+            "Visual generation request failed"
         );
       }
 
@@ -524,8 +472,6 @@ export default function App() {
         ...visualsData,
       }));
     } catch (err) {
-      console.log("VISUALS ERROR:", err.message);
-
       setResult((prev) => ({
         ...prev,
         visuals_error: err.message,
@@ -549,24 +495,30 @@ export default function App() {
     try {
       const res = await fetch(`${API_URL}/analyze`, {
         method: "POST",
-        body: buildFormData(),
+        body: await buildFormData(),
       });
 
       const data = await res.json();
+
       console.log("ANALYZE RESPONSE:", data);
+      console.log("STATUS:", res.status);
 
       if (!res.ok) {
         throw new Error(
-          data.detail || data.message || "Analyze request failed",
+          data?.detail ||
+          data?.message ||
+          JSON.stringify(data) ||
+          "Analyze request failed"
         );
       }
 
       setResult(data);
       setLoading(false);
 
-      if (data?.rep_feedback?.length > 0) {
-        await generateVisuals();
-      }
+      // TEMP: disable visuals because deployed endpoint is timing out
+// if (data?.rep_feedback?.length > 0) {
+//   await generateVisuals();
+// }
     } catch (err) {
       setResult({ error: true, message: err.message });
       setLoading(false);
@@ -586,7 +538,6 @@ export default function App() {
   }, [reps]);
 
   const displayScore = avgScore !== null ? Math.round(avgScore * 10) : null;
-
   const bestRep = getBestRep(reps);
 
   const biggestFix =
@@ -595,19 +546,22 @@ export default function App() {
     "Upload a clear side-angle video for analysis.";
 
   const phaseConfig = getPhaseConfig(result?.exercise_label);
+  const phaseImages = result?.phase_images || {};
   const zones = getInteractiveZones(result);
   const activeZone = selectedZone || zones[0];
 
-  const coachingImagePath = getZoneImagePath(result, activeZone);
-  const coachingImageUrl = coachingImagePath
-    ? `${API_URL}${coachingImagePath}?zone=${activeZone?.id || "default"}`
-    : null;
+  const activeImagePath =
+    phaseImages?.[activeZone?.imageKey] ||
+    phaseImages?.setup ||
+    phaseImages?.bottom ||
+    phaseImages?.pull ||
+    phaseImages?.mid ||
+    phaseImages?.press ||
+    phaseImages?.lockout ||
+    null;
 
-  const overlayUrl = result?.overlay_video_url
-    ? `${API_URL}${result.overlay_video_url}`
-    : null;
-
-  const phaseImages = result?.phase_images || {};
+  const activeImageUrl = fullUrl(activeImagePath);
+  const overlayUrl = fullUrl(result?.overlay_video_url);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -617,7 +571,7 @@ export default function App() {
             <Text style={styles.eyebrow}>AI Movement Coach</Text>
             <Text style={styles.title}>FormCheck AI</Text>
             <Text style={styles.subtitle}>
-              Upload a lift. Get rep scoring, coaching zones, phase images, and
+              Upload a lift. Get scoring, coaching zones, phase images, and
               replay.
             </Text>
           </View>
@@ -628,24 +582,15 @@ export default function App() {
         </View>
 
         <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={recordWithCamera}
-          >
+          <TouchableOpacity style={styles.primaryButton} onPress={recordWithCamera}>
             <Text style={styles.primaryButtonText}>Record</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={pickFromLibrary}
-          >
+          <TouchableOpacity style={styles.secondaryButton} onPress={pickFromLibrary}>
             <Text style={styles.secondaryButtonText}>Library</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={pickFromCloud}
-          >
+          <TouchableOpacity style={styles.secondaryButton} onPress={pickFromCloud}>
             <Text style={styles.secondaryButtonText}>Files</Text>
           </TouchableOpacity>
         </View>
@@ -658,16 +603,17 @@ export default function App() {
         )}
 
         <TouchableOpacity
-          style={[styles.analyzeButton, loading && styles.disabledButton]}
+          style={[
+            styles.analyzeButton,
+            (loading || visualsLoading) && styles.disabledButton,
+          ]}
           onPress={analyzeVideo}
-          disabled={loading}
+          disabled={loading || visualsLoading}
         >
           {loading ? (
             <View style={styles.loadingBlock}>
               <ActivityIndicator color="#020617" />
-              <Text style={styles.analyzeButtonText}>
-                Analyzing movement...
-              </Text>
+              <Text style={styles.analyzeButtonText}>Analyzing movement...</Text>
             </View>
           ) : visualsLoading ? (
             <View style={styles.loadingBlock}>
@@ -753,9 +699,7 @@ export default function App() {
             {visualsLoading && (
               <View style={styles.warningCard}>
                 <ActivityIndicator color="#86efac" />
-                <Text style={styles.warningTitle}>
-                  Coaching visuals are loading
-                </Text>
+                <Text style={styles.warningTitle}>Coaching visuals are loading</Text>
                 <Text style={styles.warningText}>
                   Scores are ready. Phase images and replay will appear next.
                 </Text>
@@ -770,14 +714,8 @@ export default function App() {
             )}
 
             <View style={styles.card}>
-              <View style={styles.sectionHeader}>
-                <View>
-                  <Text style={styles.sectionTitle}>Rep Breakdown</Text>
-                  <Text style={styles.sectionSub}>
-                    Score trend across the set
-                  </Text>
-                </View>
-              </View>
+              <Text style={styles.sectionTitle}>Rep Breakdown</Text>
+              <Text style={styles.sectionSub}>Score trend across the set</Text>
 
               {reps.map((rep) => {
                 const score = Number(rep.score || 0);
@@ -813,20 +751,22 @@ export default function App() {
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Interactive Coaching Map</Text>
               <Text style={styles.sectionSub}>
-                Tap a zone to see the most relevant frame and coaching note.
+                Tap a zone to see the most relevant saved phase frame.
               </Text>
 
               <View style={styles.coachImageWrap}>
-                {coachingImageUrl ? (
+                {activeImageUrl ? (
                   <Image
-                    key={`${activeZone?.id}-${coachingImagePath}`}
-                    source={{ uri: coachingImageUrl }}
+                    key={`${activeZone?.id}-${activeImagePath}`}
+                    source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
                     resizeMode="contain"
                   />
                 ) : (
                   <View style={styles.emptyImage}>
-                    <Text style={styles.emptyImageText}>Visual loading...</Text>
+                    <Text style={styles.emptyImageText}>
+                      Visuals are not available yet.
+                    </Text>
                   </View>
                 )}
               </View>
@@ -846,9 +786,7 @@ export default function App() {
                       ]}
                       onPress={() => setSelectedZone(zone)}
                     >
-                      <View
-                        style={[styles.statusDot, { backgroundColor: color }]}
-                      />
+                      <View style={[styles.statusDot, { backgroundColor: color }]} />
                       <Text style={styles.zoneText}>{zone.title}</Text>
                     </TouchableOpacity>
                   );
@@ -877,7 +815,7 @@ export default function App() {
               >
                 {phaseConfig.items.map(([key, label]) => {
                   const path = phaseImages[key];
-                  const url = path ? `${API_URL}${path}` : null;
+                  const url = fullUrl(path);
 
                   return (
                     <View key={key} style={styles.phaseCard}>
@@ -1154,10 +1092,6 @@ const styles = StyleSheet.create({
     borderColor: "#1e293b",
     marginBottom: 14,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
   sectionTitle: {
     color: "#f8fafc",
     fontSize: 21,
@@ -1221,10 +1155,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 20,
   },
   emptyImageText: {
     color: "#64748b",
     fontWeight: "800",
+    textAlign: "center",
   },
   zoneGrid: {
     flexDirection: "row",
