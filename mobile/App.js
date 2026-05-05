@@ -461,27 +461,33 @@ export default function App() {
     }
   };
 
-  const buildFormData = async () => {
-    const formData = new FormData();
+  const buildFormData = async (extra = {}) => {
+  const formData = new FormData();
 
-    if (Platform.OS === "web") {
-      if (!video?.file) {
-        throw new Error(
-          "No browser file found. Please choose the video again.",
-        );
-      }
-
-      formData.append("file", video.file, video.name || "upload.mov");
-    } else {
-      formData.append("file", {
-        uri: video.uri,
-        name: video.name || "upload.mov",
-        type: video.type || "video/mp4",
-      });
+  if (Platform.OS === "web") {
+    if (!video?.file) {
+      throw new Error(
+        "No browser file found. Please choose the video again.",
+      );
     }
 
-    return formData;
-  };
+    formData.append("file", video.file, video.name || "upload.mov");
+  } else {
+    formData.append("file", {
+      uri: video.uri,
+      name: video.name || "upload.mov",
+      type: video.type || "video/mp4",
+    });
+  }
+
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value);
+    }
+  });
+
+  return formData;
+};
 
   const generateVisuals = async () => {
     try {
@@ -497,7 +503,9 @@ export default function App() {
 
       const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
         method: "POST",
-        body: await buildFormData(),
+        body: await buildFormData({
+          rep_json: JSON.stringify(getBestRep(result?.rep_feedback || [])),
+        }),
         signal: controller.signal,
       });
 
