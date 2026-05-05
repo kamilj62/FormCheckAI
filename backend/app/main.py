@@ -2259,6 +2259,7 @@ def draw_overlay_video(
                     results.pose_landmarks,
                 )
 
+                # DEADLIFT
                 if exercise == "deadlift":
                     frame = draw_ideal_deadlift(
                         frame,
@@ -2267,7 +2268,8 @@ def draw_overlay_video(
                         height,
                     )
 
-                elif exercise in ["squat", "squat_back", "squat_front", "overhead_squat"]:
+                # SQUAT (STABLE VERSION)
+                elif exercise in ["squat", "squat_back", "back_squat"]:
                     frame = draw_ideal_squat_overlay(
                         frame,
                         results.pose_landmarks,
@@ -2275,6 +2277,7 @@ def draw_overlay_video(
                         height,
                     )
 
+                # PUSH PRESS
                 elif exercise in ["push_press", "strict_press"]:
                     frame = draw_ideal_push_press_overlay(
                         frame,
@@ -2283,6 +2286,7 @@ def draw_overlay_video(
                         height,
                     )
 
+                # BENCH PRESS
                 elif exercise == "bench_press":
                     frame = draw_ideal_bench_press_overlay(
                         frame,
@@ -2347,6 +2351,10 @@ def draw_ideal_deadlift(frame, pose_landmarks, width, height):
 
 
 def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
+    """
+    Draw ideal back squat overlay (stable version)
+    """
+
     landmarks = pose_landmarks.landmark
 
     def pt(idx):
@@ -2359,12 +2367,7 @@ def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
     left_ids = {"shoulder": 11, "hip": 23, "knee": 25, "ankle": 27}
     right_ids = {"shoulder": 12, "hip": 24, "knee": 26, "ankle": 28}
 
-    ids = (
-        left_ids
-        if sum(vis(i) for i in left_ids.values())
-        >= sum(vis(i) for i in right_ids.values())
-        else right_ids
-    )
+    ids = left_ids if sum(vis(i) for i in left_ids.values()) >= sum(vis(i) for i in right_ids.values()) else right_ids
 
     shoulder = pt(ids["shoulder"])
     hip = pt(ids["hip"])
@@ -2384,28 +2387,23 @@ def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
     if forward_sign == 0:
         forward_sign = 1
 
+    # depth phase
     hip_vs_knee = hip[1] - knee[1]
-    phase = np.clip(
-        (hip_vs_knee + femur_len * 0.55) / (femur_len * 1.1),
-        0.0,
-        1.0,
-    )
+    phase = np.clip((hip_vs_knee + femur_len * 0.55) / (femur_len * 1.1), 0.0, 1.0)
 
+    # --- IDEAL POSITIONS (tuned) ---
     ideal_ankle = ankle.copy()
 
-    # knee slightly forward
     ideal_knee = np.array([
         ideal_ankle[0] + forward_sign * shin_len * (0.18 + 0.08 * phase),
         ideal_ankle[1] - shin_len * (0.93 - 0.04 * phase),
     ])
 
-    # deep but not collapsed
     ideal_hip = np.array([
         ideal_knee[0] - forward_sign * femur_len * (0.54 + 0.08 * phase),
         ideal_knee[1] - femur_len * (0.08 - 0.02 * phase),
     ])
 
-    # proud chest / athletic torso
     ideal_shoulder = np.array([
         ideal_hip[0] + forward_sign * torso_len * (0.68 + 0.05 * phase),
         ideal_hip[1] - torso_len * (0.92 - 0.02 * phase),
@@ -2425,6 +2423,17 @@ def draw_ideal_squat_overlay(frame, pose_landmarks, width, height):
 
     for p in points:
         cv2.circle(frame, p, 7, blue, -1, cv2.LINE_AA)
+
+    cv2.putText(
+        frame,
+        "BLUE = IDEAL BACK SQUAT",
+        (20, 45),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        blue,
+        2,
+        cv2.LINE_AA,
+    )
 
     return frame
 
