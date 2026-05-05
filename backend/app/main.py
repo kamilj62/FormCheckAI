@@ -32,13 +32,11 @@ app.mount(
     name="outputs",
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:19006",
-        "http://127.0.0.1:19006",
-        "https://formcheck-ai.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -132,6 +130,13 @@ def calculate_angle(a, b, c):
 def point(landmarks, landmark):
     lm = landmarks[landmark.value]
     return np.array([lm.x, lm.y], dtype=np.float32)
+
+
+def formatLabel(v):
+    if not v:
+        return "Unknown Exercise"
+
+    return str(v).replace("_", " ").title()
 
 
 def extract_features_and_biomechanics(results):
@@ -2207,28 +2212,10 @@ def draw_overlay_video(
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    best_rep = max(
-        rep_feedback,
-        key=lambda rep: (
-            rep.get("score", 0),
-            rep.get("rep", 0),
-        ),
-    )
-
-    raw_start = int(best_rep.get("start_frame", 0))
-    raw_end = int(best_rep.get("end_frame", raw_start + 1))
-
-    raw_start = max(0, min(raw_start, total_frames - 1))
-    raw_end = max(raw_start + 1, min(raw_end, total_frames - 1))
-
-    pad_before = int(fps * 0.15)
-    pad_after = int(fps * 0.15)
-
-    start_frame = max(0, raw_start - pad_before)
-    end_frame = min(total_frames - 1, raw_end + pad_after)
+    temp_output_path = output_path.replace(".mp4", "_raw.mp4")
 
     writer = cv2.VideoWriter(
-        output_path,
+        temp_output_path,
         cv2.VideoWriter_fourcc(*"mp4v"),
         fps,
         (width, height),
@@ -2239,20 +2226,30 @@ def draw_overlay_video(
         cap.release()
         return None
 
-    exercise = exercise_label.lower().replace(" ", "_")
+    best_rep = max(
+        rep_feedback,
+        key=lambda rep: (
+            float(rep.get("score", 0) or 0),
+            int(rep.get("rep", 0) or 0),
+        ),
+    )
 
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    exercise = str(exercise_label or "").lower().replace(" ", "_")
+    score = best_rep.get("score", None)
+    feedback = best_rep.get("feedback") or best_rep.get("issues") or []
+    main_note = feedback[0] if feedback else "Keep the full body visible and move with control."
+
     frame_idx = 0
-    start_frame = 0
-    end_frame = total_frames - 1
     frames_written = 0
+    landmark_hits = 0
 
     with mp_pose.Pose(
         static_image_mode=False,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5,
+        model_complexity=1,
+        min_detection_confidence=0.35,
+        min_tracking_confidence=0.35,
     ) as pose:
-        while cap.isOpened() and frame_idx <= end_frame:
+        while True:
             ret, frame = cap.read()
 
             if not ret:
@@ -2261,14 +2258,44 @@ def draw_overlay_video(
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
+            # Always draw a visible overlay header so we know this file is not raw video.
+            cv2.rectangle(frame, (0, 0), (width, 92), (2, 6, 23), -1)
+
+            cv2.putText(
+                frame,
+                "FORMCHECK AI OVERLAY",
+                (24, 34),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (134, 239, 172),
+                2,
+                cv2.LINE_AA,
+            )
+
+            score_text = f"{formatLabel(exercise_label)}"
+            if score is not None:
+                score_text += f" | Best Rep Score: {float(score):.1f}/10"
+
+            cv2.putText(
+                frame,
+                score_text,
+                (24, 66),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.65,
+                (248, 250, 252),
+                2,
+                cv2.LINE_AA,
+            )
+
             if results.pose_landmarks:
+                landmark_hits += 1
+
                 frame = draw_user_skeleton(
                     frame,
                     results.pose_landmarks,
                 )
 
-                # DEADLIFT
-                if exercise == "deadlift":
+                if exercise in ["deadlift"]:
                     frame = draw_ideal_deadlift(
                         frame,
                         results.pose_landmarks,
@@ -2276,7 +2303,6 @@ def draw_overlay_video(
                         height,
                     )
 
-                # SQUAT (STABLE VERSION)
                 elif exercise in ["squat", "squat_back", "back_squat"]:
                     frame = draw_ideal_squat_overlay(
                         frame,
@@ -2285,7 +2311,6 @@ def draw_overlay_video(
                         height,
                     )
 
-                # PUSH PRESS
                 elif exercise in ["push_press", "strict_press"]:
                     frame = draw_ideal_push_press_overlay(
                         frame,
@@ -2294,14 +2319,49 @@ def draw_overlay_video(
                         height,
                     )
 
-                # BENCH PRESS
-                elif exercise == "bench_press":
+                elif exercise in ["bench_press", "bench"]:
                     frame = draw_ideal_bench_press_overlay(
                         frame,
                         results.pose_landmarks,
                         width,
                         height,
                     )
+
+                else:
+                    cv2.putText(
+                        frame,
+                        "Pose detected. No ideal overlay for this exercise yet.",
+                        (24, height - 34),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.65,
+                        (251, 191, 36),
+                        2,
+                        cv2.LINE_AA,
+                    )
+
+            else:
+                cv2.putText(
+                    frame,
+                    "Pose not detected on this frame",
+                    (24, height - 68),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (239, 68, 68),
+                    2,
+                    cv2.LINE_AA,
+                )
+
+            cv2.rectangle(frame, (0, height - 58), (width, height), (15, 23, 42), -1)
+            cv2.putText(
+                frame,
+                str(main_note)[:95],
+                (24, height - 22),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.62,
+                (226, 232, 240),
+                2,
+                cv2.LINE_AA,
+            )
 
             writer.write(frame)
             frames_written += 1
@@ -2310,9 +2370,33 @@ def draw_overlay_video(
     cap.release()
     writer.release()
 
+    import subprocess
+
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i", temp_output_path,
+            "-vcodec", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
+            output_path,
+        ],
+        check=True,
+    )
+
+    if os.path.exists(temp_output_path):
+        os.remove(temp_output_path)
+
+    print("OVERLAY FRAMES WRITTEN:", frames_written)
+    print("OVERLAY LANDMARK HITS:", landmark_hits)
+
     if frames_written == 0:
         print("Overlay error: no frames written")
         return None
+
+    if landmark_hits == 0:
+        print("Overlay warning: video was written but no pose landmarks were detected")
 
     return output_path
 
@@ -3979,11 +4063,11 @@ async def generate_visuals(
         # -------------------------
         if "squat" in label:
             phase_frames = {
-                "setup": max(0, start - 25),
-                "descent": max(0, start + int((bottom - start) * 0.45)),
+                "setup": max(0, start - 15),
+                "descent": max(0, bottom - 20),
                 "bottom": bottom,
-                "ascent": min(total_frames - 1, bottom + int((end - bottom) * 0.45)),
-                "lockout": min(total_frames - 1, end + 20),
+                "ascent": min(total_frames - 1, bottom + 20),
+                "lockout": min(total_frames - 1, end + 35),
             }
 
         elif "deadlift" in label:
@@ -4092,6 +4176,107 @@ async def generate_visuals(
         "overlay_video_url": None,
         "phase_images": phase_images,
     }
+
+
+@app.post("/generate_overlay")
+async def generate_overlay(
+    file: UploadFile = File(...),
+    rep_json: str = Form(None),
+    exercise_label: str = Form(None),
+):
+    import json
+    import time
+
+    started_at = time.time()
+
+    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
+    temp_filename = f"overlay_input_{uuid.uuid4().hex[:8]}{suffix}"
+    temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+
+    try:
+        # Save uploaded video
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Parse best rep sent from frontend
+        rep_feedback = []
+
+        if rep_json:
+            try:
+                rep = json.loads(rep_json)
+
+                if isinstance(rep, dict):
+                    rep_feedback = [rep]
+
+            except Exception as e:
+                print("OVERLAY REP JSON PARSE ERROR:", e)
+
+        # Fallback if frontend does not send rep data
+        if not rep_feedback:
+            cap = cv2.VideoCapture(temp_path)
+
+            if not cap.isOpened():
+                return {
+                    "overlay_video_url": None,
+                    "overlay_error": "Could not open uploaded video.",
+                }
+
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            cap.release()
+
+            rep_feedback = [
+                {
+                    "rep": 1,
+                    "start_frame": 0,
+                    "end_frame": max(1, total_frames - 1),
+                    "score": 10.0,
+                    "grade": "Captured",
+                    "issues": [],
+                    "feedback": [],
+                }
+            ]
+
+        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+
+        made_overlay = draw_overlay_video(
+            input_path=temp_path,
+            output_path=overlay_path,
+            rep_feedback=rep_feedback,
+            exercise_label=exercise_label or "unknown",
+            sample_every=1,
+        )
+
+        runtime = round(time.time() - started_at, 2)
+        print("OVERLAY RUNTIME:", runtime)
+
+        if not made_overlay:
+            return {
+                "overlay_video_url": None,
+                "overlay_error": "Could not generate overlay video.",
+                "runtime_seconds": runtime,
+            }
+
+        return {
+            "overlay_video_url": f"/outputs/{overlay_filename}",
+            "overlay_error": None,
+            "runtime_seconds": runtime,
+        }
+
+    except Exception as e:
+        print("GENERATE OVERLAY ERROR:", e)
+
+        return {
+            "overlay_video_url": None,
+            "overlay_error": str(e),
+        }
+
+    finally:
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception as e:
+            print("OVERLAY TEMP CLEANUP ERROR:", e)
 
 
 @app.post("/analyze")
