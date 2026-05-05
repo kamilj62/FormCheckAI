@@ -557,10 +557,11 @@ clearTimeout(timeoutId);
       setResult(data);
       setLoading(false);
 
-      // TEMP: disable visuals because deployed endpoint is timing out
-// if (data?.rep_feedback?.length > 0) {
-//   await generateVisuals();
-// }
+      if (data?.rep_feedback?.length > 0) {
+        setTimeout(() => {
+          generateVisuals();
+        }, 500);
+      }
     } catch (err) {
       setResult({ error: true, message: err.message });
       setLoading(false);
