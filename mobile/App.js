@@ -29,12 +29,6 @@ const fullUrl = (path) => {
   return `${MEDIA_URL}${path}`;
 };
 
-const fullUrl = (path) => {
-  if (!path) return null;
-  if (String(path).startsWith("http")) return path;
-  return `${BACKEND_URL}${path}`;
-};
-
 const formatLabel = (v) =>
   v
     ? String(v)
