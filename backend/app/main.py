@@ -3944,7 +3944,6 @@ async def generate_visuals(file: UploadFile = File(...)):
 
     # -----------------------------------
     # Create synthetic rep for bodyweight
-    # movements so overlay rendering works
     # -----------------------------------
     visual_only_labels = [
         "pull_up",
@@ -3970,108 +3969,86 @@ async def generate_visuals(file: UploadFile = File(...)):
     overlay_video_url = None
     phase_images = None
 
+    # pick best rep
     phase_rep = None
-
     if rep_feedback:
         phase_rep = max(
             rep_feedback,
             key=lambda rep: rep.get("end_frame", 0) - rep.get("start_frame", 0),
         )
 
-    if rep_feedback or normalized_label in [
-        "pull_up",
-        "bar_muscle_up",
-        "ring_muscle_up",
-    ]:
-        if normalized_label == "deadlift":
-            phase_images = create_deadlift_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep,
-                sample_every=sample_every,
-            )
+    try:
+        if rep_feedback or normalized_label in visual_only_labels:
 
-        elif normalized_label in [
-            "squat",
-            "squat_back",
-            "squat_front",
-            "overhead_squat",
-        ]:
-            phase_images = create_squat_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep,
-                sample_every=sample_every,
-            )
+            if normalized_label == "deadlift":
+                phase_images = create_deadlift_phase_images(
+                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
+                )
 
-        elif normalized_label in ["push_press", "strict_press"]:
-            phase_images = create_push_press_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep,
-                sample_every=sample_every,
-            )
+            elif normalized_label in [
+                "squat",
+                "squat_back",
+                "squat_front",
+                "overhead_squat",
+            ]:
+                phase_images = create_squat_phase_images(
+                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
+                )
 
-        elif normalized_label == "bench_press":
-            phase_images = create_bench_press_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep,
-                sample_every=sample_every,
-            )
+            elif normalized_label in ["push_press", "strict_press"]:
+                phase_images = create_push_press_phase_images(
+                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
+                )
 
-        elif normalized_label == "pull_up":
-            phase_images = create_pull_up_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep,
-                sample_every=sample_every,
-            )
+            elif normalized_label == "bench_press":
+                phase_images = create_bench_press_phase_images(
+                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
+                )
 
-        elif normalized_label in ["bar_muscle_up", "ring_muscle_up"]:
-            phase_images = create_bar_muscle_up_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep,
-                sample_every=sample_every,
-                exercise_label=normalized_label,
-            )
+            elif normalized_label == "pull_up":
+                phase_images = create_pull_up_phase_images(
+                    temp_path, OVERLAY_DIR, phase_rep, sample_every=sample_every
+                )
 
-        elif normalized_label in [
-            "olympic_lift",
-            "clean_and_jerk",
-            "snatch",
-            "clean",
-            "jerk",
-            "split_jerk",
-            "thruster",
-        ]:
-            phase_images = create_olympic_lift_phase_images(
-                temp_path,
-                OVERLAY_DIR,
-                phase_rep
-                or {
-                    "rep": 1,
-                    "start_frame": 0,
-                    "end_frame": int(result["debug"].get("frames_seen", 1)) - 1,
-                },
-                sample_every=sample_every,
-                exercise_label=normalized_label,
-            )
+            elif normalized_label in ["bar_muscle_up", "ring_muscle_up"]:
+                phase_images = create_bar_muscle_up_phase_images(
+                    temp_path,
+                    OVERLAY_DIR,
+                    phase_rep,
+                    sample_every=sample_every,
+                    exercise_label=normalized_label,
+                )
 
-        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
-        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+            elif normalized_label in [
+                "olympic_lift",
+                "clean_and_jerk",
+                "snatch",
+                "clean",
+                "jerk",
+                "split_jerk",
+                "thruster",
+            ]:
+                phase_images = create_olympic_lift_phase_images(
+                    temp_path,
+                    OVERLAY_DIR,
+                    phase_rep
+                    or {
+                        "rep": 1,
+                        "start_frame": 0,
+                        "end_frame": int(result["debug"].get("frames_seen", 1)) - 1,
+                    },
+                    sample_every=sample_every,
+                    exercise_label=normalized_label,
+                )
 
-        made_overlay = draw_overlay_video(
-            input_path=temp_path,
-            output_path=overlay_path,
-            rep_feedback=rep_feedback,
-            exercise_label=label,
-            sample_every=sample_every,
-        )
+    except Exception as e:
+        print("PHASE IMAGE ERROR:", e)
+        phase_images = None
 
-        if made_overlay:
-            overlay_video_url = f"/outputs/{overlay_filename}"
+    # -----------------------------------
+    # OVERLAY DISABLED (prevents timeout)
+    # -----------------------------------
+    overlay_video_url = None
 
     return {
         "exercise_label": result["exercise_label"],
