@@ -485,10 +485,19 @@ export default function App() {
     try {
       setVisualsLoading(true);
 
-      const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
-        method: "POST",
-        body: await buildFormData(),
-      });
+      const controller = new AbortController();
+
+const timeoutId = setTimeout(() => {
+  controller.abort();
+}, 20000);
+
+const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
+  method: "POST",
+  body: await buildFormData(),
+  signal: controller.signal,
+});
+
+clearTimeout(timeoutId);
 
       const visualsData = await visualsRes.json();
 
