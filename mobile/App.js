@@ -367,99 +367,81 @@ export default function App() {
   };
 
   const pickWebVideoFile = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "video/*";
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "video/*";
 
-    input.onchange = (e) => {
-      const file = e.target.files?.[0];
+  input.onchange = (e) => {
+    const file = e.target.files?.[0];
 
-      if (!file) return;
+    if (!file) return;
 
-      setVideo({
-        file,
-        uri: URL.createObjectURL(file),
-        name: file.name || "upload.mov",
-        type: file.type || "video/mp4",
-      });
-    };
-
-    input.click();
-  };
-
-  const pickFromLibrary = async () => {
-    if (Platform.OS === "web") {
-      reset();
-      pickWebVideoFile();
-      return;
-    }
-
-    if (Platform.OS === "web") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "video/*";
-
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-
-        if (file) {
-          setVideo({
-            file,
-            name: file.name,
-            type: file.type,
-          });
-        }
-      };
-
-      input.click();
-      return;
-    }
-
-    // native stays the same
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert("Library permission required");
-      return;
-    }
-
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      quality: 1,
+    setVideo({
+      file,
+      uri: URL.createObjectURL(file),
+      name: file.name || "upload.mov",
+      type: file.type || "video/mp4",
     });
-
-    if (!res.canceled) {
-      const a = res.assets[0];
-
-      setVideo({
-        uri: a.uri,
-        name: a.fileName || "library.mov",
-        type: a.mimeType || "video/quicktime",
-      });
-    }
   };
 
-  const pickFromCloud = async () => {
-    if (Platform.OS === "web") {
-      reset();
-      pickWebVideoFile();
-      return;
-    }
+  input.click();
+};
 
-    const res = await DocumentPicker.getDocumentAsync({
-      type: "video/*",
-      copyToCacheDirectory: true,
+const pickFromLibrary = async () => {
+  reset();
+
+  if (Platform.OS === "web") {
+    pickWebVideoFile();
+    return;
+  }
+
+  const permission =
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+  if (!permission.granted) {
+    Alert.alert("Library permission required");
+    return;
+  }
+
+  const res = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    quality: 1,
+  });
+
+  if (!res.canceled) {
+    const a = res.assets[0];
+
+    setVideo({
+      uri: a.uri,
+      name: a.fileName || a.name || "library.mov",
+      type: a.mimeType || a.type || "video/quicktime",
     });
+  }
+};
 
-    if (!res.canceled) {
-      const a = res.assets[0];
-      setVideo({
-        uri: a.uri,
-        name: a.name || "cloud.mov",
-        type: a.mimeType || "video/quicktime",
-      });
-    }
-  };
+const pickFromCloud = async () => {
+  reset();
+
+  if (Platform.OS === "web") {
+    pickWebVideoFile();
+    return;
+  }
+
+  const res = await DocumentPicker.getDocumentAsync({
+    type: "video/*",
+    copyToCacheDirectory: true,
+  });
+
+  if (!res.canceled) {
+    const a = res.assets[0];
+
+    setVideo({
+      uri: a.uri,
+      name: a.name || "cloud.mov",
+      type: a.mimeType || "video/quicktime",
+    });
+  }
+};
 
   const buildFormData = async (extra = {}) => {
   const formData = new FormData();
