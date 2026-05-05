@@ -36,7 +36,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://formcheck-ai-full-v2.vercel.app",
+        "http://localhost:19006",
+        "http://localhost:8081",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,15 +90,14 @@ mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
 @app.get("/")
-def root():
-    return {"status": "ok", "message": "FormCheck AI API is running"}
+@app.head("/")
+async def root():
+    return {"status": "ok"}
 
 @app.get("/health")
-def health():
-    return {
-        "status": "ok",
-        "model_loaded": MODEL is not None,
-    }
+@app.head("/health")
+async def health():
+    return {"status": "ok", "model_loaded": True}
 
 
 def angle(a, b, c):
