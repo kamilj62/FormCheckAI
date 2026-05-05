@@ -21,6 +21,13 @@ const BACKEND_URL =
   "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
 
 const API_URL = Platform.OS === "web" ? "/api" : BACKEND_URL;
+const MEDIA_URL = Platform.OS === "web" ? API_URL : BACKEND_URL;
+
+const fullUrl = (path) => {
+  if (!path) return null;
+  if (String(path).startsWith("http")) return path;
+  return `${MEDIA_URL}${path}`;
+};
 
 const fullUrl = (path) => {
   if (!path) return null;
