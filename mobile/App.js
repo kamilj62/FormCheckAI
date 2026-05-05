@@ -940,6 +940,8 @@ export default function App() {
               style={styles.overlayButton}
               onPress={generateOverlay}
             >
+              <Text style={styles.secondaryButtonText}>Generate Overlay</Text>
+            </TouchableOpacity>
 
             {overlayUrl && (
               <View style={styles.card}>
