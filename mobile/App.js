@@ -532,7 +532,11 @@ const generateOverlay = async () => {
       }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+
+if (!data) {
+  throw new Error("Server returned an empty response.");
+}
 
     if (!res.ok) {
       throw new Error(
@@ -572,7 +576,11 @@ const generateOverlay = async () => {
         body: await buildFormData(),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+
+      if (!data) {
+        throw new Error("Server returned an empty response.");
+      }
 
       console.log("ANALYZE RESPONSE:", data);
       console.log("STATUS:", res.status);
