@@ -366,8 +366,33 @@ export default function App() {
     }
   };
 
+  const pickWebVideoFile = () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "video/*";
+
+  input.onchange = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setVideo({
+      file,
+      uri: URL.createObjectURL(file),
+      name: file.name || "upload.mov",
+      type: file.type || "video/mp4",
+    });
+  };
+
+  input.click();
+};
+
   const pickFromLibrary = async () => {
-  reset();
+    if (Platform.OS === "web") {
+      reset();
+      pickWebVideoFile();
+      return;
+    }
 
   if (Platform.OS === "web") {
     const input = document.createElement("input");
@@ -415,7 +440,11 @@ export default function App() {
 };
 
   const pickFromCloud = async () => {
-    reset();
+    if (Platform.OS === "web") {
+      reset();
+      pickWebVideoFile();
+      return;
+    }
 
     const res = await DocumentPicker.getDocumentAsync({
       type: "video/*",
@@ -436,7 +465,11 @@ export default function App() {
   const formData = new FormData();
 
   if (Platform.OS === "web") {
-    formData.append("file", video.file);
+    if (!video?.file) {
+      throw new Error("No browser file found. Please choose the video again.");
+    }
+
+    formData.append("file", video.file, video.name || "upload.mov");
   } else {
     formData.append("file", {
       uri: video.uri,
