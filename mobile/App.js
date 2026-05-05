@@ -372,193 +372,192 @@ export default function App() {
   };
 
   const pickWebVideoFile = () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "video/*";
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
 
-  input.onchange = (e) => {
-    const file = e.target.files?.[0];
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
 
-    if (!file) return;
+      if (!file) return;
 
-    setVideo({
-      file,
-      uri: URL.createObjectURL(file),
-      name: file.name || "upload.mov",
-      type: file.type || "video/mp4",
-    });
+      setVideo({
+        file,
+        uri: URL.createObjectURL(file),
+        name: file.name || "upload.mov",
+        type: file.type || "video/mp4",
+      });
+    };
+
+    input.click();
   };
 
-  input.click();
-};
+  const pickFromLibrary = async () => {
+    reset();
 
-const pickFromLibrary = async () => {
-  reset();
+    if (Platform.OS === "web") {
+      pickWebVideoFile();
+      return;
+    }
 
-  if (Platform.OS === "web") {
-    pickWebVideoFile();
-    return;
-  }
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  const permission =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Library permission required");
+      return;
+    }
 
-  if (!permission.granted) {
-    Alert.alert("Library permission required");
-    return;
-  }
-
-  const res = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-    quality: 1,
-  });
-
-  if (!res.canceled) {
-    const a = res.assets[0];
-
-    setVideo({
-      uri: a.uri,
-      name: a.fileName || a.name || "library.mov",
-      type: a.mimeType || a.type || "video/quicktime",
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      quality: 1,
     });
-  }
-};
 
-const pickFromCloud = async () => {
-  reset();
+    if (!res.canceled) {
+      const a = res.assets[0];
 
-  if (Platform.OS === "web") {
-    pickWebVideoFile();
-    return;
-  }
+      setVideo({
+        uri: a.uri,
+        name: a.fileName || a.name || "library.mov",
+        type: a.mimeType || a.type || "video/quicktime",
+      });
+    }
+  };
 
-  const res = await DocumentPicker.getDocumentAsync({
-    type: "video/*",
-    copyToCacheDirectory: true,
-  });
+  const pickFromCloud = async () => {
+    reset();
 
-  if (!res.canceled) {
-    const a = res.assets[0];
+    if (Platform.OS === "web") {
+      pickWebVideoFile();
+      return;
+    }
 
-    setVideo({
-      uri: a.uri,
-      name: a.name || "cloud.mov",
-      type: a.mimeType || "video/quicktime",
+    const res = await DocumentPicker.getDocumentAsync({
+      type: "video/*",
+      copyToCacheDirectory: true,
     });
-  }
-};
+
+    if (!res.canceled) {
+      const a = res.assets[0];
+
+      setVideo({
+        uri: a.uri,
+        name: a.name || "cloud.mov",
+        type: a.mimeType || "video/quicktime",
+      });
+    }
+  };
 
   const buildFormData = async (extra = {}) => {
-  const formData = new FormData();
+    const formData = new FormData();
 
-  if (Platform.OS === "web") {
-    if (!video?.file) {
-      throw new Error("No browser file found. Please choose the video again.");
+    if (Platform.OS === "web") {
+      if (!video?.file) {
+        throw new Error(
+          "No browser file found. Please choose the video again.",
+        );
+      }
+
+      formData.append("file", video.file, video.name || "upload.mov");
+    } else {
+      formData.append("file", {
+        uri: video.uri,
+        name: video.name || "upload.mov",
+        type: video.type || "video/mp4",
+      });
     }
 
-    formData.append("file", video.file, video.name || "upload.mov");
-  } else {
-    formData.append("file", {
-      uri: video.uri,
-      name: video.name || "upload.mov",
-      type: video.type || "video/mp4",
+    Object.entries(extra).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
     });
-  }
 
-  Object.entries(extra).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      formData.append(key, value);
-    }
-  });
-
-  return formData;
-};
+    return formData;
+  };
 
   const generateVisuals = async (analysisResult) => {
-  try {
-    console.log("GENERATE VISUALS STARTED");
+    try {
+      console.log("GENERATE VISUALS STARTED");
 
-    setVisualsLoading(true);
+      setVisualsLoading(true);
 
-    const bestRep = getBestRep(analysisResult?.rep_feedback || []);
+      const bestRep = getBestRep(analysisResult?.rep_feedback || []);
 
-    const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
-      method: "POST",
-      body: await buildFormData({
-        rep_json: bestRep ? JSON.stringify(bestRep) : null,
-        exercise_label: analysisResult?.exercise_label || "",
-      }),
-    });
+      const visualsRes = await fetch(`${API_URL}/generate_visuals`, {
+        method: "POST",
+        body: await buildFormData({
+          rep_json: bestRep ? JSON.stringify(bestRep) : null,
+          exercise_label: analysisResult?.exercise_label || "",
+        }),
+      });
 
-    const visualsData = await visualsRes.json();
+      const visualsData = await visualsRes.json();
 
-    console.log("VISUALS RESPONSE:", visualsData);
-    console.log("VISUALS STATUS:", visualsRes.status);
+      console.log("VISUALS RESPONSE:", visualsData);
+      console.log("VISUALS STATUS:", visualsRes.status);
 
-    if (!visualsRes.ok) {
-      throw new Error(
-        visualsData.detail ||
-          visualsData.message ||
-          "Visual generation request failed"
-      );
+      if (!visualsRes.ok) {
+        throw new Error(
+          visualsData.detail ||
+            visualsData.message ||
+            "Visual generation request failed",
+        );
+      }
+
+      setResult((prev) => ({
+        ...prev,
+        overlay_video_url: visualsData.overlay_video_url,
+        phase_images: visualsData.phase_images,
+        visuals_error: visualsData.visuals_error,
+      }));
+    } catch (err) {
+      console.log("VISUALS ERROR:", err);
+
+      setResult((prev) => ({
+        ...prev,
+        visuals_error: err.message,
+      }));
+    } finally {
+      setVisualsLoading(false);
     }
+  };
 
-    setResult((prev) => ({
-      ...prev,
-      overlay_video_url: visualsData.overlay_video_url,
-      phase_images: visualsData.phase_images,
-      visuals_error: visualsData.visuals_error,
-    }));
-  } catch (err) {
-    console.log("VISUALS ERROR:", err);
+  const generateOverlay = async () => {
+    try {
+      const bestRep = getBestRep(result?.rep_feedback || []);
 
-    setResult((prev) => ({
-      ...prev,
-      visuals_error: err.message,
-    }));
-  } finally {
-    setVisualsLoading(false);
-  }
-};
+      const res = await fetch(`${API_URL}/generate_overlay`, {
+        method: "POST",
+        body: await buildFormData({
+          rep_json: bestRep ? JSON.stringify(bestRep) : null,
+          exercise_label: result?.exercise_label || "",
+        }),
+      });
 
-const generateOverlay = async () => {
-  try {
-    const bestRep = getBestRep(result?.rep_feedback || []);
+      const data = await res.json().catch(() => null);
 
-    const res = await fetch(`${API_URL}/generate_overlay`, {
-      method: "POST",
-      body: await buildFormData({
-        rep_json: bestRep ? JSON.stringify(bestRep) : null,
-        exercise_label: result?.exercise_label || "",
-      }),
-    });
+      if (!data) {
+        throw new Error("Server returned an empty response.");
+      }
 
-    const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          data.overlay_error || data.message || "Overlay generation failed",
+        );
+      }
 
-if (!data) {
-  throw new Error("Server returned an empty response.");
-}
-
-    if (!res.ok) {
-      throw new Error(
-        data.overlay_error ||
-        data.message ||
-        "Overlay generation failed"
-      );
+      setResult((prev) => ({
+        ...prev,
+        overlay_video_url: data.overlay_video_url,
+        overlay_error: data.overlay_error,
+      }));
+    } catch (err) {
+      setResult((prev) => ({
+        ...prev,
+        overlay_error: err.message,
+      }));
     }
-
-    setResult((prev) => ({
-      ...prev,
-      overlay_video_url: data.overlay_video_url,
-      overlay_error: data.overlay_error,
-    }));
-  } catch (err) {
-    setResult((prev) => ({
-      ...prev,
-      overlay_error: err.message,
-    }));
-  }
-};
+  };
 
   const analyzeVideo = async () => {
     if (!video) {
@@ -944,9 +943,7 @@ if (!data) {
               style={styles.secondaryButton}
               onPress={generateOverlay}
             >
-              <Text style={styles.secondaryButtonText}>
-                Generate Overlay
-              </Text>
+              <Text style={styles.secondaryButtonText}>Generate Overlay</Text>
             </TouchableOpacity>
 
             {overlayUrl && (
