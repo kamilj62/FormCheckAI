@@ -937,11 +937,9 @@ export default function App() {
             </View>
 
             <TouchableOpacity
-              style={styles.secondaryButton}
+              style={styles.overlayButton}
               onPress={generateOverlay}
             >
-              <Text style={styles.secondaryButtonText}>Generate Overlay</Text>
-            </TouchableOpacity>
 
             {overlayUrl && (
               <View style={styles.card}>
@@ -1408,4 +1406,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 4,
   },
+  overlayButton: {
+  backgroundColor: "#22c55e",
+  borderRadius: 18,
+  paddingVertical: 16,
+  alignItems: "center",
+  marginBottom: 14,
+},
 });
