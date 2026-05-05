@@ -524,10 +524,13 @@ export default function App() {
         );
       }
 
-      setResult((prev) => ({
-        ...prev,
-        ...visualsData,
-      }));
+      
+  setResult((prev) => ({
+    ...prev,
+    overlay_video_url: visualsData.overlay_video_url,
+    phase_images: visualsData.phase_images,
+    visuals_error: visualsData.visuals_error,
+  }));
     } catch (err) {
       console.log("VISUALS ERROR:", err);
 
