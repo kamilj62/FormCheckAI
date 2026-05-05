@@ -1,0 +1,4 @@
+Retrieving logs...
+Logs were saved to /Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/.elasticbeanstalk/logs/260503_191746
+Logs were saved to /Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/.elasticbeanstalk/logs/260503_191746
+Updated symlink at /Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/.elasticbeanstalk/logs/latest

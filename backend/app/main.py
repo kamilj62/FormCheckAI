@@ -34,7 +34,11 @@ app.mount(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:19006",
+        "http://127.0.0.1:19006",
+        "https://formcheck-ai.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,6 +85,10 @@ OLY_ROUTER_MODEL = OLY_ROUTER_BUNDLE["model"]
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
+
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "FormCheck AI API is running"}
 
 @app.get("/health")
 def health():

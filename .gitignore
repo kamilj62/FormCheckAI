@@ -51,3 +51,5 @@ dist/
 
 backend/uploads/
 backend/outputs/
+.vercel
+.env*.local
