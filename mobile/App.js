@@ -695,10 +695,6 @@ const generateOverlay = async () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={generateOverlay}>
-          <Text style={styles.secondaryButtonText}>Generate Overlay</Text>
-        </TouchableOpacity>
-
         {video && (
           <View style={styles.selectedCard}>
             <Text style={styles.cardLabel}>Selected Video</Text>
@@ -948,6 +944,15 @@ const generateOverlay = async () => {
                 })}
               </ScrollView>
             </View>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={generateOverlay}
+            >
+              <Text style={styles.secondaryButtonText}>
+                Generate Overlay
+              </Text>
+            </TouchableOpacity>
 
             {overlayUrl && (
               <View style={styles.card}>
