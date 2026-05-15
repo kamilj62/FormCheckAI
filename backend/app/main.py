@@ -36,7 +36,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://formcheck-ai-full-v2.vercel.app"],
+    allow_origins=[
+        "https://formcheck-ai-full-v2.vercel.app",
+        "http://localhost:19006",
+        "http://localhost:8081",
+        "http://localhost:3000",
+        "http://127.0.0.1:19006",
+        "http://127.0.0.1:8081",
+        "http://127.0.0.1:3000",
+    ]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
