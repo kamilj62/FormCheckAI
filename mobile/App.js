@@ -16,7 +16,15 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const BACKEND_URL = "https://formcheckai.onrender.com";
+const IS_LOCAL =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
+const BACKEND_URL = IS_LOCAL
+  ? "http://127.0.0.1:8000"
+  : "https://formcheckai.onrender.com";
+
 const API_URL = BACKEND_URL;
 const MEDIA_URL = BACKEND_URL;
 
