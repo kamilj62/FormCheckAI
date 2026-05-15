@@ -527,42 +527,46 @@ export default function App() {
     }
   };
 
+  const [overlayLoading, setOverlayLoading] = useState(false);
+  
   const generateOverlay = async () => {
-    try {
-      const bestRep = getBestRep(result?.rep_feedback || []);
+  try {
+    setOverlayLoading(true);
 
-      const res = await fetch(`${API_URL}/generate_overlay`, {
-        method: "POST",
-        body: await buildFormData({
-          rep_json: bestRep ? JSON.stringify(bestRep) : null,
-          exercise_label: result?.exercise_label || "",
-        }),
-      });
+    const bestRep = getBestRep(result?.rep_feedback || []);
 
-      const data = await res.json().catch(() => null);
+    const res = await fetch(`${API_URL}/generate_overlay`, {
+      method: "POST",
+      body: await buildFormData({
+        rep_json: bestRep ? JSON.stringify(bestRep) : null,
+        exercise_label: result?.exercise_label || "",
+      }),
+    });
 
-      if (!data) {
-        throw new Error("Server returned an empty response.");
-      }
+    const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(
-          data.overlay_error || data.message || "Overlay generation failed",
-        );
-      }
-
-      setResult((prev) => ({
-        ...prev,
-        overlay_video_url: data.overlay_video_url,
-        overlay_error: data.overlay_error,
-      }));
-    } catch (err) {
-      setResult((prev) => ({
-        ...prev,
-        overlay_error: err.message,
-      }));
+    if (!res.ok) {
+      throw new Error(
+        data.overlay_error ||
+          data.message ||
+          "Overlay generation failed"
+      );
     }
-  };
+
+    setResult((prev) => ({
+      ...prev,
+      overlay_video_url: data.overlay_video_url,
+      overlay_error: data.overlay_error,
+    }));
+  } catch (err) {
+    setResult((prev) => ({
+      ...prev,
+      overlay_error: err.message,
+    }));
+  } finally {
+    setOverlayLoading(false);
+  }
+};
 
   const analyzeVideo = async () => {
     if (!video) {
@@ -652,6 +656,49 @@ export default function App() {
 
   const activeImageUrl = fullUrl(activeImagePath);
   const overlayUrl = fullUrl(result?.overlay_video_url);
+
+  const buildCoachSummary = (result) => {
+  if (!result) return "";
+
+  const rep = result.rep_feedback?.[0];
+  if (!rep) return "";
+
+  const issues = rep.issues || [];
+  const biggestFix = result.set_summary?.biggest_fix;
+
+  const lines = [];
+
+  // Main fix
+  if (biggestFix) {
+    lines.push(`Main fix: ${biggestFix}`);
+  }
+
+  // Why (from issues)
+  if (issues.length > 0) {
+    lines.push(`Issue: ${issues[0]}`);
+  }
+
+  // Add smart cues based on breakdown
+  const breakdown = rep.breakdown || {};
+
+  if (breakdown.knees === "poor") {
+    lines.push("Cue: Drive your knees out and track them over your toes.");
+  }
+
+  if (breakdown.depth === "borderline") {
+    lines.push("Cue: Sit slightly deeper while keeping your chest up.");
+  }
+
+  if (breakdown.torso === "poor") {
+    lines.push("Cue: Keep your chest tall and avoid collapsing forward.");
+  }
+
+  if (breakdown.heels === "poor") {
+    lines.push("Cue: Keep your weight through mid-foot and heels.");
+  }
+
+  return lines.join("\n\n");
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -944,14 +991,23 @@ export default function App() {
               </ScrollView>
             </View>
 
-            <View style={styles.overlayButtonDisabled}>
-              <Text style={styles.secondaryButtonText}>
-                Overlay Replay (coming soon)
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={[styles.overlayButton, overlayLoading && styles.disabledButton]}
+              onPress={generateOverlay}
+              disabled={overlayLoading}
+            >
+              {overlayLoading ? (
+                <View style={styles.loadingBlock}>
+                  <ActivityIndicator color="#020617" />
+                  <Text style={styles.analyzeButtonText}>Generating overlay...</Text>
+                </View>
+              ) : (
+                <Text style={styles.analyzeButtonText}>Generate Overlay</Text>
+              )}
+            </TouchableOpacity>
 
             {overlayUrl && (
-              <View style={styles.card}>
+              <View style={styles.overlayCard}>
                 <Text style={styles.sectionTitle}>Coached Replay</Text>
                 <Text style={styles.sectionSub}>
                   Overlay video with rep feedback and movement markers.
@@ -969,15 +1025,9 @@ export default function App() {
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Coach Summary</Text>
 
-              <Text style={styles.summaryLine}>
-                {result?.set_summary?.trend || "Form summary will appear here."}
+              <Text style={styles.coachText}>
+                {buildCoachSummary(result)}
               </Text>
-
-              {result?.feedback?.map((item, index) => (
-                <Text key={`feedback-${index}`} style={styles.feedbackLine}>
-                  • {item}
-                </Text>
-              ))}
             </View>
           </>
         )}
@@ -1429,5 +1479,32 @@ overlayButtonDisabled: {
   alignItems: "center",
   marginBottom: 14,
   opacity: 0.7,
+},
+overlayCard: {
+  backgroundColor: "#111827",
+  borderRadius: 28,
+  padding: 18,
+  marginBottom: 18,
+  borderWidth: 1,
+  borderColor: "#243044",
+  overflow: "visible",
+},
+videoPlayer: {
+  width: "100%",
+  height: 620,
+  borderRadius: 22,
+  backgroundColor: "#020617",
+},
+videoShell: {
+  width: "100%",
+  borderRadius: 22,
+  overflow: "visible",
+  backgroundColor: "#020617",
+},
+coachText: {
+  color: "#E5E7EB",
+  fontSize: 16,
+  lineHeight: 22,
+  marginTop: 8,
 },
 });
