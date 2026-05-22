@@ -23,8 +23,9 @@ const IS_LOCAL =
 
 const BACKEND_URL = IS_LOCAL
   ? "http://127.0.0.1:8000"
-  : "https://formcheckai.onrender.com";
+  : "http://3.80.255.34:8000";
 
+const BACKEND_URL = "https://lid-coins-bacon-previously.trycloudflare.com";
 const API_URL = BACKEND_URL;
 const MEDIA_URL = BACKEND_URL;
 
@@ -665,39 +666,55 @@ export default function App() {
 
   const issues = rep.issues || [];
   const biggestFix = result.set_summary?.biggest_fix;
-
-  const lines = [];
-
-  // Main fix
-  if (biggestFix) {
-    lines.push(`Main fix: ${biggestFix}`);
-  }
-
-  // Why (from issues)
-  if (issues.length > 0) {
-    lines.push(`Issue: ${issues[0]}`);
-  }
-
-  // Add smart cues based on breakdown
   const breakdown = rep.breakdown || {};
 
+  let intro = "Solid rep overall.";
+  let body = [];
+  let cues = [];
+
+  // Tone based on score
+  if (rep.score >= 9) {
+    intro = "Great rep — very strong execution.";
+  } else if (rep.score >= 7) {
+    intro = "Good rep overall, but there are a couple things to clean up.";
+  } else {
+    intro = "This rep needs some work.";
+  }
+
+  // Explain issue
+  if (issues.length > 0) {
+    body.push(issues[0]);
+  }
+
+  // Smart cues
   if (breakdown.knees === "poor") {
-    lines.push("Cue: Drive your knees out and track them over your toes.");
+    cues.push("Drive your knees out and keep them tracking over your toes.");
   }
 
   if (breakdown.depth === "borderline") {
-    lines.push("Cue: Sit slightly deeper while keeping your chest up.");
+    cues.push("Sit slightly deeper while keeping your chest up.");
   }
 
   if (breakdown.torso === "poor") {
-    lines.push("Cue: Keep your chest tall and avoid collapsing forward.");
+    cues.push("Keep your chest tall and avoid leaning forward.");
   }
 
   if (breakdown.heels === "poor") {
-    lines.push("Cue: Keep your weight through mid-foot and heels.");
+    cues.push("Keep your weight through your mid-foot and heels.");
   }
 
-  return lines.join("\n\n");
+  // Build paragraph
+  let text = intro;
+
+  if (body.length > 0) {
+    text += " " + body.join(" ");
+  }
+
+  if (cues.length > 0) {
+    text += " Focus on this next: " + cues.join(" ");
+  }
+
+  return text;
 };
 
   return (
