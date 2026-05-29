@@ -1,331 +1,212 @@
-# 📱 FormCheck AI — AI-Powered Movement Analysis & Coaching
+# 🏋️ FormCheck AI
 
-FormCheck AI is a computer vision + deep learning platform that analyzes exercise videos, classifies movements, evaluates biomechanics, generates coaching feedback, and creates visual phase breakdowns automatically.
+AI-powered exercise analysis platform that uses computer vision, pose estimation, and machine learning to analyze lifting technique from video.
 
-It acts like having an AI coach review your lifts frame-by-frame.
+Users upload a video and receive:
 
-Built with:
-
-- **FastAPI backend**
-- **Expo React Native mobile app**
-- **TensorFlow / Keras deep learning**
-- **MediaPipe Pose landmark extraction**
-- **OpenCV computer vision**
-- **Biomechanics scoring engine**
-- **Automatic overlay video generation**
-- **Phase-by-phase movement visualization**
+- Exercise classification
+- Rep detection
+- Rep scoring
+- Biomechanics feedback
+- Coaching cues
+- Overlay analysis videos
+- Phase-by-phase movement breakdowns
 
 ---
 
 # Demo
 
-Upload a lift video →
+## Back Squat Analysis
 
-FormCheck AI returns:
+### Input Video
 
-✅ movement classification  
-✅ rep counting  
-✅ biomechanics feedback  
-✅ coaching cues  
-✅ rep grading  
-✅ overlay analysis video  
-✅ phase images  
-✅ coaching zones  
+![Back Squat Input](docs/examples/backsquat_input.gif)
+
+---
+
+### Analysis Output
+
+```json
+{
+  "exercise_label": "Back Squat",
+  "confidence": 0.80,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "score": 8.2,
+      "grade": "Good",
+      "issues": [
+        "Depth is close, but could be slightly lower.",
+        "Knees cave inward noticeably."
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Overlay Analysis
+
+![Overlay Video](docs/examples/backsquat_overlay.gif)
+
+---
+
+### Phase Review
+
+| Setup | Descent | Bottom | Ascent | Lockout |
+|--------|--------|--------|--------|--------|
+| ![](docs/examples/setup.jpg) | ![](docs/examples/descent.jpg) | ![](docs/examples/bottom.jpg) | ![](docs/examples/ascent.jpg) | ![](docs/examples/lockout.jpg) |
 
 ---
 
 # Features
 
-# ✅ Exercise Classification
+## Exercise Recognition
 
-Automatically identifies the exercise being performed.
+### Strength Training
 
-Supports:
-
-## 🏋️ Strength / Olympic Lifts
-
-- Bench Press
-- Deadlift
 - Back Squat
 - Front Squat
 - Overhead Squat
-- Strict Press
+- Deadlift
+- Bench Press
 - Push Press
-- Split Jerk
-- Thruster
+
+### Olympic Weightlifting
+
 - Clean
-- Snatch
+- Split Jerk
 - Clean & Jerk
-
-## 🤸 Gymnastics / CrossFit
-
-- Pull-up
-- Bar Muscle-up
-- Ring Muscle-up
-
-Future planned:
-
-- Toes-to-bar
-- Handstand Push-up
-- Box Jump
-- Rowing stroke analysis
-- Running gait analysis
+- Snatch
 
 ---
 
-# ✅ Rep Detection
+## Rep Analysis
 
 Automatically detects:
 
-- rep start
-- eccentric phase
-- bottom position
-- concentric phase
-- lockout
-- rep completion
+- Rep start
+- Descent / eccentric phase
+- Bottom position
+- Ascent / concentric phase
+- Lockout
+- Rep completion
 
 Returns:
 
-- total reps
-- best rep
-- worst rep
-- average score
-- consistency trend
+- Total reps
+- Best rep
+- Worst rep
+- Average score
+- Consistency trend
 
 ---
 
-# ✅ Biomechanics Analysis
+## Biomechanics Feedback
 
-Analyzes movement quality using joint tracking and movement heuristics.
+### Squat Analysis
 
-Metrics include:
+- Depth assessment
+- Knee valgus detection
+- Forward torso lean
+- Heel rise detection
 
-- knee angle
-- hip angle
-- torso angle
-- elbow angle
-- shoulder position
-- valgus ratio
-- lockout quality
-- spinal neutrality
-- bar path
-- tempo / control
-- overhead stability
+### Deadlift Analysis
 
----
+- Back rounding detection
+- Hip hinge quality
+- Lockout analysis
+- Bar path tracking
 
-# ✅ Coaching Feedback
+### Bench Press Analysis
 
-Provides actionable cues.
+- Range of motion
+- Lockout quality
+- Stability assessment
 
-Examples:
+### Push Press Analysis
 
-### Squat
-
-- Drive knees out
-- Keep chest tall
-- Hit full depth
-- Maintain heel pressure
-
-### Deadlift
-
-- Brace core
-- Neutral spine
-- Push floor away
-- Finish tall with glutes
-
-### Bench Press
-
-- Touch lower chest
-- Keep wrists stacked
-- Full lockout
-- Drive through feet
-
-### Olympic Lifts
-
-- Stay over bar
-- Finish extension
-- Fast elbows
-- Punch overhead aggressively
+- Dip quality
+- Bar path tracking
+- Overhead lockout
+- Timing analysis
 
 ---
 
-# ✅ Phase Image Generation
+## Visual Feedback
 
-Automatically creates key movement snapshots.
+### Overlay Video Generation
 
----
+FormCheck AI generates replay videos showing:
 
-## Clean
+- Rep boundaries
+- Scores
+- Coaching notes
+- Movement analysis
 
-Generates:
+### Phase Image Generation
 
-- setup
-- first pull
-- extension
-- catch
-- finish
+#### Squat
 
----
+- Setup
+- Descent
+- Bottom
+- Ascent
+- Lockout
 
-## Split Jerk
+#### Deadlift
 
-Generates:
+- Setup
+- Pull
+- Mid-Pull
+- Finish
+- Lockout
 
-- setup
-- dip
-- drive
-- catch
-- recovery
-- finish
+#### Push Press
 
----
+- Setup
+- Dip
+- Drive
+- Catch
+- Lockout
 
-## Push Press
+#### Olympic Lifts
 
-Generates:
-
-- setup
-- dip
-- drive
-- catch
-- lockout
-
----
-
-## Squat
-
-Generates:
-
-- setup
-- descent
-- bottom
-- ascent
-- lockout
+- Setup
+- First Pull
+- Extension
+- Catch
+- Finish
 
 ---
 
-## Deadlift
+# Architecture
 
-Generates:
-
-- setup
-- pull
-- mid
-- finish
-- lockout
-
----
-
-## Pull-up
-
-Generates:
-
-- hang
-- pull
-- top
-- descent
-- finish
-
----
-
-## Muscle-ups
-
-Generates:
-
-- hang
-- pull
-- transition
-- dip
-- lockout
-- finish
-
----
-
-# ✅ Overlay Video Rendering
-
-FormCheck AI creates an annotated replay video showing:
-
-- rep boundaries
-- labels
-- score overlays
-- coaching zones
-- biomechanics notes
-- analysis timeline
-
-This gives users visual feedback—not just numbers.
-
----
-
-# ✅ Smart Override Engine
-
-A biomechanics-aware rule engine improves classification beyond model predictions.
-
-Overrides include:
-
-- Thruster detection
-- Push Press detection
-- Split Jerk detection
-- Pull-up detection
-- Bar Muscle-up detection
-- Ring Muscle-up detection
-- Olympic lift routing
-- Squat family routing
-
-This dramatically improves real-world accuracy.
-
----
-
-# Backend Pipeline
-
-Video →
-
-Frame extraction →
-
-MediaPipe Pose →
-
-Landmark extraction →
-
-Feature engineering →
-
-Velocity features →
-
-Sequence model →
-
-Biomechanics override →
-
-Rep segmentation →
-
-Movement scoring →
-
-Feedback generation →
-
-Phase image creation →
-
-Overlay rendering →
-
-JSON response
-
----
-
-# Model Performance
-
-Current production classifier:
-
-### Movement Router v2
-
-Performance:
-
-| Movement | Accuracy |
-|---------|----------|
-| Deadlift | 98.8% |
-| Push Press | 97.6% |
-| Back Squat | 96.8% |
-| Front Squat | 98.1% |
-
-Confusion is minimal.
-
-Biomechanics overrides further improve final prediction quality.
+```text
+Video Upload
+      ↓
+MediaPipe Pose
+      ↓
+Landmark Extraction
+      ↓
+Feature Engineering
+      ↓
+Movement Classification
+      ↓
+Rep Detection
+      ↓
+Biomechanics Analysis
+      ↓
+Feedback Generation
+      ↓
+Phase Images
+      ↓
+Overlay Rendering
+      ↓
+JSON Response
+```
 
 ---
 
@@ -336,45 +217,132 @@ Biomechanics overrides further improve final prediction quality.
 - FastAPI
 - Python
 - TensorFlow / Keras
+- MediaPipe
 - OpenCV
 - NumPy
 - Pandas
-- MediaPipe
 
-## Frontend
+## Mobile
 
 - React Native
 - Expo
-- JavaScript
 
-## ML / CV
+## Machine Learning
 
-- LSTM sequence models
-- Landmark feature engineering
-- Motion velocity vectors
-- Heuristic override engine
-- Rep segmentation logic
+- LSTM Sequence Models
+- Pose Landmark Extraction
+- Feature Engineering
+- Movement Routing Models
+- Biomechanics Rule Engine
+
+---
+
+# API Endpoints
+
+## Health Check
+
+```http
+GET /health
+```
+
+Returns:
+
+```json
+{
+  "status": "ok",
+  "model_loaded": true
+}
+```
+
+---
+
+## Analyze Video
+
+```http
+POST /analyze
+```
+
+Returns:
+
+- exercise_label
+- confidence
+- feedback
+- rep_feedback
+- set_summary
+- coaching_zones
+- overlay_video_url
+- phase_images
+
+Example:
+
+```json
+{
+  "exercise_label": "Back Squat",
+  "confidence": 0.80,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "score": 8.2,
+      "grade": "Good"
+    }
+  ]
+}
+```
+
+---
+
+## Generate Visuals
+
+```http
+POST /generate_visuals
+```
+
+Creates:
+
+- Phase review images
+- Movement snapshots
+- Exercise-specific breakdowns
+
+---
+
+## Generate Overlay
+
+```http
+POST /generate_overlay
+```
+
+Creates:
+
+- Annotated replay video
+- Rep markers
+- Coaching overlays
+- Movement analysis timeline
 
 ---
 
 # Installation
 
-## Backend
+## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/formcheck-ai.git
+git clone https://github.com/kamilj62/FormCheckAI.git
 
-cd formcheck-ai/backend
+cd FormCheckAI
+```
 
-python3.12 -m venv .venv
+---
+
+## Backend Setup
+
+```bash
+cd backend
+
+python3 -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
-```
 
-Run server:
-
-```bash
 uvicorn app.main:app --reload
 ```
 
@@ -384,7 +352,7 @@ Server:
 http://127.0.0.1:8000
 ```
 
-Swagger docs:
+Swagger Docs:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -392,10 +360,10 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Frontend
+## Mobile App
 
 ```bash
-cd frontend
+cd mobile
 
 npm install
 
@@ -406,73 +374,86 @@ Run on:
 
 - iPhone
 - Android
-- simulator
+- iOS Simulator
 - Expo Go
 
 ---
 
-# API Example
-
-POST:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/analyze" \
--H "accept: application/json" \
--F "file=@deadlift.mov"
-```
-
-Response:
+# Example API Response
 
 ```json
 {
-  "exercise_label": "Deadlift",
-  "confidence": 0.95,
+  "exercise_label": "Back Squat",
+  "confidence": 0.80,
   "analysis_mode": "detailed_rep_analysis",
   "feedback": [
-    "Brace core and maintain neutral spine."
+    "Predicted exercise: Back Squat.",
+    "Model confidence: 80.0%."
   ],
   "rep_feedback": [
     {
       "rep": 1,
-      "score": 8.5,
-      "grade": "Good"
+      "score": 8.2,
+      "grade": "Good",
+      "issues": [
+        "Depth is close, but could be slightly lower.",
+        "Knees cave inward noticeably."
+      ]
     }
   ],
-  "overlay_video_url": "/outputs/overlay.mp4",
-  "phase_images": {
-    "setup": "/outputs/setup.jpg",
-    "pull": "/outputs/pull.jpg",
-    "finish": "/outputs/finish.jpg"
+  "set_summary": {
+    "detected_reps": 1,
+    "avg_rep_score": 8.2,
+    "trend": "Form appears consistent across the set."
   }
 }
 ```
 
 ---
 
-# Vision
+# Current Supported Movements
 
-FormCheck AI aims to become:
+### Powerlifting
 
-**The AI movement coach for everyone**
+- Back Squat
+- Front Squat
+- Overhead Squat
+- Bench Press
+- Deadlift
 
-Applications:
+### Weightlifting
 
-- strength training
-- Olympic lifting
-- CrossFit
-- personal training
-- rehab movement screening
-- sports performance
-- remote coaching
+- Clean
+- Split Jerk
+- Clean & Jerk
+- Snatch
+
+### Pressing
+
+- Push Press
+
+---
+
+# Roadmap
+
+- Strict Press
+- Thruster
+- Additional CrossFit movements
+- Historical athlete tracking
+- Coach dashboard
+- Team analytics
+- Performance trend analysis
 
 ---
 
 # Author
 
-**Joseph Kamil**
+## Joseph Kamil
 
-Full Stack + AI Engineer
+AI Engineer | Full Stack Developer
 
-Built with deep learning, computer vision, and an obsession for biomechanics.
+University of Michigan
 
----
+GitHub: https://github.com/kamilj62
+
+Built with computer vision, machine learning, and a passion for improving movement quality through AI.

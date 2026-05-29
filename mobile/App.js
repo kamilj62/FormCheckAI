@@ -25,7 +25,7 @@ const BACKEND_URL = IS_LOCAL
   ? "http://127.0.0.1:8000"
   : "http://3.80.255.34:8000";
 
-const BACKEND_URL = "https://lid-coins-bacon-previously.trycloudflare.com";
+const BACKEND_URL = "https://coalition-rouge-mathematics-advice.trycloudflare.com";
 const API_URL = BACKEND_URL;
 const MEDIA_URL = BACKEND_URL;
 
