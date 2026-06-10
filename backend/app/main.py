@@ -13,6 +13,10 @@ import tensorflow as tf
 
 import joblib
 
+import threading
+
+overlay_jobs = {}
+
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -4096,6 +4100,102 @@ async def generate_visuals(
             os.remove(temp_path)
 
             
+def overlay_worker(job_id, temp_path, rep_feedback, exercise_label):
+    try:
+        overlay_jobs[job_id] = {"status": "processing"}
+
+        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+
+        made_overlay = draw_overlay_video(
+            input_path=temp_path,
+            output_path=overlay_path,
+            rep_feedback=rep_feedback,
+            exercise_label=exercise_label or "unknown",
+            sample_every=3,
+        )
+
+        if made_overlay:
+            overlay_jobs[job_id] = {
+                "status": "ready",
+                "overlay_video_url": f"/outputs/{overlay_filename}",
+            }
+        else:
+            overlay_jobs[job_id] = {
+                "status": "error",
+                "message": "Could not generate overlay video.",
+            }
+
+    except Exception as e:
+        overlay_jobs[job_id] = {
+            "status": "error",
+            "message": str(e),
+        }
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
+@app.post("/start_overlay")
+async def start_overlay(
+    file: UploadFile = File(...),
+    rep_json: str = Form(None),
+    exercise_label: str = Form(None),
+):
+    import json
+
+    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
+    temp_filename = f"overlay_input_{uuid.uuid4().hex[:8]}{suffix}"
+    temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    rep_feedback = []
+
+    if rep_json:
+        rep = json.loads(rep_json)
+        rep_feedback = [rep] if isinstance(rep, dict) else rep
+
+    if not rep_feedback:
+        cap = cv2.VideoCapture(temp_path)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+
+        rep_feedback = [{
+            "rep": 1,
+            "start_frame": 0,
+            "end_frame": min(90, max(1, total_frames - 1)),
+            "score": 10.0,
+            "grade": "Captured",
+            "issues": [],
+            "feedback": [],
+        }]
+
+    job_id = uuid.uuid4().hex[:12]
+    overlay_jobs[job_id] = {"status": "queued"}
+
+    threading.Thread(
+        target=overlay_worker,
+        args=(job_id, temp_path, rep_feedback, exercise_label),
+        daemon=True,
+    ).start()
+
+    return {
+        "job_id": job_id,
+        "status": "processing",
+    }
+
+
+@app.get("/overlay_status/{job_id}")
+async def overlay_status(job_id: str):
+    return overlay_jobs.get(job_id, {
+        "status": "not_found",
+        "message": "Overlay job not found.",
+    })
+
+
 @app.post("/generate_overlay")
 async def generate_overlay(
     file: UploadFile = File(...),
@@ -4221,3 +4321,4 @@ async def analyze(file: UploadFile = File(...)):
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
