@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "expo": "~54.0.13",
-    "expo-av": "~15.1.7",
     "expo-document-picker": "~14.0.8",
     "expo-image-picker": "~17.0.10",
     "expo-video": "~3.0.16",

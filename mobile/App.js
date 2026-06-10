@@ -14,7 +14,7 @@ import {
 
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { Video, ResizeMode } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 
 const BACKEND_URL =
   "http://formcheck-ai-api-v3.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
@@ -679,7 +679,9 @@ try {
     null;
 
   const activeImageUrl = fullUrl(activeImagePath);
-  const overlayUrl = fullUrl(result?.overlay_video_url);
+  const overlayPlayer = useVideoPlayer(overlayUrl, (player) => {
+    player.loop = false;
+  });
 
   const buildCoachSummary = (result) => {
     if (!result) return "";
@@ -1076,11 +1078,13 @@ try {
                   Overlay video with rep feedback and movement markers.
                 </Text>
 
-                <Video
-                  source={{ uri: overlayUrl }}
+                <VideoView
+                  player={overlayPlayer}
                   style={styles.videoPlayer}
-                  useNativeControls
-                  resizeMode={ResizeMode.CONTAIN}
+                  allowsFullscreen
+                  allowsPictureInPicture
+                  nativeControls
+                  contentFit="contain"
                 />
               </View>
             )}
