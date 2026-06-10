@@ -3762,7 +3762,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # SNATCH OVERRIDE
         if (
             raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
-            and summary.get("wrist_above_shoulder_ratio", 0) >= 0.22
+            and summary.get("wrist_above_shoulder_ratio", 0) >= 0.45
             and summary.get("min_knee_angle", 180) < 90
             and summary.get("min_hip_angle", 180) < 90
             and summary.get("max_elbow_angle", 0) > 150
@@ -3772,8 +3772,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         # CLEAN OVERRIDE
         if (
-            raw_label == "deadlift"
+            raw_label in ["deadlift", "squat", "squat_back", "squat_front", "snatch"]
             and summary.get("wrist_above_shoulder_ratio", 0) >= 0.10
+            and summary.get("wrist_above_shoulder_ratio", 0) < 0.45
             and summary.get("max_elbow_angle", 0) > 150
             and summary.get("min_hip_angle", 180) < 80
             and summary.get("min_knee_angle", 180) < 100
