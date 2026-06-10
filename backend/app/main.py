@@ -3730,9 +3730,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         # --------------------------------------------------
         # THRUSTER OVERRIDE
-        # --------------------------------------------------
         if (
-            raw_label in ["squat", "squat_back", "squat_front"]
+            raw_label in ["squat", "squat_back", "squat_front", "bench_press", "push_press"]
             and summary.get("wrist_above_shoulder_ratio", 0) > 0.15
             and summary.get("min_knee_angle", 180) < 100
             and summary.get("min_hip_angle", 180) < 100
