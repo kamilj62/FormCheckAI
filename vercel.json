@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com/:path*"
+      "destination": "http://formcheck-ai-api-v2.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com/:path*"
     }
   ]
 }
