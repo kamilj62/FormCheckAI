@@ -4032,21 +4032,52 @@ async def generate_visuals(
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        reps = []
-        if rep_json:
-            try:
-                rep = json.loads(rep_json)
-                reps = [rep] if isinstance(rep, dict) else rep
-            except Exception as e:
-                print("VISUALS REP JSON PARSE ERROR:", e)
+        if not rep_json:
+            return {
+                "exercise_label": exercise_label or "Unknown",
+                "overlay_video_url": None,
+                "phase_images": None,
+                "visuals_error": "Missing rep data. Analyze the video first.",
+            }
 
-        result = analyze_video(temp_path, make_visuals=False)
+        rep = json.loads(rep_json)
+        if isinstance(rep, list):
+            rep = rep[0] if rep else None
+
+        if not rep:
+            return {
+                "exercise_label": exercise_label or "Unknown",
+                "overlay_video_url": None,
+                "phase_images": None,
+                "visuals_error": "No usable rep found.",
+            }
+
+        label = str(exercise_label or "").lower()
+
+        if "squat" in label:
+            phase_images = create_squat_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "deadlift" in label:
+            phase_images = create_deadlift_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "push press" in label:
+            phase_images = create_push_press_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "bench" in label:
+            phase_images = create_bench_press_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        else:
+            phase_images = None
 
         return {
-            "exercise_label": exercise_label or result.get("exercise_label"),
+            "exercise_label": exercise_label or "Unknown",
             "overlay_video_url": None,
-            "phase_images": None,
-            "visuals_error": "Phase review is temporarily disabled for production speed.",
+            "phase_images": phase_images,
+            "visuals_error": None if phase_images else "Phase images unavailable for this lift.",
         }
 
     except Exception as e:
@@ -4057,14 +4088,14 @@ async def generate_visuals(
             "exercise_label": exercise_label or "Unknown",
             "overlay_video_url": None,
             "phase_images": None,
-            "error": str(e),
+            "visuals_error": str(e),
         }
 
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-
+            
 @app.post("/generate_overlay")
 async def generate_overlay(
     file: UploadFile = File(...),
