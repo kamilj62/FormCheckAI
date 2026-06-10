@@ -617,11 +617,6 @@ try {
       setResult(data);
       setLoading(false);
 
-      console.log("ABOUT TO START VISUALS", data?.rep_feedback?.length);
-
-            setResult(data);
-            setLoading(false);
-
       // Visuals are now generated manually
     } catch (err) {
       setResult({ error: true, message: err.message });
