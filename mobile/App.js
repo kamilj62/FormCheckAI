@@ -884,19 +884,19 @@ try {
               </View>
             )}
 
-            {/*
-<TouchableOpacity
-  style={[styles.analyzeButton, visualsLoading && styles.disabledButton]}
-  onPress={() => generateVisuals(result)}
-  disabled={visualsLoading}
->
-  <Text style={styles.analyzeButtonText}>
-    {visualsLoading
-      ? "Generating Phase Review..."
-      : "Generate Phase Review"}
-  </Text>
-</TouchableOpacity>
-*/}
+            {
+              <TouchableOpacity
+                style={[styles.analyzeButton, visualsLoading && styles.disabledButton]}
+                onPress={() => generateVisuals(result)}
+                disabled={visualsLoading}
+              >
+                <Text style={styles.analyzeButtonText}>
+                  {visualsLoading
+                    ? "Generating Phase Review..."
+                    : "Generate Phase Review"}
+                </Text>
+              </TouchableOpacity>
+            }
 
 <View style={styles.card}>
   <Text style={styles.sectionTitle}>Rep Breakdown</Text>
