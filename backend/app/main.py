@@ -1751,31 +1751,47 @@ def analyze_clean_reps(biomechanics):
         return [], build_set_summary([])
 
     # One clean attempt per clip for now.
-    start = 0
-    end = len(biomechanics) - 1
+    start_idx = 0
+    end_idx = len(biomechanics) - 1
 
-    catch_idx = int(np.argmin(knee))
-    extension_idx = int(np.argmax(hip[: max(catch_idx, 1)])) if catch_idx > 1 else 0
+    first_pull_idx = int(len(biomechanics) * 0.25)
 
-    min_knee = float(np.min(knee))
-    max_hip = float(np.max(hip))
-    max_torso = float(np.percentile(torso, 85))
-    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
-    min_elbow = float(np.min(elbow))
-    catch_elbow = float(elbow[catch_idx])
-    rack_distance = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+    extension_window_start = max(1, int(len(biomechanics) * 0.25))
+    extension_window_end = max(extension_window_start + 1, int(len(biomechanics) * 0.65))
 
-    issues = []
-    feedback = []
+    catch_window_start = max(1, int(len(biomechanics) * 0.35))
+    catch_window_end = len(biomechanics)
 
-    breakdown = {
-        "first_pull": "good",
-        "extension": "good",
-        "turnover": "good",
-        "catch": "good",
-        "front_rack": "good",
-        "bar_path": "good",
-    }
+    extension_local = int(np.argmax(hip[extension_window_start:extension_window_end]))
+    extension_idx = extension_window_start + extension_local
+
+    catch_local = int(np.argmin(knee[catch_window_start:catch_window_end]))
+    catch_idx = catch_window_start + catch_local
+
+    if extension_idx <= first_pull_idx:
+        extension_idx = min(first_pull_idx + 1, end_idx)
+
+    if catch_idx <= extension_idx:
+        catch_idx = min(extension_idx + 1, end_idx)
+        min_knee = float(np.min(knee))
+        max_hip = float(np.max(hip))
+        max_torso = float(np.percentile(torso, 85))
+        wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
+        min_elbow = float(np.min(elbow))
+        catch_elbow = float(elbow[catch_idx])
+        rack_distance = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+
+        issues = []
+        feedback = []
+
+        breakdown = {
+            "first_pull": "good",
+            "extension": "good",
+            "turnover": "good",
+            "catch": "good",
+            "front_rack": "good",
+            "bar_path": "good",
+        }
 
     if max_torso > 75:
         breakdown["first_pull"] = "poor"
@@ -1833,11 +1849,11 @@ def analyze_clean_reps(biomechanics):
 
     reps = [{
         "rep": 1,
-        "start_frame": int(frame_numbers[start]),
-        "first_pull_frame": int(frame_numbers[int(len(frame_numbers) * 0.25)]),
+        "start_frame": int(frame_numbers[start_idx]),
+        "first_pull_frame": int(frame_numbers[first_pull_idx]),
         "extension_frame": int(frame_numbers[extension_idx]),
         "catch_frame": int(frame_numbers[catch_idx]),
-        "end_frame": int(frame_numbers[end]),
+        "end_frame": int(frame_numbers[end_idx]),
         "score": score,
         "grade": grade_score(score),
         "issues": issues,
