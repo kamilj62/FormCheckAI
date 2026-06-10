@@ -17,7 +17,8 @@ import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
 const BACKEND_URL =
-  "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
+  "http://formcheck-ai-api-v2.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
+
 const API_URL = Platform.OS === "web" ? "/api" : BACKEND_URL;
 
 const MEDIA_URL = BACKEND_URL;
