@@ -3528,7 +3528,7 @@ def build_coaching_zones(exercise_label, rep_feedback):
     return {}
 
 
-def analyze_video(video_path, make_visuals=True):
+def analyze_video(video_path, make_visuals=True, make_overlay=True):
     try:
         olympic_labels = [
             "olympic_lift",
@@ -3869,15 +3869,18 @@ def analyze_video(video_path, make_visuals=True):
         if make_visuals and rep_feedback:
             phase_rep = choose_phase_rep(rep_feedback)
 
-            overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
-            overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+            if make_overlay:
+                phase_rep = choose_phase_rep(rep_feedback)
 
-            overlay_result = draw_overlay_video(
-                video_path,
-                overlay_path,
-                rep_feedback,
-                label,
-                sample_every=sample_every,
+                overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+                overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+
+                overlay_result = draw_overlay_video(
+                    video_path,
+                    overlay_path,
+                    rep_feedback,
+                    label,
+                    sample_every=sample_every,
             )
 
             if overlay_result:
@@ -4037,7 +4040,7 @@ async def generate_visuals(
             except Exception as e:
                 print("VISUALS REP JSON PARSE ERROR:", e)
 
-        result = analyze_video(temp_path, make_visuals=True)
+        result = analyze_video(temp_path, make_visuals=True, make_overlay=False)
 
         return {
             "exercise_label": result.get("exercise_label", exercise_label),
