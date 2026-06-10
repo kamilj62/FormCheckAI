@@ -476,10 +476,13 @@ export default function App() {
   };
 
   const generateVisuals = async (analysisResult) => {
-    try {
-      console.log("GENERATE VISUALS STARTED");
+    if (visualsLoading) return;
+    if (result?.phase_images) return;
 
-      setVisualsLoading(true);
+  try {
+    console.log("GENERATE VISUALS STARTED");
+
+    setVisualsLoading(true);
 
       const bestRep = getBestRep(analysisResult?.rep_feedback || []);
 
@@ -886,14 +889,19 @@ try {
 
             {
               <TouchableOpacity
-                style={[styles.analyzeButton, visualsLoading && styles.disabledButton]}
+                style={[
+                  styles.analyzeButton,
+                  (visualsLoading || result?.phase_images) && styles.disabledButton,
+                ]}
                 onPress={() => generateVisuals(result)}
-                disabled={visualsLoading}
+                disabled={visualsLoading || !!result?.phase_images}
               >
                 <Text style={styles.analyzeButtonText}>
                   {visualsLoading
                     ? "Generating Phase Review..."
-                    : "Generate Phase Review"}
+                    : result?.phase_images
+                      ? "Phase Review Generated"
+                      : "Generate Phase Review"}
                 </Text>
               </TouchableOpacity>
             }
