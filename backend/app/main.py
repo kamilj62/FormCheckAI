@@ -1732,6 +1732,122 @@ def draw_ideal_push_press_overlay(frame, pose_landmarks, width, height):
     return frame
 
 
+def analyze_clean_reps(biomechanics):
+    knee = np.array([b["knee_angle"] for b in biomechanics])
+    hip = np.array([b["hip_angle"] for b in biomechanics])
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    # One clean attempt per clip for now.
+    start = 0
+    end = len(biomechanics) - 1
+
+    catch_idx = int(np.argmin(knee))
+    extension_idx = int(np.argmax(hip[: max(catch_idx, 1)])) if catch_idx > 1 else 0
+
+    min_knee = float(np.min(knee))
+    max_hip = float(np.max(hip))
+    max_torso = float(np.percentile(torso, 85))
+    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
+    min_elbow = float(np.min(elbow))
+    catch_elbow = float(elbow[catch_idx])
+    rack_distance = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good",
+    }
+
+    if max_torso > 75:
+        breakdown["first_pull"] = "poor"
+        issues.append("Torso may be losing position during the pull.")
+        feedback.append("Stay braced and keep your chest up through the first pull.")
+
+    if max_hip < 150:
+        breakdown["extension"] = "incomplete"
+        issues.append("Hip extension may be incomplete.")
+        feedback.append("Finish your pull tall before pulling under the bar.")
+
+    if min_elbow < 45:
+        breakdown["turnover"] = "early_arm_bend"
+        issues.append("Arms may be bending early during the pull.")
+        feedback.append("Keep arms long until you finish extending.")
+
+    if catch_elbow > 135:
+        breakdown["front_rack"] = "poor"
+        issues.append("Elbows may be slow coming through in the catch.")
+        feedback.append("Whip elbows through fast and catch in a strong front rack.")
+
+    if min_knee > 125:
+        breakdown["catch"] = "power_catch"
+        issues.append("Catch position is high.")
+        feedback.append("Pull under the bar and receive lower if needed.")
+    elif min_knee < 70:
+        breakdown["catch"] = "deep_catch"
+
+    if rack_distance > 0.22:
+        breakdown["bar_path"] = "drifting"
+        issues.append("Bar may be drifting away during the turnover.")
+        feedback.append("Keep the bar close and pull yourself under it.")
+
+    score = 10.0
+
+    penalties = {
+        "first_pull": {"good": 0.0, "poor": 1.2},
+        "extension": {"good": 0.0, "incomplete": 1.2},
+        "turnover": {"good": 0.0, "early_arm_bend": 1.0},
+        "catch": {"good": 0.0, "power_catch": 0.4, "deep_catch": 0.0},
+        "front_rack": {"good": 0.0, "poor": 1.2},
+        "bar_path": {"good": 0.0, "drifting": 1.0},
+    }
+
+    for key, value in breakdown.items():
+        score -= penalties.get(key, {}).get(value, 0.0)
+
+    score = round(max(1.0, min(10.0, score)), 1)
+
+    if issues:
+        score = min(score, 9.2)
+    else:
+        score = max(score, 9.0)
+        feedback = ["Good clean rep. Strong pull and catch position."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start]),
+        "first_pull_frame": int(frame_numbers[int(len(frame_numbers) * 0.25)]),
+        "extension_frame": int(frame_numbers[extension_idx]),
+        "catch_frame": int(frame_numbers[catch_idx]),
+        "end_frame": int(frame_numbers[end]),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_bench_press_reps(biomechanics):
     elbow_all = np.array([b["elbow_angle"] for b in biomechanics])
     wrist_y_all = np.array([b["wrist_y"] for b in biomechanics])
@@ -3898,6 +4014,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         elif label in ["push_press", "strict_press", "thruster"]:
             rep_feedback, _ = analyze_push_press_reps(biomechanics, label)
+            analysis_mode = "detailed_rep_analysis"
+
+        elif label == "clean":
+            rep_feedback, _ = analyze_clean_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
         elif label == "bench_press":
