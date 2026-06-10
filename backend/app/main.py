@@ -3557,7 +3557,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             }
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        sample_every = min(5, max(1, total_frames // 160))
+        sample_every = max(3, min(5, total_frames // 160))
 
         sequence = []
         biomechanics = []
