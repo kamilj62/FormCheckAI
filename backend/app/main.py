@@ -3494,7 +3494,7 @@ def build_coaching_zones(exercise_label, rep_feedback):
     # -----------------------------
     # PUSH PRESS / STRICT PRESS
     # -----------------------------
-    elif label in ["push_press", "strict_press"]:
+    elif label in ["push_press", "strict_press", "thruster"]:
         return {
             "dip": zone_result("Dip", "dip", {"good"}),
             "dip_path": zone_result(
@@ -3842,7 +3842,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             rep_feedback, _ = analyze_deadlift_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
-        elif label in ["push_press", "strict_press"]:
+        elif label in ["push_press", "strict_press", "thruster"]:
             rep_feedback, _ = analyze_push_press_reps(biomechanics, label)
             analysis_mode = "detailed_rep_analysis"
 
@@ -3906,7 +3906,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         sample_every=sample_every,
                     )
 
-                elif label in ["push_press", "strict_press"]:
+                elif label in ["push_press", "strict_press", "thruster"]:
                     phase_images = create_push_press_phase_images(
                         video_path,
                         OVERLAY_DIR,
