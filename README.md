@@ -2,15 +2,31 @@
 
 AI-powered exercise analysis platform that uses computer vision, pose estimation, and machine learning to analyze lifting technique from video.
 
-Users upload a video and receive:
+FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifting video and receive detailed feedback on movement quality, rep performance, biomechanics, and coaching recommendations.
 
-- Exercise classification
-- Rep detection
-- Rep scoring
-- Biomechanics feedback
-- Coaching cues
-- Overlay analysis videos
-- Phase-by-phase movement breakdowns
+---
+
+# 🚀 Live Features
+
+✅ Exercise Classification
+
+✅ Rep Detection
+
+✅ Rep Scoring
+
+✅ Biomechanics Feedback
+
+✅ Coaching Zones
+
+✅ Set Summaries
+
+✅ Phase Review Images
+
+✅ Overlay Video Generation
+
+✅ Background Overlay Processing
+
+✅ Mobile & Web Support
 
 ---
 
@@ -61,11 +77,9 @@ Users upload a video and receive:
 
 ---
 
-# Features
+# Supported Exercises
 
-## Exercise Recognition
-
-### Strength Training
+## Strength Training
 
 - Back Squat
 - Front Squat
@@ -74,7 +88,7 @@ Users upload a video and receive:
 - Bench Press
 - Push Press
 
-### Olympic Weightlifting
+## Olympic Weightlifting
 
 - Clean
 - Split Jerk
@@ -83,14 +97,16 @@ Users upload a video and receive:
 
 ---
 
-## Rep Analysis
+# What FormCheck AI Analyzes
 
-Automatically detects:
+## Rep Detection
+
+Automatically identifies:
 
 - Rep start
-- Descent / eccentric phase
+- Eccentric phase
 - Bottom position
-- Ascent / concentric phase
+- Concentric phase
 - Lockout
 - Rep completion
 
@@ -115,7 +131,7 @@ Returns:
 
 ### Deadlift Analysis
 
-- Back rounding detection
+- Back rounding
 - Hip hinge quality
 - Lockout analysis
 - Bar path tracking
@@ -123,32 +139,25 @@ Returns:
 ### Bench Press Analysis
 
 - Range of motion
-- Lockout quality
 - Stability assessment
+- Lockout quality
 
 ### Push Press Analysis
 
 - Dip quality
-- Bar path tracking
-- Overhead lockout
 - Timing analysis
+- Overhead lockout
+- Bar path tracking
 
 ---
 
-## Visual Feedback
+# Visual Feedback
 
-### Overlay Video Generation
+## Phase Review
 
-FormCheck AI generates replay videos showing:
+Generates key movement snapshots.
 
-- Rep boundaries
-- Scores
-- Coaching notes
-- Movement analysis
-
-### Phase Image Generation
-
-#### Squat
+### Squat
 
 - Setup
 - Descent
@@ -156,7 +165,7 @@ FormCheck AI generates replay videos showing:
 - Ascent
 - Lockout
 
-#### Deadlift
+### Deadlift
 
 - Setup
 - Pull
@@ -164,7 +173,7 @@ FormCheck AI generates replay videos showing:
 - Finish
 - Lockout
 
-#### Push Press
+### Push Press
 
 - Setup
 - Dip
@@ -172,13 +181,27 @@ FormCheck AI generates replay videos showing:
 - Catch
 - Lockout
 
-#### Olympic Lifts
+### Olympic Lifts
 
 - Setup
 - First Pull
 - Extension
 - Catch
 - Finish
+
+---
+
+## Overlay Video Generation
+
+FormCheck AI generates annotated replay videos showing:
+
+- Rep boundaries
+- Rep scores
+- Coaching notes
+- Movement analysis
+- Exercise classification
+
+Overlay rendering is performed asynchronously using background processing jobs.
 
 ---
 
@@ -203,9 +226,13 @@ Feedback Generation
       ↓
 Phase Images
       ↓
-Overlay Rendering
+Start Overlay Job
       ↓
-JSON Response
+Background Overlay Worker
+      ↓
+Overlay Status Polling
+      ↓
+Overlay Video
 ```
 
 ---
@@ -222,10 +249,11 @@ JSON Response
 - NumPy
 - Pandas
 
-## Mobile
+## Frontend
 
 - React Native
 - Expo
+- expo-video
 
 ## Machine Learning
 
@@ -234,6 +262,22 @@ JSON Response
 - Feature Engineering
 - Movement Routing Models
 - Biomechanics Rule Engine
+
+## Deployment
+
+### Frontend
+
+- Vercel
+
+### Backend
+
+- AWS Elastic Beanstalk
+- Docker
+
+### Inference
+
+- TensorFlow
+- MediaPipe
 
 ---
 
@@ -270,7 +314,6 @@ Returns:
 - rep_feedback
 - set_summary
 - coaching_zones
-- overlay_video_url
 - phase_images
 
 Example:
@@ -279,20 +322,13 @@ Example:
 {
   "exercise_label": "Back Squat",
   "confidence": 0.80,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "score": 8.2,
-      "grade": "Good"
-    }
-  ]
+  "analysis_mode": "detailed_rep_analysis"
 }
 ```
 
 ---
 
-## Generate Visuals
+## Generate Phase Review
 
 ```http
 POST /generate_visuals
@@ -306,18 +342,37 @@ Creates:
 
 ---
 
-## Generate Overlay
+## Start Overlay Job
 
 ```http
-POST /generate_overlay
+POST /start_overlay
 ```
 
-Creates:
+Returns:
 
-- Annotated replay video
-- Rep markers
-- Coaching overlays
-- Movement analysis timeline
+```json
+{
+  "job_id": "1d76ef7edce7",
+  "status": "processing"
+}
+```
+
+---
+
+## Overlay Status
+
+```http
+GET /overlay_status/{job_id}
+```
+
+Returns:
+
+```json
+{
+  "status": "ready",
+  "overlay_video_url": "/outputs/overlay_ab14dd6d.mp4"
+}
+```
 
 ---
 
@@ -346,7 +401,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Server:
+Backend:
 
 ```text
 http://127.0.0.1:8000
@@ -360,7 +415,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Mobile App
+## Mobile Setup
 
 ```bash
 cd mobile
@@ -370,22 +425,21 @@ npm install
 npx expo start
 ```
 
-Run on:
+Supported Platforms:
 
 - iPhone
 - Android
-- iOS Simulator
 - Expo Go
+- Web Browser
 
 ---
 
-# Example API Response
+# Example Response
 
 ```json
 {
   "exercise_label": "Back Squat",
   "confidence": 0.80,
-  "analysis_mode": "detailed_rep_analysis",
   "feedback": [
     "Predicted exercise: Back Squat.",
     "Model confidence: 80.0%."
@@ -394,11 +448,7 @@ Run on:
     {
       "rep": 1,
       "score": 8.2,
-      "grade": "Good",
-      "issues": [
-        "Depth is close, but could be slightly lower.",
-        "Knees cave inward noticeably."
-      ]
+      "grade": "Good"
     }
   ],
   "set_summary": {
@@ -413,7 +463,7 @@ Run on:
 
 # Current Supported Movements
 
-### Powerlifting
+## Powerlifting
 
 - Back Squat
 - Front Squat
@@ -421,14 +471,14 @@ Run on:
 - Bench Press
 - Deadlift
 
-### Weightlifting
+## Weightlifting
 
 - Clean
 - Split Jerk
 - Clean & Jerk
 - Snatch
 
-### Pressing
+## Pressing
 
 - Push Press
 
@@ -436,13 +486,19 @@ Run on:
 
 # Roadmap
 
+### Next Movements
+
 - Strict Press
 - Thruster
-- Additional CrossFit movements
-- Historical athlete tracking
-- Coach dashboard
-- Team analytics
-- Performance trend analysis
+
+### Future Features
+
+- Athlete History
+- Coach Dashboard
+- Team Analytics
+- Performance Trends
+- Movement Comparison
+- Expanded CrossFit Exercise Library
 
 ---
 
@@ -454,6 +510,7 @@ AI Engineer | Full Stack Developer
 
 University of Michigan
 
-GitHub: https://github.com/kamilj62
+GitHub:
+https://github.com/kamilj62
 
-Built with computer vision, machine learning, and a passion for improving movement quality through AI.
+Built using computer vision, machine learning, biomechanics analysis, and modern AI tooling to help athletes move better.
