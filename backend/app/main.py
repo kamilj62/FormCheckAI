@@ -4040,12 +4040,13 @@ async def generate_visuals(
             except Exception as e:
                 print("VISUALS REP JSON PARSE ERROR:", e)
 
-        result = analyze_video(temp_path, make_visuals=True, make_overlay=False)
+        result = analyze_video(temp_path, make_visuals=False)
 
         return {
-            "exercise_label": result.get("exercise_label", exercise_label),
-            "overlay_video_url": result.get("overlay_video_url"),
-            "phase_images": result.get("phase_images"),
+            "exercise_label": exercise_label or result.get("exercise_label"),
+            "overlay_video_url": None,
+            "phase_images": None,
+            "visuals_error": "Phase review is temporarily disabled for production speed.",
         }
 
     except Exception as e:
