@@ -4021,168 +4021,44 @@ async def generate_visuals(
 ):
     import json
 
-    suffix = os.path.splitext(file.filename)[1] or ".mov"
+    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
     temp_filename = f"visuals_{uuid.uuid4().hex[:8]}{suffix}"
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
 
-    with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    cap = cv2.VideoCapture(temp_path)
+        reps = []
+        if rep_json:
+            try:
+                rep = json.loads(rep_json)
+                reps = [rep] if isinstance(rep, dict) else rep
+            except Exception as e:
+                print("VISUALS REP JSON PARSE ERROR:", e)
 
-    if not cap.isOpened():
+        result = analyze_video(temp_path, make_visuals=True)
+
         return {
-            "exercise_label": "Visuals",
+            "exercise_label": result.get("exercise_label", exercise_label),
+            "overlay_video_url": result.get("overlay_video_url"),
+            "phase_images": result.get("phase_images"),
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+        return {
+            "exercise_label": exercise_label or "Unknown",
             "overlay_video_url": None,
             "phase_images": None,
-            "visuals_error": "Could not open uploaded video.",
+            "error": str(e),
         }
 
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    if total_frames <= 0:
-        cap.release()
-        return {
-            "exercise_label": "Visuals",
-            "overlay_video_url": None,
-            "phase_images": None,
-            "visuals_error": "Video has no frames.",
-        }
-
-    rep = None
-
-    if rep_json:
-        try:
-            rep = json.loads(rep_json)
-        except Exception as e:
-            print("REP JSON PARSE ERROR:", e)
-            rep = None
-
-    label = (exercise_label or "").lower().replace(" ", "_")
-
-    if rep:
-        start = int(rep.get("start_frame", 0))
-        bottom = int(rep.get("bottom_frame", total_frames // 2))
-        end = int(rep.get("end_frame", total_frames - 1))
-
-        # -------------------------
-        # lift-specific phase logic
-        # -------------------------
-        if "squat" in label:
-            phase_frames = {
-                "setup": max(0, start - 15),
-                "descent": max(0, bottom - 20),
-                "bottom": bottom,
-                "ascent": min(total_frames - 1, bottom + 20),
-                "lockout": min(total_frames - 1, end + 35),
-            }
-
-        elif "deadlift" in label:
-            phase_frames = {
-                "setup": int(rep.get("start_frame", start)),
-                "pull": int(rep.get("pull_frame", start + 5)),
-                "mid": int(rep.get("mid_frame", (start + end) // 2)),
-                "finish": int(rep.get("finish_frame", end - 5)),
-                "lockout": int(rep.get("end_frame", end)),
-            }
-
-        elif label in ["push_press", "strict_press"]:
-            phase_frames = {
-                "setup": start,
-                "dip": start + int((end - start) * 0.20),
-                "drive": start + int((end - start) * 0.45),
-                "catch": start + int((end - start) * 0.70),
-                "lockout": end,
-            }
-
-        elif "bench" in label:
-            phase_frames = {
-                "setup": start,
-                "descent": start + int((bottom - start) * 0.45),
-                "bottom": bottom,
-                "press": bottom + int((end - bottom) * 0.45),
-                "lockout": end,
-            }
-
-        elif label in [
-            "olympic_lift",
-            "clean_and_jerk",
-            "clean",
-            "snatch",
-            "jerk",
-            "split_jerk",
-            "thruster",
-        ]:
-            phase_frames = {
-                "setup": start,
-                "first_pull": start + int((end - start) * 0.20),
-                "extension": start + int((end - start) * 0.45),
-                "catch": start + int((end - start) * 0.70),
-                "finish": end,
-            }
-
-        elif label == "pull_up":
-            phase_frames = {
-                "hang": start,
-                "pull": start + int((end - start) * 0.35),
-                "top": start + int((end - start) * 0.65),
-                "lower": start + int((end - start) * 0.85),
-                "finish": end,
-            }
-
-        elif label in ["bar_muscle_up", "ring_muscle_up"]:
-            phase_frames = {
-                "hang": start,
-                "pull": start + int((end - start) * 0.25),
-                "transition": start + int((end - start) * 0.50),
-                "dip": start + int((end - start) * 0.72),
-                "support": end,
-            }
-
-        else:
-            phase_frames = {
-                "setup": int(total_frames * 0.10),
-                "phase_1": int(total_frames * 0.30),
-                "phase_2": int(total_frames * 0.50),
-                "phase_3": int(total_frames * 0.70),
-                "finish": int(total_frames * 0.90),
-            }
-
-    else:
-        phase_frames = {
-            "setup": int(total_frames * 0.10),
-            "phase_1": int(total_frames * 0.30),
-            "phase_2": int(total_frames * 0.50),
-            "phase_3": int(total_frames * 0.70),
-            "finish": int(total_frames * 0.90),
-        }
-
-    phase_images = {}
-
-    for phase, frame_no in phase_frames.items():
-        frame_no = max(0, min(int(frame_no), total_frames - 1))
-
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
-        ret, frame = cap.read()
-
-        if not ret:
-            print(f"FAILED TO READ FRAME: {phase} frame={frame_no}")
-            continue
-
-        filename = f"{phase}_{uuid.uuid4().hex[:8]}.jpg"
-        output_path = os.path.join(OVERLAY_DIR, filename)
-
-        cv2.imwrite(output_path, frame)
-
-        phase_images[phase] = f"/outputs/{filename}"
-
-    cap.release()
-
-    return {
-        "exercise_label": exercise_label,
-        "overlay_video_url": None,
-        "phase_images": phase_images,
-    }
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 @app.post("/generate_overlay")
@@ -4201,24 +4077,18 @@ async def generate_overlay(
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
 
     try:
-        # Save uploaded video
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Parse best rep sent from frontend
         rep_feedback = []
 
         if rep_json:
             try:
                 rep = json.loads(rep_json)
-
-                if isinstance(rep, dict):
-                    rep_feedback = [rep]
-
+                rep_feedback = [rep] if isinstance(rep, dict) else rep
             except Exception as e:
                 print("OVERLAY REP JSON PARSE ERROR:", e)
 
-        # Fallback if frontend does not send rep data
         if not rep_feedback:
             cap = cv2.VideoCapture(temp_path)
 
@@ -4231,17 +4101,15 @@ async def generate_overlay(
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             cap.release()
 
-            rep_feedback = [
-                {
-                    "rep": 1,
-                    "start_frame": 0,
-                    "end_frame": max(1, total_frames - 1),
-                    "score": 10.0,
-                    "grade": "Captured",
-                    "issues": [],
-                    "feedback": [],
-                }
-            ]
+            rep_feedback = [{
+                "rep": 1,
+                "start_frame": 0,
+                "end_frame": max(1, total_frames - 1),
+                "score": 10.0,
+                "grade": "Captured",
+                "issues": [],
+                "feedback": [],
+            }]
 
         overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
         overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
@@ -4255,7 +4123,6 @@ async def generate_overlay(
         )
 
         runtime = round(time.time() - started_at, 2)
-        print("OVERLAY RUNTIME:", runtime)
 
         if not made_overlay:
             return {
@@ -4271,7 +4138,8 @@ async def generate_overlay(
         }
 
     except Exception as e:
-        print("GENERATE OVERLAY ERROR:", e)
+        import traceback
+        traceback.print_exc()
 
         return {
             "overlay_video_url": None,
@@ -4279,22 +4147,42 @@ async def generate_overlay(
         }
 
     finally:
-        try:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-        except Exception as e:
-            print("OVERLAY TEMP CLEANUP ERROR:", e)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
-    suffix = os.path.splitext(file.filename)[1] or ".mov"
+    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
     temp_filename = f"upload_{uuid.uuid4().hex[:8]}{suffix}"
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
 
-    with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    try:
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    result = analyze_video(temp_path, make_visuals=False)
+        result = analyze_video(temp_path, make_visuals=False)
+        return result
 
-    return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+        return {
+            "error": True,
+            "message": str(e),
+            "exercise_label": "Unknown",
+            "confidence": 0.0,
+            "analysis_mode": "error",
+            "feedback": ["Analysis failed."],
+            "rep_feedback": [],
+            "set_summary": build_set_summary([]),
+            "coaching_zones": build_coaching_zones("unknown", []),
+            "overlay_video_url": None,
+            "phase_images": None,
+            "debug": {},
+        }
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)

@@ -16,17 +16,10 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Video, ResizeMode } from "expo-av";
 
-const IS_LOCAL =
-  typeof window !== "undefined" &&
-  (window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1");
+const BACKEND_URL =
+  "http://formcheck-ai-api.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
+const API_URL = Platform.OS === "web" ? "/api" : BACKEND_URL;
 
-const BACKEND_URL = IS_LOCAL
-  ? "http://127.0.0.1:8000"
-  : "http://3.80.255.34:8000";
-
-const BACKEND_URL = "https://coalition-rouge-mathematics-advice.trycloudflare.com";
-const API_URL = BACKEND_URL;
 const MEDIA_URL = BACKEND_URL;
 
 const fullUrl = (path) => {
@@ -529,45 +522,43 @@ export default function App() {
   };
 
   const [overlayLoading, setOverlayLoading] = useState(false);
-  
+
   const generateOverlay = async () => {
-  try {
-    setOverlayLoading(true);
+    try {
+      setOverlayLoading(true);
 
-    const bestRep = getBestRep(result?.rep_feedback || []);
+      const bestRep = getBestRep(result?.rep_feedback || []);
 
-    const res = await fetch(`${API_URL}/generate_overlay`, {
-      method: "POST",
-      body: await buildFormData({
-        rep_json: bestRep ? JSON.stringify(bestRep) : null,
-        exercise_label: result?.exercise_label || "",
-      }),
-    });
+      const res = await fetch(`${API_URL}/generate_overlay`, {
+        method: "POST",
+        body: await buildFormData({
+          rep_json: bestRep ? JSON.stringify(bestRep) : null,
+          exercise_label: result?.exercise_label || "",
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(
-        data.overlay_error ||
-          data.message ||
-          "Overlay generation failed"
-      );
+      if (!res.ok) {
+        throw new Error(
+          data.overlay_error || data.message || "Overlay generation failed",
+        );
+      }
+
+      setResult((prev) => ({
+        ...prev,
+        overlay_video_url: data.overlay_video_url,
+        overlay_error: data.overlay_error,
+      }));
+    } catch (err) {
+      setResult((prev) => ({
+        ...prev,
+        overlay_error: err.message,
+      }));
+    } finally {
+      setOverlayLoading(false);
     }
-
-    setResult((prev) => ({
-      ...prev,
-      overlay_video_url: data.overlay_video_url,
-      overlay_error: data.overlay_error,
-    }));
-  } catch (err) {
-    setResult((prev) => ({
-      ...prev,
-      overlay_error: err.message,
-    }));
-  } finally {
-    setOverlayLoading(false);
-  }
-};
+  };
 
   const analyzeVideo = async () => {
     if (!video) {
@@ -659,63 +650,63 @@ export default function App() {
   const overlayUrl = fullUrl(result?.overlay_video_url);
 
   const buildCoachSummary = (result) => {
-  if (!result) return "";
+    if (!result) return "";
 
-  const rep = result.rep_feedback?.[0];
-  if (!rep) return "";
+    const rep = result.rep_feedback?.[0];
+    if (!rep) return "";
 
-  const issues = rep.issues || [];
-  const biggestFix = result.set_summary?.biggest_fix;
-  const breakdown = rep.breakdown || {};
+    const issues = rep.issues || [];
+    const biggestFix = result.set_summary?.biggest_fix;
+    const breakdown = rep.breakdown || {};
 
-  let intro = "Solid rep overall.";
-  let body = [];
-  let cues = [];
+    let intro = "Solid rep overall.";
+    let body = [];
+    let cues = [];
 
-  // Tone based on score
-  if (rep.score >= 9) {
-    intro = "Great rep — very strong execution.";
-  } else if (rep.score >= 7) {
-    intro = "Good rep overall, but there are a couple things to clean up.";
-  } else {
-    intro = "This rep needs some work.";
-  }
+    // Tone based on score
+    if (rep.score >= 9) {
+      intro = "Great rep — very strong execution.";
+    } else if (rep.score >= 7) {
+      intro = "Good rep overall, but there are a couple things to clean up.";
+    } else {
+      intro = "This rep needs some work.";
+    }
 
-  // Explain issue
-  if (issues.length > 0) {
-    body.push(issues[0]);
-  }
+    // Explain issue
+    if (issues.length > 0) {
+      body.push(issues[0]);
+    }
 
-  // Smart cues
-  if (breakdown.knees === "poor") {
-    cues.push("Drive your knees out and keep them tracking over your toes.");
-  }
+    // Smart cues
+    if (breakdown.knees === "poor") {
+      cues.push("Drive your knees out and keep them tracking over your toes.");
+    }
 
-  if (breakdown.depth === "borderline") {
-    cues.push("Sit slightly deeper while keeping your chest up.");
-  }
+    if (breakdown.depth === "borderline") {
+      cues.push("Sit slightly deeper while keeping your chest up.");
+    }
 
-  if (breakdown.torso === "poor") {
-    cues.push("Keep your chest tall and avoid leaning forward.");
-  }
+    if (breakdown.torso === "poor") {
+      cues.push("Keep your chest tall and avoid leaning forward.");
+    }
 
-  if (breakdown.heels === "poor") {
-    cues.push("Keep your weight through your mid-foot and heels.");
-  }
+    if (breakdown.heels === "poor") {
+      cues.push("Keep your weight through your mid-foot and heels.");
+    }
 
-  // Build paragraph
-  let text = intro;
+    // Build paragraph
+    let text = intro;
 
-  if (body.length > 0) {
-    text += " " + body.join(" ");
-  }
+    if (body.length > 0) {
+      text += " " + body.join(" ");
+    }
 
-  if (cues.length > 0) {
-    text += " Focus on this next: " + cues.join(" ");
-  }
+    if (cues.length > 0) {
+      text += " Focus on this next: " + cues.join(" ");
+    }
 
-  return text;
-};
+    return text;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1009,14 +1000,19 @@ export default function App() {
             </View>
 
             <TouchableOpacity
-              style={[styles.overlayButton, overlayLoading && styles.disabledButton]}
+              style={[
+                styles.overlayButton,
+                overlayLoading && styles.disabledButton,
+              ]}
               onPress={generateOverlay}
               disabled={overlayLoading}
             >
               {overlayLoading ? (
                 <View style={styles.loadingBlock}>
                   <ActivityIndicator color="#020617" />
-                  <Text style={styles.analyzeButtonText}>Generating overlay...</Text>
+                  <Text style={styles.analyzeButtonText}>
+                    Generating overlay...
+                  </Text>
                 </View>
               ) : (
                 <Text style={styles.analyzeButtonText}>Generate Overlay</Text>
@@ -1042,9 +1038,7 @@ export default function App() {
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Coach Summary</Text>
 
-              <Text style={styles.coachText}>
-                {buildCoachSummary(result)}
-              </Text>
+              <Text style={styles.coachText}>{buildCoachSummary(result)}</Text>
             </View>
           </>
         )}
@@ -1429,11 +1423,6 @@ const styles = StyleSheet.create({
     padding: 12,
     textAlign: "center",
   },
-  videoPlayer: {
-    height: 260,
-    borderRadius: 22,
-    backgroundColor: "#020617",
-  },
   warningCard: {
     backgroundColor: "#102018",
     borderRadius: 24,
@@ -1483,45 +1472,45 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   overlayButton: {
-  backgroundColor: "#22c55e",
-  borderRadius: 18,
-  paddingVertical: 16,
-  alignItems: "center",
-  marginBottom: 14,
-},
-overlayButtonDisabled: {
-  backgroundColor: "#374151",
-  borderRadius: 18,
-  paddingVertical: 16,
-  alignItems: "center",
-  marginBottom: 14,
-  opacity: 0.7,
-},
-overlayCard: {
-  backgroundColor: "#111827",
-  borderRadius: 28,
-  padding: 18,
-  marginBottom: 18,
-  borderWidth: 1,
-  borderColor: "#243044",
-  overflow: "visible",
-},
-videoPlayer: {
-  width: "100%",
-  height: 620,
-  borderRadius: 22,
-  backgroundColor: "#020617",
-},
-videoShell: {
-  width: "100%",
-  borderRadius: 22,
-  overflow: "visible",
-  backgroundColor: "#020617",
-},
-coachText: {
-  color: "#E5E7EB",
-  fontSize: 16,
-  lineHeight: 22,
-  marginTop: 8,
-},
+    backgroundColor: "#22c55e",
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  overlayButtonDisabled: {
+    backgroundColor: "#374151",
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 14,
+    opacity: 0.7,
+  },
+  overlayCard: {
+    backgroundColor: "#111827",
+    borderRadius: 28,
+    padding: 18,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: "#243044",
+    overflow: "visible",
+  },
+  videoPlayer: {
+    width: "100%",
+    height: 620,
+    borderRadius: 22,
+    backgroundColor: "#020617",
+  },
+  videoShell: {
+    width: "100%",
+    borderRadius: 22,
+    overflow: "visible",
+    backgroundColor: "#020617",
+  },
+  coachText: {
+    color: "#E5E7EB",
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 8,
+  },
 });

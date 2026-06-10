@@ -53,3 +53,4 @@ backend/uploads/
 backend/outputs/
 .vercel
 .env*.local
+backend/formcheck-env/
