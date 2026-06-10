@@ -1,0 +1,11 @@
+backend/formcheck-env/
+backend/.venv/
+backend/__pycache__/
+backend/outputs/
+node_modules/
+.git/
+*.mp4
+*.mov
+*.avi
+*.zip
+.DS_Store
