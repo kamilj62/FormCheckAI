@@ -547,7 +547,16 @@ try {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+let data = {};
+try {
+  data = JSON.parse(text);
+} catch {
+  data = {
+    message: text || "Overlay generation returned non-JSON response",
+  };
+}
 
       if (!res.ok) {
         throw new Error(
@@ -610,16 +619,16 @@ try {
 
       console.log("ABOUT TO START VISUALS", data?.rep_feedback?.length);
 
-      setResult(data);
-setLoading(false);
+            setResult(data);
+            setLoading(false);
 
-// Visuals are now generated manually
-
-} catch (err) {
-  setResult({ error: true, message: err.message });
-  setLoading(false);
-  setVisualsLoading(false);
-}
+      // Visuals are now generated manually
+    } catch (err) {
+      setResult({ error: true, message: err.message });
+      setLoading(false);
+      setVisualsLoading(false);
+    }
+  };
 
   const reps = result?.rep_feedback || [];
 
@@ -882,7 +891,7 @@ setLoading(false);
 
             <TouchableOpacity
   style={[styles.analyzeButton, visualsLoading && styles.disabledButton]}
-  onPress={generateVisuals}
+  onPress={() => generateVisuals(result)}
   disabled={visualsLoading}
 >
   <Text style={styles.analyzeButtonText}>
