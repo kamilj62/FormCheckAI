@@ -1444,11 +1444,11 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     issues.append("Squat depth may be shallow for a thruster.")
                     feedback.append("Use a full front squat before driving overhead.")
 
-                if torso_score > 45:
+                if torso_score > 65:
                     issues.append("Torso is leaning too far forward during the thruster.")
                     feedback.append("Stay tall through the squat and drive straight overhead.")
 
-                if elbow_lockout < 150:
+                if elbow_lockout < 135:
                     issues.append("Finish stronger overhead.")
                     feedback.append("Fully lock out the bar overhead at the top.")
 
@@ -1542,18 +1542,24 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             score = apply_coach_reward(score, issues, breakdown)
 
             if exercise_label == "thruster":
+                score += 1.2
+
                 if breakdown.get("bar_severity") == "moderate":
                     score += 0.8
                 elif breakdown.get("bar_severity") == "severe":
-                    score += 0.4
+                    score += 0.5
 
                 if breakdown.get("lockout") == "good":
-                    score += 0.5
+                    score += 0.7
 
                 if breakdown.get("squat_depth") == "good":
-                    score += 0.5
+                    score += 0.7
 
                 score = min(10.0, round(score, 1))
+
+                # Don't allow perfect scores when issues exist
+                if issues:
+                    score = min(score, 9.2)
 
             if not issues:
                 score = max(score, 9.0)
