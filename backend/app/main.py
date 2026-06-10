@@ -4095,7 +4095,7 @@ async def generate_visuals(
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-
+            
 @app.post("/generate_overlay")
 async def generate_overlay(
     file: UploadFile = File(...),
@@ -4154,7 +4154,7 @@ async def generate_overlay(
             output_path=overlay_path,
             rep_feedback=rep_feedback,
             exercise_label=exercise_label or "unknown",
-            sample_every=5,
+            sample_every=1,
         )
 
         runtime = round(time.time() - started_at, 2)
