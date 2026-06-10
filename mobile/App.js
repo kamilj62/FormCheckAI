@@ -491,7 +491,16 @@ export default function App() {
         }),
       });
 
-      const visualsData = await visualsRes.json();
+      const visualsText = await visualsRes.text();
+
+let visualsData = {};
+try {
+  visualsData = JSON.parse(visualsText);
+} catch {
+  visualsData = {
+    message: visualsText || "Visual generation returned non-JSON response",
+  };
+}
 
       console.log("VISUALS RESPONSE:", visualsData);
       console.log("VISUALS STATUS:", visualsRes.status);
@@ -601,17 +610,16 @@ export default function App() {
 
       console.log("ABOUT TO START VISUALS", data?.rep_feedback?.length);
 
-      if (data?.rep_feedback?.length > 0) {
-        setTimeout(() => {
-          generateVisuals(data);
-        }, 500);
-      }
-    } catch (err) {
-      setResult({ error: true, message: err.message });
-      setLoading(false);
-      setVisualsLoading(false);
-    }
-  };
+      setResult(data);
+setLoading(false);
+
+// Visuals are now generated manually
+
+} catch (err) {
+  setResult({ error: true, message: err.message });
+  setLoading(false);
+  setVisualsLoading(false);
+}
 
   const reps = result?.rep_feedback || [];
 
@@ -872,10 +880,21 @@ export default function App() {
               </View>
             )}
 
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Rep Breakdown</Text>
-              <Text style={styles.sectionSub}>Score trend across the set</Text>
+            <TouchableOpacity
+  style={[styles.analyzeButton, visualsLoading && styles.disabledButton]}
+  onPress={generateVisuals}
+  disabled={visualsLoading}
+>
+  <Text style={styles.analyzeButtonText}>
+    {visualsLoading
+      ? "Generating Phase Review..."
+      : "Generate Phase Review"}
+  </Text>
+</TouchableOpacity>
 
+<View style={styles.card}>
+  <Text style={styles.sectionTitle}>Rep Breakdown</Text>
+  <Text style={styles.sectionSub}>Score trend across the set</Text>
               {reps.map((rep) => {
                 const score = Number(rep.score || 0);
                 const barWidth = `${Math.min(100, Math.max(8, score * 10))}%`;
