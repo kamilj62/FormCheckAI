@@ -17,6 +17,8 @@ import threading
 
 overlay_jobs = {}
 
+import boto3
+
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +27,10 @@ app = FastAPI()
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+S3_BUCKET = os.getenv("S3_BUCKET", "formcheck-ai-overlays-kamilj")
+S3_REGION = os.getenv("AWS_REGION", "us-west-2")
+s3_client = boto3.client("s3", region_name=S3_REGION)
 
 OVERLAY_DIR = "outputs"
 os.makedirs(OVERLAY_DIR, exist_ok=True)
@@ -4162,9 +4168,24 @@ def overlay_worker(job_id, temp_path, rep_feedback, exercise_label):
         )
 
         if made_overlay:
+            s3_key = f"overlays/{overlay_filename}"
+
+            s3_client.upload_file(
+                overlay_path,
+                S3_BUCKET,
+                s3_key,
+                ExtraArgs={
+                    "ContentType": "video/mp4",
+                },
+            )
+
+            overlay_url = (
+                f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
+            )
+
             overlay_jobs[job_id] = {
                 "status": "ready",
-                "overlay_video_url": f"/outputs/{overlay_filename}",
+                "overlay_video_url": overlay_url,
             }
         else:
             overlay_jobs[job_id] = {
@@ -4181,6 +4202,9 @@ def overlay_worker(job_id, temp_path, rep_feedback, exercise_label):
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+        if "overlay_path" in locals() and os.path.exists(overlay_path):
+            os.remove(overlay_path)
 
 
 @app.post("/start_overlay")
