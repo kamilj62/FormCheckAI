@@ -534,11 +534,15 @@ try {
     }
   };
 
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [overlayLoading, setOverlayLoading] = useState(false);
-
+  const [overlayProgress, setOverlayProgress] = useState("");
+  
   const generateOverlay = async () => {
   try {
     setOverlayLoading(true);
+    setOverlayProgress("Starting overlay job...");
 
     const bestRep = getBestRep(result?.rep_feedback || []);
 
@@ -559,17 +563,22 @@ try {
     const jobId = startData.job_id;
 
     for (let i = 0; i < 30; i++) {
+      setOverlayProgress(`Processing overlay... ${i + 1}/30`);
+
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
       const statusData = await statusRes.json();
 
       if (statusData.status === "ready") {
+        setOverlayProgress("Overlay ready!");
+
         setResult((prev) => ({
           ...prev,
           overlay_video_url: statusData.overlay_video_url,
           overlay_error: null,
         }));
+
         return;
       }
 
@@ -580,6 +589,8 @@ try {
 
     throw new Error("Overlay is still processing. Try again shortly.");
   } catch (err) {
+    setOverlayProgress("");
+
     setResult((prev) => ({
       ...prev,
       overlay_error: err.message,
@@ -1052,7 +1063,7 @@ try {
                 <View style={styles.loadingBlock}>
                   <ActivityIndicator color="#020617" />
                   <Text style={styles.analyzeButtonText}>
-                    Generating overlay...
+                    {overlayProgress || "Generating overlay..."}
                   </Text>
                 </View>
               ) : (
