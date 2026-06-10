@@ -537,50 +537,57 @@ try {
   const [overlayLoading, setOverlayLoading] = useState(false);
 
   const generateOverlay = async () => {
-    try {
-      setOverlayLoading(true);
+  try {
+    setOverlayLoading(true);
 
-      const bestRep = getBestRep(result?.rep_feedback || []);
+    const bestRep = getBestRep(result?.rep_feedback || []);
 
-      const res = await fetch(`${API_URL}/generate_overlay`, {
-        method: "POST",
-        body: await buildFormData({
-          rep_json: bestRep ? JSON.stringify(bestRep) : null,
-          exercise_label: result?.exercise_label || "",
-        }),
-      });
+    const startRes = await fetch(`${API_URL}/start_overlay`, {
+      method: "POST",
+      body: await buildFormData({
+        rep_json: bestRep ? JSON.stringify(bestRep) : null,
+        exercise_label: result?.exercise_label || "",
+      }),
+    });
 
-      const text = await res.text();
+    const startData = await startRes.json();
 
-let data = {};
-try {
-  data = JSON.parse(text);
-} catch {
-  data = {
-    message: text || "Overlay generation returned non-JSON response",
-  };
-}
+    if (!startRes.ok || !startData.job_id) {
+      throw new Error(startData.message || "Could not start overlay job");
+    }
 
-      if (!res.ok) {
-        throw new Error(
-          data.overlay_error || data.message || "Overlay generation failed",
-        );
+    const jobId = startData.job_id;
+
+    for (let i = 0; i < 30; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
+      const statusData = await statusRes.json();
+
+      if (statusData.status === "ready") {
+        setResult((prev) => ({
+          ...prev,
+          overlay_video_url: statusData.overlay_video_url,
+          overlay_error: null,
+        }));
+        return;
       }
 
-      setResult((prev) => ({
-        ...prev,
-        overlay_video_url: data.overlay_video_url,
-        overlay_error: data.overlay_error,
-      }));
-    } catch (err) {
-      setResult((prev) => ({
-        ...prev,
-        overlay_error: err.message,
-      }));
-    } finally {
-      setOverlayLoading(false);
+      if (statusData.status === "error") {
+        throw new Error(statusData.message || "Overlay generation failed");
+      }
     }
-  };
+
+    throw new Error("Overlay is still processing. Try again shortly.");
+  } catch (err) {
+    setResult((prev) => ({
+      ...prev,
+      overlay_error: err.message,
+    }));
+  } finally {
+    setOverlayLoading(false);
+  }
+};
 
   const analyzeVideo = async () => {
     if (!video) {
