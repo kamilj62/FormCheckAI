@@ -534,8 +534,6 @@ try {
     }
   };
 
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayProgress, setOverlayProgress] = useState("");
   
