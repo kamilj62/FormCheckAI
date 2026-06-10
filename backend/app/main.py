@@ -4139,7 +4139,7 @@ async def generate_overlay(
             rep_feedback = [{
                 "rep": 1,
                 "start_frame": 0,
-                "end_frame": max(1, total_frames - 1),
+                "end_frame": min(90, max(1, total_frames - 1)),
                 "score": 10.0,
                 "grade": "Captured",
                 "issues": [],
@@ -4154,7 +4154,7 @@ async def generate_overlay(
             output_path=overlay_path,
             rep_feedback=rep_feedback,
             exercise_label=exercise_label or "unknown",
-            sample_every=1,
+            sample_every=3,
         )
 
         runtime = round(time.time() - started_at, 2)
