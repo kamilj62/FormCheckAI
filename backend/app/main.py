@@ -1312,11 +1312,12 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
     head_forward = np.array([b.get("head_forward", 0.0) for b in biomechanics])
     elbow_angle = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
 
-    good_rep_message = (
-        "Good strict press rep."
-        if exercise_label == "strict_press"
-        else "Good push press rep."
-    )
+    if exercise_label == "strict_press":
+        good_rep_message = "Good strict press rep."
+    elif exercise_label == "thruster":
+        good_rep_message = "Good thruster rep."
+    else:
+        good_rep_message = "Good push press rep."
 
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -1375,14 +1376,13 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             head_forward_score = float(np.percentile(rep_head_forward, 80))
             elbow_lockout = float(np.percentile(rep_elbow, 85))
 
-            # Timing proxy: push press should show knee drive before/with arms moving overhead.
             dip_idx = int(np.argmin(rep_knee))
             first_overhead = np.where(rep_wrist_y < rep_shoulder_y)[0]
+
             if len(first_overhead) > 0:
                 overhead_idx = int(first_overhead[0])
                 drive_timing = overhead_idx - dip_idx
             else:
-                overhead_idx = None
                 drive_timing = 999
 
             if wrist_drift > 0.05:
@@ -1395,7 +1395,6 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             issues = []
             feedback = []
 
-            # PUSH PRESS
             if exercise_label == "push_press":
                 if min_knee > 172:
                     issues.append("Dip is too shallow.")
@@ -1423,7 +1422,6 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     issues.append("Finish stronger overhead.")
                     feedback.append("Punch to a strong, stacked lockout.")
 
-            # STRICT PRESS
             if exercise_label == "strict_press":
                 if min_knee < 155:
                     issues.append("Knees bend during strict press.")
@@ -1441,7 +1439,19 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     issues.append("Finish stronger overhead.")
                     feedback.append("Reach tall and actively finish overhead.")
 
-            # SHARED
+            if exercise_label == "thruster":
+                if min_knee > 125:
+                    issues.append("Squat depth may be shallow for a thruster.")
+                    feedback.append("Use a full front squat before driving overhead.")
+
+                if torso_score > 45:
+                    issues.append("Torso is leaning too far forward during the thruster.")
+                    feedback.append("Stay tall through the squat and drive straight overhead.")
+
+                if elbow_lockout < 150:
+                    issues.append("Finish stronger overhead.")
+                    feedback.append("Fully lock out the bar overhead at the top.")
+
             if wrist_above < 0.35:
                 issues.append("Incomplete overhead lockout.")
                 feedback.append("Fully extend arms overhead.")
@@ -1472,6 +1482,8 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     penalty += 0.8
                 elif "finish stronger" in text:
                     penalty += 0.8
+                elif "depth" in text or "shallow" in text:
+                    penalty += 0.9
                 elif "dip" in text:
                     penalty += 1.0
                 else:
@@ -1506,7 +1518,6 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     else "borderline" if min_valgus < 0.60
                     else "good"
                 )
-                
                 breakdown["active_finish"] = "good" if elbow_lockout >= 165 else "soft"
                 breakdown["knee_range"] = round(knee_range, 1)
                 breakdown["drive_timing_frames"] = int(drive_timing)
@@ -1522,7 +1533,27 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 )
                 breakdown["active_finish"] = "good" if elbow_lockout >= 165 else "soft"
 
+            if exercise_label == "thruster":
+                breakdown["squat_depth"] = "good" if min_knee <= 125 else "shallow"
+                breakdown["torso_stack"] = "good" if torso_score <= 45 else "leaning_forward"
+                breakdown["active_finish"] = "good" if elbow_lockout >= 150 else "soft"
+                breakdown["knee_range"] = round(knee_range, 1)
+
             score = apply_coach_reward(score, issues, breakdown)
+
+            if exercise_label == "thruster":
+                if breakdown.get("bar_severity") == "moderate":
+                    score += 0.8
+                elif breakdown.get("bar_severity") == "severe":
+                    score += 0.4
+
+                if breakdown.get("lockout") == "good":
+                    score += 0.5
+
+                if breakdown.get("squat_depth") == "good":
+                    score += 0.5
+
+                score = min(10.0, round(score, 1))
 
             if not issues:
                 score = max(score, 9.0)
@@ -1545,6 +1576,22 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         start_idx = int(len(frame_numbers) * 0.05)
         end_idx = int(len(frame_numbers) * 0.45)
 
+        fallback_breakdown = {
+            "lockout": "good",
+            "bar_path": "good",
+            "bar_severity": "minor",
+            "knees": "good",
+        }
+
+        if exercise_label == "strict_press":
+            fallback_breakdown["dip"] = "not_used"
+        elif exercise_label == "thruster":
+            fallback_breakdown["squat_depth"] = "good"
+            fallback_breakdown["torso_stack"] = "good"
+            fallback_breakdown["active_finish"] = "good"
+        else:
+            fallback_breakdown["dip"] = "good"
+
         reps.append({
             "rep": 1,
             "start_frame": int(frame_numbers[start_idx]),
@@ -1552,13 +1599,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             "score": 9.0,
             "grade": "Excellent",
             "issues": [],
-            "breakdown": {
-                "dip": "not_used" if exercise_label == "strict_press" else "good",
-                "lockout": "good",
-                "bar_path": "good",
-                "bar_severity": "minor",
-                "knees": "good",
-            },
+            "breakdown": fallback_breakdown,
             "feedback": [good_rep_message],
         })
 
