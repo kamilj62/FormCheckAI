@@ -26,6 +26,10 @@ FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifti
 
 ✅ Background Overlay Processing
 
+✅ Strict Press Analysis
+
+✅ Thruster Analysis
+
 ✅ Mobile & Web Support
 
 ---
@@ -77,23 +81,54 @@ FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifti
 
 ---
 
-# Supported Exercises
+# Current Supported Movements
 
-## Strength Training
+## Detailed Rep Analysis
+
+### Squat Family
 
 - Back Squat
 - Front Squat
 - Overhead Squat
-- Deadlift
-- Bench Press
-- Push Press
 
-## Olympic Weightlifting
+### Pressing
+
+- Strict Press
+- Push Press
+- Thruster
+
+### Strength
+
+- Bench Press
+- Deadlift
+
+Each movement includes:
+
+- Rep Detection
+- Rep Scoring
+- Coaching Zones
+- Set Summary
+- Overlay Video Generation
+- Phase Review Images
+
+---
+
+## Classification & Phase Review
+
+### Olympic Weightlifting
 
 - Clean
 - Split Jerk
 - Clean & Jerk
 - Snatch
+
+These movements currently support:
+
+- Movement Classification
+- Confidence Scoring
+- Phase Review Images
+
+Detailed rep analysis is planned for future releases.
 
 ---
 
@@ -149,6 +184,21 @@ Returns:
 - Overhead lockout
 - Bar path tracking
 
+### Strict Press Analysis
+
+- Knee bend detection
+- Overhead lockout
+- Torso positioning
+- Head position at lockout
+
+### Thruster Analysis
+
+- Squat depth
+- Torso position
+- Overhead lockout
+- Bar path
+- Rep scoring
+
 ---
 
 # Visual Feedback
@@ -173,7 +223,7 @@ Generates key movement snapshots.
 - Finish
 - Lockout
 
-### Push Press
+### Push Press / Strict Press / Thruster
 
 - Setup
 - Dip
@@ -438,60 +488,35 @@ Supported Platforms:
 
 ```json
 {
-  "exercise_label": "Back Squat",
-  "confidence": 0.80,
-  "feedback": [
-    "Predicted exercise: Back Squat.",
-    "Model confidence: 80.0%."
-  ],
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "score": 8.2,
-      "grade": "Good"
-    }
-  ],
+  "exercise_label": "Thruster",
+  "confidence": 0.84,
+  "analysis_mode": "detailed_rep_analysis",
   "set_summary": {
-    "detected_reps": 1,
-    "avg_rep_score": 8.2,
-    "trend": "Form appears consistent across the set."
+    "detected_reps": 6,
+    "avg_rep_score": 8.0
   }
 }
 ```
 
 ---
 
-# Current Supported Movements
-
-## Powerlifting
-
-- Back Squat
-- Front Squat
-- Overhead Squat
-- Bench Press
-- Deadlift
-
-## Weightlifting
-
-- Clean
-- Split Jerk
-- Clean & Jerk
-- Snatch
-
-## Pressing
-
-- Push Press
-
----
-
 # Roadmap
 
-### Next Movements
+## Olympic Lift Analysis
 
-- Strict Press
-- Thruster
+- Detailed Clean Analysis
+- Detailed Split Jerk Analysis
+- Detailed Clean & Jerk Analysis
+- Detailed Snatch Analysis
 
-### Future Features
+## New Movements
+
+- Power Clean
+- Hang Clean
+- Push Jerk
+- Front Rack Carry
+
+## Platform Features
 
 - Athlete History
 - Coach Dashboard
@@ -512,5 +537,18 @@ University of Michigan
 
 GitHub:
 https://github.com/kamilj62
+
+FormCheck AI currently provides detailed AI-driven analysis for:
+
+- Back Squat
+- Front Squat
+- Overhead Squat
+- Bench Press
+- Deadlift
+- Push Press
+- Strict Press
+- Thruster
+
+with classification support for Olympic lifts.
 
 Built using computer vision, machine learning, biomechanics analysis, and modern AI tooling to help athletes move better.
