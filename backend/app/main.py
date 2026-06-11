@@ -4334,6 +4334,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # SNATCH LOW-CATCH OVERRIDE
         if (
             raw_label in ["squat", "squat_back", "squat_front", "clean"]
+            and summary.get("wrist_above_shoulder_ratio", 0) < 0.35
             and summary.get("min_knee_angle", 180) < 60
             and summary.get("min_hip_angle", 180) < 60
             and summary.get("max_elbow_angle", 0) > 160
