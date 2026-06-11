@@ -1996,15 +1996,25 @@ def analyze_split_jerk_reps(biomechanics):
 
 def analyze_clean_and_jerk_reps(biomechanics):
     clean_reps, _ = analyze_clean_reps(biomechanics)
-    jerk_reps, _ = analyze_split_jerk_reps(biomechanics)
-
     clean = clean_reps[0] if clean_reps else None
+
+    if clean:
+        clean_catch_frame = clean.get("catch_frame", 0)
+
+        jerk_biomechanics = [
+            b for b in biomechanics
+            if b.get("frame_number", 0) >= clean_catch_frame
+        ]
+
+        jerk_reps, _ = analyze_split_jerk_reps(jerk_biomechanics)
+    else:
+        jerk_reps, _ = analyze_split_jerk_reps(biomechanics)
+
     jerk = jerk_reps[0] if jerk_reps else None
 
     issues = []
     feedback = []
     breakdown = {}
-
     score_parts = []
 
     if clean:
@@ -2034,6 +2044,7 @@ def analyze_clean_and_jerk_reps(biomechanics):
 
     start_frame = clean.get("start_frame", 0) if clean else 0
     clean_catch_frame = clean.get("catch_frame", start_frame) if clean else start_frame
+
     jerk_dip_frame = jerk.get("dip_frame", clean_catch_frame) if jerk else clean_catch_frame
     jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
     jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
