@@ -460,6 +460,17 @@ def classify_with_biomechanics(
         return "push_press", max(confidence, 0.80), True, "protect_push_press_from_snatch"
 
     # -----------------------------
+# PROTECT THRUSTER FROM SNATCH
+# -----------------------------
+    if (
+        raw_label == "snatch"
+        and summary.get("wrist_above_shoulder_ratio", 0) < 0.25
+        and summary.get("min_knee_angle", 180) < 90
+        and summary.get("max_elbow_angle", 0) > 150
+    ):
+        return "thruster", max(confidence, 0.82), True, "protect_thruster_from_snatch"
+    
+    # -----------------------------
     # TRUST STRONG MODEL PREDICTIONS
     # -----------------------------
     if confidence >= 0.45:
@@ -4378,18 +4389,6 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_label = "clean"
             raw_confidence = 0.80
 
-        # --------------------------------------------------
-        # THRUSTER OVERRIDE
-        if (
-            raw_label in ["squat", "squat_back", "squat_front", "push_press"]
-            and summary.get("wrist_above_shoulder_ratio", 0) > 0.15
-            and summary.get("min_knee_angle", 180) < 100
-            and summary.get("min_hip_angle", 180) < 100
-            and summary.get("max_elbow_angle", 0) > 150
-        ):
-            raw_label = "thruster"
-            raw_confidence = 0.84
-
         # OVERHEAD SQUAT OVERRIDE
         if (
             raw_label == "push_press"
@@ -4421,7 +4420,18 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         squat_router_label = None
         squat_router_confidence = None
-
+        
+        # --------------------------------------------------
+        # THRUSTER OVERRIDE
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "push_press"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.15
+            and summary.get("min_knee_angle", 180) < 100
+            and summary.get("min_hip_angle", 180) < 100
+            and summary.get("max_elbow_angle", 0) > 150
+        ):
+            raw_label = "thruster"
+            raw_confidence = 0.84
 
         # SPLIT JERK OVERRIDE
         if (
