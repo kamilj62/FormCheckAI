@@ -4040,7 +4040,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         # CLEAN OVERRIDE
         if (
-            raw_label in ["deadlift", "squat", "squat_back", "squat_front", "snatch"]
+            raw_label in ["deadlift", "squat", "squat_back", "squat_front"]
             and summary.get("wrist_above_shoulder_ratio", 0) >= 0.10
             and summary.get("wrist_above_shoulder_ratio", 0) < 0.45
             and summary.get("max_elbow_angle", 0) > 150
