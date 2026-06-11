@@ -1994,6 +1994,145 @@ def analyze_split_jerk_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
+def analyze_snatch_reps(biomechanics):
+    knee = np.array([b["knee_angle"] for b in biomechanics])
+    hip = np.array([b["hip_angle"] for b in biomechanics])
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    start_idx = 0
+    end_idx = len(biomechanics) - 1
+
+    first_pull_idx = int(len(biomechanics) * 0.25)
+
+    extension_window_start = max(1, int(len(biomechanics) * 0.25))
+    extension_window_end = max(extension_window_start + 1, int(len(biomechanics) * 0.65))
+
+    catch_window_start = max(1, int(len(biomechanics) * 0.35))
+    catch_window_end = len(biomechanics)
+
+    extension_local = int(np.argmax(hip[extension_window_start:extension_window_end]))
+    extension_idx = extension_window_start + extension_local
+
+    catch_local = int(np.argmin(knee[catch_window_start:catch_window_end]))
+    catch_idx = catch_window_start + catch_local
+
+    if extension_idx <= first_pull_idx:
+        extension_idx = min(first_pull_idx + 1, end_idx)
+
+    if catch_idx <= extension_idx:
+        catch_idx = min(extension_idx + 1, end_idx)
+
+    min_knee = float(np.min(knee))
+    max_hip = float(np.max(hip))
+    max_torso = float(np.percentile(torso, 85))
+    min_elbow = float(np.min(elbow))
+    max_elbow = float(np.percentile(elbow, 90))
+    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
+    bar_drift = float(np.percentile(wrist_x, 90) - np.percentile(wrist_x, 10))
+    catch_bar_offset = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good",
+    }
+
+    if max_torso > 85:
+        breakdown["first_pull"] = "poor"
+        issues.append("Torso may be losing position during the pull.")
+        feedback.append("Stay braced and keep your chest up through the first pull.")
+
+    if max_hip < 150:
+        breakdown["extension"] = "incomplete"
+        issues.append("Hip extension may be incomplete.")
+        feedback.append("Finish tall before pulling under the bar.")
+
+    if min_elbow < 45:
+        breakdown["turnover"] = "early_arm_bend"
+        issues.append("Arms may be bending early during the pull.")
+        feedback.append("Keep arms long until you finish extending.")
+
+    if max_elbow < 160:
+        breakdown["overhead_catch"] = "soft"
+        issues.append("Overhead catch could be stronger.")
+        feedback.append("Punch up into a strong locked-out overhead position.")
+
+    if wrist_above_ratio < 0.15:
+        breakdown["stability"] = "poor"
+        issues.append("Overhead position may not be stable.")
+        feedback.append("Stabilize the bar overhead before standing.")
+
+    if min_knee > 125:
+        breakdown["overhead_catch"] = "power_catch"
+        issues.append("Catch position is high.")
+        feedback.append("Pull under the bar and receive lower if needed.")
+
+    if bar_drift > 0.12 or catch_bar_offset > 0.28:
+        breakdown["bar_path"] = "drifting"
+        issues.append("Bar may be drifting away during the catch.")
+        feedback.append("Keep the bar close and receive it stacked overhead.")
+
+    penalties = {
+        "first_pull": {"good": 0.0, "poor": 0.8},
+        "extension": {"good": 0.0, "incomplete": 1.0},
+        "turnover": {"good": 0.0, "early_arm_bend": 0.7},
+        "overhead_catch": {"good": 0.0, "soft": 0.8, "power_catch": 0.4},
+        "stability": {"good": 0.0, "poor": 1.0},
+        "bar_path": {"good": 0.0, "drifting": 0.8},
+    }
+
+    score = 10.0
+
+    for key, value in breakdown.items():
+        score -= penalties.get(key, {}).get(value, 0.0)
+
+    score = round(max(1.0, min(10.0, score)), 1)
+
+    score += 0.5
+    score = min(10.0, score)
+
+    if issues:
+        score = min(score, 9.2)
+    else:
+        score = max(score, 9.0)
+        feedback = ["Good snatch rep. Strong pull, catch, and overhead position."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "first_pull_frame": int(frame_numbers[first_pull_idx]),
+        "extension_frame": int(frame_numbers[extension_idx]),
+        "catch_frame": int(frame_numbers[catch_idx]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_bench_press_reps(biomechanics):
     elbow_all = np.array([b["elbow_angle"] for b in biomechanics])
     wrist_y_all = np.array([b["wrist_y"] for b in biomechanics])
@@ -4186,6 +4325,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         elif label == "split_jerk":
             rep_feedback, _ = analyze_split_jerk_reps(biomechanics)
+            analysis_mode = "detailed_rep_analysis"
+
+        elif label == "snatch":
+            rep_feedback, _ = analyze_snatch_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
         elif label == "bench_press":
