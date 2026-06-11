@@ -1826,9 +1826,6 @@ def analyze_clean_reps(biomechanics):
         issues.append("Bar may be drifting away during the turnover.")
         feedback.append("Keep the bar close and pull yourself under it.")
 
-    score += 0.8
-    score = min(9.2, round(score, 1)) if issues else max(score, 9.0)
-
     penalties = {
         "first_pull": {"good": 0.0, "poor": 0.8},
         "extension": {"good": 0.0, "incomplete": 1.0},
@@ -1838,30 +1835,35 @@ def analyze_clean_reps(biomechanics):
         "bar_path": {"good": 0.0, "drifting": 0.8},
     }
 
+    score = 10.0
+
     for key, value in breakdown.items():
         score -= penalties.get(key, {}).get(value, 0.0)
 
     score = round(max(1.0, min(10.0, score)), 1)
+
+    # Small clean bonus
+    score += 0.8
+    score = min(10.0, score)
 
     if issues:
         score = min(score, 9.2)
     else:
         score = max(score, 9.0)
         feedback = ["Good clean rep. Strong pull and catch position."]
-
-    reps = [{
-        "rep": 1,
-        "start_frame": int(frame_numbers[start_idx]),
-        "first_pull_frame": int(frame_numbers[first_pull_idx]),
-        "extension_frame": int(frame_numbers[extension_idx]),
-        "catch_frame": int(frame_numbers[catch_idx]),
-        "end_frame": int(frame_numbers[end_idx]),
-        "score": score,
-        "grade": grade_score(score),
-        "issues": issues,
-        "breakdown": breakdown,
-        "feedback": feedback,
-    }]
+        reps = [{
+            "rep": 1,
+            "start_frame": int(frame_numbers[start_idx]),
+            "first_pull_frame": int(frame_numbers[first_pull_idx]),
+            "extension_frame": int(frame_numbers[extension_idx]),
+            "catch_frame": int(frame_numbers[catch_idx]),
+            "end_frame": int(frame_numbers[end_idx]),
+            "score": score,
+            "grade": grade_score(score),
+            "issues": issues,
+            "breakdown": breakdown,
+            "feedback": feedback,
+        }]
 
     return reps, build_set_summary(reps)
 
