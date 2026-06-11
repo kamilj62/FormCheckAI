@@ -3876,9 +3876,7 @@ def build_coaching_zones(exercise_label, rep_feedback):
         return {}
 
     FEEDBACK_BY_KEY = {
-        # -----------------------------
         # Shared / Squat
-        # -----------------------------
         "neck": "Keep your neck neutral and eyes forward.",
         "torso": "Keep your chest up and torso controlled.",
         "squat_knees": "Drive knees out over your toes.",
@@ -3887,40 +3885,47 @@ def build_coaching_zones(exercise_label, rep_feedback):
         "front_rack": "Drive elbows higher to keep the bar secure.",
         "bar_position": "Keep the bar stacked securely over your midfoot.",
 
-        # -----------------------------
         # Deadlift
-        # -----------------------------
         "back": "Keep your back flat and brace your core.",
         "hinge": "Push your hips back and hinge before pulling.",
         "deadlift_knees": "Keep shins more vertical and hinge from the hips.",
         "deadlift_bar_path": "Keep the bar close to your body.",
         "deadlift_lockout": "Finish tall with hips fully extended.",
 
-        # -----------------------------
-        # Bench Press
-        # -----------------------------
+        # Bench
         "elbows": "Keep elbows controlled and stacked under the wrists.",
         "arch": "Keep your upper back tight and arch controlled.",
         "bench_lockout": "Fully extend your arms at the top.",
         "bench_legs_unknown": "Foot position could not be evaluated because feet were not visible.",
         "legs": "Keep your feet planted and use leg drive.",
 
-        # -----------------------------
-        # Push Press / Strict Press
-        # -----------------------------
+        # Pressing
         "dip": "Use a controlled vertical dip before driving up.",
         "dip_verticality": "Keep the dip vertical with chest tall.",
         "press_timing": "Drive with your legs first, then press overhead.",
         "press_bar_path": "Keep the bar path vertical and press straight overhead.",
         "press_lockout": "Fully extend arms overhead.",
         "active_finish": "Punch to a strong, stacked lockout.",
+
+        # Olympic lifts
+        "first_pull": "Stay braced and keep your chest up through the first pull.",
+        "extension": "Finish your pull tall before pulling under the bar.",
+        "turnover": "Keep arms long until you finish extending.",
+        "catch": "Pull under the bar and receive in a strong catch position.",
+        "clean_front_rack": "Whip elbows through fast and catch in a strong front rack.",
+        "oly_bar_path": "Keep the bar close and pull yourself under it.",
+        "overhead_catch": "Punch up into a strong locked-out overhead position.",
+        "stability": "Stabilize the bar overhead before standing.",
+        "split_catch": "Drop under the bar into a strong split position.",
+        "jerk_lockout": "Punch the bar overhead and finish with straight arms.",
+        "jerk_torso": "Keep ribs stacked and torso vertical under the bar.",
     }
 
-    def zone_result(label, key, good_values, feedback_key=None):
+    def zone_result(label, key, good_values, feedback_key=None, source_breakdown=None):
         affected = []
 
         for rep in rep_feedback:
-            breakdown = rep.get("breakdown", {})
+            breakdown = source_breakdown(rep) if source_breakdown else rep.get("breakdown", {})
             value = breakdown.get(key)
 
             if value is None:
@@ -3935,10 +3940,7 @@ def build_coaching_zones(exercise_label, rep_feedback):
             message = f"{label} looks solid across the set."
         else:
             lookup_key = feedback_key or key
-            message = FEEDBACK_BY_KEY.get(
-                lookup_key,
-                f"{label} needs attention.",
-            )
+            message = FEEDBACK_BY_KEY.get(lookup_key, f"{label} needs attention.")
 
         return {
             "label": label,
@@ -3949,123 +3951,94 @@ def build_coaching_zones(exercise_label, rep_feedback):
 
     label = exercise_label.lower().replace(" ", "_")
 
-    # -----------------------------
-    # SQUAT FAMILY
-    # -----------------------------
     if label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
         zones = {
             "neck": zone_result("Neck", "neck", {"good"}),
             "torso": zone_result("Torso", "torso", {"good"}),
-            "knees": zone_result(
-                "Knees",
-                "knees",
-                {"good"},
-                "squat_knees",
-            ),
+            "knees": zone_result("Knees", "knees", {"good"}, "squat_knees"),
             "depth": zone_result("Depth", "depth", {"good"}),
             "heels": zone_result("Heels", "heels", {"good"}),
         }
 
         if label == "squat_front":
-            zones["front_rack"] = zone_result(
-                "Front Rack",
-                "front_rack",
-                {"good"},
-            )
-            zones["bar_position"] = zone_result(
-                "Bar Position",
-                "bar_position",
-                {"good"},
-            )
+            zones["front_rack"] = zone_result("Front Rack", "front_rack", {"good"})
+            zones["bar_position"] = zone_result("Bar Position", "bar_position", {"good"})
 
         return zones
 
-    # -----------------------------
-    # DEADLIFT
-    # -----------------------------
     elif label == "deadlift":
         return {
             "neck": zone_result("Neck", "neck", {"good"}),
             "torso": zone_result("Torso", "back", {"good"}),
             "hips": zone_result("Hip Hinge", "hinge", {"good"}),
-            "knees": zone_result(
-                "Knees",
-                "knees",
-                {"good"},
-                "deadlift_knees",
-            ),
-            "bar_path": zone_result(
-                "Bar Path",
-                "bar_path",
-                {"good"},
-                "deadlift_bar_path",
-            ),
-            "lockout": zone_result(
-                "Lockout",
-                "lockout",
-                {"good"},
-                "deadlift_lockout",
-            ),
+            "knees": zone_result("Knees", "knees", {"good"}, "deadlift_knees"),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "deadlift_bar_path"),
+            "lockout": zone_result("Lockout", "lockout", {"good"}, "deadlift_lockout"),
         }
 
-    # -----------------------------
-    # BENCH PRESS
-    # -----------------------------
     elif label == "bench_press":
         return {
             "elbows": zone_result("Elbows", "elbows", {"good"}),
             "depth": zone_result("Depth", "depth", {"good"}),
-            "lockout": zone_result(
-                "Lockout",
-                "lockout",
-                {"good"},
-                "bench_lockout",
-            ),
+            "lockout": zone_result("Lockout", "lockout", {"good"}, "bench_lockout"),
             "arch": zone_result("Arch", "arch", {"controlled", "good"}),
-            "legs": zone_result(
-                "Leg Drive",
-                "legs",
-                {"good"},
-                "bench_legs_unknown",
-            ),
+            "legs": zone_result("Leg Drive", "legs", {"good"}, "bench_legs_unknown"),
         }
 
-    # -----------------------------
-    # PUSH PRESS / STRICT PRESS
-    # -----------------------------
     elif label in ["push_press", "strict_press", "thruster"]:
         return {
             "dip": zone_result("Dip", "dip", {"good"}),
-            "dip_path": zone_result(
-                "Dip Path",
-                "dip_verticality",
-                {"good"},
-                "dip_verticality",
-            ),
-            "timing": zone_result(
-                "Timing",
-                "timing",
-                {"good"},
-                "press_timing",
-            ),
-            "bar_path": zone_result(
-                "Bar Path",
-                "bar_path",
-                {"good"},
-                "press_bar_path",
-            ),
-            "lockout": zone_result(
-                "Lockout",
-                "lockout",
-                {"good"},
-                "press_lockout",
-            ),
-            "finish": zone_result(
-                "Finish",
-                "active_finish",
-                {"good"},
-                "active_finish",
-            ),
+            "dip_path": zone_result("Dip Path", "dip_verticality", {"good"}, "dip_verticality"),
+            "timing": zone_result("Timing", "timing", {"good"}, "press_timing"),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "press_bar_path"),
+            "lockout": zone_result("Lockout", "lockout", {"good"}, "press_lockout"),
+            "finish": zone_result("Finish", "active_finish", {"good"}, "active_finish"),
+        }
+
+    elif label == "clean":
+        return {
+            "first_pull": zone_result("First Pull", "first_pull", {"good"}),
+            "extension": zone_result("Extension", "extension", {"good"}),
+            "turnover": zone_result("Turnover", "turnover", {"good"}),
+            "catch": zone_result("Catch", "catch", {"good", "deep_catch"}, "catch"),
+            "front_rack": zone_result("Front Rack", "front_rack", {"good"}, "clean_front_rack"),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "oly_bar_path"),
+        }
+
+    elif label == "snatch":
+        return {
+            "first_pull": zone_result("First Pull", "first_pull", {"good"}),
+            "extension": zone_result("Extension", "extension", {"good"}),
+            "turnover": zone_result("Turnover", "turnover", {"good"}),
+            "overhead_catch": zone_result("Overhead Catch", "overhead_catch", {"good"}, "overhead_catch"),
+            "stability": zone_result("Stability", "stability", {"good"}, "stability"),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "oly_bar_path"),
+        }
+
+    elif label == "split_jerk":
+        return {
+            "dip": zone_result("Dip", "dip", {"good"}),
+            "drive": zone_result("Drive", "drive", {"good"}),
+            "lockout": zone_result("Lockout", "lockout", {"good"}, "jerk_lockout"),
+            "split_catch": zone_result("Split Catch", "split_catch", {"good"}, "split_catch"),
+            "torso_stack": zone_result("Torso Stack", "torso_stack", {"good"}, "jerk_torso"),
+            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "press_bar_path"),
+        }
+
+    elif label == "clean_and_jerk":
+        clean_breakdown = lambda rep: rep.get("breakdown", {}).get("clean", {})
+        jerk_breakdown = lambda rep: rep.get("breakdown", {}).get("jerk", {})
+
+        return {
+            "clean_first_pull": zone_result("Clean First Pull", "first_pull", {"good"}, "first_pull", clean_breakdown),
+            "clean_extension": zone_result("Clean Extension", "extension", {"good"}, "extension", clean_breakdown),
+            "clean_turnover": zone_result("Clean Turnover", "turnover", {"good"}, "turnover", clean_breakdown),
+            "clean_catch": zone_result("Clean Catch", "catch", {"good", "deep_catch"}, "catch", clean_breakdown),
+            "jerk_dip": zone_result("Jerk Dip", "dip", {"good"}, "dip", jerk_breakdown),
+            "jerk_drive": zone_result("Jerk Drive", "drive", {"good"}, "dip", jerk_breakdown),
+            "jerk_lockout": zone_result("Jerk Lockout", "lockout", {"good"}, "jerk_lockout", jerk_breakdown),
+            "jerk_catch": zone_result("Jerk Catch", "split_catch", {"good"}, "split_catch", jerk_breakdown),
+            "jerk_bar_path": zone_result("Jerk Bar Path", "bar_path", {"good"}, "press_bar_path", jerk_breakdown),
         }
 
     return {}
