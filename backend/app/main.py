@@ -4455,6 +4455,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         if make_visuals and rep_feedback:
             phase_rep = choose_phase_rep(rep_feedback)
 
+            overlay_result = None
+
             if make_overlay:
                 phase_rep = choose_phase_rep(rep_feedback)
 
