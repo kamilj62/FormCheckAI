@@ -423,6 +423,17 @@ def classify_with_biomechanics(
     summary,
     pose_frames,
 ):
+    if (
+        label == "snatch"
+        and oly_label == "not_oly"
+        and summary.get("wrist_above_shoulder_ratio", 0) < 0.25
+        and summary.get("avg_torso_angle", 0) > 70
+    ):
+        label = "push_press"
+        confidence = 0.80
+        override_used = True
+        reason = "protect_push_press_from_snatch"
+
     if pose_frames < 10 or not summary:
         return raw_label, confidence, False, "low_pose_data"
 
