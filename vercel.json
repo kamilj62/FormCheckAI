@@ -1,4 +1,6 @@
 {
+  "buildCommand": "cd mobile && npm run build && python3 -c \"from pathlib import Path; p=Path('dist/index.html'); s=p.read_text(); s=s.replace('</head>', '<link rel=\\\"icon\\\" href=\\\"/favicon.ico?v=5\\\" /></head>'); p.write_text(s)\"",
+  "outputDirectory": "mobile/dist",
   "rewrites": [
     {
       "source": "/api/:path*",

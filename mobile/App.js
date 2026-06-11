@@ -516,6 +516,8 @@ try {
         );
       }
 
+      setOverlayUrl(visualsData.overlay_video_url);
+
       setResult((prev) => ({
         ...prev,
         overlay_video_url: visualsData.overlay_video_url,
@@ -534,6 +536,7 @@ try {
     }
   };
 
+  const [overlayUrl, setOverlayUrl] = useState(null);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayProgress, setOverlayProgress] = useState("");
   
@@ -570,6 +573,7 @@ try {
 
       if (statusData.status === "ready") {
         setOverlayProgress("Overlay ready!");
+        setOverlayUrl(statusData.overlay_video_url);
 
         setResult((prev) => ({
           ...prev,

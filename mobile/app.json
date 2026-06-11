@@ -1,5 +1,10 @@
 {
   "expo": {
+    "name": "FormCheck AI",
+    "slug": "formcheck-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "assetBundlePatterns": ["**/*"],
     "web": {
       "favicon": "./assets/favicon.png"
     }
