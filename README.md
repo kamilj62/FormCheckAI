@@ -2,7 +2,25 @@
 
 AI-powered exercise analysis platform that uses computer vision, pose estimation, and machine learning to analyze lifting technique from video.
 
-FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifting video and receive detailed feedback on movement quality, rep performance, biomechanics, coaching recommendations, phase-by-phase analysis, and annotated video overlays.
+FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifting video and receive detailed feedback on movement quality, rep performance, biomechanics, coaching recommendations, phase review images, and annotated overlay videos.
+
+---
+
+# Latest Release
+
+## v1.2.0 – Olympic Overlay Release
+
+Added:
+
+- Detailed Clean Analysis
+- Detailed Split Jerk Analysis
+- Detailed Clean & Jerk Analysis
+- Detailed Snatch Analysis
+- Olympic Coaching Zones
+- Olympic Phase Images
+- Olympic Overlay Videos
+- Improved Overlay Rendering
+- S3 Overlay Delivery
 
 ---
 
@@ -26,29 +44,11 @@ FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifti
 
 ✅ Background Overlay Processing
 
-✅ Back Squat Analysis
-
-✅ Front Squat Analysis
-
-✅ Overhead Squat Analysis
-
-✅ Deadlift Analysis
-
-✅ Bench Press Analysis
-
-✅ Push Press Analysis
-
 ✅ Strict Press Analysis
 
 ✅ Thruster Analysis
 
-✅ Clean Analysis
-
-✅ Snatch Analysis
-
-✅ Split Jerk Analysis
-
-✅ Clean & Jerk Analysis
+✅ Olympic Lift Analysis
 
 ✅ Mobile & Web Support
 
@@ -129,14 +129,90 @@ FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifti
 - Clean & Jerk
 - Snatch
 
-Each movement includes:
+All supported movements include:
 
 - Rep Detection
 - Rep Scoring
 - Coaching Zones
 - Set Summary
+- Phase Review Images
+- Overlay Video Generation
+
+---
+
+# Olympic Weightlifting
+
+FormCheck AI provides detailed rep analysis for Olympic lifts.
+
+Supported:
+
+- Clean
+- Split Jerk
+- Clean & Jerk
+- Snatch
+
+Features include:
+
+- Rep Detection
+- Rep Scoring
+- Coaching Zones
 - Biomechanics Feedback
 - Phase Review Images
+- Overlay Video Generation
+
+---
+
+## Clean
+
+- Rep Detection
+- Rep Scoring
+- First Pull Analysis
+- Extension Analysis
+- Turnover Analysis
+- Catch Position Analysis
+- Coaching Zones
+- Phase Images
+- Overlay Videos
+
+---
+
+## Split Jerk
+
+- Rep Detection
+- Rep Scoring
+- Dip Analysis
+- Drive Analysis
+- Lockout Analysis
+- Catch Position Analysis
+- Coaching Zones
+- Phase Images
+- Overlay Videos
+
+---
+
+## Clean & Jerk
+
+- Clean Analysis
+- Jerk Analysis
+- Rep Scoring
+- Coaching Zones
+- Phase Images
+- Overlay Videos
+
+---
+
+## Snatch
+
+- Rep Detection
+- Rep Scoring
+- First Pull Analysis
+- Extension Analysis
+- Turnover Analysis
+- Overhead Catch Analysis
+- Stability Analysis
+- Coaching Zones
+- Phase Images
+- Overlay Videos
 
 ---
 
@@ -207,121 +283,16 @@ Returns:
 - Bar path
 - Rep scoring
 
-### Clean Analysis
-
-- First pull quality
-- Extension quality
-- Turnover timing
-- Front rack position
-- Catch position
-- Bar path tracking
-
-### Snatch Analysis
-
-- First pull quality
-- Extension quality
-- Turnover timing
-- Overhead catch stability
-- Overhead positioning
-- Bar path tracking
-
-### Split Jerk Analysis
-
-- Dip quality
-- Drive quality
-- Overhead lockout
-- Split receiving position
-- Torso stacking
-- Bar path tracking
-
-### Clean & Jerk Analysis
-
-- Clean phase scoring
-- Jerk phase scoring
-- Combined movement scoring
-- Clean catch analysis
-- Jerk receiving analysis
-- Coaching zones
-
----
-
-# Coaching Zones
-
-FormCheck AI generates exercise-specific coaching zones that identify strengths and weaknesses across a set.
-
-Examples include:
-
-### Squat Family
-
-- Depth
-- Knees
-- Torso
-- Heels
-- Neck
-
-### Deadlift
-
-- Back
-- Hip Hinge
-- Knees
-- Bar Path
-- Lockout
-
-### Bench Press
-
-- Elbows
-- Depth
-- Lockout
-- Arch
-- Leg Drive
-
-### Push Press / Strict Press / Thruster
-
-- Dip
-- Dip Path
-- Timing
-- Bar Path
-- Lockout
-- Finish
-
-### Clean
+### Olympic Lift Analysis
 
 - First Pull
 - Extension
 - Turnover
-- Catch
-- Front Rack
-- Bar Path
-
-### Snatch
-
-- First Pull
-- Extension
-- Turnover
-- Overhead Catch
-- Stability
-- Bar Path
-
-### Split Jerk
-
-- Dip
-- Drive
-- Lockout
-- Split Catch
-- Torso Stack
-- Bar Path
-
-### Clean & Jerk
-
-- Clean First Pull
-- Clean Extension
-- Clean Turnover
-- Clean Catch
-- Jerk Dip
-- Jerk Drive
-- Jerk Lockout
-- Jerk Catch
-- Jerk Bar Path
+- Catch Position
+- Overhead Stability
+- Lockout Quality
+- Bar Path Analysis
+- Coaching Zones
 
 ---
 
@@ -363,6 +334,24 @@ Generates key movement snapshots.
 - Catch
 - Finish
 
+### Split Jerk
+
+- Setup
+- Dip
+- Drive
+- Catch
+- Lockout
+- Finish
+
+### Clean & Jerk
+
+- Setup
+- Clean Catch
+- Jerk Dip
+- Jerk Drive
+- Jerk Catch
+- Finish
+
 ### Snatch
 
 - Setup
@@ -371,50 +360,20 @@ Generates key movement snapshots.
 - Catch
 - Finish
 
-### Split Jerk
-
-- Setup
-- Dip
-- Drive
-- Catch
-- Recovery
-- Finish
-
-### Clean & Jerk
-
-- Setup
-- First Pull
-- Extension
-- Clean Catch
-- Jerk Dip
-- Jerk Drive
-- Jerk Catch
-- Finish
-
 ---
 
 ## Overlay Video Generation
 
 FormCheck AI generates annotated replay videos showing:
 
-- Rep boundaries
-- Rep scores
-- Coaching notes
-- Movement analysis
 - Exercise classification
+- Rep scores
+- Coaching feedback
+- Olympic lift phases
+- Movement analysis
+- Pose overlays
 
-Overlay rendering is performed asynchronously using background processing jobs.
-
-Currently supported for:
-
-- Back Squat
-- Front Squat
-- Overhead Squat
-- Deadlift
-- Bench Press
-- Push Press
-- Strict Press
-- Thruster
+Overlay rendering is performed asynchronously and delivered through Amazon S3.
 
 ---
 
@@ -437,15 +396,13 @@ Biomechanics Analysis
       ↓
 Feedback Generation
       ↓
-Coaching Zones
-      ↓
 Phase Images
       ↓
 Start Overlay Job
       ↓
 Background Overlay Worker
       ↓
-Overlay Status Polling
+Amazon S3 Delivery
       ↓
 Overlay Video
 ```
@@ -489,6 +446,10 @@ Overlay Video
 - AWS Elastic Beanstalk
 - Docker
 
+### Storage
+
+- Amazon S3
+
 ### Inference
 
 - TensorFlow
@@ -531,16 +492,6 @@ Returns:
 - coaching_zones
 - phase_images
 
-Example:
-
-```json
-{
-  "exercise_label": "Back Squat",
-  "confidence": 0.80,
-  "analysis_mode": "detailed_rep_analysis"
-}
-```
-
 ---
 
 ## Generate Phase Review
@@ -548,12 +499,6 @@ Example:
 ```http
 POST /generate_visuals
 ```
-
-Creates:
-
-- Phase review images
-- Movement snapshots
-- Exercise-specific breakdowns
 
 ---
 
@@ -585,7 +530,7 @@ Returns:
 ```json
 {
   "status": "ready",
-  "overlay_video_url": "/outputs/overlay_ab14dd6d.mp4"
+  "overlay_video_url": "https://..."
 }
 ```
 
@@ -649,38 +594,15 @@ Supported Platforms:
 
 ---
 
-# Example Response
-
-```json
-{
-  "exercise_label": "Clean and Jerk",
-  "confidence": 0.63,
-  "analysis_mode": "detailed_rep_analysis",
-  "set_summary": {
-    "detected_reps": 1,
-    "avg_rep_score": 9.2
-  }
-}
-```
-
----
-
 # Roadmap
 
-## Olympic Lift Improvements
+## Olympic Lift Enhancements
 
-- Olympic Lift Overlay Videos
-- Olympic Lift Phase-Specific Coaching Images
-- Multi-Rep Olympic Lift Detection
-- Improved Clean & Jerk Segmentation
-- Improved Snatch Stability Analysis
-
-## New Movements
-
-- Power Clean
-- Hang Clean
-- Push Jerk
-- Front Rack Carry
+- Multi-rep Olympic lift detection
+- Advanced bar path tracking
+- Power Clean analysis
+- Hang Clean analysis
+- Push Jerk analysis
 
 ## Platform Features
 
@@ -702,33 +624,6 @@ AI Engineer | Full Stack Developer
 University of Michigan
 
 GitHub:
-
 https://github.com/kamilj62
-
----
-
-FormCheck AI currently provides detailed AI-driven analysis for:
-
-- Back Squat
-- Front Squat
-- Overhead Squat
-- Bench Press
-- Deadlift
-- Push Press
-- Strict Press
-- Thruster
-- Clean
-- Split Jerk
-- Clean & Jerk
-- Snatch
-
-including:
-
-- Rep Detection
-- Rep Scoring
-- Coaching Zones
-- Set Summaries
-- Phase Review Images
-- Biomechanics Feedback
 
 Built using computer vision, machine learning, biomechanics analysis, and modern AI tooling to help athletes move better.
