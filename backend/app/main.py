@@ -2758,9 +2758,13 @@ def draw_overlay_video(
     if fps <= 0:
         fps = 30
 
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    source_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    source_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    upscale_factor = 3.0 if source_width < 800 else 1.0
+    width = int(source_width * upscale_factor)
+    height = int(source_height * upscale_factor)
 
     temp_output_path = output_path.replace(".mp4", "_raw.mp4")
 
@@ -2820,10 +2824,12 @@ def draw_overlay_video(
             return None
 
         phases = [(name, f) for name, f in phases if f is not None]
+
         if not phases:
             return None
 
         current = phases[0][0]
+
         for name, f in phases:
             if frame_idx >= int(f):
                 current = name
@@ -2846,10 +2852,16 @@ def draw_overlay_video(
             if not ret:
                 break
 
+            if upscale_factor != 1.0:
+                frame = cv2.resize(
+                    frame,
+                    (width, height),
+                    interpolation=cv2.INTER_CUBIC,
+                )
+
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
-            # Always draw a visible overlay header so we know this file is not raw video.
             cv2.rectangle(frame, (0, 0), (width, 92), (2, 6, 23), -1)
 
             cv2.putText(
@@ -2877,6 +2889,21 @@ def draw_overlay_video(
                 2,
                 cv2.LINE_AA,
             )
+
+            olympic_phase = get_olympic_phase(frame_idx, best_rep, exercise)
+
+            if olympic_phase:
+                cv2.rectangle(frame, (10, 104), (280, 142), (15, 23, 42), -1)
+                cv2.putText(
+                    frame,
+                    f"Phase: {olympic_phase}",
+                    (18, 130),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55,
+                    (96, 165, 250),
+                    2,
+                    cv2.LINE_AA,
+                )
 
             if results.pose_landmarks:
                 landmark_hits += 1
@@ -2921,7 +2948,7 @@ def draw_overlay_video(
                 else:
                     cv2.putText(
                         frame,
-                        "Pose detected. No ideal overlay for this exercise yet.",
+                        "Pose detected. Olympic phase overlay active.",
                         (24, height - 34),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.65,
@@ -2943,6 +2970,7 @@ def draw_overlay_video(
                 )
 
             cv2.rectangle(frame, (0, height - 58), (width, height), (15, 23, 42), -1)
+
             cv2.putText(
                 frame,
                 str(main_note)[:95],
@@ -2953,21 +2981,6 @@ def draw_overlay_video(
                 2,
                 cv2.LINE_AA,
             )
-
-            olympic_phase = get_olympic_phase(frame_idx, best_rep, exercise)
-
-            if olympic_phase:
-                cv2.rectangle(frame, (10, 74), (250, 112), (15, 23, 42), -1)
-                cv2.putText(
-                    frame,
-                    f"Phase: {olympic_phase}",
-                    (18, 101),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.55,
-                    (96, 165, 250),
-                    2,
-                    cv2.LINE_AA,
-                )
 
             writer.write(frame)
             frames_written += 1
