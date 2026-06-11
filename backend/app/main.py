@@ -1869,6 +1869,131 @@ def analyze_clean_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
+def analyze_split_jerk_reps(biomechanics):
+    knee = np.array([b["knee_angle"] for b in biomechanics])
+    hip = np.array([b["hip_angle"] for b in biomechanics])
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
+    valgus = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    start_idx = 0
+    end_idx = len(biomechanics) - 1
+
+    dip_idx = int(np.argmin(knee[: max(2, int(len(knee) * 0.45))]))
+    drive_idx = min(dip_idx + max(1, int(len(knee) * 0.12)), end_idx)
+
+    catch_window_start = max(1, int(len(knee) * 0.30))
+    catch_idx = catch_window_start + int(np.argmin(knee[catch_window_start:]))
+
+    lockout_idx = int(np.argmax(elbow))
+    if lockout_idx < catch_idx:
+        lockout_idx = catch_idx
+
+    finish_idx = end_idx
+
+    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
+    max_elbow = float(np.percentile(elbow, 90))
+    torso_stack = float(np.percentile(torso, 80))
+    min_knee = float(np.percentile(knee, 10))
+    min_valgus = float(np.percentile(np.clip(valgus, 0.5, 1.5), 15))
+    bar_drift = float(
+        np.percentile(wrist_x, 90) - np.percentile(wrist_x, 10)
+    )
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "dip": "good",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good",
+    }
+
+    if wrist_above_ratio < 0.50:
+        breakdown["lockout"] = "incomplete"
+        issues.append("Overhead position is not held long enough.")
+        feedback.append("Catch and stabilize the bar overhead.")
+
+    if max_elbow < 155:
+        breakdown["lockout"] = "soft"
+        issues.append("Overhead lockout could be stronger.")
+        feedback.append("Punch the bar overhead and finish with straight arms.")
+
+    if min_knee > 160:
+        breakdown["split_catch"] = "shallow"
+        issues.append("Split catch may be too shallow.")
+        feedback.append("Drop under the bar into a stronger split position.")
+
+    if torso_stack > 20:
+        breakdown["torso_stack"] = "leaning"
+        issues.append("Torso is leaning during the catch.")
+        feedback.append("Keep ribs stacked and torso vertical under the bar.")
+
+    if min_valgus < 0.70:
+        breakdown["dip"] = "knee_cave"
+        issues.append("Knees may cave during the dip or catch.")
+        feedback.append("Drive knees out and keep a stable receiving position.")
+
+    if bar_drift > 0.08:
+        breakdown["bar_path"] = "drifting"
+        issues.append("Bar path may be drifting overhead.")
+        feedback.append("Drive the bar straight up and receive it stacked over midfoot.")
+
+    score = 10.0
+
+    penalties = {
+        "dip": {"good": 0.0, "knee_cave": 1.0},
+        "drive": {"good": 0.0},
+        "lockout": {"good": 0.0, "soft": 0.8, "incomplete": 1.4},
+        "split_catch": {"good": 0.0, "shallow": 0.8},
+        "torso_stack": {"good": 0.0, "leaning": 0.8},
+        "bar_path": {"good": 0.0, "drifting": 0.8},
+    }
+
+    for key, value in breakdown.items():
+        score -= penalties.get(key, {}).get(value, 0.0)
+
+    score = round(max(1.0, min(10.0, score)), 1)
+
+    if issues:
+        score = min(score + 0.5, 9.2)
+    else:
+        score = max(score, 9.0)
+        feedback = ["Good split jerk rep. Strong overhead position and recovery."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "dip_frame": int(frame_numbers[dip_idx]),
+        "drive_frame": int(frame_numbers[drive_idx]),
+        "catch_frame": int(frame_numbers[catch_idx]),
+        "lockout_frame": int(frame_numbers[lockout_idx]),
+        "end_frame": int(frame_numbers[finish_idx]),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_bench_press_reps(biomechanics):
     elbow_all = np.array([b["elbow_angle"] for b in biomechanics])
     wrist_y_all = np.array([b["wrist_y"] for b in biomechanics])
@@ -4040,6 +4165,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         elif label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
+            analysis_mode = "detailed_rep_analysis"
+
+        elif label == "split_jerk":
+            rep_feedback, _ = analyze_split_jerk_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
         elif label == "bench_press":
