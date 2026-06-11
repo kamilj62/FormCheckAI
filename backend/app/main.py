@@ -2957,13 +2957,13 @@ def draw_overlay_video(
             olympic_phase = get_olympic_phase(frame_idx, best_rep, exercise)
 
             if olympic_phase:
-                cv2.rectangle(frame, (24, 104), (360, 154), (15, 23, 42), -1)
+                cv2.rectangle(frame, (10, 74), (250, 112), (15, 23, 42), -1)
                 cv2.putText(
                     frame,
                     f"Phase: {olympic_phase}",
-                    (42, 138),
+                    (18, 101),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
+                    0.55,
                     (96, 165, 250),
                     2,
                     cv2.LINE_AA,
