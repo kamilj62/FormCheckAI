@@ -1773,25 +1773,26 @@ def analyze_clean_reps(biomechanics):
 
     if catch_idx <= extension_idx:
         catch_idx = min(extension_idx + 1, end_idx)
-        min_knee = float(np.min(knee))
-        max_hip = float(np.max(hip))
-        max_torso = float(np.percentile(torso, 85))
-        wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
-        min_elbow = float(np.min(elbow))
-        catch_elbow = float(elbow[catch_idx])
-        rack_distance = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+        
+    min_knee = float(np.min(knee))
+    max_hip = float(np.max(hip))
+    max_torso = float(np.percentile(torso, 85))
+    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
+    min_elbow = float(np.min(elbow))
+    catch_elbow = float(elbow[catch_idx])
+    rack_distance = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
 
-        issues = []
-        feedback = []
+    issues = []
+    feedback = []
 
-        breakdown = {
-            "first_pull": "good",
-            "extension": "good",
-            "turnover": "good",
-            "catch": "good",
-            "front_rack": "good",
-            "bar_path": "good",
-        }
+    breakdown = {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good",
+    }
 
     if max_torso > 75:
         breakdown["first_pull"] = "poor"
