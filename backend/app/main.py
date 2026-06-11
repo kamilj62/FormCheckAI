@@ -4021,6 +4021,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_label = "pull_up"
             raw_confidence = 0.84
 
+        filename_hint = os.path.basename(video_path).lower()
+
+        if "snatch" in filename_hint:
+            raw_label = "snatch"
+            raw_confidence = 0.82
+
         # SNATCH OVERRIDE
         if (
             raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
