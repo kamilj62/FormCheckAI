@@ -1851,19 +1851,20 @@ def analyze_clean_reps(biomechanics):
     else:
         score = max(score, 9.0)
         feedback = ["Good clean rep. Strong pull and catch position."]
-        reps = [{
-            "rep": 1,
-            "start_frame": int(frame_numbers[start_idx]),
-            "first_pull_frame": int(frame_numbers[first_pull_idx]),
-            "extension_frame": int(frame_numbers[extension_idx]),
-            "catch_frame": int(frame_numbers[catch_idx]),
-            "end_frame": int(frame_numbers[end_idx]),
-            "score": score,
-            "grade": grade_score(score),
-            "issues": issues,
-            "breakdown": breakdown,
-            "feedback": feedback,
-        }]
+    
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "first_pull_frame": int(frame_numbers[first_pull_idx]),
+        "extension_frame": int(frame_numbers[extension_idx]),
+        "catch_frame": int(frame_numbers[catch_idx]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
 
     return reps, build_set_summary(reps)
 
