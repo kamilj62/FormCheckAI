@@ -2789,6 +2789,47 @@ def draw_overlay_video(
     feedback = best_rep.get("feedback") or best_rep.get("issues") or []
     main_note = feedback[0] if feedback else "Keep the full body visible and move with control."
 
+    def get_olympic_phase(frame_idx, rep, exercise):
+        if exercise in ["clean", "snatch"]:
+            phases = [
+                ("Setup", rep.get("start_frame")),
+                ("First Pull", rep.get("first_pull_frame")),
+                ("Extension", rep.get("extension_frame")),
+                ("Catch", rep.get("catch_frame")),
+                ("Finish", rep.get("end_frame")),
+            ]
+        elif exercise == "split_jerk":
+            phases = [
+                ("Setup", rep.get("start_frame")),
+                ("Dip", rep.get("dip_frame")),
+                ("Drive", rep.get("drive_frame")),
+                ("Catch", rep.get("catch_frame")),
+                ("Lockout", rep.get("lockout_frame")),
+                ("Finish", rep.get("end_frame")),
+            ]
+        elif exercise == "clean_and_jerk":
+            phases = [
+                ("Setup", rep.get("start_frame")),
+                ("Clean Catch", rep.get("clean_catch_frame")),
+                ("Jerk Dip", rep.get("jerk_dip_frame")),
+                ("Jerk Drive", rep.get("jerk_drive_frame")),
+                ("Jerk Catch", rep.get("jerk_catch_frame")),
+                ("Finish", rep.get("end_frame")),
+            ]
+        else:
+            return None
+
+        phases = [(name, f) for name, f in phases if f is not None]
+        if not phases:
+            return None
+
+        current = phases[0][0]
+        for name, f in phases:
+            if frame_idx >= int(f):
+                current = name
+
+        return current
+
     frame_idx = 0
     frames_written = 0
     landmark_hits = 0
@@ -2912,6 +2953,21 @@ def draw_overlay_video(
                 2,
                 cv2.LINE_AA,
             )
+
+            olympic_phase = get_olympic_phase(frame_idx, best_rep, exercise)
+
+            if olympic_phase:
+                cv2.rectangle(frame, (24, 104), (360, 154), (15, 23, 42), -1)
+                cv2.putText(
+                    frame,
+                    f"Phase: {olympic_phase}",
+                    (42, 138),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (96, 165, 250),
+                    2,
+                    cv2.LINE_AA,
+                )
 
             writer.write(frame)
             frames_written += 1
