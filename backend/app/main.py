@@ -4462,7 +4462,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             label = raw_label
             confidence = raw_confidence
 
-        if raw_label in olympic_labels:
+        if raw_label in olympic_labels and oly_label != "not_oly":
             label = raw_label
             confidence = raw_confidence
             override_used = False
