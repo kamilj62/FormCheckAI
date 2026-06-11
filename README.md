@@ -615,6 +615,35 @@ Supported Platforms:
 
 ---
 
+## Smoke Test Results (v1.2.2)
+
+| Exercise | Status |
+|-----------|---------|
+| Back Squat | ✅ |
+| Deadlift | ✅ |
+| Bench Press | ✅ |
+| Push Press | ✅ |
+| Clean & Jerk | ✅ |
+
+### Verified Features
+
+- ✅ Exercise Classification
+- ✅ Rep Detection
+- ✅ Rep Scoring
+- ✅ Coaching Zones
+- ✅ Phase Images
+- ✅ Overlay Videos
+- ✅ S3 Overlay Delivery
+- ✅ Olympic Lift Analysis
+
+### Production Tags
+
+- v1.2.0-olympic-overlays
+- v1.2.1-readme
+- v1.2.2-smoke-test-fixes
+
+---
+
 # Author
 
 ## Joseph Kamil
