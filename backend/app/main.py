@@ -423,23 +423,8 @@ def classify_with_biomechanics(
     summary,
     pose_frames,
 ):
-    if (
-        label == "snatch"
-        and oly_label == "not_oly"
-        and summary.get("wrist_above_shoulder_ratio", 0) < 0.25
-        and summary.get("avg_torso_angle", 0) > 70
-    ):
-        label = "push_press"
-        confidence = 0.80
-        override_used = True
-        reason = "protect_push_press_from_snatch"
-
     if pose_frames < 10 or not summary:
         return raw_label, confidence, False, "low_pose_data"
-
-    # Trust strong model predictions first
-    if confidence >= 0.45:
-        return raw_label, confidence, False, "trusted_model_prediction"
 
     min_knee = summary["min_knee_angle"]
     max_knee = summary["max_knee_angle"]
@@ -461,6 +446,24 @@ def classify_with_biomechanics(
     elbow_range = max_elbow - min_elbow
 
     avg_torso = summary.get("avg_torso_angle", 0)
+
+    # -----------------------------
+    # PROTECT PUSH PRESS FROM SNATCH
+    # -----------------------------
+    if (
+        raw_label == "snatch"
+        and wrist_ratio < 0.25
+        and avg_torso > 70
+        and max_elbow > 150
+        and knee_range > 40
+    ):
+        return "push_press", max(confidence, 0.80), True, "protect_push_press_from_snatch"
+
+    # -----------------------------
+    # TRUST STRONG MODEL PREDICTIONS
+    # -----------------------------
+    if confidence >= 0.45:
+        return raw_label, confidence, False, "trusted_model_prediction"
 
     # -----------------------------
     # PUSH PRESS
