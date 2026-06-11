@@ -1994,6 +1994,69 @@ def analyze_split_jerk_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
+def analyze_clean_and_jerk_reps(biomechanics):
+    clean_reps, _ = analyze_clean_reps(biomechanics)
+    jerk_reps, _ = analyze_split_jerk_reps(biomechanics)
+
+    clean = clean_reps[0] if clean_reps else None
+    jerk = jerk_reps[0] if jerk_reps else None
+
+    issues = []
+    feedback = []
+    breakdown = {}
+
+    score_parts = []
+
+    if clean:
+        score_parts.append(clean.get("score", 0))
+        breakdown["clean"] = clean.get("breakdown", {})
+        issues.extend([f"Clean: {issue}" for issue in clean.get("issues", [])])
+        feedback.extend(clean.get("feedback", []))
+
+    if jerk:
+        score_parts.append(jerk.get("score", 0))
+        breakdown["jerk"] = jerk.get("breakdown", {})
+        issues.extend([f"Jerk: {issue}" for issue in jerk.get("issues", [])])
+        feedback.extend(jerk.get("feedback", []))
+
+    if score_parts:
+        score = round(sum(score_parts) / len(score_parts), 1)
+    else:
+        score = 7.0
+        issues.append("Could not clearly analyze clean and jerk phases.")
+        feedback.append("Record the full clean and jerk from setup through recovery.")
+
+    if issues:
+        score = min(score, 9.2)
+    else:
+        score = max(score, 9.0)
+        feedback = ["Good clean and jerk rep. Strong clean, overhead drive, and finish."]
+
+    start_frame = clean.get("start_frame", 0) if clean else 0
+    clean_catch_frame = clean.get("catch_frame", start_frame) if clean else start_frame
+    jerk_dip_frame = jerk.get("dip_frame", clean_catch_frame) if jerk else clean_catch_frame
+    jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
+    jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
+    end_frame = jerk.get("end_frame", clean.get("end_frame", 0)) if jerk else clean.get("end_frame", 0)
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(start_frame),
+        "clean_catch_frame": int(clean_catch_frame),
+        "jerk_dip_frame": int(jerk_dip_frame),
+        "jerk_drive_frame": int(jerk_drive_frame),
+        "jerk_catch_frame": int(jerk_catch_frame),
+        "end_frame": int(end_frame),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_snatch_reps(biomechanics):
     knee = np.array([b["knee_angle"] for b in biomechanics])
     hip = np.array([b["hip_angle"] for b in biomechanics])
@@ -4332,6 +4395,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             rep_feedback, _ = analyze_clean_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
 
+        elif label == "clean_and_jerk":
+            rep_feedback, _ = analyze_clean_and_jerk_reps(biomechanics)
+            analysis_mode = "detailed_rep_analysis"
+        
         elif label == "split_jerk":
             rep_feedback, _ = analyze_split_jerk_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
