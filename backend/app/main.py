@@ -3963,11 +3963,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         squat_router_label = None
         squat_router_confidence = None
 
+
         # SPLIT JERK OVERRIDE
         if (
-            raw_label in ["push_press", "strict_press"]
+            raw_label in ["push_press", "strict_press", "bar_muscle_up", "pull_up"]
             and summary.get("wrist_above_shoulder_ratio", 0) > 0.55
-            and summary.get("min_knee_angle", 180) < 115
+            and summary.get("min_knee_angle", 180) < 155
             and summary.get("max_elbow_angle", 0) > 150
         ):
             raw_label = "split_jerk"
