@@ -1826,15 +1826,16 @@ def analyze_clean_reps(biomechanics):
         issues.append("Bar may be drifting away during the turnover.")
         feedback.append("Keep the bar close and pull yourself under it.")
 
-    score = 10.0
+    score += 0.8
+    score = min(9.2, round(score, 1)) if issues else max(score, 9.0)
 
     penalties = {
-        "first_pull": {"good": 0.0, "poor": 1.2},
-        "extension": {"good": 0.0, "incomplete": 1.2},
-        "turnover": {"good": 0.0, "early_arm_bend": 1.0},
+        "first_pull": {"good": 0.0, "poor": 0.8},
+        "extension": {"good": 0.0, "incomplete": 1.0},
+        "turnover": {"good": 0.0, "early_arm_bend": 0.7},
         "catch": {"good": 0.0, "power_catch": 0.4, "deep_catch": 0.0},
-        "front_rack": {"good": 0.0, "poor": 1.2},
-        "bar_path": {"good": 0.0, "drifting": 1.0},
+        "front_rack": {"good": 0.0, "poor": 0.8},
+        "bar_path": {"good": 0.0, "drifting": 0.8},
     }
 
     for key, value in breakdown.items():
