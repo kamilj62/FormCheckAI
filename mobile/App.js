@@ -516,7 +516,7 @@ try {
         );
       }
 
-      setOverlayUrl(visualsData.overlay_video_url);
+      setOverlayUrl(fullUrl(visualsData.overlay_video_url));
 
       setResult((prev) => ({
         ...prev,
@@ -540,14 +540,14 @@ try {
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayProgress, setOverlayProgress] = useState("");
   
-  const generateOverlay = async () => {
+const generateOverlay = async () => {
   try {
     setOverlayLoading(true);
-    setOverlayProgress("Starting overlay job...");
+    setOverlayProgress("Generating overlay...");
 
     const bestRep = getBestRep(result?.rep_feedback || []);
 
-    const startRes = await fetch(`${API_URL}/start_overlay`, {
+    const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
       method: "POST",
       body: await buildFormData({
         rep_json: bestRep ? JSON.stringify(bestRep) : null,
@@ -555,41 +555,25 @@ try {
       }),
     });
 
-    const startData = await startRes.json();
+    const overlayData = await overlayRes.json();
 
-    if (!startRes.ok || !startData.job_id) {
-      throw new Error(startData.message || "Could not start overlay job");
+    if (!overlayRes.ok || overlayData.error) {
+      throw new Error(
+        overlayData.detail ||
+          overlayData.message ||
+          overlayData.error ||
+          "Overlay generation failed"
+      );
     }
 
-    const jobId = startData.job_id;
+    setOverlayProgress("Overlay ready!");
+    setOverlayUrl(fullUrl(overlayData.overlay_video_url));
 
-    for (let i = 0; i < 30; i++) {
-      setOverlayProgress(`Processing overlay... ${i + 1}/30`);
-
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
-      const statusData = await statusRes.json();
-
-      if (statusData.status === "ready") {
-        setOverlayProgress("Overlay ready!");
-        setOverlayUrl(statusData.overlay_video_url);
-
-        setResult((prev) => ({
-          ...prev,
-          overlay_video_url: statusData.overlay_video_url,
-          overlay_error: null,
-        }));
-
-        return;
-      }
-
-      if (statusData.status === "error") {
-        throw new Error(statusData.message || "Overlay generation failed");
-      }
-    }
-
-    throw new Error("Overlay is still processing. Try again shortly.");
+    setResult((prev) => ({
+      ...prev,
+      overlay_video_url: overlayData.overlay_video_url,
+      overlay_error: null,
+    }));
   } catch (err) {
     setOverlayProgress("");
 
