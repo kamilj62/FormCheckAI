@@ -2048,6 +2048,17 @@ def analyze_clean_and_jerk_reps(biomechanics):
     jerk_dip_frame = jerk.get("dip_frame", clean_catch_frame) if jerk else clean_catch_frame
     jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
     jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
+
+    # Force proper phase ordering
+    if jerk_dip_frame <= clean_catch_frame:
+        jerk_dip_frame = clean_catch_frame + 1
+
+    if jerk_drive_frame <= jerk_dip_frame:
+        jerk_drive_frame = jerk_dip_frame + 1
+
+    if jerk_catch_frame <= jerk_drive_frame:
+        jerk_catch_frame = jerk_drive_frame + 1
+        
     end_frame = jerk.get("end_frame", clean.get("end_frame", 0)) if jerk else clean.get("end_frame", 0)
 
     reps = [{
