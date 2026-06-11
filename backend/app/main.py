@@ -3590,34 +3590,62 @@ def create_olympic_lift_phase_images(
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    start = int(rep.get("start_frame", 0)) * sample_every
-    end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+    def rep_frame(key, default):
+        return int(rep.get(key, default))
+
+    start = rep_frame("start_frame", 0)
+    end = rep_frame("end_frame", total_frames - 1)
 
     start = max(0, min(start, total_frames - 1))
     end = max(start + 1, min(end, total_frames - 1))
-
-    duration = max(1, end - start)
 
     normalized_label = exercise_label.lower().replace(" ", "_")
     prefix = normalized_label
 
     # -----------------------------------
-    # JERK / SPLIT JERK / THRUSTER
+    # SPLIT JERK
     # -----------------------------------
-    if normalized_label in ["jerk", "split_jerk", "thruster"]:
+    if normalized_label == "split_jerk":
         phase_frames = {
             "setup": start,
-            "dip": start + int(duration * 0.20),
-            "drive": start + int(duration * 0.38),
-            "catch": start + int(duration * 0.62),
-            "recovery": start + int(duration * 0.82),
-            "finish": max(start, min(end - 1, total_frames - 1)),
+            "dip": rep_frame("dip_frame", start),
+            "drive": rep_frame("drive_frame", start),
+            "catch": rep_frame("catch_frame", start),
+            "lockout": rep_frame("lockout_frame", end),
+            "finish": end,
         }
 
     # -----------------------------------
-    # CLEAN / SNATCH / CLEAN & JERK
+    # CLEAN & JERK
+    # -----------------------------------
+    elif normalized_label == "clean_and_jerk":
+        phase_frames = {
+            "setup": start,
+            "clean_catch": rep_frame("clean_catch_frame", start),
+            "jerk_dip": rep_frame("jerk_dip_frame", start),
+            "jerk_drive": rep_frame("jerk_drive_frame", start),
+            "jerk_catch": rep_frame("jerk_catch_frame", start),
+            "finish": end,
+        }
+
+    # -----------------------------------
+    # CLEAN / SNATCH
+    # -----------------------------------
+    elif normalized_label in ["clean", "snatch"]:
+        phase_frames = {
+            "setup": start,
+            "first_pull": rep_frame("first_pull_frame", start),
+            "extension": rep_frame("extension_frame", start),
+            "catch": rep_frame("catch_frame", start),
+            "finish": end,
+        }
+
+    # -----------------------------------
+    # FALLBACK
     # -----------------------------------
     else:
+        duration = max(1, end - start)
+
         phase_frames = {
             "setup": start,
             "first_pull": start + int(duration * 0.22),
@@ -3675,7 +3703,6 @@ def create_olympic_lift_phase_images(
         cv2.imwrite(debug_path, debug_sheet)
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
 
-    # Force finish fallback
     if "finish" not in saved and "recovery" in saved:
         saved["finish"] = saved["recovery"]
 
