@@ -471,6 +471,18 @@ def classify_with_biomechanics(
         return "thruster", max(confidence, 0.82), True, "protect_thruster_from_snatch"
     
     # -----------------------------
+# PROTECT PULL-UP FROM JERK/SNATCH
+# -----------------------------
+    if (
+        raw_label in ["split_jerk", "snatch", "jerk", "clean_and_jerk"]
+        and summary.get("wrist_above_shoulder_ratio", 0) > 0.45
+        and summary.get("min_knee_angle", 180) > 95
+        and summary.get("avg_torso_angle", 90) < 35
+        and summary.get("min_elbow_angle", 180) < 100
+    ):
+        return "pull_up", max(confidence, 0.82), True, "protect_pull_up_from_overhead_lift"
+    
+    # -----------------------------
     # TRUST STRONG MODEL PREDICTIONS
     # -----------------------------
     if confidence >= 0.45:
