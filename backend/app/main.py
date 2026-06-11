@@ -4896,8 +4896,7 @@ async def analyze(file: UploadFile = File(...)):
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        result = analyze_video(temp_path, make_visuals=False)
-        return result
+        result = analyze_video(temp_path, make_visuals=True, make_overlay=False)        return result
 
     except Exception as e:
         import traceback
