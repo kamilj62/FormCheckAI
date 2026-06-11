@@ -4188,6 +4188,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_label = "snatch"
             raw_confidence = 0.82
 
+        # CLEAN AND JERK OVERRIDE
+        if (
+            oly_router_label == "clean_and_jerk"
+            and oly_router_confidence is not None
+            and oly_router_confidence >= 0.55
+        ):
+            raw_label = "clean_and_jerk"
+            raw_confidence = max(raw_confidence, oly_router_confidence)
+        
         # CLEAN OVERRIDE
         if (
             raw_label in ["deadlift", "squat", "squat_back", "squat_front"]
