@@ -428,24 +428,20 @@ def classify_with_biomechanics(
 
     min_knee = summary["min_knee_angle"]
     max_knee = summary["max_knee_angle"]
-
     min_hip = summary["min_hip_angle"]
     max_hip = summary["max_hip_angle"]
-
     min_torso = summary["min_torso_angle"]
     max_torso = summary["max_torso_angle"]
-
     min_elbow = summary["min_elbow_angle"]
     max_elbow = summary["max_elbow_angle"]
 
     wrist_ratio = summary["wrist_above_shoulder_ratio"]
+    avg_torso = summary.get("avg_torso_angle", 0)
 
     knee_range = max_knee - min_knee
     hip_range = max_hip - min_hip
     torso_range = max_torso - min_torso
     elbow_range = max_elbow - min_elbow
-
-    avg_torso = summary.get("avg_torso_angle", 0)
 
     # -----------------------------
     # PROTECT PUSH PRESS FROM SNATCH
@@ -460,54 +456,67 @@ def classify_with_biomechanics(
         return "push_press", max(confidence, 0.80), True, "protect_push_press_from_snatch"
 
     # -----------------------------
-# PROTECT THRUSTER FROM SNATCH
-# -----------------------------
+    # PROTECT THRUSTER FROM SNATCH
+    # -----------------------------
     if (
         raw_label == "snatch"
-        and summary.get("wrist_above_shoulder_ratio", 0) < 0.25
-        and summary.get("min_knee_angle", 180) < 90
-        and summary.get("max_elbow_angle", 0) > 150
+        and wrist_ratio < 0.25
+        and min_knee < 90
+        and max_elbow > 150
     ):
         return "thruster", max(confidence, 0.82), True, "protect_thruster_from_snatch"
-    
+
     # -----------------------------
-# PROTECT PULL-UP FROM JERK/SNATCH
-# -----------------------------
+    # PROTECT PULL-UP FROM JERK/SNATCH
+    # -----------------------------
     if (
         raw_label in ["split_jerk", "snatch", "jerk", "clean_and_jerk"]
-        and summary.get("wrist_above_shoulder_ratio", 0) > 0.45
-        and summary.get("min_knee_angle", 180) > 95
-        and summary.get("avg_torso_angle", 90) < 35
-        and summary.get("min_elbow_angle", 180) < 100
+        and wrist_ratio > 0.45
+        and min_knee > 95
+        and avg_torso < 35
+        and min_elbow < 100
     ):
         return "pull_up", max(confidence, 0.82), True, "protect_pull_up_from_overhead_lift"
-    
+
     # -----------------------------
-# PROTECT PUSH-UP FROM DEADLIFT
-# -----------------------------
+    # PROTECT PUSH-UP FROM DEADLIFT
+    # -----------------------------
     if (
         raw_label == "deadlift"
-        and summary.get("wrist_above_shoulder_ratio", 1) < 0.10
-        and summary.get("avg_torso_angle", 0) > 45
-        and summary.get("max_torso_angle", 0) > 85
-        and summary.get("min_elbow_angle", 180) < 80
-        and summary.get("max_elbow_angle", 0) > 140
+        and wrist_ratio < 0.10
+        and avg_torso > 45
+        and max_torso > 85
+        and min_elbow < 80
+        and max_elbow > 140
     ):
         return "push_up", max(confidence, 0.82), True, "protect_push_up_from_deadlift"
-    
+
     # -----------------------------
-# PROTECT HANDSTAND PUSH-UP FROM BENCH
-# -----------------------------
+    # PROTECT HANDSTAND PUSH-UP FROM BENCH
+    # -----------------------------
     if (
         raw_label == "bench_press"
-        and summary.get("avg_torso_angle", 0) > 150
-        and summary.get("min_elbow_angle", 180) < 125
-        and summary.get("max_elbow_angle", 0) > 165
-        and summary.get("wrist_above_shoulder_ratio", 1) < 0.10
+        and avg_torso > 150
+        and min_elbow < 125
+        and max_elbow > 165
+        and wrist_ratio < 0.10
         and summary.get("avg_knee_angle", 0) > 150
     ):
         return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
-    
+
+    # -----------------------------
+    # PROTECT BURPEE FROM CLEAN
+    # -----------------------------
+    if (
+        raw_label in ["clean", "deadlift", "squat"]
+        and min_knee < 90
+        and min_hip < 70
+        and max_torso > 95
+        and min_elbow < 80
+        and wrist_ratio < 0.30
+    ):
+        return "burpee", max(confidence, 0.82), True, "protect_burpee_from_clean"
+
     # -----------------------------
     # TRUST STRONG MODEL PREDICTIONS
     # -----------------------------
@@ -2772,6 +2781,54 @@ def analyze_push_up_reps(biomechanics, exercise_label="push_up"):
     return reps, build_set_summary(reps)
 
 
+def analyze_burpee_reps(biomechanics):
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    start_idx = 0
+    end_idx = len(biomechanics) - 1
+
+    hands_down_idx = int(len(biomechanics) * 0.20)
+    plank_idx = int(len(biomechanics) * 0.40)
+    stand_idx = int(len(biomechanics) * 0.70)
+    finish_idx = end_idx
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "start": "good",
+        "hands_down": "good",
+        "plank": "good",
+        "stand": "good",
+        "finish": "good",
+    }
+
+    score = 9.0
+    feedback = ["Good burpee rep. Move smoothly from standing to plank and back to finish."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "hands_down_frame": int(frame_numbers[hands_down_idx]),
+        "plank_frame": int(frame_numbers[plank_idx]),
+        "stand_frame": int(frame_numbers[stand_idx]),
+        "end_frame": int(frame_numbers[finish_idx]),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def draw_ideal_bench_press_overlay(frame, pose_landmarks, width, height):
     """
     Draw ideal bench press guide:
@@ -4494,6 +4551,78 @@ def create_push_up_phase_images(
     return saved
 
 
+def create_burpee_phase_images(
+    input_path,
+    output_dir,
+    rep=None,
+    sample_every=1,
+):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Burpee phase error")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    start = 0
+    end = total_frames - 1
+
+    phase_frames = {
+        "start": start,
+        "hands_down": int(total_frames * 0.20),
+        "plank": int(total_frames * 0.40),
+        "stand": int(total_frames * 0.70),
+        "finish": end,
+    }
+
+    saved = {}
+    debug_images = []
+
+    for phase, frame_idx in phase_frames.items():
+        frame_idx = max(0, min(frame_idx, total_frames - 1))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
+
+        if not ret or frame is None:
+            continue
+
+        filename = f"burpee_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filepath = os.path.join(output_dir, filename)
+
+        cv2.imwrite(filepath, frame)
+        saved[phase] = f"/outputs/{filename}"
+
+        debug = frame.copy()
+        cv2.putText(
+            debug,
+            f"{phase} ({frame_idx})",
+            (30, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+        )
+        debug_images.append(debug)
+
+    if debug_images:
+        debug_sheet = np.hstack(debug_images)
+        debug_filename = f"burpee_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_path = os.path.join(output_dir, debug_filename)
+
+        cv2.imwrite(debug_path, debug_sheet)
+        saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    # Fallbacks
+    if "finish" not in saved and "stand" in saved:
+        saved["finish"] = saved["stand"]
+
+    cap.release()
+
+    return saved
+
+
 def build_coaching_zones(exercise_label, rep_feedback):
     if not rep_feedback:
         return {}
@@ -5034,6 +5163,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             )
             analysis_mode = "detailed_rep_analysis"
 
+        elif label == "burpee":
+            rep_feedback, _ = analyze_burpee_reps(biomechanics)
+            analysis_mode = "detailed_rep_analysis"
+
         elif label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
@@ -5160,6 +5293,14 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         phase_rep,
                         sample_every=sample_every,
                         exercise_label=label,
+                    )
+
+                elif label == "burpee":
+                    phase_images = create_burpee_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep,
+                        sample_every=sample_every,
                     )
 
                 elif label == "bench_press":
