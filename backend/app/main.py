@@ -2789,43 +2789,74 @@ def analyze_burpee_reps(biomechanics):
         for i, b in enumerate(biomechanics)
     ])
 
+    wrist_y = np.array([
+        b.get("wrist_y", 0.0)
+        for b in biomechanics
+    ])
+
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
+    n = len(biomechanics)
+
     start_idx = 0
-    end_idx = len(biomechanics) - 1
 
-    hands_down_idx = int(len(biomechanics) * 0.20)
-    plank_idx = int(len(biomechanics) * 0.40)
-    stand_idx = int(len(biomechanics) * 0.70)
-    finish_idx = end_idx
+    # Hands Down
+    early_end = max(3, int(n * 0.25))
+    hands_down_idx = int(np.argmax(wrist_y[:early_end]))
 
-    issues = []
-    feedback = []
+    # Force ordered phases.
+    plank_idx = min(
+        hands_down_idx + int(n * 0.18),
+        n - 1
+    )
 
-    breakdown = {
-        "start": "good",
-        "hands_down": "good",
-        "plank": "good",
-        "stand": "good",
-        "finish": "good",
-    }
+    jump_in_idx = min(
+        plank_idx + int(n * 0.10),
+        n - 1
+    )
 
-    score = 9.0
-    feedback = ["Good burpee rep. Move smoothly from standing to plank and back to finish."]
+    stand_idx = min(
+        jump_in_idx + int(n * 0.08),
+        n - 1
+    )
+
+    # Finish = same upright position as stand
+    finish_idx = stand_idx
+
+    # Enforce order
+    hands_down_idx = max(hands_down_idx, start_idx)
+    plank_idx = max(plank_idx, hands_down_idx + 1)
+    jump_in_idx = max(jump_in_idx, plank_idx + 1)
+    stand_idx = max(stand_idx, jump_in_idx + 1)
+
+    hands_down_idx = min(hands_down_idx, n - 1)
+    plank_idx = min(plank_idx, n - 1)
+    jump_in_idx = min(jump_in_idx, n - 1)
+    stand_idx = min(stand_idx, n - 1)
+    finish_idx = min(finish_idx, n - 1)
 
     reps = [{
         "rep": 1,
         "start_frame": int(frame_numbers[start_idx]),
         "hands_down_frame": int(frame_numbers[hands_down_idx]),
         "plank_frame": int(frame_numbers[plank_idx]),
+        "jump_in_frame": int(frame_numbers[jump_in_idx]),
         "stand_frame": int(frame_numbers[stand_idx]),
         "end_frame": int(frame_numbers[finish_idx]),
-        "score": score,
-        "grade": grade_score(score),
-        "issues": issues,
-        "breakdown": breakdown,
-        "feedback": feedback,
+        "score": 9.0,
+        "grade": grade_score(9.0),
+        "issues": [],
+        "breakdown": {
+            "hands_down": "good",
+            "plank": "good",
+            "jump_in": "good",
+            "stand": "good",
+            "finish": "good",
+        },
+        "feedback": [
+            "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
+        ],
     }]
 
     return reps, build_set_summary(reps)
@@ -4567,15 +4598,27 @@ def create_burpee_phase_images(
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    start = 0
-    end = total_frames - 1
+    if rep:
+        start = int(rep.get("start_frame", 0))
+        hands_down = int(rep.get("hands_down_frame", start))
+        plank = int(rep.get("plank_frame", start))
+
+        jump_in = int(
+            rep.get(
+                "jump_in_frame",
+                rep.get("plank_frame", start)
+            )
+        )
+
+        stand = int(rep.get("stand_frame", start))
+        finish = int(rep.get("end_frame", total_frames - 1))
 
     phase_frames = {
-        "start": start,
-        "hands_down": int(total_frames * 0.20),
-        "plank": int(total_frames * 0.40),
-        "stand": int(total_frames * 0.70),
-        "finish": end,
+        "start": hands_down,
+        "hands_down": plank,
+        "plank": jump_in,
+        "stand": stand,
+        "finish": finish,
     }
 
     saved = {}
@@ -4616,12 +4659,10 @@ def create_burpee_phase_images(
         cv2.imwrite(debug_path, debug_sheet)
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
 
-    # Fallbacks
     if "finish" not in saved and "stand" in saved:
         saved["finish"] = saved["stand"]
 
     cap.release()
-
     return saved
 
 

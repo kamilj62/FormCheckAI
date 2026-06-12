@@ -144,6 +144,79 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
+      if (label.includes("pull")) {
+    return {
+      title: "Pull-Up Phase Review",
+      text: "Hang → Pull → Top → Descent → Finish",
+      items: [
+        ["hang", "Hang"],
+        ["pull", "Pull"],
+        ["top", "Top"],
+        ["descent", "Descent"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
+  if (label.includes("muscle")) {
+    return {
+      title: label.includes("ring")
+        ? "Ring Muscle-Up Phase Review"
+        : "Bar Muscle-Up Phase Review",
+      text: "Hang → Pull → Transition → Dip → Lockout → Finish",
+      items: [
+        ["hang", "Hang"],
+        ["pull", "Pull"],
+        ["transition", "Transition"],
+        ["dip", "Dip"],
+        ["lockout", "Lockout"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
+  if (label.includes("handstand push")) {
+    return {
+      title: "Handstand Push-Up Phase Review",
+      text: "Setup → Descent → Bottom → Ascent → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["descent", "Descent"],
+        ["bottom", "Bottom"],
+        ["ascent", "Ascent"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  if (label.includes("push up") || label.includes("push-up")) {
+    return {
+      title: "Push-Up Phase Review",
+      text: "Setup → Descent → Bottom → Ascent → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["descent", "Descent"],
+        ["bottom", "Bottom"],
+        ["ascent", "Ascent"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  if (label.includes("burpee")) {
+    return {
+      title: "Burpee Phase Review",
+      text: "Hands Down → Plank → Jump In → Stand → Finish",
+      items: [
+        ["start", "Hands Down"],
+        ["hands_down", "Plank"],
+        ["plank", "Jump In"],
+        ["stand", "Stand"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
   return {
     title: "Deadlift Phase Review",
     text: "Setup → Pull → Mid → Finish → Lockout",
@@ -161,6 +234,46 @@ const getInteractiveZones = (result) => {
   const label = String(result?.exercise_label || "").toLowerCase();
   const bestRep = getBestRep(result?.rep_feedback || []);
   const breakdown = bestRep?.breakdown || {};
+
+    if (label.includes("burpee")) {
+    return [
+      {
+        id: "hands_down",
+        title: "Hands Down",
+        imageKey: "start",
+        status: breakdown.start || "good",
+        note: "Move quickly to the floor while staying balanced.",
+      },
+      {
+        id: "plank",
+        title: "Plank",
+        imageKey: "hands_down",
+        status: breakdown.hands_down || "good",
+        note: "Keep your body tight and avoid sagging through the core.",
+      },
+      {
+        id: "jump_in",
+        title: "Jump In",
+        imageKey: "plank",
+        status: breakdown.plank || "good",
+        note: "Bring your feet underneath you efficiently.",
+      },
+      {
+        id: "stand",
+        title: "Stand",
+        imageKey: "stand",
+        status: breakdown.stand || "good",
+        note: "Stand tall with control before finishing the rep.",
+      },
+      {
+        id: "finish",
+        title: "Finish",
+        imageKey: "finish",
+        status: breakdown.finish || "good",
+        note: "Complete the rep fully before starting the next one.",
+      },
+    ];
+  }
 
   if (label.includes("push press")) {
     return [
@@ -547,33 +660,79 @@ const generateOverlay = async () => {
 
     const bestRep = getBestRep(result?.rep_feedback || []);
 
-    const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
-      method: "POST",
-      body: await buildFormData({
-        rep_json: bestRep ? JSON.stringify(bestRep) : null,
-        exercise_label: result?.exercise_label || "",
-      }),
-    });
+    const formPayload = {
+      rep_json: bestRep ? JSON.stringify(bestRep) : null,
+      exercise_label: result?.exercise_label || "",
+    };
 
-    const overlayData = await overlayRes.json();
+    // 1. Try fast direct overlay first
+    try {
+      const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
+        method: "POST",
+        body: await buildFormData(formPayload),
+      });
 
-    if (!overlayRes.ok || overlayData.error) {
-      throw new Error(
-        overlayData.detail ||
-          overlayData.message ||
-          overlayData.error ||
-          "Overlay generation failed"
-      );
+      const overlayData = await overlayRes.json();
+
+      if (overlayRes.ok && overlayData.overlay_video_url) {
+        setOverlayProgress("Overlay ready!");
+        setOverlayUrl(fullUrl(overlayData.overlay_video_url));
+
+        setResult((prev) => ({
+          ...prev,
+          overlay_video_url: overlayData.overlay_video_url,
+          overlay_error: null,
+        }));
+
+        return;
+      }
+    } catch (directErr) {
+      console.log("DIRECT OVERLAY FAILED, FALLING BACK:", directErr);
     }
 
-    setOverlayProgress("Overlay ready!");
-    setOverlayUrl(fullUrl(overlayData.overlay_video_url));
+    // 2. Fallback to background overlay job
+    setOverlayProgress("Starting background overlay job...");
 
-    setResult((prev) => ({
-      ...prev,
-      overlay_video_url: overlayData.overlay_video_url,
-      overlay_error: null,
-    }));
+    const startRes = await fetch(`${API_URL}/start_overlay`, {
+      method: "POST",
+      body: await buildFormData(formPayload),
+    });
+
+    const startData = await startRes.json();
+
+    if (!startRes.ok || !startData.job_id) {
+      throw new Error(startData.message || "Could not start overlay job");
+    }
+
+    const jobId = startData.job_id;
+
+    for (let i = 0; i < 40; i++) {
+      setOverlayProgress(`Processing overlay... ${i + 1}/40`);
+
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
+      const statusData = await statusRes.json();
+
+      if (statusData.status === "ready") {
+        setOverlayProgress("Overlay ready!");
+        setOverlayUrl(fullUrl(statusData.overlay_video_url));
+
+        setResult((prev) => ({
+          ...prev,
+          overlay_video_url: statusData.overlay_video_url,
+          overlay_error: null,
+        }));
+
+        return;
+      }
+
+      if (statusData.status === "error") {
+        throw new Error(statusData.message || "Overlay generation failed");
+      }
+    }
+
+    throw new Error("Overlay is still processing. Try again shortly.");
   } catch (err) {
     setOverlayProgress("");
 
@@ -958,7 +1117,7 @@ const generateOverlay = async () => {
                     key={`${activeZone?.id}-${activeImagePath}`}
                     source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
-                    resizeMode="contain"
+                    resizeMode="cover"
                   />
                 ) : (
                   <View style={styles.emptyImage}>
