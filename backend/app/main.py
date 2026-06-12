@@ -2463,6 +2463,166 @@ def analyze_bench_press_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
+def analyze_pull_up_reps(biomechanics):
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    # Pull-up top usually has smallest elbow angle / highest body position
+    top_idx = int(np.argmin(elbow))
+
+    start_idx = max(0, top_idx - int(len(biomechanics) * 0.35))
+    end_idx = min(len(biomechanics) - 1, top_idx + int(len(biomechanics) * 0.35))
+
+    rep_elbow = elbow[start_idx:end_idx + 1]
+    rep_wrist_y = wrist_y[start_idx:end_idx + 1]
+    rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
+
+    min_elbow = float(np.min(rep_elbow))
+    max_elbow = float(np.max(rep_elbow))
+    elbow_range = max_elbow - min_elbow
+    wrist_above_ratio = float(np.mean(rep_wrist_y < rep_shoulder_y))
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "range": "good",
+        "top": "good",
+        "control": "good",
+    }
+
+    if elbow_range < 45:
+        breakdown["range"] = "short"
+        issues.append("Pull-up range of motion may be short.")
+        feedback.append("Start from a fuller hang and pull through a complete range.")
+
+    if min_elbow > 105:
+        breakdown["top"] = "short"
+        issues.append("Chin may not reach the bar.")
+        feedback.append("Pull higher until your chin clears the bar.")
+
+    if wrist_above_ratio < 0.35:
+        breakdown["control"] = "review"
+        issues.append("Upper-body position was hard to track.")
+        feedback.append("Record from the side with the full body and bar visible.")
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good pull-up rep. Keep the body tight and finish high."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "pull_frame": int(frame_numbers[start_idx + int((top_idx - start_idx) * 0.5)]),
+        "top_frame": int(frame_numbers[top_idx]),
+        "descent_frame": int(frame_numbers[top_idx + int((end_idx - top_idx) * 0.5)]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
+def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    top_idx = int(np.argmin(hip_y))
+    start_idx = max(0, top_idx - int(len(biomechanics) * 0.45))
+    end_idx = min(len(biomechanics) - 1, top_idx + int(len(biomechanics) * 0.30))
+
+    rep_elbow = elbow[start_idx:end_idx + 1]
+    rep_wrist_y = wrist_y[start_idx:end_idx + 1]
+    rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
+
+    min_elbow = float(np.min(rep_elbow))
+    max_elbow = float(np.max(rep_elbow))
+    elbow_range = max_elbow - min_elbow
+    support_ratio = float(np.mean(rep_wrist_y < rep_shoulder_y))
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "pull": "good",
+        "transition": "good",
+        "support": "good",
+        "lockout": "good",
+    }
+
+    if elbow_range < 45:
+        breakdown["pull"] = "short"
+        issues.append("Pull may be short.")
+        feedback.append("Pull higher before transitioning over the bar.")
+
+    if min_elbow > 110:
+        breakdown["transition"] = "slow"
+        issues.append("Transition may be incomplete.")
+        feedback.append("Turn over aggressively and get your chest over the bar.")
+
+    if support_ratio < 0.30:
+        breakdown["support"] = "unstable"
+        issues.append("Support position may be unstable.")
+        feedback.append("Finish in a strong support position above the bar.")
+
+    if max_elbow < 150:
+        breakdown["lockout"] = "soft"
+        issues.append("Lockout may be incomplete.")
+        feedback.append("Press to a stronger lockout at the top.")
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        name = "ring muscle-up" if exercise_label == "ring_muscle_up" else "bar muscle-up"
+        feedback = [f"Good {os.name} rep. Strong pull, transition, and support."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "pull_frame": int(frame_numbers[start_idx + int((top_idx - start_idx) * 0.35)]),
+        "transition_frame": int(frame_numbers[start_idx + int((top_idx - start_idx) * 0.70)]),
+        "dip_frame": int(frame_numbers[top_idx]),
+        "lockout_frame": int(frame_numbers[end_idx]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def draw_ideal_bench_press_overlay(frame, pose_landmarks, width, height):
     """
     Draw ideal bench press guide:
@@ -3832,8 +3992,8 @@ def create_pull_up_phase_images(
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     if rep:
-        start = int(rep.get("start_frame", 0)) * sample_every
-        end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+        start = int(rep.get("start_frame", 0))
+        end = int(rep.get("end_frame", total_frames - 1))
     else:
         start = 0
         end = total_frames - 1
@@ -3925,8 +4085,8 @@ def create_bar_muscle_up_phase_images(
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     if rep:
-        start = int(rep.get("start_frame", 0)) * sample_every
-        end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+        start = int(rep.get("start_frame", 0))
+        end = int(rep.get("end_frame", total_frames - 1))
     else:
         start = 0
         end = total_frames - 1
@@ -3995,6 +4155,9 @@ def create_bar_muscle_up_phase_images(
 
         cv2.imwrite(debug_path, debug_sheet)
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    if "lockout" not in saved and "dip" in saved:
+        saved["lockout"] = saved["dip"]
 
     if "finish" not in saved and "lockout" in saved:
         saved["finish"] = saved["lockout"]
@@ -4519,6 +4682,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             rep_feedback, _ = analyze_push_press_reps(biomechanics, label)
             analysis_mode = "detailed_rep_analysis"
 
+        elif label == "pull_up":
+            rep_feedback, _ = analyze_pull_up_reps(biomechanics)
+            analysis_mode = "detailed_rep_analysis"
+
+        elif label in ["bar_muscle_up", "ring_muscle_up"]:
+            rep_feedback, _ = analyze_muscle_up_reps(
+                biomechanics,
+                exercise_label=label,
+            )
+            analysis_mode = "detailed_rep_analysis"
+
         elif label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
@@ -4603,6 +4777,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         OVERLAY_DIR,
                         phase_rep,
                         sample_every=sample_every,
+                    )
+
+                elif label == "pull_up":
+                    phase_images = create_pull_up_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep,
+                        sample_every=sample_every,
+                    )
+
+                elif label in ["bar_muscle_up", "ring_muscle_up"]:
+                    phase_images = create_bar_muscle_up_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep,
+                        sample_every=sample_every,
+                        exercise_label=label,
                     )
 
                 elif label == "bench_press":
