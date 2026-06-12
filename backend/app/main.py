@@ -496,6 +496,19 @@ def classify_with_biomechanics(
         return "push_up", max(confidence, 0.82), True, "protect_push_up_from_deadlift"
     
     # -----------------------------
+# PROTECT HANDSTAND PUSH-UP FROM BENCH
+# -----------------------------
+    if (
+        raw_label == "bench_press"
+        and summary.get("avg_torso_angle", 0) > 150
+        and summary.get("min_elbow_angle", 180) < 125
+        and summary.get("max_elbow_angle", 0) > 165
+        and summary.get("wrist_above_shoulder_ratio", 1) < 0.10
+        and summary.get("avg_knee_angle", 0) > 150
+    ):
+        return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
+    
+    # -----------------------------
     # TRUST STRONG MODEL PREDICTIONS
     # -----------------------------
     if confidence >= 0.45:
@@ -2672,7 +2685,7 @@ def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
     return reps, build_set_summary(reps)
 
 
-def analyze_push_up_reps(biomechanics):
+def analyze_push_up_reps(biomechanics, exercise_label="push_up"):
     elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
     hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
     shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
@@ -2716,8 +2729,10 @@ def analyze_push_up_reps(biomechanics):
     if min_elbow > 100:
         breakdown["depth"] = "shallow"
         issues.append("Push-up depth may be shallow.")
-        feedback.append("Lower your chest closer to the floor.")
-
+        if exercise_label == "handstand_push_up":
+            feedback.append("Lower your head toward the floor.")
+        else:
+            feedback.append("Lower your chest closer to the floor.")
     if max_elbow < 155:
         breakdown["lockout"] = "incomplete"
         issues.append("Lockout may be incomplete.")
@@ -4381,7 +4396,13 @@ def create_bar_muscle_up_phase_images(
     return saved
 
 
-def create_push_up_phase_images(input_path, output_dir, rep=None, sample_every=1):
+def create_push_up_phase_images(
+    input_path,
+    output_dir,
+    rep=None,
+    sample_every=1,
+    exercise_label="push_up",
+):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
@@ -4391,28 +4412,30 @@ def create_push_up_phase_images(input_path, output_dir, rep=None, sample_every=1
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     if rep:
-        start = int(rep.get("start_frame", 0))
-        bottom = int(rep.get("bottom_frame", start))
-        end = int(rep.get("end_frame", total_frames - 1))
+        start = int(rep.get("start_frame", 0)) * sample_every
+        end = int(rep.get("end_frame", total_frames - 1)) * sample_every
     else:
         start = 0
-        bottom = total_frames // 2
         end = total_frames - 1
 
     start = max(0, min(start, total_frames - 1))
-    bottom = max(start + 1, min(bottom, total_frames - 1))
-    end = max(bottom + 1, min(end, total_frames - 1))
+    end = max(start + 1, min(end, total_frames - 1))
 
-    descent = start + int((bottom - start) * 0.5)
-    ascent = bottom + int((end - bottom) * 0.5)
+    duration = max(1, end - start)
 
     phase_frames = {
         "setup": start,
-        "descent": descent,
-        "bottom": bottom,
-        "ascent": ascent,
-        "lockout": end,
+        "descent": start + int(duration * 0.25),
+        "bottom": start + int(duration * 0.50),
+        "ascent": start + int(duration * 0.75),
+        "lockout": max(start, min(end - 1, total_frames - 1)),
     }
+
+    prefix = (
+        "handstand_push_up"
+        if exercise_label == "handstand_push_up"
+        else "push_up"
+    )
 
     saved = {}
     debug_images = []
@@ -4420,13 +4443,24 @@ def create_push_up_phase_images(input_path, output_dir, rep=None, sample_every=1
     for phase, frame_idx in phase_frames.items():
         frame_idx = max(0, min(frame_idx, total_frames - 1))
 
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = cap.read()
+        frame = None
 
-        if not ret or frame is None:
+        for offset in [0, -1, -2, -3, -5, -8, -10]:
+            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
+            ret, candidate = cap.read()
+
+            if ret and candidate is not None:
+                frame = candidate
+                frame_idx = safe_idx
+                break
+
+        if frame is None:
+            print(f"Could not read {phase} frame near: {frame_idx}")
             continue
 
-        filename = f"push_up_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filename = f"{prefix}_{phase}_{uuid.uuid4().hex[:8]}.jpg"
         filepath = os.path.join(output_dir, filename)
 
         cv2.imwrite(filepath, frame)
@@ -4446,12 +4480,17 @@ def create_push_up_phase_images(input_path, output_dir, rep=None, sample_every=1
 
     if debug_images:
         debug_sheet = np.hstack(debug_images)
-        debug_filename = f"push_up_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+
+        debug_filename = (
+            f"{prefix}_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        )
         debug_path = os.path.join(output_dir, debug_filename)
+
         cv2.imwrite(debug_path, debug_sheet)
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
 
     cap.release()
+
     return saved
 
 
@@ -4982,9 +5021,19 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             analysis_mode = "detailed_rep_analysis"
 
         elif label == "push_up":
-            rep_feedback, _ = analyze_push_up_reps(biomechanics)
+            rep_feedback, _ = analyze_push_up_reps(
+                biomechanics,
+                exercise_label=label,
+            )
             analysis_mode = "detailed_rep_analysis"
         
+        elif label == "handstand_push_up":
+            rep_feedback, _ = analyze_push_up_reps(
+                biomechanics,
+                exercise_label=label,
+            )
+            analysis_mode = "detailed_rep_analysis"
+
         elif label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
@@ -5102,7 +5151,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         OVERLAY_DIR,
                         phase_rep,
                         sample_every=sample_every,
-    )
+                    )
+
+                elif label == "handstand_push_up":
+                    phase_images = create_push_up_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep,
+                        sample_every=sample_every,
+                        exercise_label=label,
+                    )
 
                 elif label == "bench_press":
                     phase_images = create_bench_press_phase_images(
