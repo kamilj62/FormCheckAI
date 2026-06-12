@@ -19,6 +19,8 @@ overlay_jobs = {}
 
 import boto3
 
+import subprocess
+
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -5217,13 +5219,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
                 overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
 
+                compressed_path = compress_video_for_overlay(video_path)
+
                 overlay_result = draw_overlay_video(
-                    video_path,
+                    compressed_path,
                     overlay_path,
                     rep_feedback,
                     label,
-                    sample_every=sample_every,
-            )
+                    sample_every=1,
+                )
 
             if overlay_result:
                 overlay_video_url = f"/outputs/{overlay_filename}"
@@ -5495,12 +5499,14 @@ def overlay_worker(job_id, temp_path, rep_feedback, exercise_label):
         overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
         overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
 
+        compressed_path = compress_video_for_overlay(temp_path)
+
         made_overlay = draw_overlay_video(
-            input_path=temp_path,
+            input_path=compressed_path,
             output_path=overlay_path,
             rep_feedback=rep_feedback,
             exercise_label=exercise_label or "unknown",
-            sample_every=3,
+            sample_every=1,
         )
 
         if made_overlay:
@@ -5541,6 +5547,35 @@ def overlay_worker(job_id, temp_path, rep_feedback, exercise_label):
 
         if "overlay_path" in locals() and os.path.exists(overlay_path):
             os.remove(overlay_path)
+
+
+def compress_video_for_overlay(input_path):
+    compressed_path = input_path.rsplit(".", 1)[0] + "_compressed.mp4"
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", input_path,
+        "-t", "8",
+        "-vf", "scale=480:-2,fps=12",
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-crf", "34",
+        "-an",
+        compressed_path,
+    ]
+
+    try:
+        subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return compressed_path
+    except Exception as e:
+        print("Compression failed, using original:", e)
+        return input_path
 
 
 @app.post("/start_overlay")
@@ -5655,12 +5690,14 @@ async def generate_overlay(
         overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
         overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
 
+        compressed_path = compress_video_for_overlay(temp_path)
+
         made_overlay = draw_overlay_video(
-            input_path=temp_path,
+            input_path=compressed_path,
             output_path=overlay_path,
             rep_feedback=rep_feedback,
             exercise_label=exercise_label or "unknown",
-            sample_every=3,
+            sample_every=1,
         )
 
         runtime = round(time.time() - started_at, 2)
