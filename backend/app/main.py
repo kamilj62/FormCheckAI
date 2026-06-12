@@ -2555,8 +2555,16 @@ def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
         return [], build_set_summary([])
 
     top_idx = int(np.argmin(hip_y))
-    start_idx = max(0, top_idx - int(len(biomechanics) * 0.45))
-    end_idx = min(len(biomechanics) - 1, top_idx + int(len(biomechanics) * 0.30))
+
+    start_idx = max(
+        0,
+        top_idx - int(len(biomechanics) * 0.45)
+    )
+
+    end_idx = min(
+        len(biomechanics) - 1,
+        top_idx + int(len(biomechanics) * 0.30)
+    )
 
     rep_elbow = elbow[start_idx:end_idx + 1]
     rep_wrist_y = wrist_y[start_idx:end_idx + 1]
@@ -2564,8 +2572,12 @@ def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
 
     min_elbow = float(np.min(rep_elbow))
     max_elbow = float(np.max(rep_elbow))
+
     elbow_range = max_elbow - min_elbow
-    support_ratio = float(np.mean(rep_wrist_y < rep_shoulder_y))
+
+    support_ratio = float(
+        np.mean(rep_wrist_y < rep_shoulder_y)
+    )
 
     issues = []
     feedback = []
@@ -2580,36 +2592,60 @@ def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
     if elbow_range < 45:
         breakdown["pull"] = "short"
         issues.append("Pull may be short.")
-        feedback.append("Pull higher before transitioning over the bar.")
+        feedback.append(
+            "Pull higher before transitioning over the bar."
+        )
 
     if min_elbow > 110:
         breakdown["transition"] = "slow"
         issues.append("Transition may be incomplete.")
-        feedback.append("Turn over aggressively and get your chest over the bar.")
+        feedback.append(
+            "Turn over aggressively and get your chest over the bar."
+        )
 
     if support_ratio < 0.30:
         breakdown["support"] = "unstable"
         issues.append("Support position may be unstable.")
-        feedback.append("Finish in a strong support position above the bar.")
+        feedback.append(
+            "Finish in a strong support position above the bar."
+        )
 
     if max_elbow < 150:
         breakdown["lockout"] = "soft"
         issues.append("Lockout may be incomplete.")
-        feedback.append("Press to a stronger lockout at the top.")
+        feedback.append(
+            "Press to a stronger lockout at the top."
+        )
 
     score = compute_rep_score(issues)
     score = apply_coach_reward(score, issues, breakdown)
 
     if not issues:
         score = max(score, 9.0)
-        name = "ring muscle-up" if exercise_label == "ring_muscle_up" else "bar muscle-up"
-        feedback = [f"Good {os.name} rep. Strong pull, transition, and support."]
+
+        movement_name = (
+            "ring muscle-up"
+            if exercise_label == "ring_muscle_up"
+            else "bar muscle-up"
+        )
+
+        feedback = [
+            f"Good {movement_name} rep. Strong pull, transition, and support."
+        ]
 
     reps = [{
         "rep": 1,
         "start_frame": int(frame_numbers[start_idx]),
-        "pull_frame": int(frame_numbers[start_idx + int((top_idx - start_idx) * 0.35)]),
-        "transition_frame": int(frame_numbers[start_idx + int((top_idx - start_idx) * 0.70)]),
+        "pull_frame": int(
+            frame_numbers[
+                start_idx + int((top_idx - start_idx) * 0.35)
+            ]
+        ),
+        "transition_frame": int(
+            frame_numbers[
+                start_idx + int((top_idx - start_idx) * 0.70)
+            ]
+        ),
         "dip_frame": int(frame_numbers[top_idx]),
         "lockout_frame": int(frame_numbers[end_idx]),
         "end_frame": int(frame_numbers[end_idx]),
