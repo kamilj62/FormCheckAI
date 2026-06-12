@@ -4013,6 +4013,86 @@ def create_olympic_lift_phase_images(
     return saved
 
 
+def create_overhead_squat_phase_images(
+    input_path,
+    output_dir,
+    rep=None,
+    sample_every=1,
+):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Overhead squat phase error")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if rep:
+        start = 0
+        end = total_frames - 1
+        bottom = int(rep.get("bottom_frame", total_frames // 2)) if rep else total_frames // 2
+    else:
+        start = 0
+        bottom = total_frames // 2
+        end = total_frames - 1
+
+    start = max(0, min(start, total_frames - 1))
+    bottom = max(start + 1, min(bottom, total_frames - 1))
+    end = max(bottom + 1, min(end, total_frames - 1))
+
+    descent = start + int((bottom - start) * 0.60)
+    ascent = bottom + int((end - bottom) * 0.40)
+
+    phase_frames = {
+        "setup": start,
+        "descent": descent,
+        "bottom": bottom,
+        "ascent": ascent,
+        "lockout": end,
+    }
+
+    saved = {}
+    debug_images = []
+
+    for phase, frame_idx in phase_frames.items():
+        frame_idx = max(0, min(frame_idx, total_frames - 1))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
+
+        if not ret or frame is None:
+            continue
+
+        filename = f"overhead_squat_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filepath = os.path.join(output_dir, filename)
+
+        cv2.imwrite(filepath, frame)
+        saved[phase] = f"/outputs/{filename}"
+
+        debug = frame.copy()
+        cv2.putText(
+            debug,
+            f"{phase} ({frame_idx})",
+            (30, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+        )
+        debug_images.append(debug)
+
+    if debug_images:
+        debug_sheet = np.hstack(debug_images)
+        debug_filename = f"overhead_squat_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_path = os.path.join(output_dir, debug_filename)
+
+        cv2.imwrite(debug_path, debug_sheet)
+        saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    cap.release()
+    return saved
+
+
 def create_pull_up_phase_images(
     input_path,
     output_dir,
@@ -4791,7 +4871,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 overlay_video_url = f"/outputs/{overlay_filename}"
 
             if phase_rep or label in olympic_labels:
-                if label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
+                if label == "overhead_squat":
+                    phase_images = create_overhead_squat_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep,
+                        sample_every=sample_every,
+                    )
+
+                elif label in ["squat", "squat_back", "squat_front"]:
                     phase_images = create_squat_phase_images(
                         video_path,
                         OVERLAY_DIR,
