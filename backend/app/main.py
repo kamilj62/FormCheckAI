@@ -483,6 +483,19 @@ def classify_with_biomechanics(
         return "pull_up", max(confidence, 0.82), True, "protect_pull_up_from_overhead_lift"
     
     # -----------------------------
+# PROTECT PUSH-UP FROM DEADLIFT
+# -----------------------------
+    if (
+        raw_label == "deadlift"
+        and summary.get("wrist_above_shoulder_ratio", 1) < 0.10
+        and summary.get("avg_torso_angle", 0) > 45
+        and summary.get("max_torso_angle", 0) > 85
+        and summary.get("min_elbow_angle", 180) < 80
+        and summary.get("max_elbow_angle", 0) > 140
+    ):
+        return "push_up", max(confidence, 0.82), True, "protect_push_up_from_deadlift"
+    
+    # -----------------------------
     # TRUST STRONG MODEL PREDICTIONS
     # -----------------------------
     if confidence >= 0.45:
@@ -2659,6 +2672,91 @@ def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
     return reps, build_set_summary(reps)
 
 
+def analyze_push_up_reps(biomechanics):
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+    hip_angle = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    bottom_idx = int(np.argmin(elbow))
+
+    start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.35))
+    end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.35))
+
+    rep_elbow = elbow[start_idx:end_idx + 1]
+    rep_hip_y = hip_y[start_idx:end_idx + 1]
+    rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
+    rep_hip_angle = hip_angle[start_idx:end_idx + 1]
+
+    min_elbow = float(np.min(rep_elbow))
+    max_elbow = float(np.max(rep_elbow))
+    elbow_range = max_elbow - min_elbow
+
+    body_sag = float(np.max(rep_hip_y - rep_shoulder_y))
+    min_hip_angle = float(np.min(rep_hip_angle))
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "depth": "good",
+        "lockout": "good",
+        "body_line": "good",
+        "control": "good",
+    }
+
+    if min_elbow > 100:
+        breakdown["depth"] = "shallow"
+        issues.append("Push-up depth may be shallow.")
+        feedback.append("Lower your chest closer to the floor.")
+
+    if max_elbow < 155:
+        breakdown["lockout"] = "incomplete"
+        issues.append("Lockout may be incomplete.")
+        feedback.append("Press all the way up until your arms are nearly straight.")
+
+    if body_sag > 0.18 or min_hip_angle < 140:
+        breakdown["body_line"] = "sagging"
+        issues.append("Hips may be sagging.")
+        feedback.append("Brace your core and keep shoulders, hips, and ankles in one line.")
+
+    if elbow_range < 40:
+        breakdown["control"] = "short_range"
+        issues.append("Movement range was too small to confidently score.")
+        feedback.append("Record a full push-up rep from lockout to bottom and back.")
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good push-up rep. Strong body line and full press."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "descent_frame": int(frame_numbers[start_idx + int((bottom_idx - start_idx) * 0.5)]),
+        "bottom_frame": int(frame_numbers[bottom_idx]),
+        "ascent_frame": int(frame_numbers[bottom_idx + int((end_idx - bottom_idx) * 0.5)]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def draw_ideal_bench_press_overlay(frame, pose_landmarks, width, height):
     """
     Draw ideal bench press guide:
@@ -4283,6 +4381,80 @@ def create_bar_muscle_up_phase_images(
     return saved
 
 
+def create_push_up_phase_images(input_path, output_dir, rep=None, sample_every=1):
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Push-up phase error")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if rep:
+        start = int(rep.get("start_frame", 0))
+        bottom = int(rep.get("bottom_frame", start))
+        end = int(rep.get("end_frame", total_frames - 1))
+    else:
+        start = 0
+        bottom = total_frames // 2
+        end = total_frames - 1
+
+    start = max(0, min(start, total_frames - 1))
+    bottom = max(start + 1, min(bottom, total_frames - 1))
+    end = max(bottom + 1, min(end, total_frames - 1))
+
+    descent = start + int((bottom - start) * 0.5)
+    ascent = bottom + int((end - bottom) * 0.5)
+
+    phase_frames = {
+        "setup": start,
+        "descent": descent,
+        "bottom": bottom,
+        "ascent": ascent,
+        "lockout": end,
+    }
+
+    saved = {}
+    debug_images = []
+
+    for phase, frame_idx in phase_frames.items():
+        frame_idx = max(0, min(frame_idx, total_frames - 1))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
+
+        if not ret or frame is None:
+            continue
+
+        filename = f"push_up_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filepath = os.path.join(output_dir, filename)
+
+        cv2.imwrite(filepath, frame)
+        saved[phase] = f"/outputs/{filename}"
+
+        debug = frame.copy()
+        cv2.putText(
+            debug,
+            f"{phase} ({frame_idx})",
+            (30, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2,
+        )
+        debug_images.append(debug)
+
+    if debug_images:
+        debug_sheet = np.hstack(debug_images)
+        debug_filename = f"push_up_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_path = os.path.join(output_dir, debug_filename)
+        cv2.imwrite(debug_path, debug_sheet)
+        saved["debug_sheet"] = f"/outputs/{debug_filename}"
+
+    cap.release()
+    return saved
+
+
 def build_coaching_zones(exercise_label, rep_feedback):
     if not rep_feedback:
         return {}
@@ -4809,6 +4981,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             )
             analysis_mode = "detailed_rep_analysis"
 
+        elif label == "push_up":
+            rep_feedback, _ = analyze_push_up_reps(biomechanics)
+            analysis_mode = "detailed_rep_analysis"
+        
         elif label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
             analysis_mode = "detailed_rep_analysis"
@@ -4919,6 +5095,14 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         sample_every=sample_every,
                         exercise_label=label,
                     )
+
+                elif label == "push_up":
+                    phase_images = create_push_up_phase_images(
+                        video_path,
+                        OVERLAY_DIR,
+                        phase_rep,
+                        sample_every=sample_every,
+    )
 
                 elif label == "bench_press":
                     phase_images = create_bench_press_phase_images(
