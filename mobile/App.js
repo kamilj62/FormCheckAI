@@ -1,4 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +15,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
 
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
@@ -144,7 +151,7 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-      if (label.includes("pull")) {
+  if (label.includes("pull")) {
     return {
       title: "Pull-Up Phase Review",
       text: "Hang → Pull → Top → Descent → Finish",
@@ -235,7 +242,7 @@ const getInteractiveZones = (result) => {
   const bestRep = getBestRep(result?.rep_feedback || []);
   const breakdown = bestRep?.breakdown || {};
 
-    if (label.includes("burpee")) {
+  if (label.includes("burpee")) {
     return [
       {
         id: "hands_down",
@@ -271,6 +278,105 @@ const getInteractiveZones = (result) => {
         imageKey: "finish",
         status: breakdown.finish || "good",
         note: "Complete the rep fully before starting the next one.",
+      },
+    ];
+  }
+
+  if (label.includes("muscle")) {
+    return [
+      {
+        id: "pull",
+        title: "Pull",
+        imageKey: "pull",
+        status: breakdown.pull || "good",
+        note: "Pull high before starting the transition.",
+      },
+      {
+        id: "transition",
+        title: "Transition",
+        imageKey: "transition",
+        status: breakdown.transition || "good",
+        note: "Turn over aggressively and keep the rings or bar close.",
+      },
+      {
+        id: "support",
+        title: "Support",
+        imageKey: "dip",
+        status: breakdown.support || "good",
+        note: "Stabilize above the bar or rings before finishing.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || "good",
+        note: "Finish tall with strong locked-out arms.",
+      },
+    ];
+  }
+
+  if (label.includes("handstand push")) {
+    return [
+      {
+        id: "depth",
+        title: "Depth",
+        imageKey: "bottom",
+        status: breakdown.depth || "good",
+        note: "Lower your head toward the floor under control.",
+      },
+      {
+        id: "body_line",
+        title: "Body Line",
+        imageKey: "descent",
+        status: breakdown.body_line || "good",
+        note: "Keep your body stacked and avoid arching or sagging.",
+      },
+      {
+        id: "press",
+        title: "Press",
+        imageKey: "ascent",
+        status: breakdown.control || "good",
+        note: "Press smoothly away from the floor.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || "good",
+        note: "Finish with arms fully locked out overhead.",
+      },
+    ];
+  }
+
+  if (label.includes("push up")) {
+    return [
+      {
+        id: "depth",
+        title: "Depth",
+        imageKey: "bottom",
+        status: breakdown.depth || "good",
+        note: "Lower your chest closer to the floor.",
+      },
+      {
+        id: "body_line",
+        title: "Body Line",
+        imageKey: "descent",
+        status: breakdown.body_line || "good",
+        note: "Keep shoulders, hips, and ankles aligned.",
+      },
+      {
+        id: "press",
+        title: "Press",
+        imageKey: "ascent",
+        status: breakdown.control || "good",
+        note: "Press smoothly back to lockout.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || "good",
+        note: "Finish with elbows nearly straight.",
       },
     ];
   }
@@ -444,12 +550,58 @@ const getInteractiveZones = (result) => {
   ];
 };
 
+const QUEUE_KEY = "formcheck_pending_videos";
+
+const savePendingVideo = async (video) => {
+  const id = Date.now().toString();
+
+  const ext = video.uri?.split(".").pop() || "mov";
+  const localUri = `${FileSystem.documentDirectory}pending_${id}.${ext}`;
+
+  await FileSystem.copyAsync({
+    from: video.uri,
+    to: localUri,
+  });
+
+  const item = {
+    id,
+    uri: localUri,
+    name: video.name || video.fileName || `Workout ${id}`,
+    createdAt: new Date().toISOString(),
+    status: "pending",
+  };
+
+  const existing =
+    JSON.parse(await AsyncStorage.getItem(QUEUE_KEY)) || [];
+
+  const updated = [item, ...existing];
+
+  await AsyncStorage.setItem(
+    QUEUE_KEY,
+    JSON.stringify(updated)
+  );
+
+  return item;
+};
+
+const loadPendingVideos = async (setter) => {
+  const existing =
+    JSON.parse(await AsyncStorage.getItem(QUEUE_KEY)) || [];
+
+  setter(existing);
+};
+
 export default function App() {
   const [video, setVideo] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
+  const [pendingVideos, setPendingVideos] = useState([]);
+
+  useEffect(() => {
+    loadPendingVideos(setPendingVideos);
+  }, []);
 
   const reset = () => {
     setResult(null);
@@ -475,12 +627,18 @@ export default function App() {
 
     if (!res.canceled) {
       const a = res.assets[0];
-      setVideo({
+
+      const selected = {
         uri: a.uri,
         file: a.file,
         name: a.fileName || a.name || "library.mov",
         type: a.mimeType || a.type || "video/quicktime",
-      });
+      };
+
+      setVideo(selected);
+
+      await savePendingVideo(selected);
+      await loadPendingVideos(setPendingVideos);
     }
   };
 
@@ -528,11 +686,16 @@ export default function App() {
     if (!res.canceled) {
       const a = res.assets[0];
 
-      setVideo({
+      const selected = {
         uri: a.uri,
         name: a.fileName || a.name || "library.mov",
         type: a.mimeType || a.type || "video/quicktime",
-      });
+      };
+
+      setVideo(selected);
+
+      await savePendingVideo(selected);
+      await loadPendingVideos(setPendingVideos);
     }
   };
 
@@ -552,11 +715,16 @@ export default function App() {
     if (!res.canceled) {
       const a = res.assets[0];
 
-      setVideo({
+      const selected = {
         uri: a.uri,
         name: a.name || "cloud.mov",
         type: a.mimeType || "video/quicktime",
-      });
+      };
+
+      setVideo(selected);
+
+      await savePendingVideo(selected);
+      await loadPendingVideos(setPendingVideos);
     }
   };
 
@@ -592,10 +760,10 @@ export default function App() {
     if (visualsLoading) return;
     if (result?.phase_images) return;
 
-  try {
-    console.log("GENERATE VISUALS STARTED");
+    try {
+      console.log("GENERATE VISUALS STARTED");
 
-    setVisualsLoading(true);
+      setVisualsLoading(true);
 
       const bestRep = getBestRep(analysisResult?.rep_feedback || []);
 
@@ -609,14 +777,15 @@ export default function App() {
 
       const visualsText = await visualsRes.text();
 
-let visualsData = {};
-try {
-  visualsData = JSON.parse(visualsText);
-} catch {
-  visualsData = {
-    message: visualsText || "Visual generation returned non-JSON response",
-  };
-}
+      let visualsData = {};
+      try {
+        visualsData = JSON.parse(visualsText);
+      } catch {
+        visualsData = {
+          message:
+            visualsText || "Visual generation returned non-JSON response",
+        };
+      }
 
       console.log("VISUALS RESPONSE:", visualsData);
       console.log("VISUALS STATUS:", visualsRes.status);
@@ -652,98 +821,98 @@ try {
   const [overlayUrl, setOverlayUrl] = useState(null);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayProgress, setOverlayProgress] = useState("");
-  
-const generateOverlay = async () => {
-  try {
-    setOverlayLoading(true);
-    setOverlayProgress("Generating overlay...");
 
-    const bestRep = getBestRep(result?.rep_feedback || []);
-
-    const formPayload = {
-      rep_json: bestRep ? JSON.stringify(bestRep) : null,
-      exercise_label: result?.exercise_label || "",
-    };
-
-    // 1. Try fast direct overlay first
+  const generateOverlay = async () => {
     try {
-      const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
+      setOverlayLoading(true);
+      setOverlayProgress("Generating overlay...");
+
+      const bestRep = getBestRep(result?.rep_feedback || []);
+
+      const formPayload = {
+        rep_json: bestRep ? JSON.stringify(bestRep) : null,
+        exercise_label: result?.exercise_label || "",
+      };
+
+      // 1. Try fast direct overlay first
+      try {
+        const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
+          method: "POST",
+          body: await buildFormData(formPayload),
+        });
+
+        const overlayData = await overlayRes.json();
+
+        if (overlayRes.ok && overlayData.overlay_video_url) {
+          setOverlayProgress("Overlay ready!");
+          setOverlayUrl(fullUrl(overlayData.overlay_video_url));
+
+          setResult((prev) => ({
+            ...prev,
+            overlay_video_url: overlayData.overlay_video_url,
+            overlay_error: null,
+          }));
+
+          return;
+        }
+      } catch (directErr) {
+        console.log("DIRECT OVERLAY FAILED, FALLING BACK:", directErr);
+      }
+
+      // 2. Fallback to background overlay job
+      setOverlayProgress("Starting background overlay job...");
+
+      const startRes = await fetch(`${API_URL}/start_overlay`, {
         method: "POST",
         body: await buildFormData(formPayload),
       });
 
-      const overlayData = await overlayRes.json();
+      const startData = await startRes.json();
 
-      if (overlayRes.ok && overlayData.overlay_video_url) {
-        setOverlayProgress("Overlay ready!");
-        setOverlayUrl(fullUrl(overlayData.overlay_video_url));
-
-        setResult((prev) => ({
-          ...prev,
-          overlay_video_url: overlayData.overlay_video_url,
-          overlay_error: null,
-        }));
-
-        return;
-      }
-    } catch (directErr) {
-      console.log("DIRECT OVERLAY FAILED, FALLING BACK:", directErr);
-    }
-
-    // 2. Fallback to background overlay job
-    setOverlayProgress("Starting background overlay job...");
-
-    const startRes = await fetch(`${API_URL}/start_overlay`, {
-      method: "POST",
-      body: await buildFormData(formPayload),
-    });
-
-    const startData = await startRes.json();
-
-    if (!startRes.ok || !startData.job_id) {
-      throw new Error(startData.message || "Could not start overlay job");
-    }
-
-    const jobId = startData.job_id;
-
-    for (let i = 0; i < 40; i++) {
-      setOverlayProgress(`Processing overlay... ${i + 1}/40`);
-
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
-      const statusData = await statusRes.json();
-
-      if (statusData.status === "ready") {
-        setOverlayProgress("Overlay ready!");
-        setOverlayUrl(fullUrl(statusData.overlay_video_url));
-
-        setResult((prev) => ({
-          ...prev,
-          overlay_video_url: statusData.overlay_video_url,
-          overlay_error: null,
-        }));
-
-        return;
+      if (!startRes.ok || !startData.job_id) {
+        throw new Error(startData.message || "Could not start overlay job");
       }
 
-      if (statusData.status === "error") {
-        throw new Error(statusData.message || "Overlay generation failed");
+      const jobId = startData.job_id;
+
+      for (let i = 0; i < 40; i++) {
+        setOverlayProgress(`Processing overlay... ${i + 1}/40`);
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
+        const statusData = await statusRes.json();
+
+        if (statusData.status === "ready") {
+          setOverlayProgress("Overlay ready!");
+          setOverlayUrl(fullUrl(statusData.overlay_video_url));
+
+          setResult((prev) => ({
+            ...prev,
+            overlay_video_url: statusData.overlay_video_url,
+            overlay_error: null,
+          }));
+
+          return;
+        }
+
+        if (statusData.status === "error") {
+          throw new Error(statusData.message || "Overlay generation failed");
+        }
       }
+
+      throw new Error("Overlay is still processing. Try again shortly.");
+    } catch (err) {
+      setOverlayProgress("");
+
+      setResult((prev) => ({
+        ...prev,
+        overlay_error: err.message,
+      }));
+    } finally {
+      setOverlayLoading(false);
     }
-
-    throw new Error("Overlay is still processing. Try again shortly.");
-  } catch (err) {
-    setOverlayProgress("");
-
-    setResult((prev) => ({
-      ...prev,
-      overlay_error: err.message,
-    }));
-  } finally {
-    setOverlayLoading(false);
-  }
-};
+  };
 
   const analyzeVideo = async () => {
     if (!video) {
@@ -937,6 +1106,26 @@ const generateOverlay = async () => {
           </View>
         )}
 
+        {pendingVideos.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Pending Videos</Text>
+            <Text style={styles.sectionSub}>
+              Saved locally for later analysis
+            </Text>
+
+            {pendingVideos.map((v) => (
+              <TouchableOpacity
+                key={v.id}
+                style={styles.selectedCard}
+                onPress={() => setVideo(v)}
+              >
+                <Text style={styles.cardLabel}>Pending</Text>
+                <Text style={styles.selectedName}>{v.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         <TouchableOpacity
           style={[
             styles.analyzeButton,
@@ -1056,7 +1245,8 @@ const generateOverlay = async () => {
               <TouchableOpacity
                 style={[
                   styles.analyzeButton,
-                  (visualsLoading || result?.phase_images) && styles.disabledButton,
+                  (visualsLoading || result?.phase_images) &&
+                    styles.disabledButton,
                 ]}
                 onPress={() => generateVisuals(result)}
                 disabled={visualsLoading || !!result?.phase_images}
@@ -1071,9 +1261,9 @@ const generateOverlay = async () => {
               </TouchableOpacity>
             }
 
-<View style={styles.card}>
-  <Text style={styles.sectionTitle}>Rep Breakdown</Text>
-  <Text style={styles.sectionSub}>Score trend across the set</Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Rep Breakdown</Text>
+              <Text style={styles.sectionSub}>Score trend across the set</Text>
               {reps.map((rep) => {
                 const score = Number(rep.score || 0);
                 const barWidth = `${Math.min(100, Math.max(8, score * 10))}%`;
@@ -1117,7 +1307,11 @@ const generateOverlay = async () => {
                     key={`${activeZone?.id}-${activeImagePath}`}
                     source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
-                    resizeMode="cover"
+                    resizeMode={
+                      result?.exercise_label?.toLowerCase().includes("muscle")
+                        ? "contain"
+                        : "cover"
+                    }
                   />
                 ) : (
                   <View style={styles.emptyImage}>
@@ -1183,7 +1377,13 @@ const generateOverlay = async () => {
                           <Image
                             source={{ uri: url }}
                             style={styles.phaseImage}
-                            resizeMode="cover"
+                            resizeMode={
+                              result?.exercise_label
+                                ?.toLowerCase()
+                                .includes("muscle")
+                                ? "contain"
+                                : "cover"
+                            }
                           />
                         ) : (
                           <View style={styles.emptyPhase}>
