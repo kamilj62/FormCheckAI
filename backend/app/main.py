@@ -441,6 +441,18 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     torso_range = max_torso - min_torso
     elbow_range = max_elbow - min_elbow
 
+    # HANDSTAND PUSH-UP RESCUE FROM BENCH
+    # Must run before trusting confident bench predictions.
+    if (
+        raw_label == "bench_press"
+        and avg_torso > 150
+        and min_elbow < 125
+        and max_elbow > 165
+        and wrist_ratio < 0.10
+        and summary.get("avg_knee_angle", 0) > 150
+    ):
+        return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
+
     # Do not override confident model predictions.
     if confidence >= 0.45:
         return raw_label, confidence, False, "trusted_model_prediction"
@@ -490,16 +502,6 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         and max_elbow > 140
     ):
         return "push_up", max(confidence, 0.82), True, "protect_push_up_from_deadlift"
-
-    if (
-        raw_label == "bench_press"
-        and avg_torso > 150
-        and min_elbow < 125
-        and max_elbow > 165
-        and wrist_ratio < 0.10
-        and summary.get("avg_knee_angle", 0) > 150
-    ):
-        return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
 
     if (
         wrist_ratio > 0.65
@@ -5137,6 +5139,19 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_label = "burpee"
             raw_confidence = 0.82
 
+        # FRONT SQUAT RESCUE FROM CLEAN
+        if (
+            raw_label == "clean"
+            and oly_label == "not_oly"
+            and summary.get("wrist_above_shoulder_ratio", 0) < 0.25
+            and summary.get("min_knee_angle", 180) < 90
+            and summary.get("min_hip_angle", 180) < 90
+            and summary.get("max_torso_angle", 180) < 55
+            and summary.get("max_elbow_angle", 0) > 150
+        ):
+            raw_label = "squat_front"
+            raw_confidence = 0.80
+
         # BACK SQUAT / GENERAL SQUAT RESCUE FROM BASE MODEL
         base_squat_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("squat", 0)
 
@@ -5144,8 +5159,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_label = "squat"
             raw_confidence = base_squat_conf
 
+        # PULL-UP RESCUE FROM OVERHEAD SQUAT
+        if (
+            raw_label in ["squat", "overhead_squat", "squat_back", "squat_front"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.65
+            and summary.get("min_knee_angle", 180) > 110
+            and summary.get("min_hip_angle", 180) > 120
+            and summary.get("max_torso_angle", 180) < 45
+            and summary.get("min_elbow_angle", 180) < 100
+        ):
+            raw_label = "pull_up"
+            raw_confidence = 0.82
+        
         # SQUAT FAMILY ROUTER
-        if "squat" in raw_label:
+        if "squat" in raw_label and raw_label not in ["squat_front", "pull_up"]:
             squat_probs = SQUAT_ROUTER_MODEL.predict(
                 np.expand_dims(seq_base, axis=0),
                 verbose=0,
