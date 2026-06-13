@@ -831,15 +831,15 @@ def analyze_deadlift_reps(biomechanics):
                 "control": "good",
             }
 
-            if max_torso > 75:
+            if max_torso > 43 or torso_change > 35:
                 breakdown["back"] = "poor"
                 issues.append("Back may be rounding during the pull.")
                 feedback.append("Brace your core and keep a neutral spine.")
-            elif max_torso > 60:
+            elif max_torso > 37 or torso_change > 28:
                 breakdown["back"] = "fair"
                 issues.append("Slight torso rounding detected.")
                 feedback.append("Keep your chest proud and lats tight.")
-
+                        
             if min_hip > 115:
                 breakdown["hinge"] = "poor"
                 issues.append("Not enough hip hinge.")
@@ -881,6 +881,11 @@ def analyze_deadlift_reps(biomechanics):
             score = compute_rep_score(issues)
             score = apply_coach_reward(score, issues, breakdown)
 
+            if breakdown["back"] == "poor":
+                score -= 2.0
+            elif breakdown["back"] == "fair":
+                score -= 1.0
+            
             if breakdown["lockout"] == "poor":
                 score -= 2.0
             elif breakdown["lockout"] == "incomplete":
@@ -5105,19 +5110,37 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_confidence = 0.84
 
         # SPLIT JERK OVERRIDE
+        base_push_press_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("push_press", 0)
+
         if (
-            raw_label in ["push_press", "strict_press", "bar_muscle_up", "pull_up"]
+            raw_label in ["strict_press", "bar_muscle_up", "pull_up"]
+            and base_push_press_conf < 0.80
             and summary.get("wrist_above_shoulder_ratio", 0) > 0.55
-            and summary.get("min_knee_angle", 180) < 155
+            and summary.get("min_knee_angle", 180) < 145
             and summary.get("max_elbow_angle", 0) > 150
         ):
             raw_label = "split_jerk"
             raw_confidence = 0.82
 
+        # BURPEE RESCUE — prevent squat router from stealing burpees
+        base_deadlift_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("deadlift", 0)
+
+        if (
+            base_deadlift_conf < 0.80
+            and raw_label in ["squat", "squat_back", "squat_front", "clean", "deadlift"]
+            and summary.get("min_knee_angle", 180) < 100
+            and summary.get("min_hip_angle", 180) < 90
+            and summary.get("max_torso_angle", 0) > 100
+            and summary.get("min_elbow_angle", 180) < 90
+            and summary.get("wrist_above_shoulder_ratio", 1.0) < 0.20
+        ):
+            raw_label = "burpee"
+            raw_confidence = 0.82
+
         # BACK SQUAT / GENERAL SQUAT RESCUE FROM BASE MODEL
         base_squat_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("squat", 0)
 
-        if base_squat_conf >= 0.90 and oly_label == "not_oly":
+        if raw_label != "burpee" and base_squat_conf >= 0.90 and oly_label == "not_oly":
             raw_label = "squat"
             raw_confidence = base_squat_conf
 
