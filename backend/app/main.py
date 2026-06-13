@@ -419,12 +419,7 @@ def summarize_biomechanics(biomechanics):
     }
 
 
-def classify_with_biomechanics(
-    raw_label,
-    confidence,
-    summary,
-    pose_frames,
-):
+def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     if pose_frames < 10 or not summary:
         return raw_label, confidence, False, "low_pose_data"
 
@@ -445,9 +440,20 @@ def classify_with_biomechanics(
     torso_range = max_torso - min_torso
     elbow_range = max_elbow - min_elbow
 
-    # -----------------------------
-    # PROTECT PUSH PRESS FROM SNATCH
-    # -----------------------------
+    # Do not override confident model predictions.
+    if confidence >= 0.45:
+        return raw_label, confidence, False, "trusted_model_prediction"
+
+    if (
+        raw_label in ["clean", "deadlift", "squat"]
+        and min_knee < 75
+        and min_hip < 60
+        and max_torso > 105
+        and min_elbow < 70
+        and wrist_ratio < 0.20
+    ):
+        return "burpee", max(confidence, 0.70), True, "protect_burpee_from_clean"
+
     if (
         raw_label == "snatch"
         and wrist_ratio < 0.25
@@ -457,9 +463,6 @@ def classify_with_biomechanics(
     ):
         return "push_press", max(confidence, 0.80), True, "protect_push_press_from_snatch"
 
-    # -----------------------------
-    # PROTECT THRUSTER FROM SNATCH
-    # -----------------------------
     if (
         raw_label == "snatch"
         and wrist_ratio < 0.25
@@ -468,9 +471,6 @@ def classify_with_biomechanics(
     ):
         return "thruster", max(confidence, 0.82), True, "protect_thruster_from_snatch"
 
-    # -----------------------------
-    # PROTECT PULL-UP FROM JERK/SNATCH
-    # -----------------------------
     if (
         raw_label in ["split_jerk", "snatch", "jerk", "clean_and_jerk"]
         and wrist_ratio > 0.45
@@ -480,9 +480,6 @@ def classify_with_biomechanics(
     ):
         return "pull_up", max(confidence, 0.82), True, "protect_pull_up_from_overhead_lift"
 
-    # -----------------------------
-    # PROTECT PUSH-UP FROM DEADLIFT
-    # -----------------------------
     if (
         raw_label == "deadlift"
         and wrist_ratio < 0.10
@@ -493,9 +490,6 @@ def classify_with_biomechanics(
     ):
         return "push_up", max(confidence, 0.82), True, "protect_push_up_from_deadlift"
 
-    # -----------------------------
-    # PROTECT HANDSTAND PUSH-UP FROM BENCH
-    # -----------------------------
     if (
         raw_label == "bench_press"
         and avg_torso > 150
@@ -506,28 +500,6 @@ def classify_with_biomechanics(
     ):
         return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
 
-    # -----------------------------
-    # PROTECT BURPEE FROM CLEAN
-    # -----------------------------
-    if (
-        raw_label in ["clean", "deadlift", "squat"]
-        and min_knee < 90
-        and min_hip < 70
-        and max_torso > 95
-        and min_elbow < 80
-        and wrist_ratio < 0.30
-    ):
-        return "burpee", max(confidence, 0.82), True, "protect_burpee_from_clean"
-
-    # -----------------------------
-    # TRUST STRONG MODEL PREDICTIONS
-    # -----------------------------
-    if confidence >= 0.45:
-        return raw_label, confidence, False, "trusted_model_prediction"
-
-    # -----------------------------
-    # PUSH PRESS
-    # -----------------------------
     if (
         wrist_ratio > 0.65
         and elbow_range > 80
@@ -536,9 +508,6 @@ def classify_with_biomechanics(
     ):
         return "push_press", max(confidence, 0.78), True, "overhead_press_detected"
 
-    # -----------------------------
-    # DEADLIFT
-    # -----------------------------
     if (
         wrist_ratio < 0.20
         and hip_range >= 50
@@ -548,9 +517,6 @@ def classify_with_biomechanics(
     ):
         return "deadlift", max(confidence, 0.80), True, "deadlift_pattern_detected"
 
-    # -----------------------------
-    # TRUST RAW SQUAT
-    # -----------------------------
     if (
         raw_label == "squat"
         and confidence >= 0.35
@@ -559,9 +525,6 @@ def classify_with_biomechanics(
     ):
         return "squat", max(confidence, 0.75), False, "trusted_raw_squat_prediction"
 
-    # -----------------------------
-    # BENCH PRESS
-    # -----------------------------
     if (
         raw_label != "squat"
         and elbow_range >= 45
@@ -571,9 +534,6 @@ def classify_with_biomechanics(
     ):
         return "bench_press", max(confidence, 0.80), True, "bench_press_pattern_detected"
 
-    # -----------------------------
-    # SQUAT PATTERN
-    # -----------------------------
     if (
         knee_range >= 45
         and hip_range >= 25
@@ -2712,9 +2672,13 @@ def analyze_push_up_reps(biomechanics, exercise_label="push_up"):
 
     bottom_idx = int(np.argmin(elbow))
 
-    start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.35))
-    end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.35))
+    if exercise_label == "handstand_push_up":
+        start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.18))
+        end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.18))
 
+    else:
+        start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.35))
+        end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.35))
     rep_elbow = elbow[start_idx:end_idx + 1]
     rep_hip_y = hip_y[start_idx:end_idx + 1]
     rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
@@ -4415,13 +4379,29 @@ def create_bar_muscle_up_phase_images(
 
     duration = max(1, end - start)
 
+    if rep:
+        pull = int(rep.get("pull_frame", start + int(duration * 0.22)))
+        transition = int(rep.get("transition_frame", start + int(duration * 0.45)))
+        dip = int(rep.get("dip_frame", start + int(duration * 0.65)))
+        lockout = int(rep.get("lockout_frame", end))
+        finish = int(rep.get("end_frame", end))
+
+        lockout = min(lockout, total_frames - 8)
+        finish = min(finish, total_frames - 4)
+    else:
+        pull = start + int(duration * 0.22)
+        transition = start + int(duration * 0.45)
+        dip = start + int(duration * 0.65)
+        lockout = start + int(duration * 0.82)
+        finish = end
+
     phase_frames = {
         "hang": start,
-        "pull": start + int(duration * 0.22),
-        "transition": start + int(duration * 0.45),
-        "dip": start + int(duration * 0.65),
-        "lockout": start + int(duration * 0.82),
-        "finish": max(start, min(end - 1, total_frames - 1)),
+        "pull": pull,
+        "transition": transition,
+        "dip": dip,
+        "lockout": lockout,
+        "finish": finish,
     }
 
     saved = {}
@@ -4434,7 +4414,7 @@ def create_bar_muscle_up_phase_images(
 
         frame = None
 
-        for offset in [0, -1, -2, -3, -5, -8, -10]:
+        for offset in [0, -1, -2, -3, -5, -8, -10, -15, -20, -30, -45]:
             safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
 
             cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
@@ -4502,30 +4482,55 @@ def create_push_up_phase_images(
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     if rep:
-        start = int(rep.get("start_frame", 0)) * sample_every
-        end = int(rep.get("end_frame", total_frames - 1)) * sample_every
+        start = int(rep.get("start_frame", 0))
+        end = int(rep.get("end_frame", total_frames - 1))
     else:
         start = 0
         end = total_frames - 1
 
     start = max(0, min(start, total_frames - 1))
     end = max(start + 1, min(end, total_frames - 1))
-
     duration = max(1, end - start)
 
-    phase_frames = {
-        "setup": start,
-        "descent": start + int(duration * 0.25),
-        "bottom": start + int(duration * 0.50),
-        "ascent": start + int(duration * 0.75),
-        "lockout": max(start, min(end - 1, total_frames - 1)),
-    }
+    if exercise_label == "handstand_push_up" and rep:
+        phase_frames = {
+            "setup": int(rep.get("start_frame", start)),
+            "descent": int(rep.get("descent_frame", start)),
+            "bottom": int(rep.get("end_frame", end)),
+            "ascent": int(rep.get("ascent_frame", end)),
+            "lockout": int(rep.get("bottom_frame", start)),
+        }
 
-    prefix = (
-        "handstand_push_up"
-        if exercise_label == "handstand_push_up"
-        else "push_up"
-    )
+    elif exercise_label == "push_up" and rep:
+        bottom = int(rep.get("bottom_frame", start + int(duration * 0.50)))
+
+        phase_frames = {
+            "setup": max(0, bottom - 36),
+            "descent": max(0, bottom - 18),
+            "bottom": bottom,
+            "ascent": min(total_frames - 1, bottom + 9),
+            "lockout": min(total_frames - 1, bottom + 24),
+        }
+
+    elif rep:
+        phase_frames = {
+            "setup": int(rep.get("start_frame", start)),
+            "descent": int(rep.get("descent_frame", start + int(duration * 0.25))),
+            "bottom": int(rep.get("bottom_frame", start + int(duration * 0.50))),
+            "ascent": int(rep.get("ascent_frame", start + int(duration * 0.75))),
+            "lockout": int(rep.get("end_frame", end)),
+        }
+
+    else:
+        phase_frames = {
+            "setup": start,
+            "descent": start + int(duration * 0.25),
+            "bottom": start + int(duration * 0.50),
+            "ascent": start + int(duration * 0.75),
+            "lockout": max(start, min(end - 1, total_frames - 1)),
+        }
+
+    prefix = "handstand_push_up" if exercise_label == "handstand_push_up" else "push_up"
 
     saved = {}
     debug_images = []
@@ -4533,20 +4538,10 @@ def create_push_up_phase_images(
     for phase, frame_idx in phase_frames.items():
         frame_idx = max(0, min(frame_idx, total_frames - 1))
 
-        frame = None
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
 
-        for offset in [0, -1, -2, -3, -5, -8, -10]:
-            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
-
-            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
-            ret, candidate = cap.read()
-
-            if ret and candidate is not None:
-                frame = candidate
-                frame_idx = safe_idx
-                break
-
-        if frame is None:
+        if not ret or frame is None:
             print(f"Could not read {phase} frame near: {frame_idx}")
             continue
 
@@ -4570,17 +4565,13 @@ def create_push_up_phase_images(
 
     if debug_images:
         debug_sheet = np.hstack(debug_images)
-
-        debug_filename = (
-            f"{prefix}_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
-        )
+        debug_filename = f"{prefix}_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
         debug_path = os.path.join(output_dir, debug_filename)
 
         cv2.imwrite(debug_path, debug_sheet)
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
 
     cap.release()
-
     return saved
 
 
@@ -5306,12 +5297,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         sample_every=sample_every,
                     )
 
-                elif label == "pull_up":
-                    phase_images = create_pull_up_phase_images(
+                elif label == "push_up":
+                    phase_images = create_push_up_phase_images(
                         video_path,
                         OVERLAY_DIR,
                         phase_rep,
                         sample_every=sample_every,
+                        exercise_label=label,
                     )
 
                 elif label in ["bar_muscle_up", "ring_muscle_up"]:
