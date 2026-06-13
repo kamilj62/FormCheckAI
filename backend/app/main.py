@@ -273,7 +273,8 @@ def extract_features_and_biomechanics(results):
     knee_width = abs(float(left_knee[0]) - float(right_knee[0]))
     ankle_width = abs(float(left_ankle[0]) - float(right_ankle[0]))
     valgus_ratio = knee_width / (ankle_width + 1e-6)
-
+    valgus_ratio = float(np.clip(valgus_ratio, 0.50, 1.50))
+    
     wrist_x = float((left_wrist[0] + right_wrist[0]) / 2)
     ankle_x = float((left_ankle[0] + right_ankle[0]) / 2)
     bar_distance = abs(wrist_x - ankle_x)
@@ -1101,8 +1102,7 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
     SQUAT_PENALTIES = {
         "depth": {"good": 0.0, "borderline": 0.6, "poor": 1.4},
         "torso": {"good": 0.0, "borderline": 1.0, "poor": 2.2},
-        "knees": {"good": 0.0, "borderline": 0.6, "poor": 1.2},
-        "heels": {"good": 0.0, "borderline": 0.4, "poor": 0.9},
+        "knees": {"good": 0.0, "borderline": 1.5, "poor": 3.5},        "heels": {"good": 0.0, "borderline": 0.4, "poor": 0.9},
         "neck": {"good": 0.0, "borderline": 0.8, "poor": 1.8},
         "front_rack": {"good": 0.0, "borderline": 0.8, "poor": 1.6},
         "bar_position": {"good": 0.0, "borderline": 0.7, "poor": 1.4},
@@ -1155,7 +1155,7 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
 
             clean_knee = np.clip(rep_knee, 45, 180)
             clean_torso = np.clip(rep_torso, 0, 90)
-            clean_valgus = np.clip(rep_valgus, 0.75, 1.5)
+            clean_valgus = np.clip(rep_valgus, 0.50, 1.5)
             clean_heel = np.clip(rep_heel, -0.05, 0.08)
             clean_head_drop = np.clip(rep_head_drop, -0.10, 0.25)
             clean_head_forward = np.clip(rep_head_forward, 0.0, 0.30)
@@ -1206,11 +1206,11 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                         "Keep your chest up, upper back tight, and shoulders stacked over the bar."
                     )
 
-            if valgus_score < 0.80:
+            if valgus_score < 0.95:
                 knees_grade = "poor"
                 issues.append("Knees cave inward noticeably.")
                 feedback.append("Drive knees out over your toes.")
-            elif valgus_score < 0.92:
+            elif valgus_score < 1.05:
                 knees_grade = "borderline"
                 issues.append("Slight knee cave detected.")
                 feedback.append("Keep knees tracking over your toes.")
@@ -3715,12 +3715,18 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
     bottom = max(start, min(bottom, total_frames - 1))
     end = max(bottom + 1, min(end, total_frames - 1))
 
-    # Rebuild phases from start/bottom/end so they are spaced correctly.
-    setup_frame = start
-    descent_frame = start + int((bottom - start) * 0.60)
-    bottom_frame = bottom
-    ascent_frame = bottom + int((end - bottom) * 0.45)
-    lockout_frame = end
+    # Use exact detected phase frames from the selected rep.
+    setup_frame = int(rep.get("start_frame", start))
+    descent_frame = int(rep.get("descent_frame", start + int((bottom - start) * 0.60)))
+    bottom_frame = int(rep.get("bottom_frame", bottom))
+    ascent_frame = int(rep.get("ascent_frame", bottom + int((end - bottom) * 0.45)))
+    lockout_frame = int(rep.get("end_frame", end))
+
+    setup_frame = max(0, min(setup_frame, total_frames - 1))
+    descent_frame = max(setup_frame, min(descent_frame, total_frames - 1))
+    bottom_frame = max(descent_frame, min(bottom_frame, total_frames - 1))
+    ascent_frame = max(bottom_frame, min(ascent_frame, total_frames - 1))
+    lockout_frame = max(ascent_frame, min(lockout_frame, total_frames - 1))
 
     phase_frames = {
         "setup": setup_frame,
@@ -5107,6 +5113,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         ):
             raw_label = "split_jerk"
             raw_confidence = 0.82
+
+        # BACK SQUAT / GENERAL SQUAT RESCUE FROM BASE MODEL
+        base_squat_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("squat", 0)
+
+        if base_squat_conf >= 0.90 and oly_label == "not_oly":
+            raw_label = "squat"
+            raw_confidence = base_squat_conf
 
         # SQUAT FAMILY ROUTER
         if "squat" in raw_label:
