@@ -515,6 +515,13 @@ const getInteractiveZones = (result) => {
         status: "good",
         note: "Receive the bar under control.",
       },
+      {
+        id: "finish",
+        title: "Finish",
+        imageKey: "finish",
+        status: "good",
+        note: "Stand tall and stabilize the finished position.",
+      },
     ];
   }
 

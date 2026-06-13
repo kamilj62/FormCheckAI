@@ -2139,27 +2139,18 @@ def analyze_snatch_reps(biomechanics):
         return [], build_set_summary([])
 
     start_idx = 0
-    end_idx = len(biomechanics) - 1
+    raw_end_idx = len(biomechanics) - 1
+    duration = max(1, raw_end_idx - start_idx)
 
-    first_pull_idx = int(len(biomechanics) * 0.25)
+    first_pull_idx = start_idx + int(duration * 0.25)
+    extension_idx = start_idx + int(duration * 0.75)
+    catch_idx = start_idx + int(duration * 0.83)
+    end_idx = start_idx + int(duration * 0.88)
 
-    extension_window_start = max(1, int(len(biomechanics) * 0.25))
-    extension_window_end = max(extension_window_start + 1, int(len(biomechanics) * 0.65))
-
-    catch_window_start = max(1, int(len(biomechanics) * 0.35))
-    catch_window_end = len(biomechanics)
-
-    extension_local = int(np.argmax(hip[extension_window_start:extension_window_end]))
-    extension_idx = extension_window_start + extension_local
-
-    catch_local = int(np.argmin(knee[catch_window_start:catch_window_end]))
-    catch_idx = catch_window_start + catch_local
-
-    if extension_idx <= first_pull_idx:
-        extension_idx = min(first_pull_idx + 1, end_idx)
-
-    if catch_idx <= extension_idx:
-        catch_idx = min(extension_idx + 1, end_idx)
+    first_pull_idx = max(start_idx, min(first_pull_idx, len(biomechanics) - 1))
+    extension_idx = max(first_pull_idx + 1, min(extension_idx, len(biomechanics) - 1))
+    catch_idx = max(extension_idx + 1, min(catch_idx, len(biomechanics) - 1))
+    end_idx = max(catch_idx + 1, min(end_idx, len(biomechanics) - 1))
 
     min_knee = float(np.min(knee))
     max_hip = float(np.max(hip))
@@ -2227,14 +2218,11 @@ def analyze_snatch_reps(biomechanics):
     }
 
     score = 10.0
-
     for key, value in breakdown.items():
         score -= penalties.get(key, {}).get(value, 0.0)
 
     score = round(max(1.0, min(10.0, score)), 1)
-
-    score += 0.5
-    score = min(10.0, score)
+    score = min(10.0, score + 0.5)
 
     if issues:
         score = min(score, 9.2)
@@ -4110,10 +4098,22 @@ def create_olympic_lift_phase_images(
             "finish": end,
         }
 
-    # -----------------------------------
-    # CLEAN / SNATCH
-    # -----------------------------------
-    elif normalized_label in ["clean", "snatch"]:
+    elif normalized_label == "snatch":
+
+        catch_frame = rep_frame("catch_frame", start)
+
+        phase_frames = {
+            "setup": start,
+            "first_pull": rep_frame("first_pull_frame", start),
+            "extension": rep_frame("extension_frame", start),
+            "catch": catch_frame,
+
+            # standing overhead after catch
+            "finish": min(catch_frame + 90, end),
+        }
+
+    elif normalized_label == "clean":
+
         phase_frames = {
             "setup": start,
             "first_pull": rep_frame("first_pull_frame", start),
@@ -4144,7 +4144,7 @@ def create_olympic_lift_phase_images(
 
         frame = None
 
-        for offset in [0, -1, -2, -3, -5, -8, -10]:
+        for offset in [0, 1, 2, 3, 5, 8, -1, -2]:
             safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
 
             cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
