@@ -1791,37 +1791,37 @@ def analyze_clean_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    # One clean attempt per clip for now.
     start_idx = 0
-    end_idx = len(biomechanics) - 1
+    raw_end_idx = len(biomechanics) - 1
+    duration = raw_end_idx - start_idx
 
-    first_pull_idx = int(len(biomechanics) * 0.25)
+    #
+    # CLEAN PHASES
+    #
+    first_pull_idx = start_idx + int(duration * 0.18)
 
-    extension_window_start = max(1, int(len(biomechanics) * 0.25))
-    extension_window_end = max(extension_window_start + 1, int(len(biomechanics) * 0.65))
+    catch_idx = start_idx + int(duration * 0.78)
 
-    catch_window_start = max(1, int(len(biomechanics) * 0.35))
-    catch_window_end = len(biomechanics)
+    extension_idx = start_idx + int(duration * 0.70)
 
-    extension_local = int(np.argmax(hip[extension_window_start:extension_window_end]))
-    extension_idx = extension_window_start + extension_local
+    end_idx = start_idx + int(duration * 0.88)
 
-    catch_local = int(np.argmin(knee[catch_window_start:catch_window_end]))
-    catch_idx = catch_window_start + catch_local
+    first_pull_idx = max(start_idx, min(first_pull_idx, raw_end_idx))
+    extension_idx = max(first_pull_idx + 1, min(extension_idx, raw_end_idx))
+    catch_idx = max(extension_idx + 1, min(catch_idx, raw_end_idx))
+    end_idx = max(catch_idx + 1, min(end_idx, raw_end_idx))
 
-    if extension_idx <= first_pull_idx:
-        extension_idx = min(first_pull_idx + 1, end_idx)
-
-    if catch_idx <= extension_idx:
-        catch_idx = min(extension_idx + 1, end_idx)
-        
     min_knee = float(np.min(knee))
     max_hip = float(np.max(hip))
     max_torso = float(np.percentile(torso, 85))
-    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
     min_elbow = float(np.min(elbow))
-    catch_elbow = float(elbow[catch_idx])
-    rack_distance = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+    catch_elbow = float(elbow[min(catch_idx, len(elbow) - 1)])
+    rack_distance = float(
+        abs(
+            wrist_x[min(catch_idx, len(wrist_x) - 1)]
+            - shoulder_x[min(catch_idx, len(shoulder_x) - 1)]
+        )
+    )
 
     issues = []
     feedback = []
@@ -1838,34 +1838,50 @@ def analyze_clean_reps(biomechanics):
     if max_torso > 75:
         breakdown["first_pull"] = "poor"
         issues.append("Torso may be losing position during the pull.")
-        feedback.append("Stay braced and keep your chest up through the first pull.")
+        feedback.append(
+            "Stay braced and keep your chest up through the first pull."
+        )
 
     if max_hip < 150:
         breakdown["extension"] = "incomplete"
         issues.append("Hip extension may be incomplete.")
-        feedback.append("Finish your pull tall before pulling under the bar.")
+        feedback.append(
+            "Finish your pull tall before pulling under the bar."
+        )
 
     if min_elbow < 45:
         breakdown["turnover"] = "early_arm_bend"
         issues.append("Arms may be bending early during the pull.")
-        feedback.append("Keep arms long until you finish extending.")
+        feedback.append(
+            "Keep arms long until you finish extending."
+        )
 
     if catch_elbow > 135:
         breakdown["front_rack"] = "poor"
-        issues.append("Elbows may be slow coming through in the catch.")
-        feedback.append("Whip elbows through fast and catch in a strong front rack.")
+        issues.append(
+            "Elbows may be slow coming through in the catch."
+        )
+        feedback.append(
+            "Whip elbows through fast and catch in a strong front rack."
+        )
 
     if min_knee > 125:
         breakdown["catch"] = "power_catch"
         issues.append("Catch position is high.")
-        feedback.append("Pull under the bar and receive lower if needed.")
+        feedback.append(
+            "Pull under the bar and receive lower if needed."
+        )
     elif min_knee < 70:
         breakdown["catch"] = "deep_catch"
 
     if rack_distance > 0.22:
         breakdown["bar_path"] = "drifting"
-        issues.append("Bar may be drifting away during the turnover.")
-        feedback.append("Keep the bar close and pull yourself under it.")
+        issues.append(
+            "Bar may be drifting away during the turnover."
+        )
+        feedback.append(
+            "Keep the bar close and pull yourself under it."
+        )
 
     penalties = {
         "first_pull": {"good": 0.0, "poor": 0.8},
@@ -1883,7 +1899,6 @@ def analyze_clean_reps(biomechanics):
 
     score = round(max(1.0, min(10.0, score)), 1)
 
-    # Small clean bonus
     score += 0.8
     score = min(10.0, score)
 
@@ -1891,8 +1906,10 @@ def analyze_clean_reps(biomechanics):
         score = min(score, 9.2)
     else:
         score = max(score, 9.0)
-        feedback = ["Good clean rep. Strong pull and catch position."]
-    
+        feedback = [
+            "Good clean rep. Strong pull and catch position."
+        ]
+
     reps = [{
         "rep": 1,
         "start_frame": int(frame_numbers[start_idx]),
