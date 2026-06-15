@@ -90,12 +90,22 @@ const getBestRep = (reps) => {
 const getPhaseConfig = (exerciseLabel) => {
   const label = String(exerciseLabel || "").toLowerCase();
 
-  if (
-    label.includes("olympic") ||
-    label.includes("clean") ||
-    label.includes("snatch") ||
-    label.includes("jerk")
-  ) {
+    if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+    return {
+      title: "Clean & Jerk Phase Review",
+      text: "Setup → Clean Catch → Jerk Dip → Jerk Drive → Jerk Catch → Finish",
+      items: [
+        ["setup", "Setup"],
+        ["clean_catch", "Clean Catch"],
+        ["jerk_dip", "Jerk Dip"],
+        ["jerk_drive", "Jerk Drive"],
+        ["jerk_catch", "Jerk Catch"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
+  if (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk")) {
     return {
       title: "Olympic Lift Phase Review",
       text: "Setup → First Pull → Extension → Catch → Finish",
@@ -476,6 +486,53 @@ const getInteractiveZones = (result) => {
         imageKey: "lockout",
         status: breakdown.lockout || "good",
         note: "Finish with arms fully extended.",
+      },
+    ];
+  }
+
+    if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+    return [
+      {
+        id: "setup",
+        title: "Setup",
+        imageKey: "setup",
+        status: "good",
+        note: "Start tight with the bar close and chest up.",
+      },
+      {
+        id: "clean_catch",
+        title: "Clean Catch",
+        imageKey: "clean_catch",
+        status: "good",
+        note: "Receive the clean in a strong front rack.",
+      },
+      {
+        id: "jerk_dip",
+        title: "Jerk Dip",
+        imageKey: "jerk_dip",
+        status: "good",
+        note: "Dip straight down with a vertical torso.",
+      },
+      {
+        id: "jerk_drive",
+        title: "Jerk Drive",
+        imageKey: "jerk_drive",
+        status: "good",
+        note: "Drive powerfully through the legs.",
+      },
+      {
+        id: "jerk_catch",
+        title: "Jerk Catch",
+        imageKey: "jerk_catch",
+        status: "good",
+        note: "Catch locked out overhead with control.",
+      },
+      {
+        id: "finish",
+        title: "Finish",
+        imageKey: "finish",
+        status: "good",
+        note: "Stand tall and stabilize the finished position.",
       },
     ];
   }
