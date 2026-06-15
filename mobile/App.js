@@ -104,6 +104,20 @@ const getPhaseConfig = (exerciseLabel) => {
       ],
     };
   }
+  
+  if (label.includes("split jerk")) {
+  return {
+    title: "Split Jerk Phase Review",
+    text: "Setup → Dip → Drive → Catch → Finish",
+    items: [
+      ["setup", "Setup"],
+      ["dip", "Dip"],
+      ["drive", "Drive"],
+      ["catch", "Catch"],
+      ["finish", "Finish"],
+    ],
+  };
+}
 
   if (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk")) {
     return {
@@ -490,7 +504,17 @@ const getInteractiveZones = (result) => {
     ];
   }
 
-    if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+  if (label.includes("split jerk")) {
+  return [
+    { id: "setup", title: "Setup", imageKey: "setup", status: "good", note: "Start tall and braced with the bar in the front rack." },
+    { id: "dip", title: "Dip", imageKey: "dip", status: "good", note: "Dip straight down with a vertical torso." },
+    { id: "drive", title: "Drive", imageKey: "drive", status: "good", note: "Drive aggressively through the legs." },
+    { id: "catch", title: "Catch", imageKey: "catch", status: "good", note: "Catch locked out overhead in a strong split." },
+    { id: "finish", title: "Finish", imageKey: "finish", status: "good", note: "Recover under control and stabilize overhead." },
+  ];
+}
+  
+  if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return [
       {
         id: "setup",

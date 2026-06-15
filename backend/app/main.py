@@ -1948,18 +1948,19 @@ def analyze_split_jerk_reps(biomechanics):
 
     start_idx = 0
     end_idx = len(biomechanics) - 1
+    duration = max(1, end_idx - start_idx)
 
-    dip_idx = int(np.argmin(knee[: max(2, int(len(knee) * 0.45))]))
-    drive_idx = min(dip_idx + max(1, int(len(knee) * 0.12)), end_idx)
+    dip_idx = start_idx + int(duration * 0.18)
+    drive_idx = start_idx + int(duration * 0.30)
+    catch_idx = start_idx + int(duration * 0.48)
+    lockout_idx = start_idx + int(duration * 0.58)
+    finish_idx = min(end_idx, lockout_idx + int(duration * 0.20))
 
-    catch_window_start = max(1, int(len(knee) * 0.30))
-    catch_idx = catch_window_start + int(np.argmin(knee[catch_window_start:]))
-
-    lockout_idx = int(np.argmax(elbow))
-    if lockout_idx < catch_idx:
-        lockout_idx = catch_idx
-
-    finish_idx = end_idx
+    dip_idx = max(start_idx, min(dip_idx, end_idx))
+    drive_idx = max(dip_idx + 1, min(drive_idx, end_idx))
+    catch_idx = max(drive_idx + 1, min(catch_idx, end_idx))
+    lockout_idx = max(catch_idx + 1, min(lockout_idx, end_idx))
+    finish_idx = max(lockout_idx + 1, min(finish_idx, end_idx))
 
     wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
     max_elbow = float(np.percentile(elbow, 90))
