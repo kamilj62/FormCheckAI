@@ -2487,10 +2487,9 @@ def analyze_pull_up_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    # Pull-up top usually has smallest elbow angle / highest body position
     top_idx = int(np.argmin(elbow))
 
-    start_idx = max(0, top_idx - int(len(biomechanics) * 0.35))
+    start_idx = max(0, top_idx - int(len(biomechanics) * 0.45))
     end_idx = min(len(biomechanics) - 1, top_idx + int(len(biomechanics) * 0.35))
 
     rep_elbow = elbow[start_idx:end_idx + 1]
@@ -2533,13 +2532,24 @@ def analyze_pull_up_reps(biomechanics):
         score = max(score, 9.0)
         feedback = ["Good pull-up rep. Keep the body tight and finish high."]
 
+    up_span = max(1, top_idx - start_idx)
+    down_span = max(1, end_idx - top_idx)
+
+    pull_idx = start_idx + int(up_span * 0.70)
+    descent_idx = top_idx + int(down_span * 0.35)
+    finish_idx = top_idx + int(down_span * 0.75)
+
+    pull_idx = max(start_idx, min(pull_idx, top_idx))
+    descent_idx = max(top_idx, min(descent_idx, end_idx))
+    finish_idx = max(descent_idx + 1, min(finish_idx, end_idx))
+
     reps = [{
         "rep": 1,
         "start_frame": int(frame_numbers[start_idx]),
-        "pull_frame": int(frame_numbers[start_idx + int((top_idx - start_idx) * 0.5)]),
+        "pull_frame": int(frame_numbers[pull_idx]),
         "top_frame": int(frame_numbers[top_idx]),
-        "descent_frame": int(frame_numbers[top_idx + int((end_idx - top_idx) * 0.5)]),
-        "end_frame": int(frame_numbers[end_idx]),
+        "descent_frame": int(frame_numbers[descent_idx]),
+        "end_frame": int(frame_numbers[finish_idx]),
         "score": round(score, 1),
         "grade": grade_score(score),
         "issues": issues,
@@ -2669,11 +2679,11 @@ def analyze_muscle_up_reps(biomechanics, exercise_label="bar_muscle_up"):
     return reps, build_set_summary(reps)
 
 
-def analyze_push_up_reps(biomechanics, exercise_label="push_up"):
+def analyze_pull_up_reps(biomechanics):
     elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
-    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
     shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
-    hip_angle = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
 
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -2683,73 +2693,75 @@ def analyze_push_up_reps(biomechanics, exercise_label="push_up"):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    bottom_idx = int(np.argmin(elbow))
+    # Pull-up top usually has smallest elbow angle / highest body position
+    top_idx = int(np.argmin(elbow))
 
-    if exercise_label == "handstand_push_up":
-        start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.18))
-        end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.18))
+    # Revert to the version that gave the better setup frame
+    start_idx = max(0, top_idx - int(len(biomechanics) * 0.35))
+    end_idx = min(len(biomechanics) - 1, top_idx + int(len(biomechanics) * 0.35))
 
-    else:
-        start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.35))
-        end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.35))
     rep_elbow = elbow[start_idx:end_idx + 1]
-    rep_hip_y = hip_y[start_idx:end_idx + 1]
+    rep_wrist_y = wrist_y[start_idx:end_idx + 1]
     rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
-    rep_hip_angle = hip_angle[start_idx:end_idx + 1]
 
     min_elbow = float(np.min(rep_elbow))
     max_elbow = float(np.max(rep_elbow))
     elbow_range = max_elbow - min_elbow
-
-    body_sag = float(np.max(rep_hip_y - rep_shoulder_y))
-    min_hip_angle = float(np.min(rep_hip_angle))
+    wrist_above_ratio = float(np.mean(rep_wrist_y < rep_shoulder_y))
 
     issues = []
     feedback = []
 
     breakdown = {
-        "depth": "good",
-        "lockout": "good",
-        "body_line": "good",
+        "range": "good",
+        "top": "good",
         "control": "good",
     }
 
-    if min_elbow > 100:
-        breakdown["depth"] = "shallow"
-        issues.append("Push-up depth may be shallow.")
-        if exercise_label == "handstand_push_up":
-            feedback.append("Lower your head toward the floor.")
-        else:
-            feedback.append("Lower your chest closer to the floor.")
-    if max_elbow < 155:
-        breakdown["lockout"] = "incomplete"
-        issues.append("Lockout may be incomplete.")
-        feedback.append("Press all the way up until your arms are nearly straight.")
+    if elbow_range < 45:
+        breakdown["range"] = "short"
+        issues.append("Pull-up range of motion may be short.")
+        feedback.append("Start from a fuller hang and pull through a complete range.")
 
-    if body_sag > 0.18 or min_hip_angle < 140:
-        breakdown["body_line"] = "sagging"
-        issues.append("Hips may be sagging.")
-        feedback.append("Brace your core and keep shoulders, hips, and ankles in one line.")
+    if min_elbow > 105:
+        breakdown["top"] = "short"
+        issues.append("Chin may not reach the bar.")
+        feedback.append("Pull higher until your chin clears the bar.")
 
-    if elbow_range < 40:
-        breakdown["control"] = "short_range"
-        issues.append("Movement range was too small to confidently score.")
-        feedback.append("Record a full push-up rep from lockout to bottom and back.")
+    if wrist_above_ratio < 0.35:
+        breakdown["control"] = "review"
+        issues.append("Upper-body position was hard to track.")
+        feedback.append("Record from the side with the full body and bar visible.")
 
     score = compute_rep_score(issues)
     score = apply_coach_reward(score, issues, breakdown)
 
     if not issues:
         score = max(score, 9.0)
-        feedback = ["Good push-up rep. Strong body line and full press."]
+        feedback = ["Good pull-up rep. Keep the body tight and finish high."]
+
+    up_span = max(1, top_idx - start_idx)
+    down_span = max(1, end_idx - top_idx)
+
+    # Pull frame much closer to the top so it shows actual pulling
+    pull_idx = start_idx + int(up_span * 0.85)
+
+    descent_idx = top_idx + int(down_span * 0.35)
+
+    # Finish at bottom hang, not the start of another rep
+    finish_idx = top_idx + int(down_span * 0.75)
+
+    pull_idx = max(start_idx, min(pull_idx, top_idx))
+    descent_idx = max(top_idx, min(descent_idx, end_idx))
+    finish_idx = max(descent_idx + 1, min(finish_idx, end_idx))
 
     reps = [{
         "rep": 1,
         "start_frame": int(frame_numbers[start_idx]),
-        "descent_frame": int(frame_numbers[start_idx + int((bottom_idx - start_idx) * 0.5)]),
-        "bottom_frame": int(frame_numbers[bottom_idx]),
-        "ascent_frame": int(frame_numbers[bottom_idx + int((end_idx - bottom_idx) * 0.5)]),
-        "end_frame": int(frame_numbers[end_idx]),
+        "pull_frame": int(frame_numbers[pull_idx]),
+        "top_frame": int(frame_numbers[top_idx]),
+        "descent_frame": int(frame_numbers[descent_idx]),
+        "end_frame": int(frame_numbers[finish_idx]),
         "score": round(score, 1),
         "grade": grade_score(score),
         "issues": issues,
@@ -5420,6 +5432,14 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         phase_rep,
                         sample_every=sample_every,
                     )
+
+                elif label == "pull_up":
+                      phase_images = create_pull_up_phase_images(
+                          video_path,
+                          OVERLAY_DIR,
+                          phase_rep,
+                          sample_every=sample_every,
+                      )
 
                 elif label == "bench_press":
                     phase_images = create_bench_press_phase_images(

@@ -176,18 +176,17 @@ const getPhaseConfig = (exerciseLabel) => {
   }
 
   if (label.includes("pull")) {
-    return {
-      title: "Pull-Up Phase Review",
-      text: "Hang → Pull → Top → Descent → Finish",
-      items: [
-        ["hang", "Hang"],
-        ["pull", "Pull"],
-        ["top", "Top"],
-        ["descent", "Descent"],
-        ["finish", "Finish"],
-      ],
-    };
-  }
+  return {
+    title: "Pull-Up Phase Review",
+    text: "Hang → Pull → Top → Finish",
+    items: [
+      ["hang", "Hang"],
+      ["pull", "Pull"],
+      ["top", "Top"],
+      ["finish", "Finish"],
+    ],
+  };
+}
 
   if (label.includes("muscle")) {
     return {
@@ -305,6 +304,39 @@ const getInteractiveZones = (result) => {
       },
     ];
   }
+
+  if (label.includes("pull")) {
+      return [
+        {
+          id: "hang",
+          title: "Hang",
+          imageKey: "hang",
+          status: "good",
+          note: "Start from a controlled dead hang.",
+        },
+        {
+          id: "pull",
+          title: "Pull",
+          imageKey: "pull",
+          status: "good",
+          note: "Pull strongly with control.",
+        },
+        {
+          id: "top",
+          title: "Top",
+          imageKey: "top",
+          status: "good",
+          note: "Finish high with chin near or above the bar.",
+        },
+        {
+          id: "finish",
+          title: "Finish",
+          imageKey: "finish",
+          status: "good",
+          note: "Return to a controlled hang before the next rep.",
+        },
+      ];
+    }
 
   if (label.includes("muscle")) {
     return [
@@ -1395,11 +1427,12 @@ export default function App() {
                     key={`${activeZone?.id}-${activeImagePath}`}
                     source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
-                    resizeMode={
-                      result?.exercise_label?.toLowerCase().includes("muscle")
-                        ? "contain"
-                        : "cover"
-                    }
+                                          resizeMode={
+                        result?.exercise_label?.toLowerCase().includes("muscle") ||
+                        result?.exercise_label?.toLowerCase().includes("pull")
+                          ? "contain"
+                          : "cover"
+                      }
                   />
                 ) : (
                   <View style={styles.emptyImage}>
@@ -1465,13 +1498,16 @@ export default function App() {
                           <Image
                             source={{ uri: url }}
                             style={styles.phaseImage}
-                            resizeMode={
-                              result?.exercise_label
-                                ?.toLowerCase()
-                                .includes("muscle")
-                                ? "contain"
-                                : "cover"
-                            }
+                                                          resizeMode={
+                                result?.exercise_label
+                                  ?.toLowerCase()
+                                  .includes("muscle") ||
+                                result?.exercise_label
+                                  ?.toLowerCase()
+                                  .includes("pull")
+                                  ? "contain"
+                                  : "cover"
+                              }
                           />
                         ) : (
                           <View style={styles.emptyPhase}>
