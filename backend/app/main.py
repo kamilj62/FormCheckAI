@@ -421,6 +421,9 @@ def summarize_biomechanics(biomechanics):
 
 
 def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
+    if raw_label == "thruster":
+        return "thruster", max(confidence, 0.86), True, "thruster_override_locked"
+
     if pose_frames < 10 or not summary:
         return raw_label, confidence, False, "low_pose_data"
 
@@ -441,8 +444,18 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     torso_range = max_torso - min_torso
     elbow_range = max_elbow - min_elbow
 
+    # THRUSTER RESCUE
+    if (
+        raw_label in ["squat", "squat_back", "squat_front", "overhead_squat", "push_press"]
+        and wrist_ratio > 0.02
+        and min_knee < 80
+        and min_hip < 60
+        and max_elbow > 160
+        and min_elbow < 60
+    ):
+        return "thruster", max(confidence, 0.86), True, "thruster_biomechanics_detected"
+
     # HANDSTAND PUSH-UP RESCUE FROM BENCH
-    # Must run before trusting confident bench predictions.
     if (
         raw_label == "bench_press"
         and avg_torso > 150
@@ -453,7 +466,6 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
 
-    # Do not override confident model predictions.
     if confidence >= 0.45:
         return raw_label, confidence, False, "trusted_model_prediction"
 
@@ -529,7 +541,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         return "squat", max(confidence, 0.75), False, "trusted_raw_squat_prediction"
 
     if (
-        raw_label != "squat"
+        raw_label not in ["squat", "thruster"]
         and elbow_range >= 45
         and wrist_ratio < 0.55
         and max_elbow >= 140
@@ -5182,6 +5194,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_label = "squat_front"
             raw_confidence = 0.80
 
+        # THRUSTER OVERRIDE
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "push_press", "overhead_squat"]
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.15
+            and summary.get("min_knee_angle", 180) < 115
+            and summary.get("min_hip_angle", 180) < 115
+            and summary.get("max_elbow_angle", 0) > 145
+        ):
+            raw_label = "thruster"
+            raw_confidence = 0.84
+        
         # BACK SQUAT / GENERAL SQUAT RESCUE FROM BASE MODEL
         base_squat_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("squat", 0)
 
@@ -5206,7 +5229,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_confidence = 0.82
         
         # SQUAT FAMILY ROUTER
-        if "squat" in raw_label and raw_label not in ["squat_front", "pull_up"]:
+        if (
+            "squat" in raw_label
+            and raw_label not in ["squat_front", "pull_up", "thruster"]
+        ):
             squat_probs = SQUAT_ROUTER_MODEL.predict(
                 np.expand_dims(seq_base, axis=0),
                 verbose=0,
