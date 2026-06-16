@@ -713,6 +713,29 @@ const loadPendingVideos = async (setter) => {
   setter(existing);
 };
 
+const saveAnalysisHistory = async (analysis) => {
+  try {
+    const item = {
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      exercise_label: analysis.exercise_label,
+      confidence: analysis.confidence,
+      set_summary: analysis.set_summary || {},
+      rep_feedback: analysis.rep_feedback || [],
+      coaching_zones: analysis.coaching_zones || [],
+    };
+
+    const existing =
+      JSON.parse(await AsyncStorage.getItem(HISTORY_KEY)) || [];
+
+    const updated = [item, ...existing].slice(0, 100);
+
+    await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.log("SAVE HISTORY ERROR:", err);
+  }
+};
+
 export default function App() {
   const [video, setVideo] = useState(null);
   const [result, setResult] = useState(null);
