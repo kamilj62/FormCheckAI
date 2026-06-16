@@ -672,6 +672,8 @@ const getInteractiveZones = (result) => {
 
 const QUEUE_KEY = "formcheck_pending_videos";
 
+const HISTORY_KEY = "formcheck_analysis_history";
+
 const savePendingVideo = async (video) => {
   const id = Date.now().toString();
 
@@ -1068,6 +1070,8 @@ export default function App() {
             "Analyze request failed",
         );
       }
+
+      await saveAnalysisHistory(data);
 
       setResult(data);
       setLoading(false);
