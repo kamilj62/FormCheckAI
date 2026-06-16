@@ -5185,7 +5185,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # BACK SQUAT / GENERAL SQUAT RESCUE FROM BASE MODEL
         base_squat_conf = dict(zip(CLASS_NAMES, probs.tolist())).get("squat", 0)
 
-        if raw_label != "burpee" and base_squat_conf >= 0.90 and oly_label == "not_oly":
+        if (
+            raw_label not in ["burpee", "thruster"]
+            and base_squat_conf >= 0.90
+            and oly_label == "not_oly"
+        ):
             raw_label = "squat"
             raw_confidence = base_squat_conf
 
