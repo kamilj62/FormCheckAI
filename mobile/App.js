@@ -247,6 +247,20 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
+  if (label.includes("thruster")) {
+    return {
+      title: "Thruster Phase Review",
+      text: "Setup → Squat/Dip → Drive → Catch → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["dip", "Squat/Dip"],
+        ["drive", "Drive"],
+        ["catch", "Catch"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
   return {
     title: "Deadlift Phase Review",
     text: "Setup → Pull → Mid → Finish → Lockout",
@@ -259,339 +273,6 @@ const getPhaseConfig = (exerciseLabel) => {
     ],
   };
 };
-
-const getInteractiveZones = (result) => {
-  const label = String(result?.exercise_label || "").toLowerCase();
-  const bestRep = getBestRep(result?.rep_feedback || []);
-  const breakdown = bestRep?.breakdown || {};
-
-  if (label.includes("burpee")) {
-    return [
-      {
-        id: "hands_down",
-        title: "Hands Down",
-        imageKey: "start",
-        status: breakdown.start || "good",
-        note: "Move quickly to the floor while staying balanced.",
-      },
-      {
-        id: "plank",
-        title: "Plank",
-        imageKey: "hands_down",
-        status: breakdown.hands_down || "good",
-        note: "Keep your body tight and avoid sagging through the core.",
-      },
-      {
-        id: "jump_in",
-        title: "Jump In",
-        imageKey: "plank",
-        status: breakdown.plank || "good",
-        note: "Bring your feet underneath you efficiently.",
-      },
-      {
-        id: "stand",
-        title: "Stand",
-        imageKey: "stand",
-        status: breakdown.stand || "good",
-        note: "Stand tall with control before finishing the rep.",
-      },
-      {
-        id: "finish",
-        title: "Finish",
-        imageKey: "finish",
-        status: breakdown.finish || "good",
-        note: "Complete the rep fully before starting the next one.",
-      },
-    ];
-  }
-
-  if (label.includes("pull")) {
-      return [
-        {
-          id: "hang",
-          title: "Hang",
-          imageKey: "hang",
-          status: "good",
-          note: "Start from a controlled dead hang.",
-        },
-        {
-          id: "pull",
-          title: "Pull",
-          imageKey: "pull",
-          status: "good",
-          note: "Pull strongly with control.",
-        },
-        {
-          id: "top",
-          title: "Top",
-          imageKey: "top",
-          status: "good",
-          note: "Finish high with chin near or above the bar.",
-        },
-        {
-          id: "finish",
-          title: "Finish",
-          imageKey: "finish",
-          status: "good",
-          note: "Return to a controlled hang before the next rep.",
-        },
-      ];
-    }
-
-  if (label.includes("muscle")) {
-    return [
-      {
-        id: "pull",
-        title: "Pull",
-        imageKey: "pull",
-        status: breakdown.pull || "good",
-        note: "Pull high before starting the transition.",
-      },
-      {
-        id: "transition",
-        title: "Transition",
-        imageKey: "transition",
-        status: breakdown.transition || "good",
-        note: "Turn over aggressively and keep the rings or bar close.",
-      },
-      {
-        id: "support",
-        title: "Support",
-        imageKey: "dip",
-        status: breakdown.support || "good",
-        note: "Stabilize above the bar or rings before finishing.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish tall with strong locked-out arms.",
-      },
-    ];
-  }
-
-  if (label.includes("handstand push")) {
-    return [
-      {
-        id: "depth",
-        title: "Depth",
-        imageKey: "bottom",
-        status: breakdown.depth || "good",
-        note: "Lower your head toward the floor under control.",
-      },
-      {
-        id: "body_line",
-        title: "Body Line",
-        imageKey: "descent",
-        status: breakdown.body_line || "good",
-        note: "Keep your body stacked and avoid arching or sagging.",
-      },
-      {
-        id: "press",
-        title: "Press",
-        imageKey: "ascent",
-        status: breakdown.control || "good",
-        note: "Press smoothly away from the floor.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with arms fully locked out overhead.",
-      },
-    ];
-  }
-
-  if (label.includes("push up")) {
-    return [
-      {
-        id: "depth",
-        title: "Depth",
-        imageKey: "bottom",
-        status: breakdown.depth || "good",
-        note: "Lower your chest closer to the floor.",
-      },
-      {
-        id: "body_line",
-        title: "Body Line",
-        imageKey: "descent",
-        status: breakdown.body_line || "good",
-        note: "Keep shoulders, hips, and ankles aligned.",
-      },
-      {
-        id: "press",
-        title: "Press",
-        imageKey: "ascent",
-        status: breakdown.control || "good",
-        note: "Press smoothly back to lockout.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with elbows nearly straight.",
-      },
-    ];
-  }
-
-  if (label.includes("push press")) {
-    return [
-      {
-        id: "dip",
-        title: "Dip",
-        imageKey: "dip",
-        status: breakdown.dip || "good",
-        note: "Use a vertical dip and drive straight through the bar.",
-      },
-      {
-        id: "drive",
-        title: "Drive",
-        imageKey: "drive",
-        status: breakdown.bar_path || "good",
-        note: "Keep the bar close and drive straight overhead.",
-      },
-      {
-        id: "catch",
-        title: "Catch",
-        imageKey: "catch",
-        status: breakdown.control || "good",
-        note: "Catch the bar stacked over your shoulders and midfoot.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with elbows fully extended overhead.",
-      },
-    ];
-  }
-
-  if (label.includes("squat")) {
-    return [
-      {
-        id: "torso",
-        title: "Torso",
-        imageKey: "descent",
-        status: breakdown.torso || "good",
-        note: "Keep your chest tall and avoid folding forward.",
-      },
-      {
-        id: "depth",
-        title: "Depth",
-        imageKey: "bottom",
-        status: breakdown.depth || "good",
-        note: "Reach clear depth while keeping control.",
-      },
-      {
-        id: "knees",
-        title: "Knees",
-        imageKey: "bottom",
-        status: breakdown.knees || "good",
-        note: "Drive knees out and keep them tracking over toes.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Stand tall and finish the rep under control.",
-      },
-    ];
-  }
-
-  if (label.includes("bench")) {
-    return [
-      {
-        id: "wrists",
-        title: "Wrists",
-        imageKey: "press",
-        status: breakdown.wrists || "good",
-        note: "Keep wrists stacked and avoid letting them bend back.",
-      },
-      {
-        id: "elbows",
-        title: "Elbows",
-        imageKey: "bottom",
-        status: breakdown.elbows || "good",
-        note: "Keep elbows controlled without excessive flare.",
-      },
-      {
-        id: "bar",
-        title: "Bar Path",
-        imageKey: "press",
-        status: breakdown.bar_path || breakdown.depth || "good",
-        note: "Move from chest to lockout with a controlled path.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with arms fully extended.",
-      },
-    ];
-  }
-
-  if (label.includes("split jerk")) {
-  return [
-    { id: "setup", title: "Setup", imageKey: "setup", status: "good", note: "Start tall and braced with the bar in the front rack." },
-    { id: "dip", title: "Dip", imageKey: "dip", status: "good", note: "Dip straight down with a vertical torso." },
-    { id: "drive", title: "Drive", imageKey: "drive", status: "good", note: "Drive aggressively through the legs." },
-    { id: "catch", title: "Catch", imageKey: "catch", status: "good", note: "Catch locked out overhead in a strong split." },
-    { id: "finish", title: "Finish", imageKey: "finish", status: "good", note: "Recover under control and stabilize overhead." },
-  ];
-}
-  
-  if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
-    return [
-      {
-        id: "setup",
-        title: "Setup",
-        imageKey: "setup",
-        status: "good",
-        note: "Start tight with the bar close and chest up.",
-      },
-      {
-        id: "clean_catch",
-        title: "Clean Catch",
-        imageKey: "clean_catch",
-        status: "good",
-        note: "Receive the clean in a strong front rack.",
-      },
-      {
-        id: "jerk_dip",
-        title: "Jerk Dip",
-        imageKey: "jerk_dip",
-        status: "good",
-        note: "Dip straight down with a vertical torso.",
-      },
-      {
-        id: "jerk_drive",
-        title: "Jerk Drive",
-        imageKey: "jerk_drive",
-        status: "good",
-        note: "Drive powerfully through the legs.",
-      },
-      {
-        id: "jerk_catch",
-        title: "Jerk Catch",
-        imageKey: "jerk_catch",
-        status: "good",
-        note: "Catch locked out overhead with control.",
-      },
-      {
-        id: "finish",
-        title: "Finish",
-        imageKey: "finish",
-        status: "good",
-        note: "Stand tall and stabilize the finished position.",
-      },
-    ];
-  }
 
   if (
     label.includes("olympic") ||
@@ -638,6 +319,41 @@ const getInteractiveZones = (result) => {
     ];
   }
 
+  // THRUSTER
+  if (label.includes("thruster")) {
+    return [
+      {
+        id: "dip",
+        title: "Squat/Dip",
+        imageKey: "dip",
+        status: breakdown.squat_depth || "good",
+        note: "Use a full squat before driving the bar overhead.",
+      },
+      {
+        id: "drive",
+        title: "Drive",
+        imageKey: "drive",
+        status: breakdown.torso_stack || "good",
+        note: "Stay tall and drive through the bar.",
+      },
+      {
+        id: "bar_path",
+        title: "Bar Path",
+        imageKey: "catch",
+        status: breakdown.bar_path || "good",
+        note: "Keep the bar path vertical.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || breakdown.active_finish || "good",
+        note: "Finish fully locked out overhead.",
+      },
+    ];
+  }
+
+  // DEADLIFT FALLBACK
   return [
     {
       id: "back",
