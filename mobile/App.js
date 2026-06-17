@@ -266,17 +266,36 @@ const getInteractiveZones = (result) => {
   const breakdown = bestRep?.breakdown || {};
 
   if (label.includes("thruster")) {
-  return {
-    title: "Thruster Phase Review",
-    text: "Setup → Squat/Dip → Drive → Catch → Lockout",
-    items: [
-      ["setup", "Setup"],
-      ["dip", "Squat/Dip"],
-      ["drive", "Drive"],
-      ["catch", "Catch"],
-      ["lockout", "Lockout"],
-    ],
-  };
+  return [
+    {
+      id: "dip",
+      title: "Squat/Dip",
+      imageKey: "dip",
+      status: breakdown.squat_depth || "good",
+      note: "Use a full squat before driving the bar overhead.",
+    },
+    {
+      id: "drive",
+      title: "Drive",
+      imageKey: "drive",
+      status: breakdown.torso_stack || "good",
+      note: "Stay tall and drive through the bar.",
+    },
+    {
+      id: "bar_path",
+      title: "Bar Path",
+      imageKey: "catch",
+      status: breakdown.bar_path || "good",
+      note: "Keep the bar path vertical.",
+    },
+    {
+      id: "lockout",
+      title: "Lockout",
+      imageKey: "lockout",
+      status: breakdown.lockout || breakdown.active_finish || "good",
+      note: "Finish fully locked out overhead.",
+    },
+  ];
 }
 
   if (label.includes("burpee")) {
