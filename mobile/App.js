@@ -277,10 +277,10 @@ const getInteractiveZones = (result) => {
   const bestRep = getBestRep(result?.rep_feedback || []);
   const breakdown = bestRep?.breakdown || {};
 
-  if (label.includes("thruster")) {
+    if (label.includes("thruster")) {
   return [
     {
-      id: "dip",
+      id: "squat_dip",
       title: "Squat/Dip",
       imageKey: "dip",
       status: breakdown.squat_depth || "good",
@@ -292,13 +292,6 @@ const getInteractiveZones = (result) => {
       imageKey: "drive",
       status: breakdown.torso_stack || "good",
       note: "Stay tall and drive through the bar.",
-    },
-    {
-      id: "bar_path",
-      title: "Bar Path",
-      imageKey: "catch",
-      status: breakdown.bar_path || "good",
-      note: "Keep the bar path vertical.",
     },
     {
       id: "lockout",
