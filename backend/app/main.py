@@ -1624,7 +1624,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             score = apply_coach_reward(score, issues, breakdown)
 
             if exercise_label == "thruster":
-                score += 1.2
+                score += 1.5
 
                 if breakdown.get("bar_severity") == "moderate":
                     score += 1.2
