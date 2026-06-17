@@ -93,16 +93,14 @@ const getPhaseConfig = (exerciseLabel) => {
   if (label.includes("thruster")) {
   return {
     title: "Thruster Phase Review",
-    text: "Setup → Squat/Dip → Drive → Catch → Lockout",
+    text: "Squat/Dip → Drive → Lockout",
     items: [
-      ["setup", "Setup"],
       ["dip", "Squat/Dip"],
       ["drive", "Drive"],
-      ["catch", "Catch"],
       ["lockout", "Lockout"],
     ],
   };
-}  
+}
   
   if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return {
