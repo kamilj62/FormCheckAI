@@ -1526,7 +1526,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     issues.append("Squat depth may be shallow for a thruster.")
                     feedback.append("Use a full front squat before driving overhead.")
 
-                if torso_score > 65:
+                if torso_score > 75:
                     issues.append("Torso is leaning too far forward during the thruster.")
                     feedback.append("Stay tall through the squat and drive straight overhead.")
 
@@ -1617,7 +1617,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
             if exercise_label == "thruster":
                 breakdown["squat_depth"] = "good" if min_knee <= 125 else "shallow"
-                breakdown["torso_stack"] = "good" if torso_score <= 45 else "leaning_forward"
+                breakdown["torso_stack"] = "good" if torso_score <= 65 else "leaning_forward"
                 breakdown["active_finish"] = "good" if elbow_lockout >= 150 else "soft"
                 breakdown["knee_range"] = round(knee_range, 1)
 
@@ -1627,15 +1627,15 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 score += 1.2
 
                 if breakdown.get("bar_severity") == "moderate":
-                    score += 0.8
+                    score += 1.2
                 elif breakdown.get("bar_severity") == "severe":
-                    score += 0.5
+                    score += 1.0
 
                 if breakdown.get("lockout") == "good":
-                    score += 0.7
+                    score += 1.0
 
                 if breakdown.get("squat_depth") == "good":
-                    score += 0.7
+                    score += 1.0
 
                 score = min(10.0, round(score, 1))
 
@@ -1658,13 +1658,14 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 "feedback": feedback or [good_rep_message],
             }
 
-            if exercise_label == "thruster":
-                rep_item.update({
-                    "dip_frame": int(frame_numbers[start + dip_idx]),
-                    "drive_frame": int(frame_numbers[min(start + dip_idx + 3, len(frame_numbers) - 1)]),
-                    "catch_frame": int(frame_numbers[min(end + 8, len(frame_numbers) - 1)]),
-                    "lockout_frame": int(frame_numbers[min(end + 18, len(frame_numbers) - 1)]),
-                })
+            lockout_idx = min(end + 10, len(frame_numbers) - 1)
+
+            rep_item.update({
+                "dip_frame": int(frame_numbers[start + dip_idx]),
+                "drive_frame": int(frame_numbers[min(start + dip_idx + 4, len(frame_numbers) - 1)]),
+                "catch_frame": int(frame_numbers[lockout_idx]),
+                "lockout_frame": int(frame_numbers[min(lockout_idx + 1, len(frame_numbers) - 1)]),
+            })
 
             reps.append(rep_item)
 
