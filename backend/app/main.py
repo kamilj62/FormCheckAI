@@ -1661,9 +1661,9 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             if exercise_label == "thruster":
                 rep_item.update({
                     "dip_frame": int(frame_numbers[start + dip_idx]),
-                    "drive_frame": int(frame_numbers[min(end + 3, len(frame_numbers) - 1)]),
-                    "catch_frame": int(frame_numbers[min(end + 12, len(frame_numbers) - 1)]),
-                    "lockout_frame": int(frame_numbers[min(end + 25, len(frame_numbers) - 1)]),
+                    "drive_frame": int(frame_numbers[min(start + dip_idx + 3, len(frame_numbers) - 1)]),
+                    "catch_frame": int(frame_numbers[min(end + 8, len(frame_numbers) - 1)]),
+                    "lockout_frame": int(frame_numbers[min(end + 18, len(frame_numbers) - 1)]),
                 })
 
             reps.append(rep_item)
@@ -1700,6 +1700,17 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             "breakdown": fallback_breakdown,
             "feedback": [good_rep_message],
         })
+
+    if exercise_label == "thruster" and len(reps) > 1:
+        reps = [max(
+            reps,
+            key=lambda r: (
+                r.get("breakdown", {}).get("squat_depth") == "good",
+                r.get("lockout_frame", 0) - r.get("start_frame", 0),
+                r.get("score", 0),
+            )
+        )]
+        reps[0]["rep"] = 1
 
     return reps, build_set_summary(reps)
 
@@ -5428,9 +5439,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         phase_images = None
 
         if make_visuals and rep_feedback:
-            phase_rep = choose_phase_rep(rep_feedback)
+            if make_visuals and rep_feedback:
+                phase_rep = choose_phase_rep(rep_feedback)
 
-            overlay_result = None
+                if label == "thruster" and rep_feedback:
+                    phase_rep = rep_feedback[0]
+
+                overlay_result = None
 
             if make_overlay:
                 phase_rep = choose_phase_rep(rep_feedback)
@@ -5686,7 +5701,7 @@ async def generate_visuals(
             phase_images = create_deadlift_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
-        elif "push press" in label:
+        elif "push press" in label or "thruster" in label:
             phase_images = create_push_press_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
