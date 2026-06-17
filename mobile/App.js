@@ -90,7 +90,21 @@ const getBestRep = (reps) => {
 const getPhaseConfig = (exerciseLabel) => {
   const label = String(exerciseLabel || "").toLowerCase();
 
-    if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+  if (label.includes("thruster")) {
+  return {
+    title: "Thruster Phase Review",
+    text: "Setup → Squat/Dip → Drive → Catch → Lockout",
+    items: [
+      ["setup", "Setup"],
+      ["dip", "Squat/Dip"],
+      ["drive", "Drive"],
+      ["catch", "Catch"],
+      ["lockout", "Lockout"],
+    ],
+  };
+}  
+  
+  if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return {
       title: "Clean & Jerk Phase Review",
       text: "Setup → Clean Catch → Jerk Dip → Jerk Drive → Jerk Catch → Finish",
