@@ -1,8 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -90,7 +86,40 @@ const getBestRep = (reps) => {
 const getPhaseConfig = (exerciseLabel) => {
   const label = String(exerciseLabel || "").toLowerCase();
 
-    if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+  if (label.includes("thruster")) {
+    return [
+      {
+        id: "dip",
+        title: "Squat/Dip",
+        imageKey: "dip",
+        status: breakdown.squat_depth || "good",
+        note: "Use a full squat before driving the bar overhead.",
+      },
+      {
+        id: "drive",
+        title: "Drive",
+        imageKey: "drive",
+        status: breakdown.torso_stack || "good",
+        note: "Stay tall and drive through the bar.",
+      },
+      {
+        id: "bar_path",
+        title: "Bar Path",
+        imageKey: "catch",
+        status: breakdown.bar_path || "good",
+        note: "Keep the bar path vertical.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: breakdown.lockout || breakdown.active_finish || "good",
+        note: "Finish fully locked out overhead.",
+      },
+    ];
+  }
+
+  if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return {
       title: "Clean & Jerk Phase Review",
       text: "Setup → Clean Catch → Jerk Dip → Jerk Drive → Jerk Catch → Finish",
@@ -104,22 +133,27 @@ const getPhaseConfig = (exerciseLabel) => {
       ],
     };
   }
-  
-  if (label.includes("split jerk")) {
-  return {
-    title: "Split Jerk Phase Review",
-    text: "Setup → Dip → Drive → Catch → Finish",
-    items: [
-      ["setup", "Setup"],
-      ["dip", "Dip"],
-      ["drive", "Drive"],
-      ["catch", "Catch"],
-      ["finish", "Finish"],
-    ],
-  };
-}
 
-  if (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk")) {
+  if (label.includes("split jerk")) {
+    return {
+      title: "Split Jerk Phase Review",
+      text: "Setup → Dip → Drive → Catch → Finish",
+      items: [
+        ["setup", "Setup"],
+        ["dip", "Dip"],
+        ["drive", "Drive"],
+        ["catch", "Catch"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
+  if (
+    label.includes("olympic") ||
+    label.includes("clean") ||
+    label.includes("snatch") ||
+    label.includes("jerk")
+  ) {
     return {
       title: "Olympic Lift Phase Review",
       text: "Setup → First Pull → Extension → Catch → Finish",
@@ -176,17 +210,17 @@ const getPhaseConfig = (exerciseLabel) => {
   }
 
   if (label.includes("pull")) {
-  return {
-    title: "Pull-Up Phase Review",
-    text: "Hang → Pull → Top → Finish",
-    items: [
-      ["hang", "Hang"],
-      ["pull", "Pull"],
-      ["top", "Top"],
-      ["finish", "Finish"],
-    ],
-  };
-}
+    return {
+      title: "Pull-Up Phase Review",
+      text: "Hang → Pull → Top → Finish",
+      items: [
+        ["hang", "Hang"],
+        ["pull", "Pull"],
+        ["top", "Top"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
 
   if (label.includes("muscle")) {
     return {
@@ -274,117 +308,116 @@ const getPhaseConfig = (exerciseLabel) => {
   };
 };
 
-  if (
-    label.includes("olympic") ||
-    label.includes("clean") ||
-    label.includes("snatch") ||
-    label.includes("jerk")
-  ) {
-    return [
-      {
-        id: "setup",
-        title: "Setup",
-        imageKey: "setup",
-        status: "good",
-        note: "Start tight with the bar close and chest up.",
-      },
-      {
-        id: "first_pull",
-        title: "First Pull",
-        imageKey: "first_pull",
-        status: "good",
-        note: "Keep the bar close as it passes the knees.",
-      },
-      {
-        id: "extension",
-        title: "Extension",
-        imageKey: "extension",
-        status: "good",
-        note: "Drive tall through the legs and hips.",
-      },
-      {
-        id: "catch",
-        title: "Catch",
-        imageKey: "catch",
-        status: "good",
-        note: "Receive the bar under control.",
-      },
-      {
-        id: "finish",
-        title: "Finish",
-        imageKey: "finish",
-        status: "good",
-        note: "Stand tall and stabilize the finished position.",
-      },
-    ];
-  }
-
-  // THRUSTER
-  if (label.includes("thruster")) {
-    return [
-      {
-        id: "dip",
-        title: "Squat/Dip",
-        imageKey: "dip",
-        status: breakdown.squat_depth || "good",
-        note: "Use a full squat before driving the bar overhead.",
-      },
-      {
-        id: "drive",
-        title: "Drive",
-        imageKey: "drive",
-        status: breakdown.torso_stack || "good",
-        note: "Stay tall and drive through the bar.",
-      },
-      {
-        id: "bar_path",
-        title: "Bar Path",
-        imageKey: "catch",
-        status: breakdown.bar_path || "good",
-        note: "Keep the bar path vertical.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || breakdown.active_finish || "good",
-        note: "Finish fully locked out overhead.",
-      },
-    ];
-  }
-
-  // DEADLIFT FALLBACK
+if (
+  label.includes("olympic") ||
+  label.includes("clean") ||
+  label.includes("snatch") ||
+  label.includes("jerk")
+) {
   return [
     {
-      id: "back",
-      title: "Back Position",
-      imageKey: "pull",
-      status: breakdown.back || "good",
-      note: "Brace hard and keep a neutral spine.",
+      id: "setup",
+      title: "Setup",
+      imageKey: "setup",
+      status: "good",
+      note: "Start tight with the bar close and chest up.",
     },
     {
-      id: "hips",
-      title: "Hip Hinge",
-      imageKey: "mid",
-      status: breakdown.hinge || "good",
-      note: "Push hips back and keep tension through the pull.",
+      id: "first_pull",
+      title: "First Pull",
+      imageKey: "first_pull",
+      status: "good",
+      note: "Keep the bar close as it passes the knees.",
     },
     {
-      id: "bar",
+      id: "extension",
+      title: "Extension",
+      imageKey: "extension",
+      status: "good",
+      note: "Drive tall through the legs and hips.",
+    },
+    {
+      id: "catch",
+      title: "Catch",
+      imageKey: "catch",
+      status: "good",
+      note: "Receive the bar under control.",
+    },
+    {
+      id: "finish",
+      title: "Finish",
+      imageKey: "finish",
+      status: "good",
+      note: "Stand tall and stabilize the finished position.",
+    },
+  ];
+}
+
+// THRUSTER
+if (label.includes("thruster")) {
+  return [
+    {
+      id: "dip",
+      title: "Squat/Dip",
+      imageKey: "dip",
+      status: breakdown.squat_depth || "good",
+      note: "Use a full squat before driving the bar overhead.",
+    },
+    {
+      id: "drive",
+      title: "Drive",
+      imageKey: "drive",
+      status: breakdown.torso_stack || "good",
+      note: "Stay tall and drive through the bar.",
+    },
+    {
+      id: "bar_path",
       title: "Bar Path",
-      imageKey: "mid",
+      imageKey: "catch",
       status: breakdown.bar_path || "good",
-      note: "Keep the bar close to your body.",
+      note: "Keep the bar path vertical.",
     },
     {
       id: "lockout",
       title: "Lockout",
       imageKey: "lockout",
-      status: breakdown.lockout || "good",
-      note: "Finish tall with hips and knees extended.",
+      status: breakdown.lockout || breakdown.active_finish || "good",
+      note: "Finish fully locked out overhead.",
     },
   ];
-};
+}
+
+// DEADLIFT FALLBACK
+return [
+  {
+    id: "back",
+    title: "Back Position",
+    imageKey: "pull",
+    status: breakdown.back || "good",
+    note: "Brace hard and keep a neutral spine.",
+  },
+  {
+    id: "hips",
+    title: "Hip Hinge",
+    imageKey: "mid",
+    status: breakdown.hinge || "good",
+    note: "Push hips back and keep tension through the pull.",
+  },
+  {
+    id: "bar",
+    title: "Bar Path",
+    imageKey: "mid",
+    status: breakdown.bar_path || "good",
+    note: "Keep the bar close to your body.",
+  },
+  {
+    id: "lockout",
+    title: "Lockout",
+    imageKey: "lockout",
+    status: breakdown.lockout || "good",
+    note: "Finish tall with hips and knees extended.",
+  },
+];
 
 const QUEUE_KEY = "formcheck_pending_videos";
 
@@ -409,22 +442,17 @@ const savePendingVideo = async (video) => {
     status: "pending",
   };
 
-  const existing =
-    JSON.parse(await AsyncStorage.getItem(QUEUE_KEY)) || [];
+  const existing = JSON.parse(await AsyncStorage.getItem(QUEUE_KEY)) || [];
 
   const updated = [item, ...existing];
 
-  await AsyncStorage.setItem(
-    QUEUE_KEY,
-    JSON.stringify(updated)
-  );
+  await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(updated));
 
   return item;
 };
 
 const loadPendingVideos = async (setter) => {
-  const existing =
-    JSON.parse(await AsyncStorage.getItem(QUEUE_KEY)) || [];
+  const existing = JSON.parse(await AsyncStorage.getItem(QUEUE_KEY)) || [];
 
   setter(existing);
 };
@@ -441,8 +469,7 @@ const saveAnalysisHistory = async (analysis) => {
       coaching_zones: analysis.coaching_zones || [],
     };
 
-    const existing =
-      JSON.parse(await AsyncStorage.getItem(HISTORY_KEY)) || [];
+    const existing = JSON.parse(await AsyncStorage.getItem(HISTORY_KEY)) || [];
 
     const updated = [item, ...existing].slice(0, 100);
 
@@ -1170,12 +1197,14 @@ export default function App() {
                     key={`${activeZone?.id}-${activeImagePath}`}
                     source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
-                                          resizeMode={
-                        result?.exercise_label?.toLowerCase().includes("muscle") ||
-                        result?.exercise_label?.toLowerCase().includes("pull")
-                          ? "contain"
-                          : "cover"
-                      }
+                    resizeMode={
+                      result?.exercise_label
+                        ?.toLowerCase()
+                        .includes("muscle") ||
+                      result?.exercise_label?.toLowerCase().includes("pull")
+                        ? "contain"
+                        : "cover"
+                    }
                   />
                 ) : (
                   <View style={styles.emptyImage}>
@@ -1241,16 +1270,16 @@ export default function App() {
                           <Image
                             source={{ uri: url }}
                             style={styles.phaseImage}
-                                                          resizeMode={
-                                result?.exercise_label
-                                  ?.toLowerCase()
-                                  .includes("muscle") ||
-                                result?.exercise_label
-                                  ?.toLowerCase()
-                                  .includes("pull")
-                                  ? "contain"
-                                  : "cover"
-                              }
+                            resizeMode={
+                              result?.exercise_label
+                                ?.toLowerCase()
+                                .includes("muscle") ||
+                              result?.exercise_label
+                                ?.toLowerCase()
+                                .includes("pull")
+                                ? "contain"
+                                : "cover"
+                            }
                           />
                         ) : (
                           <View style={styles.emptyPhase}>
