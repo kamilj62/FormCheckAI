@@ -449,6 +449,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     if (
         raw_label in [
             "bench_press",
+            "burpee",
             "squat",
             "squat_back",
             "squat_front",
@@ -5801,10 +5802,10 @@ def compress_video_for_overlay(input_path):
         "-y",
         "-i", input_path,
         "-t", "15",
-        "-vf", "scale=480:-2,fps=12",
+        "-vf", "scale=720:-2,fps=15",
         "-c:v", "libx264",
         "-preset", "ultrafast",
-        "-crf", "34",
+        "-crf", "28",
         "-an",
         compressed_path,
     ]
@@ -5987,9 +5988,21 @@ async def analyze(file: UploadFile = File(...)):
 
         result = analyze_video(
             analysis_path,
-            make_visuals=True,
+            make_visuals=False,
             make_overlay=False,
         )
+
+        if result.get("rep_feedback"):
+            rep = result["rep_feedback"][0]
+            label = str(result.get("exercise_label", "")).lower()
+
+            if "thruster" in label or "push press" in label or "strict press" in label:
+                result["phase_images"] = create_push_press_phase_images(
+                    temp_path,
+                    OVERLAY_DIR,
+                    rep,
+                    sample_every=1,
+                )
 
         return result
 
