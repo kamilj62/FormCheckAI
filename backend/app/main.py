@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 
 import os
+from tracemalloc import start
 import uuid
 import shutil
 
@@ -444,14 +445,20 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     torso_range = max_torso - min_torso
     elbow_range = max_elbow - min_elbow
 
-    # THRUSTER RESCUE
+    # THRUSTER RESCUE — must happen before confidence lock
     if (
-        raw_label in ["squat", "squat_back", "squat_front", "overhead_squat", "push_press"]
+        raw_label in [
+            "bench_press",
+            "squat",
+            "squat_back",
+            "squat_front",
+            "overhead_squat",
+            "push_press",
+        ]
         and wrist_ratio > 0.02
         and min_knee < 80
-        and min_hip < 60
+        and min_hip < 80
         and max_elbow > 160
-        and min_elbow < 60
     ):
         return "thruster", max(confidence, 0.86), True, "thruster_biomechanics_detected"
 
@@ -466,6 +473,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
 
+    # Trust confident predictions only after special rescues
     if confidence >= 0.45:
         return raw_label, confidence, False, "trusted_model_prediction"
 
@@ -1436,13 +1444,28 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             elbow_lockout = float(np.percentile(rep_elbow, 85))
 
             dip_idx = int(np.argmin(rep_knee))
-            first_overhead = np.where(rep_wrist_y < rep_shoulder_y)[0]
 
-            if len(first_overhead) > 0:
-                overhead_idx = int(first_overhead[0])
-                drive_timing = overhead_idx - dip_idx
+            if exercise_label == "thruster":
+                overhead_candidates = np.where(
+                    (rep_wrist_y < rep_shoulder_y) &
+                    (rep_elbow > 140)
+                )[0]
+
+                if len(overhead_candidates) > 0:
+                    overhead_idx = int(overhead_candidates[-1])
+                    drive_timing = overhead_idx - dip_idx
+                else:
+                    overhead_idx = len(rep_knee) - 1
+                    drive_timing = 999
             else:
-                drive_timing = 999
+                first_overhead = np.where(rep_wrist_y < rep_shoulder_y)[0]
+
+                if len(first_overhead) > 0:
+                    overhead_idx = int(first_overhead[0])
+                    drive_timing = overhead_idx - dip_idx
+                else:
+                    overhead_idx = len(rep_knee) - 1
+                    drive_timing = 999
 
             if wrist_drift > 0.05:
                 drift_severity = "severe"
@@ -1624,7 +1647,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 score = max(score, 9.0)
                 feedback = [good_rep_message]
 
-            reps.append({
+            rep_item = {
                 "rep": len(reps) + 1,
                 "start_frame": int(frame_numbers[start]),
                 "end_frame": int(frame_numbers[end]),
@@ -1633,7 +1656,17 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 "issues": issues,
                 "breakdown": breakdown,
                 "feedback": feedback or [good_rep_message],
-            })
+            }
+
+            if exercise_label == "thruster":
+                rep_item.update({
+                    "dip_frame": int(frame_numbers[start + dip_idx]),
+                    "drive_frame": int(frame_numbers[min(end + 3, len(frame_numbers) - 1)]),
+                    "catch_frame": int(frame_numbers[min(end + 12, len(frame_numbers) - 1)]),
+                    "lockout_frame": int(frame_numbers[min(end + 25, len(frame_numbers) - 1)]),
+                })
+
+            reps.append(rep_item)
 
             in_rep = False
 
@@ -1669,6 +1702,20 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         })
 
     return reps, build_set_summary(reps)
+
+
+def find_thruster_phase_window(start_idx, end_idx, rep=None):
+    span = max(1, end_idx - start_idx)
+
+    bottom = int(rep.get("bottom_frame", start_idx + int(span * 0.35))) if rep else start_idx + int(span * 0.35)
+
+    return {
+        "setup": start_idx + int(span * 0.05),
+        "dip": bottom,
+        "drive": bottom + int(span * 0.18),
+        "catch": start_idx + int(span * 0.78),
+        "lockout": end_idx,
+    }
 
 
 def draw_ideal_push_press_overlay(frame, pose_landmarks, width, height):
@@ -3855,12 +3902,28 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
     start = max(0, min(start, total_frames - 1))
     end = max(start + 1, min(end, total_frames - 1))
 
-    phase_frames = find_push_press_phase_window(start, end)
+    # THRUSTER: use actual detected phase frames
+    if rep.get("breakdown", {}).get("squat_depth"):
+
+        phase_frames = {
+            "setup": int(rep.get("start_frame", start)),
+            "dip": int(rep.get("dip_frame", start)),
+            "drive": int(rep.get("drive_frame", start)),
+            "catch": int(rep.get("catch_frame", end)),
+            "lockout": int(rep.get("lockout_frame", end)),
+        }
+
+    # PUSH PRESS: use timing-based fallback
+    else:
+        phase_frames = find_push_press_phase_window(start, end)
 
     saved = {}
 
     for phase, frame_idx in phase_frames.items():
-        cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame_idx))
+
+        frame_idx = max(0, min(int(frame_idx), total_frames - 1))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = cap.read()
 
         if not ret:
@@ -3870,9 +3933,9 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
         filepath = os.path.join(output_dir, filename)
 
         cv2.imwrite(filepath, frame)
+
         saved[phase] = f"/outputs/{filename}"
 
-    # One image showing all 5 phases side by side
     sheet_url = save_phase_contact_sheet(
         input_path,
         phase_frames,
@@ -3886,6 +3949,7 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
     cap.release()
 
     print("Saved push press phase images:", saved)
+
     return saved
 
 
@@ -5720,7 +5784,7 @@ def compress_video_for_overlay(input_path):
         "ffmpeg",
         "-y",
         "-i", input_path,
-        "-t", "8",
+        "-t", "15",
         "-vf", "scale=480:-2,fps=12",
         "-c:v", "libx264",
         "-preset", "ultrafast",
@@ -5903,7 +5967,14 @@ async def analyze(file: UploadFile = File(...)):
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        result = analyze_video(temp_path, make_visuals=True, make_overlay=False)        
+        analysis_path = compress_video_for_overlay(temp_path)
+
+        result = analyze_video(
+            analysis_path,
+            make_visuals=True,
+            make_overlay=False,
+        )
+
         return result
 
     except Exception as e:
@@ -5928,4 +5999,7 @@ async def analyze(file: UploadFile = File(...)):
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+        if "analysis_path" in locals() and os.path.exists(analysis_path):
+            os.remove(analysis_path)
 
