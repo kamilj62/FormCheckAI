@@ -22,6 +22,12 @@ TEST_VIDEOS = [
         "expected": "Push Press",
         "required_phases": ["setup", "dip", "drive", "catch", "lockout"],
     },
+        {
+        "label": "Thruster",
+        "path": "/Users/josephkamil/Desktop/Capstone/thruster-correct.mov",
+        "expected": "Thruster",
+        "required_phases": ["setup", "dip", "drive", "catch", "lockout"],
+    },
     {
         "label": "Squat",
         "path": "/Users/josephkamil/Desktop/Capstone/data/dataset_a/raw/squat_back/Backsquat- correct.mov",

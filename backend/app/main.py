@@ -422,9 +422,6 @@ def summarize_biomechanics(biomechanics):
 
 
 def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
-    if raw_label == "thruster":
-        return "thruster", max(confidence, 0.86), True, "thruster_override_locked"
-
     if pose_frames < 10 or not summary:
         return raw_label, confidence, False, "low_pose_data"
 
@@ -447,22 +444,14 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
 
     # THRUSTER RESCUE — must happen before confidence lock
     if (
-        raw_label in [
-            "bench_press",
-            "burpee",
-            "squat",
-            "squat_back",
-            "squat_front",
-            "overhead_squat",
-            "push_press",
-        ]
+        raw_label in ["burpee"]
         and wrist_ratio > 0.02
         and min_knee < 80
         and min_hip < 80
         and max_elbow > 160
     ):
+        
         return "thruster", max(confidence, 0.86), True, "thruster_biomechanics_detected"
-
     # HANDSTAND PUSH-UP RESCUE FROM BENCH
     if (
         raw_label == "bench_press"
@@ -473,6 +462,15 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         and summary.get("avg_knee_angle", 0) > 150
     ):
         return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
+
+    if (
+        raw_label == "thruster"
+        and wrist_ratio > 0.45
+        and min_knee < 80
+        and min_hip < 80
+        and max_elbow > 160
+    ):
+        return "push_press", max(confidence, 0.80), True, "protect_push_press_from_thruster"
 
     # Trust confident predictions only after special rescues
     if confidence >= 0.45:
