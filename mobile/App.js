@@ -1563,7 +1563,7 @@ export default function App() {
                           <Image
                             source={{ uri: url }}
                             style={styles.phaseImage}
-                                                          resizeMode={
+                              resizeMode={
                                 result?.exercise_label
                                   ?.toLowerCase()
                                   .includes("muscle") ||
@@ -1901,7 +1901,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   coachImageWrap: {
-    height: 260,
+    height: 420,
     borderRadius: 22,
     overflow: "hidden",
     backgroundColor: "#020617",
