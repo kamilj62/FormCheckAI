@@ -1686,7 +1686,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
            
             rep_item.update({
                 "dip_frame": int(frame_numbers[start + dip_idx]),
-                "drive_frame": int(frame_numbers[min(start + dip_idx + 8, len(frame_numbers) - 1)]),
+                "drive_frame": int(frame_numbers[min(start + dip_idx + 7, len(frame_numbers) - 1)]),
                 "catch_frame": int(frame_numbers[lockout_idx]),
                 "lockout_frame": int(frame_numbers[min(lockout_idx + 1, len(frame_numbers) - 1)]),
             })
@@ -3968,7 +3968,7 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
         filename = f"push_press_{phase}_{uuid.uuid4().hex[:8]}.jpg"
         filepath = os.path.join(output_dir, filename)
 
-        cv2.imwrite(filepath, frame)
+        cv2.imwrite(filepath, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
 
         saved[phase] = f"/outputs/{filename}"
 
@@ -5825,10 +5825,10 @@ def compress_video_for_overlay(input_path):
         "-y",
         "-i", input_path,
         "-t", "15",
-        "-vf", "scale=720:-2,fps=15",
+        "-vf", "scale=960:-2,fps=24",
         "-c:v", "libx264",
         "-preset", "ultrafast",
-        "-crf", "28",
+        "-crf", "24",
         "-an",
         compressed_path,
     ]
@@ -6002,6 +6002,7 @@ async def analyze(file: UploadFile = File(...)):
     suffix = os.path.splitext(file.filename or "")[1] or ".mov"
     temp_filename = f"upload_{uuid.uuid4().hex[:8]}{suffix}"
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+    analysis_path = None
 
     try:
         with open(temp_path, "wb") as buffer:
@@ -6052,6 +6053,5 @@ async def analyze(file: UploadFile = File(...)):
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-        if "analysis_path" in locals() and os.path.exists(analysis_path):
+        if analysis_path and os.path.exists(analysis_path):
             os.remove(analysis_path)
-
