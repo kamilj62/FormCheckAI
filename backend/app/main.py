@@ -1443,6 +1443,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             head_drop_score = float(np.percentile(rep_head_drop, 80))
             head_forward_score = float(np.percentile(rep_head_forward, 80))
             elbow_lockout = float(np.percentile(rep_elbow, 85))
+            max_rep_elbow = float(np.max(rep_elbow))
 
             dip_idx = int(np.argmin(rep_knee))
 
@@ -1468,12 +1469,20 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     overhead_idx = len(rep_knee) - 1
                     drive_timing = 999
 
-            if wrist_drift > 0.05:
-                drift_severity = "severe"
-            elif wrist_drift > 0.03:
-                drift_severity = "moderate"
+            if exercise_label == "thruster":
+                if wrist_drift > 0.12:
+                    drift_severity = "severe"
+                elif wrist_drift > 0.08:
+                    drift_severity = "moderate"
+                else:
+                    drift_severity = "minor"
             else:
-                drift_severity = "minor"
+                if wrist_drift > 0.05:
+                    drift_severity = "severe"
+                elif wrist_drift > 0.03:
+                    drift_severity = "moderate"
+                else:
+                    drift_severity = "minor"
 
             issues = []
             feedback = []
@@ -1535,11 +1544,15 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     issues.append("Finish stronger overhead.")
                     feedback.append("Fully lock out the bar overhead at the top.")
 
-            if wrist_above < 0.35:
+            drift_threshold = 0.15 if exercise_label == "thruster" else 0.03
+            lockout_threshold = 0.10 if exercise_label == "thruster" else 0.35
+
+
+            if wrist_above < lockout_threshold and max_rep_elbow < 165:
                 issues.append("Incomplete overhead lockout.")
                 feedback.append("Fully extend arms overhead.")
 
-            if wrist_drift > 0.03:
+            if wrist_drift > drift_threshold:
                 issues.append("Bar drift detected.")
                 feedback.append("Keep the bar path vertical and press straight overhead.")
 
@@ -1579,9 +1592,12 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
             score = max(1.0, round(base_score - penalty, 1))
 
+            lockout_threshold = 0.10 if exercise_label == "thruster" else 0.35
+            drift_threshold = 0.15 if exercise_label == "thruster" else 0.03
+
             breakdown = {
-                "lockout": "good" if wrist_above >= 0.35 else "incomplete",
-                "bar_path": "drifting" if wrist_drift > 0.03 else "good",
+                "lockout": "good" if wrist_above >= lockout_threshold else "incomplete",
+                "bar_path": "drifting" if wrist_drift > drift_threshold else "good",
                 "bar_severity": drift_severity,
             }
 
@@ -1648,6 +1664,13 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 score = max(score, 9.0)
                 feedback = [good_rep_message]
 
+            if exercise_label == "thruster" and score >= 8.8:
+                breakdown["lockout"] = "good"
+                breakdown["bar_path"] = "good"
+                breakdown["bar_severity"] = "minor"
+                issues = [i for i in issues if "lockout" not in i.lower() and "bar drift" not in i.lower()]
+                feedback = [f for f in feedback if "lockout" not in f.lower() and "bar path" not in f.lower()]
+            
             rep_item = {
                 "rep": len(reps) + 1,
                 "start_frame": int(frame_numbers[start]),
@@ -1660,10 +1683,10 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             }
 
             lockout_idx = min(end + 10, len(frame_numbers) - 1)
-
+           
             rep_item.update({
                 "dip_frame": int(frame_numbers[start + dip_idx]),
-                "drive_frame": int(frame_numbers[min(start + dip_idx + 4, len(frame_numbers) - 1)]),
+                "drive_frame": int(frame_numbers[min(start + dip_idx + 8, len(frame_numbers) - 1)]),
                 "catch_frame": int(frame_numbers[lockout_idx]),
                 "lockout_frame": int(frame_numbers[min(lockout_idx + 1, len(frame_numbers) - 1)]),
             })
