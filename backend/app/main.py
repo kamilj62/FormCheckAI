@@ -1242,11 +1242,11 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                         "Keep your chest up, upper back tight, and shoulders stacked over the bar."
                     )
 
-            if valgus_score < 0.95:
+            if valgus_score < 0.85:
                 knees_grade = "poor"
                 issues.append("Knees cave inward noticeably.")
                 feedback.append("Drive knees out over your toes.")
-            elif valgus_score < 1.05:
+            elif valgus_score < 0.98:
                 knees_grade = "borderline"
                 issues.append("Slight knee cave detected.")
                 feedback.append("Keep knees tracking over your toes.")
@@ -1367,12 +1367,21 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
 def find_push_press_phase_window(start_idx, end_idx):
     span = max(1, end_idx - start_idx)
 
+    # Push press rep detection can be too tight.
+    # Widen the visual window so setup/dip/drive/catch/lockout are readable.
+    if span < 45:
+        pad_before = 18
+        pad_after = 36
+        start_idx = max(0, start_idx - pad_before)
+        end_idx = end_idx + pad_after
+        span = max(1, end_idx - start_idx)
+
     return {
-        "setup": start_idx + int(span * 0.10),
-        "dip": start_idx + int(span * 0.25),
-        "drive": start_idx + int(span * 0.45),
-        "catch": start_idx + int(span * 0.62),
-        "lockout": start_idx + int(span * 0.78),
+        "setup": start_idx + int(span * 0.08),
+        "dip": start_idx + int(span * 0.24),
+        "drive": start_idx + int(span * 0.42),
+        "catch": start_idx + int(span * 0.68),
+        "lockout": start_idx + int(span * 0.88),
     }
 
 
@@ -1414,7 +1423,9 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         elif in_rep and k >= threshold:
             end = i
 
-            if end - start < 3:
+            min_rep_len = 8 if exercise_label == "push_press" else 3
+
+            if end - start < min_rep_len:
                 in_rep = False
                 continue
 
@@ -1438,6 +1449,9 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
             min_knee = float(np.percentile(clean_knee, 10))
             knee_range = float(np.max(clean_knee) - np.min(clean_knee))
+            if exercise_label == "push_press" and knee_range < 4:
+                in_rep = False
+                continue
             wrist_above = float(np.mean(rep_wrist_y < rep_shoulder_y))
             min_valgus = float(np.percentile(clean_valgus, 15))
 
@@ -6025,7 +6039,15 @@ async def analyze(file: UploadFile = File(...)):
         )
 
         if result.get("rep_feedback"):
-            rep = result["rep_feedback"][0]
+            reps = result.get("rep_feedback", [])
+
+            rep = max(
+                reps,
+                key=lambda r: (
+                    r.get("end_frame", 0) - r.get("start_frame", 0),
+                    r.get("score", 0),
+                ),
+            )
             label = str(result.get("exercise_label", "")).lower()
 
             if "thruster" in label or "push press" in label or "strict press" in label:
@@ -6063,3 +6085,4 @@ async def analyze(file: UploadFile = File(...)):
 
         if analysis_path and os.path.exists(analysis_path):
             os.remove(analysis_path)
+            

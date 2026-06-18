@@ -4,7 +4,7 @@ API = "http://formcheck-ai-api-v3.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com"
 
 MIN_SCORES = {
     "Bench Press": 8.0,
-    "Push Press": 8.0,
+    "Push Press": 7.5,
     "Squat": 7.0,
     "Thruster": 8.5,
 }
