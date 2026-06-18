@@ -1990,13 +1990,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1e293b",
   },
-  phaseImageWrap: {
-    height: 128,
-    backgroundColor: "#111827",
+    phaseCard: {
+    width: "31%",
+    minWidth: 260,
+    borderRadius: 18,
+    overflow: "hidden",
+    backgroundColor: "#050b1a",
+    borderWidth: 1,
+    borderColor: "#25324a",
   },
   phaseImage: {
     width: "100%",
-    height: "100%",
+    height: 220,
+    resizeMode: "cover",
+  },
+  phaseCardsRow: {
+    flexDirection: "row",
+    gap: 18,
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
   },
   emptyPhase: {
     flex: 1,

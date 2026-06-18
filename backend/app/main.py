@@ -5998,7 +5998,7 @@ async def analyze(file: UploadFile = File(...)):
 
             if "thruster" in label or "push press" in label or "strict press" in label:
                 result["phase_images"] = create_push_press_phase_images(
-                    temp_path,
+                    analysis_path,
                     OVERLAY_DIR,
                     rep,
                     sample_every=1,
