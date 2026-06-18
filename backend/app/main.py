@@ -443,11 +443,12 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     elbow_range = max_elbow - min_elbow
 
     # THRUSTER RESCUE — must happen before confidence lock
+    # THRUSTER RESCUE — must happen before confidence lock
     if (
-        raw_label in ["burpee"]
-        and wrist_ratio > 0.02
-        and min_knee < 80
-        and min_hip < 80
+        raw_label in ["burpee", "bench_press"]
+        and wrist_ratio > 0.18
+        and 20 < min_knee < 90
+        and 35 < min_hip < 100
         and max_elbow > 160
     ):
         
@@ -471,6 +472,15 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         and max_elbow > 160
     ):
         return "push_press", max(confidence, 0.80), True, "protect_push_press_from_thruster"
+
+    if (
+        raw_label == "burpee"
+        and wrist_ratio < 0.18
+        and min_knee < 80
+        and min_hip < 80
+        and avg_torso < 45
+    ):
+        return "squat", max(confidence, 0.80), True, "protect_squat_from_burpee"
 
     # Trust confident predictions only after special rescues
     if confidence >= 0.45:
