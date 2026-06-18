@@ -1492,12 +1492,7 @@ export default function App() {
                     key={`${activeZone?.id}-${activeImagePath}`}
                     source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
-                                          resizeMode={
-                        result?.exercise_label?.toLowerCase().includes("muscle") ||
-                        result?.exercise_label?.toLowerCase().includes("pull")
-                          ? "contain"
-                          : "cover"
-                      }
+                    resizeMode="contain"
                   />
                 ) : (
                   <View style={styles.emptyImage}>
@@ -1912,6 +1907,7 @@ const styles = StyleSheet.create({
   coachImage: {
     width: "100%",
     height: "100%",
+    resizeMode: "contain",
   },
   emptyImage: {
     flex: 1,
