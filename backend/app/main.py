@@ -348,6 +348,7 @@ def add_velocity(sequence):
 
 def save_phase_contact_sheet(input_path, phase_frames, output_dir, prefix="squat_debug"):
     cap = cv2.VideoCapture(input_path)
+    print("OVERLAY DEBUG: VIDEO OPENED =", cap.isOpened())
 
     if not cap.isOpened():
         print("Contact sheet error")
@@ -3638,13 +3639,14 @@ def draw_overlay_video(
     rep_feedback,
     exercise_label,
 ):
-    print("OVERLAY DEBUG: ENTERED FUNCTION")
+    print("🔥 DRAW_OVERLAY ENTERED")
     print("INPUT PATH:", input_path)
+    print("OUTPUT PATH:", output_path)
     print("REPS:", len(rep_feedback) if rep_feedback else 0)
-    print("FRAMES WRITTEN:", frames_written)
-    print("LANDMARK HITS:", landmark_hits)
 
     cap = cv2.VideoCapture(input_path)
+
+    print("OVERLAY DEBUG: cap.isOpened =", cap.isOpened())
 
     if not cap.isOpened():
         print("Overlay error: could not open input video")
@@ -3670,24 +3672,19 @@ def draw_overlay_video(
 
     writer = cv2.VideoWriter(
         temp_output_path,
-        cv2.VideoWriter_fourcc(*"avc1"),
+        cv2.VideoWriter_fourcc(*"mp4v"),
         fps,
         (width, height),
     )
-    print("WRITER OPENED:", writer.isOpened())
-    print("OVERLAY DEBUG: WRITER OPEN =", writer.isOpened())
-    print("OVERLAY DEBUG: FRAME SIZE =", width, height)
 
     if not writer.isOpened():
         print("Overlay error: could not open video writer")
         cap.release()
         return None
 
-    best_rep = max(
-        rep_feedback,
-        key=lambda rep: float(rep.get("score", 0) or 0),
-    )
+    print("OVERLAY DEBUG: entering loop")
 
+    best_rep = max(rep_feedback, key=lambda rep: float(rep.get("score", 0) or 0))
     exercise = str(exercise_label or "").lower().replace(" ", "_")
 
     frame_idx = 0
@@ -3703,10 +3700,11 @@ def draw_overlay_video(
 
         while True:
             ret, frame = cap.read()
+
+            print("OVERLAY DEBUG: frame read =", ret)
+
             if not ret:
                 break
-            print("FRAME INDEX:", frame_idx)
-            print("OVERLAY DEBUG: FRAME IDX =", frame_idx)
 
             if upscale_factor != 1.0:
                 frame = cv2.resize(frame, (width, height))
@@ -3714,125 +3712,20 @@ def draw_overlay_video(
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
-            # ---------------- HEADER ----------------
-            cv2.rectangle(frame, (0, 0), (width, 92), (2, 6, 23), -1)
-
-            cv2.putText(
-                frame,
-                "FORMCHECK AI OVERLAY",
-                (24, 34),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (134, 239, 172),
-                2,
-                cv2.LINE_AA,
-            )
-
-            score_text = f"{exercise_label}"
-            if best_rep:
-                score_text += f" | Score: {float(best_rep.get('score', 0)):.1f}/10"
-
-            cv2.putText(
-                frame,
-                score_text,
-                (24, 66),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.65,
-                (248, 250, 252),
-                2,
-                cv2.LINE_AA,
-            )
-
-            # ---------------- POSE DRAWING ----------------
-            if results.pose_landmarks:
-                landmark_hits += 1
-
-                frame = draw_user_skeleton(frame, results.pose_landmarks)
-
-                if exercise == "deadlift":
-                    frame = draw_ideal_deadlift(
-                        frame,
-                        results.pose_landmarks,
-                        width,
-                        height,
-                    )
-
-                elif exercise in ["squat", "squat_back", "back_squat"]:
-                    frame = draw_ideal_squat_overlay(
-                        frame,
-                        results.pose_landmarks,
-                        width,
-                        height,
-                    )
-
-                elif exercise in ["push_press", "strict_press"]:
-                    frame = draw_ideal_push_press_overlay(
-                        frame,
-                        results.pose_landmarks,
-                        width,
-                        height,
-                    )
-
-                elif exercise in ["bench_press", "bench"]:
-                    frame = draw_ideal_bench_press_overlay(
-                        frame,
-                        results.pose_landmarks,
-                        width,
-                        height,
-                    )
-
-                elif exercise == "clean_and_jerk":
-                    cv2.putText(
-                        frame,
-                        "Clean & Jerk detected",
-                        (24, height - 34),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.65,
-                        (251, 191, 36),
-                        2,
-                        cv2.LINE_AA,
-                    )
-
-            else:
-                cv2.putText(
-                    frame,
-                    "Pose not detected",
-                    (24, height - 68),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (239, 68, 68),
-                    2,
-                    cv2.LINE_AA,
-                )
-
-            # ---------------- FOOTER ----------------
-            cv2.rectangle(frame, (0, height - 58), (width, height), (15, 23, 42), -1)
-
-            main_note = "Keep form controlled and maintain stability"
-
-            cv2.putText(
-                frame,
-                str(main_note)[:95],
-                (24, height - 22),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.62,
-                (226, 232, 240),
-                2,
-                cv2.LINE_AA,
-            )
-
             writer.write(frame)
             frames_written += 1
             frame_idx += 1
 
     cap.release()
     writer.release()
-    print("FRAMES WRITTEN:", frames_written)
-    print("LANDMARK HITS:", landmark_hits)
-    print("OVERLAY DEBUG: FRAMES WRITTEN =", frames_written)
-    print("OVERLAY DEBUG: LANDMARK HITS =", landmark_hits)
 
-    # ---------------- FFmpeg cleanup ----------------
+    print("OVERLAY DEBUG: frames_written =", frames_written)
+    print("OVERLAY DEBUG: landmark_hits =", landmark_hits)
+
+    if frames_written == 0:
+        print("Overlay error: no frames written")
+        return None
+
     import subprocess
 
     subprocess.run(
@@ -3851,13 +3744,8 @@ def draw_overlay_video(
     if os.path.exists(temp_output_path):
         os.remove(temp_output_path)
 
-    # if frames_written == 0:
-    #     print("Overlay error: no frames written")
-    #     return None
-
-    # ---------------- S3 UPLOAD ----------------
     try:
-        # import boto3
+        import boto3
         import uuid
 
         s3 = boto3.client("s3")
@@ -3867,27 +3755,16 @@ def draw_overlay_video(
 
         s3_key = f"overlays/{uuid.uuid4().hex[:8]}.mp4"
 
-        print("OVERLAY DEBUG: BEFORE S3 UPLOAD")
-        print("OUTPUT PATH:", output_path)
-        print("OUTPUT EXISTS:", os.path.exists(output_path))
-        print("OVERLAY DEBUG: BEFORE S3")
-        print("OUTPUT PATH EXISTS:", os.path.exists(output_path))
-
-
         s3.upload_file(output_path, bucket, s3_key)
 
         overlay_url = f"https://{bucket}.s3.{region}.amazonaws.com/{s3_key}"
 
         print("OVERLAY UPLOADED:", overlay_url)
-        print("OVERLAY DEBUG: S3 UPLOAD SUCCESS")
-        print("S3 URL:", overlay_url)
-        print("OVERLAY DEBUG: S3 SUCCESS")
-        print("OVERLAY URL:", overlay_url)
 
         return overlay_url
 
     except Exception as e:
-        print("OVERLAY DEBUG: S3 FAILED:", e)
+        print("S3 upload failed:", e)
         return None
 
 
@@ -5333,7 +5210,6 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
             except Exception as e:
                 print("overlay error:", e)
-                overlay_video_url = None
 
         # ---------------- RETURN ----------------
         return {
@@ -5375,22 +5251,51 @@ async def debug_oly_phases(file: UploadFile = File(...)):
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
 
     try:
+        # ---------------- SAVE FILE ----------------
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        analysis_path = compress_video_for_overlay(temp_path)
+        # ---------------- READ VIDEO ----------------
+        cap = cv2.VideoCapture(temp_path)
 
-        result = analyze_video(
-            analysis_path,
-            make_visuals=False,
-            make_overlay=False,
+        if not cap.isOpened():
+            return {
+                "exercise_label": "unknown",
+                "confidence": 0.0,
+                "rep_feedback": [],
+                "error": "Could not open video"
+            }
+
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+
+        # ---------------- FAKE / DEBUG REPS ----------------
+        rep_feedback = [{
+            "rep": 1,
+            "start_frame": 0,
+            "end_frame": max(1, min(90, total_frames - 1)),
+            "score": 10.0
+        }]
+
+        final_label = "clean_and_jerk"
+
+        # ---------------- OVERLAY SETUP ----------------
+        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+
+        overlay_video_url = draw_overlay_video(
+            temp_path,
+            overlay_path,
+            rep_feedback,
+            final_label,
         )
 
+        # ---------------- RESPONSE ----------------
         return {
-            "exercise_label": result.get("exercise_label"),
-            "confidence": result.get("confidence"),
-            "rep_feedback": result.get("rep_feedback"),
-            "debug": result.get("debug"),
+            "exercise_label": final_label,
+            "confidence": 0.96,
+            "rep_feedback": rep_feedback,
+            "overlay_video_url": overlay_video_url,
         }
 
     finally:
@@ -5417,7 +5322,6 @@ async def generate_visuals(
         if not rep_json:
             return {
                 "exercise_label": exercise_label or "Unknown",
-                "overlay_video_url": None,
                 "phase_images": None,
                 "visuals_error": "Missing rep data. Analyze the video first.",
             }
@@ -5429,7 +5333,6 @@ async def generate_visuals(
         if not rep:
             return {
                 "exercise_label": exercise_label or "Unknown",
-                "overlay_video_url": None,
                 "phase_images": None,
                 "visuals_error": "No usable rep found.",
             }
@@ -5467,7 +5370,6 @@ async def generate_visuals(
 
         return {
             "exercise_label": exercise_label or "Unknown",
-            "overlay_video_url": None,
             "phase_images": phase_images,
             "visuals_error": None if phase_images else "Phase images unavailable for this lift.",
         }
@@ -5478,7 +5380,6 @@ async def generate_visuals(
 
         return {
             "exercise_label": exercise_label or "Unknown",
-            "overlay_video_url": None,
             "phase_images": None,
             "visuals_error": str(e),
         }
@@ -5586,7 +5487,6 @@ async def generate_overlay(
         traceback.print_exc()
 
         return {
-            "overlay_video_url": None,
             "overlay_error": str(e),
         }
 
@@ -5634,7 +5534,6 @@ async def analyze(
             "rep_feedback": [],
             "set_summary": build_set_summary([]),
             "coaching_zones": build_coaching_zones("unknown", []),
-            "overlay_video_url": None,
             "phase_images": None,
             "debug": {},
         }
