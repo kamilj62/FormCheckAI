@@ -7,6 +7,8 @@ from tracemalloc import start
 import uuid
 import shutil
 
+from app.phase_detection.signal_engine import SignalEngine
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -1910,7 +1912,10 @@ def analyze_clean_reps(biomechanics):
         return [], build_set_summary([])
 
     start_idx = 0
-    raw_end_idx = len(biomechanics) - 1
+    raw_end_idx = min(
+        len(biomechanics) - 1,
+        catch_idx + int(len(biomechanics) * 0.38)
+    )
     duration = raw_end_idx - start_idx
 
     #
@@ -2288,20 +2293,34 @@ def analyze_snatch_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
+    engine = SignalEngine(biomechanics)
+
+    extension_idx = engine.extension_peak()
+    turnover_idx = engine.turnover_start()
+    catch_idx = engine.stabilization_point(extension_idx)
+
+    print("SNATCH DEBUG")
+    print("frames:", len(biomechanics))
+    print("extension_idx:", extension_idx)
+    print("turnover_idx:", turnover_idx)
+    print("catch_idx:", catch_idx)
+
     start_idx = 0
-    raw_end_idx = len(biomechanics) - 1
-    duration = max(1, raw_end_idx - start_idx)
+    end_idx = min(
+        len(biomechanics) - 1,
+        catch_idx + int(len(biomechanics) * 0.38)
+    )
 
-    first_pull_idx = start_idx + int(duration * 0.25)
-    extension_idx = start_idx + int(duration * 0.75)
-    catch_idx = start_idx + int(duration * 0.83)
-    end_idx = start_idx + int(duration * 0.88)
+    # safety clamps (critical)
+    extension_idx = max(start_idx + 1, min(extension_idx, end_idx))
+    turnover_idx = max(extension_idx + 1, min(turnover_idx, end_idx))
+    catch_idx = max(turnover_idx + 1, min(catch_idx, end_idx))
 
-    first_pull_idx = max(start_idx, min(first_pull_idx, len(biomechanics) - 1))
-    extension_idx = max(first_pull_idx + 1, min(extension_idx, len(biomechanics) - 1))
-    catch_idx = max(extension_idx + 1, min(catch_idx, len(biomechanics) - 1))
-    end_idx = max(catch_idx + 1, min(end_idx, len(biomechanics) - 1))
-
+    first_pull_idx = max(
+        start_idx + 1,
+        int(extension_idx * 0.65)
+    )
+    
     min_knee = float(np.min(knee))
     max_hip = float(np.max(hip))
     max_torso = float(np.percentile(torso, 85))
@@ -5132,12 +5151,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             if "full_features" in b
         ]
 
-        oly_label, oly_confidence = predict_olympic_lift_from_sequence(
-            oly_sequence
-        )
+        if (
+            raw_label == "clean_and_jerk"
+            and oly_confidence < 0.65
+            and summary.get("wrist_above_shoulder_ratio", 0) > 0.45
+        ):
+            # removed unsafe overwrite
+            oly_confidence = 0.66
 
         if (
-            oly_label in ["clean_and_jerk", "snatch", "clean", "jerk", "split_jerk"]
+            raw_label in ["clean_and_jerk", "snatch", "clean", "jerk", "split_jerk"]
             and (
                 oly_confidence >= 0.55
                 or raw_label in ["deadlift", "push_press", "strict_press", "squat"]
@@ -5154,7 +5177,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "bar_muscle_up"
             ]
         ):
-            raw_label = oly_label
+            raw_label = raw_label
             raw_confidence = oly_confidence
 
         # --------------------------------------------------
@@ -5230,7 +5253,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         # CLEAN AND JERK OVERRIDE
         if (
-            oly_label == "clean_and_jerk"
+            raw_label == "clean_and_jerk"
             and oly_confidence is not None
             and oly_confidence >= 0.55
         ):
@@ -5324,7 +5347,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # FRONT SQUAT RESCUE FROM CLEAN
         if (
             raw_label == "clean"
-            and oly_label == "not_oly"
+            and raw_label == "not_oly"
             and summary.get("wrist_above_shoulder_ratio", 0) < 0.25
             and summary.get("min_knee_angle", 180) < 90
             and summary.get("min_hip_angle", 180) < 90
@@ -5351,7 +5374,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         if (
             raw_label not in ["burpee", "thruster"]
             and base_squat_conf >= 0.90
-            and oly_label == "not_oly"
+            and raw_label == "not_oly"
         ):
             raw_label = "squat"
             raw_confidence = base_squat_conf
@@ -5407,6 +5430,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             pose_frames,
         )
 
+        raw_label = raw_label
+        oly_confidence = raw_confidence
+
         if (
             raw_label in ["squat_back", "squat_front", "overhead_squat"]
             and label == "squat"
@@ -5414,7 +5440,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             label = raw_label
             confidence = raw_confidence
 
-        if raw_label in olympic_labels and oly_label != "not_oly":
+        if raw_label in olympic_labels and raw_label != "not_oly":
             label = raw_label
             confidence = raw_confidence
             override_used = False
@@ -5683,8 +5709,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "override_used": override_used,
                 "classification_reason": reason,
                 "raw_predictions": dict(zip(CLASS_NAMES, probs.tolist())),
-                "oly_router_prediction": oly_label,
-                "oly_router_confidence": round(oly_confidence, 4),
+                "oly_router_prediction": raw_label,
+                "oly_router_confidence": (
+                    round(locals().get("oly_confidence", 0.0), 4)
+                    if locals().get("oly_confidence") is not None
+                    else None
+                ),
                 "overhead_router_prediction": overhead_router_label,
                 "overhead_router_confidence": (
                     round(overhead_router_confidence, 4)
