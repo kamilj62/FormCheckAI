@@ -1,0 +1,28 @@
+diff --git a/backend/app/main.py b/backend/app/main.py
+index 27658c0..b3c91aa 100644
+--- a/backend/app/main.py
++++ b/backend/app/main.py
+@@ -2259,45 +2259,66 @@ def analyze_clean_and_jerk_reps(biomechanics):
+
+-    anchor = first_overhead_idx
++    overhead_indices = np.where(overhead)[0]
++
++    if len(overhead_indices) > 3:
++        anchor = int(np.median(overhead_indices))
++    else:
++        anchor = first_overhead_idx
++
++    span = max(14, int(n * 0.20))
++
++    clean_catch_idx = min(n - 1, max(0, anchor - int(span * 0.25)))
++    jerk_dip_idx = min(n - 1, anchor + int(span * 0.15))
++    jerk_drive_idx = min(n - 1, anchor + int(span * 0.40))
++    jerk_catch_idx = min(n - 1, anchor + int(span * 0.70))
++    end_idx = min(n - 1, anchor + span)
++
++    clean_catch_idx = max(clean_extension_idx + 1, clean_catch_idx)
++    jerk_dip_idx = max(clean_catch_idx + 1, jerk_dip_idx)
++    jerk_drive_idx = max(jerk_dip_idx + 1, jerk_drive_idx)
++    jerk_catch_idx = max(jerk_drive_idx + 1, jerk_catch_idx)
++    end_idx = max(jerk_catch_idx + 1, end_idx)
+

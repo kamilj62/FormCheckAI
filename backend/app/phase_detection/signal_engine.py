@@ -5,7 +5,7 @@ class SignalEngine:
     def __init__(self, sequence):
         self.sequence = sequence
 
-        self.wrist_y = np.array([f.get("wrist_y", 0.0) for f in sequence])
+        self.wrist_y = np.array([f.get("wrist_y", 0.0) for f in sequence])        
         self.wrist_x = np.array([f.get("wrist_x", 0.0) for f in sequence])
         self.hip_y = np.array([f.get("hip_y", 0.0) for f in sequence])
         self.knee = np.array([f.get("knee_angle", 0.0) for f in sequence])
