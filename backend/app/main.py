@@ -2233,12 +2233,6 @@ def analyze_clean_and_jerk_reps(biomechanics):
     jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
     jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
 
-    if detected:
-        start_frame = detected.get("setup_frame", start_frame)
-        clean_catch_frame = detected.get("clean_catch_frame", clean_catch_frame)
-        jerk_dip_frame = detected.get("jerk_dip_frame", jerk_dip_frame)
-        jerk_drive_frame = detected.get("jerk_drive_frame", jerk_drive_frame)
-        jerk_catch_frame = detected.get("jerk_catch_frame", jerk_catch_frame)
 
     # Visual correction: clean catch should be close to the front-rack position
     # immediately before the jerk dip, not early in the pull.
@@ -5724,6 +5718,36 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "error": True,
             "message": str(e),
         }
+
+
+@app.post("/debug_oly_phases")
+async def debug_oly_phases(file: UploadFile = File(...)):
+    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
+    temp_filename = f"debug_oly_{uuid.uuid4().hex[:8]}{suffix}"
+    temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+
+    try:
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        analysis_path = compress_video_for_overlay(temp_path)
+
+        result = analyze_video(
+            analysis_path,
+            make_visuals=False,
+            make_overlay=False,
+        )
+
+        return {
+            "exercise_label": result.get("exercise_label"),
+            "confidence": result.get("confidence"),
+            "rep_feedback": result.get("rep_feedback"),
+            "debug": result.get("debug"),
+        }
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 @app.post("/generate_visuals")
