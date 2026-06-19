@@ -2259,45 +2259,23 @@ def analyze_clean_and_jerk_reps(biomechanics):
     overhead_candidates = np.where(overhead & (np.arange(n) > clean_extension_idx))[0]
     first_overhead_idx = int(overhead_candidates[0]) if len(overhead_candidates) else n - 1
 
-    # Clean catch: deepest knee bend after clean extension and before overhead jerk.
-    catch_start = min(n - 2, clean_extension_idx + 1)
-    catch_end = max(catch_start + 1, min(first_overhead_idx, int(n * 0.85)))
+    # Clean & Jerk visual timing:
+    # Use the first reliable overhead moment as the anchor.
+    # Then backtrack/advance around that anchor for visually meaningful phases.
+    # This is more reliable for C&J than treating the whole clip as one clean.
+    anchor = first_overhead_idx
 
-    clean_catch_idx = catch_start + int(np.argmin(knee[catch_start:catch_end]))
+    clean_catch_idx = min(n - 1, anchor - max(2, int(n * 0.04)))
+    jerk_dip_idx = min(n - 1, anchor + max(2, int(n * 0.03)))
+    jerk_drive_idx = min(n - 1, anchor + max(3, int(n * 0.06)))
+    jerk_catch_idx = min(n - 1, anchor + max(5, int(n * 0.12)))
+    end_idx = min(n - 1, anchor + max(10, int(n * 0.24)))
 
-    # Recovery: first standing/tall frame after clean catch.
-    recovery_idx = clean_catch_idx
-    for i in range(clean_catch_idx + 1, n):
-        if knee[i] > 140 and hip[i] > 135:
-            recovery_idx = i
-            break
-
-    # Jerk dip: deepest knee bend after recovery, before overhead catch.
-    jerk_start = min(n - 2, max(recovery_idx + 1, clean_catch_idx + 3))
-    jerk_end = max(jerk_start + 1, first_overhead_idx)
-
-    jerk_dip_idx = jerk_start + int(np.argmin(knee[jerk_start:jerk_end]))
-
-    # Jerk drive: strongest extension after dip before overhead.
-    drive_start = min(n - 2, jerk_dip_idx + 1)
-    drive_end = max(drive_start + 1, first_overhead_idx)
-    drive_signal = extension_signal
-
-    jerk_drive_idx = drive_start + int(np.argmax(drive_signal[drive_start:drive_end]))
-
-    # Jerk catch: first overhead lockout after drive.
-    jerk_catch_idx = first_overhead_idx
-    for i in range(jerk_drive_idx + 1, n):
-        if overhead[i]:
-            jerk_catch_idx = i
-            break
-
-    # Finish: stable overhead after catch.
-    end_idx = min(n - 1, jerk_catch_idx + int(n * 0.20))
-    for i in range(jerk_catch_idx + 1, n):
-        if overhead[i] and elbow[i] > 150 and knee[i] > 130:
-            end_idx = i
-            break
+    clean_catch_idx = max(clean_extension_idx + 1, clean_catch_idx)
+    jerk_dip_idx = max(clean_catch_idx + 1, jerk_dip_idx)
+    jerk_drive_idx = max(jerk_dip_idx + 1, jerk_drive_idx)
+    jerk_catch_idx = max(jerk_drive_idx + 1, jerk_catch_idx)
+    end_idx = max(jerk_catch_idx + 1, end_idx)
 
     start_frame = int(frame_numbers[start_idx])
     clean_catch_frame = int(frame_numbers[clean_catch_idx])
@@ -6184,7 +6162,7 @@ async def analyze(file: UploadFile = File(...)):
             )
             label = str(result.get("exercise_label", "")).lower()
 
-            if "snatch" in label:
+            if "snatch" in label or "clean and jerk" in label:
                 result["phase_images"] = create_olympic_lift_phase_images(
                     analysis_path,
                     OVERLAY_DIR,
