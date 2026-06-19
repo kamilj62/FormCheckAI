@@ -6053,7 +6053,16 @@ async def analyze(file: UploadFile = File(...)):
             )
             label = str(result.get("exercise_label", "")).lower()
 
-            if "thruster" in label or "push press" in label or "strict press" in label:
+            if "clean and jerk" in label or "snatch" in label:
+                result["phase_images"] = create_olympic_lift_phase_images(
+                    analysis_path,
+                    OVERLAY_DIR,
+                    rep,
+                    sample_every=1,
+                    exercise_label=result.get("exercise_label", ""),
+                )
+
+            elif "thruster" in label or "push press" in label or "strict press" in label:
                 result["phase_images"] = create_push_press_phase_images(
                     analysis_path,
                     OVERLAY_DIR,
