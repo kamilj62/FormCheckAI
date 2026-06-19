@@ -4253,12 +4253,14 @@ def create_olympic_lift_phase_images(
     # CLEAN & JERK
     # -----------------------------------
     elif normalized_label == "clean_and_jerk":
+        duration = max(1, end - start)
+
         phase_frames = {
             "setup": start,
-            "clean_catch": rep_frame("clean_catch_frame", start),
-            "jerk_dip": rep_frame("jerk_dip_frame", start),
-            "jerk_drive": rep_frame("jerk_drive_frame", start),
-            "jerk_catch": rep_frame("jerk_catch_frame", start),
+            "clean_catch": start + int(duration * 0.55),
+            "jerk_dip": start + int(duration * 0.68),
+            "jerk_drive": start + int(duration * 0.75),
+            "jerk_catch": start + int(duration * 0.86),
             "finish": end,
         }
 
@@ -5758,6 +5760,19 @@ async def generate_visuals(
         elif "bench" in label:
             phase_images = create_bench_press_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif (
+            "clean and jerk" in label
+            or "snatch" in label
+            or "clean" in label
+            or "jerk" in label
+        ):
+            phase_images = create_olympic_lift_phase_images(
+                temp_path,
+                OVERLAY_DIR,
+                rep,
+                sample_every=1,
+                exercise_label=exercise_label or "olympic_lift",
             )
         else:
             phase_images = None
