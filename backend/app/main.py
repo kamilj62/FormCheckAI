@@ -4,10 +4,12 @@ from pathlib import Path
 
 import os
 from tracemalloc import start
+from turtle import width
 import uuid
 import shutil
 
 from app.phase_detection.signal_engine import SignalEngine
+from app.phase_detection.phase_engine import get_phase_images
 
 import cv2
 import mediapipe as mp
@@ -596,6 +598,92 @@ def extract_olympic_signals(biomechanics):
     return signals
 
 
+def build_coaching_zones(exercise_label, rep_feedback):
+    zones = {}
+
+    if not rep_feedback:
+        return zones
+
+    # ---------------- BASE ZONES ----------------
+    base_zones = {}
+
+    for rep in rep_feedback:
+        breakdown = rep.get("breakdown", {})
+        issues = rep.get("issues", [])
+
+        for key, value in breakdown.items():
+            if key not in base_zones:
+                base_zones[key] = {
+                    "good": 0,
+                    "needs_work": 0,
+                    "severe": 0,
+                    "notes": []
+                }
+
+            if value in ["poor", "incomplete", "bad"]:
+                base_zones[key]["needs_work"] += 1
+            elif value in ["fair"]:
+                base_zones[key]["needs_work"] += 0.5
+            else:
+                base_zones[key]["good"] += 1
+
+            base_zones[key]["notes"].extend(issues)
+
+    # ---------------- BUILD FINAL ZONES ----------------
+    for zone, stats in base_zones.items():
+        total = stats["good"] + stats["needs_work"] + stats["severe"]
+
+        if total == 0:
+            continue
+
+        score = stats["good"] / total
+
+        if score > 0.75:
+            status = "good"
+        elif score > 0.5:
+            status = "needs_work"
+        else:
+            status = "poor"
+
+        zones[zone] = {
+            "label": zone,
+            "status": status,
+            "score": round(score, 2),
+            "message": f"{zone.replace('_', ' ').title()} is {status} overall.",
+            "issue_count": len(stats["notes"]),
+        }
+
+    # ---------------- LIFT-SPECIFIC ENHANCEMENTS ----------------
+    if exercise_label in ["clean", "clean_and_jerk"]:
+        zones["clean_first_pull"] = {
+            "label": "Clean First Pull",
+            "status": zones.get("bar_path", {}).get("status", "unknown"),
+            "message": "Focus on keeping bar close during first pull.",
+        }
+
+        zones["clean_catch"] = {
+            "label": "Clean Catch",
+            "status": zones.get("front_rack", {}).get("status", "unknown"),
+            "message": "Improve rack position and stability on catch.",
+        }
+
+    if exercise_label in ["snatch"]:
+        zones["overhead_stability"] = {
+            "label": "Overhead Stability",
+            "status": zones.get("lockout", {}).get("status", "unknown"),
+            "message": "Maintain stable overhead position without drift.",
+        }
+
+    if exercise_label in ["clean_and_jerk"]:
+        zones["jerk_dip"] = {
+            "label": "Jerk Dip",
+            "status": zones.get("knees", {}).get("status", "unknown"),
+            "message": "Keep vertical dip without knee collapse.",
+        }
+
+    return zones
+
+
 def detect_clean_phase(biomechanics):
     if len(biomechanics) < 8:
         return False
@@ -622,6 +710,66 @@ def detect_jerk_phase(biomechanics):
     knee_motion = max(knee) - min(knee)
 
     return knee_motion > 30
+
+
+def extract_olympic_time_signals(biomechanics):
+    if not biomechanics:
+        return {"sample": []}
+
+    # FORCE SAFE STRUCTURE ALWAYS
+    return {
+        "sample": list(biomechanics[-15:]) if isinstance(biomechanics, list) else [],
+        "length": len(biomechanics) if biomechanics else 0
+    }
+
+
+def olympic_confidence(biomechanics):
+    sig = extract_olympic_time_signals(biomechanics)
+
+    clean = detect_clean_phase(sig)
+    snatch = detect_snatch_phase(sig)
+    jerk = detect_jerk_phase(sig)
+
+    if snatch:
+        return 0.95, False, False, False
+    if clean and jerk:
+        return 0.92, False, True, True
+    if clean:
+        return 0.80, False, True, False
+    if jerk:
+        return 0.75, False, False, True
+
+    return 0.2, False, False, False
+
+
+def detect_clean_phase(sig):
+    if not isinstance(sig, dict):
+        return False
+
+    sample = sig.get("sample", [])
+    return len(sample) > 8
+
+
+def detect_snatch_phase(sig):
+    if not isinstance(sig, dict):
+        return False
+
+    sample = sig.get("sample", [])
+    return any(
+        isinstance(f, dict) and f.get("wrist_above_shoulder_ratio", 0) > 0.5
+        for f in sample
+    )
+
+
+def detect_jerk_phase(sig):
+    if not isinstance(sig, dict):
+        return False
+
+    sample = sig.get("sample", [])
+    return any(
+        isinstance(f, dict) and f.get("knee_angle", 180) < 140
+        for f in sample
+    )
 
 
 def grade_score(score):
@@ -816,7 +964,7 @@ def classify_olympic_lift(biomechanics):
 
     return "unknown"
 
-    
+
 def find_deadlift_phase_window(start_idx, top_idx):
     span = max(1, top_idx - start_idx)
 
@@ -2302,32 +2450,38 @@ def analyze_clean_and_jerk_reps(biomechanics):
     breakdown = {}
     score_parts = []
 
+    # ---------------- COMBINE CLEAN + JERK ----------------
     if clean:
         score_parts.append(clean.get("score", 0))
         breakdown["clean"] = clean.get("breakdown", {})
-        issues.extend([f"Clean: {issue}" for issue in clean.get("issues", [])])
+        issues.extend([f"Clean: {i}" for i in clean.get("issues", [])])
         feedback.extend(clean.get("feedback", []))
 
     if jerk:
         score_parts.append(jerk.get("score", 0))
         breakdown["jerk"] = jerk.get("breakdown", {})
-        issues.extend([f"Jerk: {issue}" for issue in jerk.get("issues", [])])
+        issues.extend([f"Jerk: {i}" for i in jerk.get("issues", [])])
         feedback.extend(jerk.get("feedback", []))
 
+    # ---------------- BASE SCORE ----------------
     if score_parts:
-        score = round(sum(score_parts) / len(score_parts), 1)
+        score = sum(score_parts) / len(score_parts)
     else:
         score = 7.0
         issues.append("Could not clearly analyze clean and jerk phases.")
-        feedback.append("Record the full clean and jerk from setup through recovery.")
+        feedback.append("Record full lift from setup to recovery.")
 
+    # ---------------- FINAL SCORING RULES ----------------
     if issues:
         score = min(score, 9.2)
     else:
         score = max(score, 9.0)
-        feedback = ["Good clean and jerk rep. Strong clean, overhead drive, and finish."]
+        feedback = ["Good clean and jerk rep. Strong execution across phases."]
 
+    # ---------------- APPLY COACH SMOOTHING (SAFE) ----------------
+    score = smooth_coach_score(score, "clean_and_jerk")
 
+    # ---------------- FRAME LOGIC (UNCHANGED) ----------------
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
@@ -2340,9 +2494,7 @@ def analyze_clean_and_jerk_reps(biomechanics):
     elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
 
     n = len(biomechanics)
-    start_idx = 0
 
-    # Clean extension: most open/tall body position before the receiving phase.
     clean_search_start = max(1, int(n * 0.12))
     clean_search_end = max(clean_search_start + 2, int(n * 0.65))
 
@@ -2354,52 +2506,50 @@ def analyze_clean_and_jerk_reps(biomechanics):
         np.argmax(extension_signal[clean_search_start:clean_search_end])
     )
 
-    # First overhead frame usually belongs to the jerk, so clean catch must happen before it.
     overhead = (wrist_y < shoulder_y) & (elbow > 145)
     overhead_candidates = np.where(overhead & (np.arange(n) > clean_extension_idx))[0]
     first_overhead_idx = int(overhead_candidates[0]) if len(overhead_candidates) else n - 1
 
-    # Clean catch: deepest knee bend after clean extension and before overhead jerk.
     catch_start = min(n - 2, clean_extension_idx + 1)
     catch_end = max(catch_start + 1, min(first_overhead_idx, int(n * 0.85)))
 
     clean_catch_idx = catch_start + int(np.argmin(knee[catch_start:catch_end]))
 
-    # Recovery: first standing/tall frame after clean catch.
     recovery_idx = clean_catch_idx
     for i in range(clean_catch_idx + 1, n):
         if knee[i] > 140 and hip[i] > 135:
             recovery_idx = i
             break
 
-    # Jerk dip: deepest knee bend after recovery, before overhead catch.
     jerk_start = min(n - 2, max(recovery_idx + 1, clean_catch_idx + 3))
     jerk_end = max(jerk_start + 1, first_overhead_idx)
 
     jerk_dip_idx = jerk_start + int(np.argmin(knee[jerk_start:jerk_end]))
 
-    # Jerk drive: strongest extension after dip before overhead.
     drive_start = min(n - 2, jerk_dip_idx + 1)
     drive_end = max(drive_start + 1, first_overhead_idx)
-    drive_signal = extension_signal
 
-    jerk_drive_idx = drive_start + int(np.argmax(drive_signal[drive_start:drive_end]))
+    jerk_drive_idx = drive_start + int(np.argmax(extension_signal[drive_start:drive_end]))
 
-    # Jerk catch: first overhead lockout after drive.
     jerk_catch_idx = first_overhead_idx
     for i in range(jerk_drive_idx + 1, n):
         if overhead[i]:
             jerk_catch_idx = i
             break
 
-    # Finish: stable overhead after catch.
     end_idx = min(n - 1, jerk_catch_idx + int(n * 0.20))
+
     for i in range(jerk_catch_idx + 1, n):
         if overhead[i] and elbow[i] > 150 and knee[i] > 130:
             end_idx = i
             break
 
-    start_frame = int(frame_numbers[start_idx])
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    start_frame = int(frame_numbers[0])
     clean_catch_frame = int(frame_numbers[clean_catch_idx])
     jerk_dip_frame = int(frame_numbers[jerk_dip_idx])
     jerk_drive_frame = int(frame_numbers[jerk_drive_idx])
@@ -2408,13 +2558,13 @@ def analyze_clean_and_jerk_reps(biomechanics):
 
     reps = [{
         "rep": 1,
-        "start_frame": int(start_frame),
-        "clean_catch_frame": int(clean_catch_frame),
-        "jerk_dip_frame": int(jerk_dip_frame),
-        "jerk_drive_frame": int(jerk_drive_frame),
-        "jerk_catch_frame": int(jerk_catch_frame),
-        "end_frame": int(end_frame),
-        "score": score,
+        "start_frame": start_frame,
+        "clean_catch_frame": clean_catch_frame,
+        "jerk_dip_frame": jerk_dip_frame,
+        "jerk_drive_frame": jerk_drive_frame,
+        "jerk_catch_frame": jerk_catch_frame,
+        "end_frame": end_frame,
+        "score": round(score, 1),
         "grade": grade_score(score),
         "issues": issues,
         "breakdown": breakdown,
@@ -2422,6 +2572,28 @@ def analyze_clean_and_jerk_reps(biomechanics):
     }]
 
     return reps, build_set_summary(reps)
+
+
+def normalize_label(label):
+    if label is None:
+        return "unknown"
+    return str(label).lower().replace(" ", "_")
+
+
+def smooth_coach_score(score, exercise_label):
+    label = normalize_label(exercise_label)
+
+    if label in ["clean_and_jerk", "snatch"]:
+        if score < 4:
+            score += 0.8
+        elif score < 7:
+            score += 0.4
+
+    elif label in ["squat", "squat_back", "squat_front", "overhead_squat", "deadlift"]:
+        if score > 8:
+            score -= 0.2
+
+    return max(0, min(10, round(score, 1)))
 
 
 def analyze_snatch_reps(biomechanics):
@@ -3466,8 +3638,13 @@ def draw_overlay_video(
     output_path,
     rep_feedback,
     exercise_label,
-    sample_every=1,
 ):
+    print("OVERLAY DEBUG: ENTERED FUNCTION")
+    print("INPUT PATH:", input_path)
+    print("REPS:", len(rep_feedback) if rep_feedback else 0)
+    print("FRAMES WRITTEN:", frames_written)
+    print("LANDMARK HITS:", landmark_hits)
+
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
@@ -3485,7 +3662,6 @@ def draw_overlay_video(
 
     source_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     source_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     upscale_factor = 3.0 if source_width < 800 else 1.0
     width = int(source_width * upscale_factor)
@@ -3495,10 +3671,13 @@ def draw_overlay_video(
 
     writer = cv2.VideoWriter(
         temp_output_path,
-        cv2.VideoWriter_fourcc(*"mp4v"),
+        cv2.VideoWriter_fourcc(*"avc1"),
         fps,
         (width, height),
     )
+    print("WRITER OPENED:", writer.isOpened())
+    print("OVERLAY DEBUG: WRITER OPEN =", writer.isOpened())
+    print("OVERLAY DEBUG: FRAME SIZE =", width, height)
 
     if not writer.isOpened():
         print("Overlay error: could not open video writer")
@@ -3507,59 +3686,10 @@ def draw_overlay_video(
 
     best_rep = max(
         rep_feedback,
-        key=lambda rep: (
-            float(rep.get("score", 0) or 0),
-            int(rep.get("rep", 0) or 0),
-        ),
+        key=lambda rep: float(rep.get("score", 0) or 0),
     )
 
     exercise = str(exercise_label or "").lower().replace(" ", "_")
-    score = best_rep.get("score", None)
-    feedback = best_rep.get("feedback") or best_rep.get("issues") or []
-    main_note = feedback[0] if feedback else "Keep the full body visible and move with control."
-
-    def get_olympic_phase(frame_idx, rep, exercise):
-        if exercise in ["clean", "snatch"]:
-            phases = [
-                ("Setup", rep.get("start_frame")),
-                ("First Pull", rep.get("first_pull_frame")),
-                ("Extension", rep.get("extension_frame")),
-                ("Catch", rep.get("catch_frame")),
-                ("Finish", rep.get("end_frame")),
-            ]
-        elif exercise == "split_jerk":
-            phases = [
-                ("Setup", rep.get("start_frame")),
-                ("Dip", rep.get("dip_frame")),
-                ("Drive", rep.get("drive_frame")),
-                ("Catch", rep.get("catch_frame")),
-                ("Lockout", rep.get("lockout_frame")),
-                ("Finish", rep.get("end_frame")),
-            ]
-        elif exercise == "clean_and_jerk":
-            phases = [
-                ("Setup", rep.get("start_frame")),
-                ("Clean Catch", rep.get("clean_catch_frame")),
-                ("Jerk Dip", rep.get("jerk_dip_frame")),
-                ("Jerk Drive", rep.get("jerk_drive_frame")),
-                ("Jerk Catch", rep.get("jerk_catch_frame")),
-                ("Finish", rep.get("end_frame")),
-            ]
-        else:
-            return None
-
-        phases = [(name, f) for name, f in phases if f is not None]
-
-        if not phases:
-            return None
-
-        current = phases[0][0]
-
-        for name, f in phases:
-            if frame_idx >= int(f):
-                current = name
-
-        return current
 
     frame_idx = 0
     frames_written = 0
@@ -3571,22 +3701,21 @@ def draw_overlay_video(
         min_detection_confidence=0.35,
         min_tracking_confidence=0.35,
     ) as pose:
+
         while True:
             ret, frame = cap.read()
-
             if not ret:
                 break
+            print("FRAME INDEX:", frame_idx)
+            print("OVERLAY DEBUG: FRAME IDX =", frame_idx)
 
             if upscale_factor != 1.0:
-                frame = cv2.resize(
-                    frame,
-                    (width, height),
-                    interpolation=cv2.INTER_CUBIC,
-                )
+                frame = cv2.resize(frame, (width, height))
 
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
+            # ---------------- HEADER ----------------
             cv2.rectangle(frame, (0, 0), (width, 92), (2, 6, 23), -1)
 
             cv2.putText(
@@ -3600,9 +3729,9 @@ def draw_overlay_video(
                 cv2.LINE_AA,
             )
 
-            score_text = f"{formatLabel(exercise_label)}"
-            if score is not None:
-                score_text += f" | Best Rep Score: {float(score):.1f}/10"
+            score_text = f"{exercise_label}"
+            if best_rep:
+                score_text += f" | Score: {float(best_rep.get('score', 0)):.1f}/10"
 
             cv2.putText(
                 frame,
@@ -3615,30 +3744,13 @@ def draw_overlay_video(
                 cv2.LINE_AA,
             )
 
-            olympic_phase = get_olympic_phase(frame_idx, best_rep, exercise)
-
-            if olympic_phase:
-                cv2.rectangle(frame, (10, 104), (280, 142), (15, 23, 42), -1)
-                cv2.putText(
-                    frame,
-                    f"Phase: {olympic_phase}",
-                    (18, 130),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.55,
-                    (96, 165, 250),
-                    2,
-                    cv2.LINE_AA,
-                )
-
+            # ---------------- POSE DRAWING ----------------
             if results.pose_landmarks:
                 landmark_hits += 1
 
-                frame = draw_user_skeleton(
-                    frame,
-                    results.pose_landmarks,
-                )
+                frame = draw_user_skeleton(frame, results.pose_landmarks)
 
-                if exercise in ["deadlift"]:
+                if exercise == "deadlift":
                     frame = draw_ideal_deadlift(
                         frame,
                         results.pose_landmarks,
@@ -3670,10 +3782,10 @@ def draw_overlay_video(
                         height,
                     )
 
-                else:
+                elif exercise == "clean_and_jerk":
                     cv2.putText(
                         frame,
-                        "Pose detected. Olympic phase overlay active.",
+                        "Clean & Jerk detected",
                         (24, height - 34),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.65,
@@ -3685,7 +3797,7 @@ def draw_overlay_video(
             else:
                 cv2.putText(
                     frame,
-                    "Pose not detected on this frame",
+                    "Pose not detected",
                     (24, height - 68),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.7,
@@ -3694,7 +3806,10 @@ def draw_overlay_video(
                     cv2.LINE_AA,
                 )
 
+            # ---------------- FOOTER ----------------
             cv2.rectangle(frame, (0, height - 58), (width, height), (15, 23, 42), -1)
+
+            main_note = "Keep form controlled and maintain stability"
 
             cv2.putText(
                 frame,
@@ -3713,7 +3828,12 @@ def draw_overlay_video(
 
     cap.release()
     writer.release()
+    print("FRAMES WRITTEN:", frames_written)
+    print("LANDMARK HITS:", landmark_hits)
+    print("OVERLAY DEBUG: FRAMES WRITTEN =", frames_written)
+    print("OVERLAY DEBUG: LANDMARK HITS =", landmark_hits)
 
+    # ---------------- FFmpeg cleanup ----------------
     import subprocess
 
     subprocess.run(
@@ -3732,17 +3852,44 @@ def draw_overlay_video(
     if os.path.exists(temp_output_path):
         os.remove(temp_output_path)
 
-    print("OVERLAY FRAMES WRITTEN:", frames_written)
-    print("OVERLAY LANDMARK HITS:", landmark_hits)
+    # if frames_written == 0:
+    #     print("Overlay error: no frames written")
+    #     return None
 
-    if frames_written == 0:
-        print("Overlay error: no frames written")
+    # ---------------- S3 UPLOAD ----------------
+    try:
+        # import boto3
+        import uuid
+
+        s3 = boto3.client("s3")
+
+        bucket = S3_BUCKET
+        region = S3_REGION
+
+        s3_key = f"overlays/{uuid.uuid4().hex[:8]}.mp4"
+
+        print("OVERLAY DEBUG: BEFORE S3 UPLOAD")
+        print("OUTPUT PATH:", output_path)
+        print("OUTPUT EXISTS:", os.path.exists(output_path))
+        print("OVERLAY DEBUG: BEFORE S3")
+        print("OUTPUT PATH EXISTS:", os.path.exists(output_path))
+
+
+        s3.upload_file(output_path, bucket, s3_key)
+
+        overlay_url = f"https://{bucket}.s3.{region}.amazonaws.com/{s3_key}"
+
+        print("OVERLAY UPLOADED:", overlay_url)
+        print("OVERLAY DEBUG: S3 UPLOAD SUCCESS")
+        print("S3 URL:", overlay_url)
+        print("OVERLAY DEBUG: S3 SUCCESS")
+        print("OVERLAY URL:", overlay_url)
+
+        return overlay_url
+
+    except Exception as e:
+        print("OVERLAY DEBUG: S3 FAILED:", e)
         return None
-
-    if landmark_hits == 0:
-        print("Overlay warning: video was written but no pose landmarks were detected")
-
-    return output_path
 
 
 def draw_ideal_deadlift(frame, pose_landmarks, width, height):
@@ -5017,177 +5164,19 @@ def create_burpee_phase_images(
     return saved
 
 
-def build_coaching_zones(exercise_label, rep_feedback):
-    if not rep_feedback:
-        return {}
+def normalize_sequence(biomechanics):
+    feats = [
+        b["full_features"]
+        for b in biomechanics
+        if "full_features" in b
+    ]
 
-    FEEDBACK_BY_KEY = {
-        # Shared / Squat
-        "neck": "Keep your neck neutral and eyes forward.",
-        "torso": "Keep your chest up and torso controlled.",
-        "squat_knees": "Drive knees out over your toes.",
-        "depth": "Sink a little deeper while keeping your chest up.",
-        "heels": "Keep your heels planted through the rep.",
-        "front_rack": "Drive elbows higher to keep the bar secure.",
-        "bar_position": "Keep the bar stacked securely over your midfoot.",
+    feats = pad_or_trim(np.array(feats), target_len=30)
 
-        # Deadlift
-        "back": "Keep your back flat and brace your core.",
-        "hinge": "Push your hips back and hinge before pulling.",
-        "deadlift_knees": "Keep shins more vertical and hinge from the hips.",
-        "deadlift_bar_path": "Keep the bar close to your body.",
-        "deadlift_lockout": "Finish tall with hips fully extended.",
+    # IMPORTANT: DO NOT MODIFY FEATURES
+    # MUST MATCH TRAINING PIPELINE EXACTLY
 
-        # Bench
-        "elbows": "Keep elbows controlled and stacked under the wrists.",
-        "arch": "Keep your upper back tight and arch controlled.",
-        "bench_lockout": "Fully extend your arms at the top.",
-        "bench_legs_unknown": "Foot position could not be evaluated because feet were not visible.",
-        "legs": "Keep your feet planted and use leg drive.",
-
-        # Pressing
-        "dip": "Use a controlled vertical dip before driving up.",
-        "dip_verticality": "Keep the dip vertical with chest tall.",
-        "press_timing": "Drive with your legs first, then press overhead.",
-        "press_bar_path": "Keep the bar path vertical and press straight overhead.",
-        "press_lockout": "Fully extend arms overhead.",
-        "active_finish": "Punch to a strong, stacked lockout.",
-
-        # Olympic lifts
-        "first_pull": "Stay braced and keep your chest up through the first pull.",
-        "extension": "Finish your pull tall before pulling under the bar.",
-        "turnover": "Keep arms long until you finish extending.",
-        "catch": "Pull under the bar and receive in a strong catch position.",
-        "clean_front_rack": "Whip elbows through fast and catch in a strong front rack.",
-        "oly_bar_path": "Keep the bar close and pull yourself under it.",
-        "overhead_catch": "Punch up into a strong locked-out overhead position.",
-        "stability": "Stabilize the bar overhead before standing.",
-        "split_catch": "Drop under the bar into a strong split position.",
-        "jerk_lockout": "Punch the bar overhead and finish with straight arms.",
-        "jerk_torso": "Keep ribs stacked and torso vertical under the bar.",
-    }
-
-    def zone_result(label, key, good_values, feedback_key=None, source_breakdown=None):
-        affected = []
-
-        for rep in rep_feedback:
-            breakdown = source_breakdown(rep) if source_breakdown else rep.get("breakdown", {})
-            value = breakdown.get(key)
-
-            if value is None:
-                continue
-
-            if value not in good_values:
-                affected.append(rep.get("rep"))
-
-        status = "good" if not affected else "needs_work"
-
-        if status == "good":
-            message = f"{label} looks solid across the set."
-        else:
-            lookup_key = feedback_key or key
-            message = FEEDBACK_BY_KEY.get(lookup_key, f"{label} needs attention.")
-
-        return {
-            "label": label,
-            "status": status,
-            "message": message,
-            "affected_reps": affected,
-        }
-
-    label = exercise_label.lower().replace(" ", "_")
-
-    if label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
-        zones = {
-            "neck": zone_result("Neck", "neck", {"good"}),
-            "torso": zone_result("Torso", "torso", {"good"}),
-            "knees": zone_result("Knees", "knees", {"good"}, "squat_knees"),
-            "depth": zone_result("Depth", "depth", {"good"}),
-            "heels": zone_result("Heels", "heels", {"good"}),
-        }
-
-        if label == "squat_front":
-            zones["front_rack"] = zone_result("Front Rack", "front_rack", {"good"})
-            zones["bar_position"] = zone_result("Bar Position", "bar_position", {"good"})
-
-        return zones
-
-    elif label == "deadlift":
-        return {
-            "neck": zone_result("Neck", "neck", {"good"}),
-            "torso": zone_result("Torso", "back", {"good"}),
-            "hips": zone_result("Hip Hinge", "hinge", {"good"}),
-            "knees": zone_result("Knees", "knees", {"good"}, "deadlift_knees"),
-            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "deadlift_bar_path"),
-            "lockout": zone_result("Lockout", "lockout", {"good"}, "deadlift_lockout"),
-        }
-
-    elif label == "bench_press":
-        return {
-            "elbows": zone_result("Elbows", "elbows", {"good"}),
-            "depth": zone_result("Depth", "depth", {"good"}),
-            "lockout": zone_result("Lockout", "lockout", {"good"}, "bench_lockout"),
-            "arch": zone_result("Arch", "arch", {"controlled", "good"}),
-            "legs": zone_result("Leg Drive", "legs", {"good"}, "bench_legs_unknown"),
-        }
-
-    elif label in ["push_press", "strict_press", "thruster"]:
-        return {
-            "dip": zone_result("Dip", "dip", {"good"}),
-            "dip_path": zone_result("Dip Path", "dip_verticality", {"good"}, "dip_verticality"),
-            "timing": zone_result("Timing", "timing", {"good"}, "press_timing"),
-            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "press_bar_path"),
-            "lockout": zone_result("Lockout", "lockout", {"good"}, "press_lockout"),
-            "finish": zone_result("Finish", "active_finish", {"good"}, "active_finish"),
-        }
-
-    elif label == "clean":
-        return {
-            "first_pull": zone_result("First Pull", "first_pull", {"good"}),
-            "extension": zone_result("Extension", "extension", {"good"}),
-            "turnover": zone_result("Turnover", "turnover", {"good"}),
-            "catch": zone_result("Catch", "catch", {"good", "deep_catch"}, "catch"),
-            "front_rack": zone_result("Front Rack", "front_rack", {"good"}, "clean_front_rack"),
-            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "oly_bar_path"),
-        }
-
-    elif label == "snatch":
-        return {
-            "first_pull": zone_result("First Pull", "first_pull", {"good"}),
-            "extension": zone_result("Extension", "extension", {"good"}),
-            "turnover": zone_result("Turnover", "turnover", {"good"}),
-            "overhead_catch": zone_result("Overhead Catch", "overhead_catch", {"good"}, "overhead_catch"),
-            "stability": zone_result("Stability", "stability", {"good"}, "stability"),
-            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "oly_bar_path"),
-        }
-
-    elif label == "split_jerk":
-        return {
-            "dip": zone_result("Dip", "dip", {"good"}),
-            "drive": zone_result("Drive", "drive", {"good"}),
-            "lockout": zone_result("Lockout", "lockout", {"good"}, "jerk_lockout"),
-            "split_catch": zone_result("Split Catch", "split_catch", {"good"}, "split_catch"),
-            "torso_stack": zone_result("Torso Stack", "torso_stack", {"good"}, "jerk_torso"),
-            "bar_path": zone_result("Bar Path", "bar_path", {"good"}, "press_bar_path"),
-        }
-
-    elif label == "clean_and_jerk":
-        clean_breakdown = lambda rep: rep.get("breakdown", {}).get("clean", {})
-        jerk_breakdown = lambda rep: rep.get("breakdown", {}).get("jerk", {})
-
-        return {
-            "clean_first_pull": zone_result("Clean First Pull", "first_pull", {"good"}, "first_pull", clean_breakdown),
-            "clean_extension": zone_result("Clean Extension", "extension", {"good"}, "extension", clean_breakdown),
-            "clean_turnover": zone_result("Clean Turnover", "turnover", {"good"}, "turnover", clean_breakdown),
-            "clean_catch": zone_result("Clean Catch", "catch", {"good", "deep_catch"}, "catch", clean_breakdown),
-            "jerk_dip": zone_result("Jerk Dip", "dip", {"good"}, "dip", jerk_breakdown),
-            "jerk_drive": zone_result("Jerk Drive", "drive", {"good"}, "dip", jerk_breakdown),
-            "jerk_lockout": zone_result("Jerk Lockout", "lockout", {"good"}, "jerk_lockout", jerk_breakdown),
-            "jerk_catch": zone_result("Jerk Catch", "split_catch", {"good"}, "split_catch", jerk_breakdown),
-            "jerk_bar_path": zone_result("Jerk Bar Path", "bar_path", {"good"}, "press_bar_path", jerk_breakdown),
-        }
-
-    return {}
+    return feats
 
 
 def analyze_video(video_path, make_visuals=True, make_overlay=True):
@@ -5199,17 +5188,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "exercise_label": "Unknown",
                 "confidence": 0.0,
                 "analysis_mode": "video_error",
-                "feedback": ["Could not open uploaded video."],
                 "rep_feedback": [],
                 "set_summary": build_set_summary([]),
                 "coaching_zones": build_coaching_zones("unknown", []),
                 "overlay_video_url": None,
                 "phase_images": None,
-                "debug": {},
+                "debug": {"error": "video_not_opened"},
             }
 
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        sample_every = max(3, min(5, total_frames // 160))
+        sample_every = 1
 
         sequence = []
         biomechanics = []
@@ -5229,7 +5217,6 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                     break
 
                 frame_idx += 1
-
                 if frame_idx % sample_every != 0:
                     continue
 
@@ -5244,32 +5231,25 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if feats is None or bio is None:
                     continue
 
-                pose_frames += 1
                 sequence.append(feats)
-
                 bio["frame_number"] = frame_idx
                 biomechanics.append(bio)
+                pose_frames += 1
 
         cap.release()
 
-        # ---------------- INSUFFICIENT DATA CHECK ----------------
+        # ---------------- INSUFFICIENT DATA ----------------
         if len(sequence) < 10:
             return {
                 "exercise_label": "Unknown",
                 "confidence": 0.0,
                 "analysis_mode": "insufficient_data",
-                "feedback": ["Not enough pose data detected."],
                 "rep_feedback": [],
                 "set_summary": build_set_summary([]),
                 "coaching_zones": build_coaching_zones("unknown", []),
                 "overlay_video_url": None,
                 "phase_images": None,
-                "debug": {
-                    "frames_seen": total_frames,
-                    "frames_processed": len(sequence),
-                    "pose_frames": pose_frames,
-                    "sample_every": sample_every,
-                },
+                "debug": {"frames_processed": len(sequence)},
             }
 
         # ---------------- FEATURE PROCESSING ----------------
@@ -5279,64 +5259,82 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # ---------------- ML MODEL ----------------
         probs = MODEL.predict_proba(seq)
         raw_idx = int(np.argmax(probs))
-
-        raw_label = CLASS_NAMES[raw_idx] if raw_idx < len(CLASS_NAMES) else "squat"
+        raw_label = CLASS_NAMES[raw_idx]
         raw_confidence = float(np.max(probs))
 
-        # ---------------- BIOMECHANICS SUMMARY ----------------
-        summary = summarize_biomechanics(biomechanics)
+        # ---------------- OLYMPIC MODEL ----------------
+        oly_sequence = [
+            b["full_features"]
+            for b in biomechanics
+            if "full_features" in b
+        ]
 
-        # ---------------- OLYMPIC CLASSIFIER (SINGLE SOURCE) ----------------
-        clean = detect_clean_phase(biomechanics)
-        overhead = detect_overhead_phase(biomechanics)
-        jerk = detect_jerk_phase(biomechanics)
+        olympic_pred, olympic_conf = predict_olympic_lift_from_sequence(
+            oly_sequence
+        )
 
-        if clean and overhead and jerk:
-            olympic_label = "clean_and_jerk"
-        elif overhead and not clean:
-            olympic_label = "snatch"
-        elif clean:
-            olympic_label = "clean"
-        else:
-            olympic_label = "unknown"
+        final_label = olympic_pred if olympic_pred else raw_label
+        final_confidence = max(raw_confidence, olympic_conf)
 
         # ---------------- REP ANALYSIS ----------------
-        rep_feedback = []
+        analysis_label = final_label
 
-        if raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
-            rep_feedback, _ = analyze_squat_reps(biomechanics, raw_label)
+        if analysis_label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
+            rep_feedback, _ = analyze_squat_reps(biomechanics, analysis_label)
 
-        elif raw_label == "deadlift":
+        elif analysis_label == "deadlift":
             rep_feedback, _ = analyze_deadlift_reps(biomechanics)
 
-        elif raw_label in ["push_press", "strict_press", "thruster"]:
-            rep_feedback, _ = analyze_push_press_reps(biomechanics, raw_label)
+        elif analysis_label in ["push_press", "strict_press", "thruster"]:
+            rep_feedback, _ = analyze_push_press_reps(biomechanics, analysis_label)
 
-        elif raw_label == "clean":
+        elif analysis_label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
 
-        elif raw_label == "clean_and_jerk":
+        elif analysis_label == "clean_and_jerk":
             rep_feedback, _ = analyze_clean_and_jerk_reps(biomechanics)
 
-        elif raw_label == "snatch":
+        elif analysis_label == "snatch":
             rep_feedback, _ = analyze_snatch_reps(biomechanics)
 
-        elif raw_label == "split_jerk":
+        elif analysis_label == "split_jerk":
             rep_feedback, _ = analyze_split_jerk_reps(biomechanics)
 
-        # ---------------- FINAL DECISION MERGER ----------------
-        final_label = raw_label
-        final_confidence = raw_confidence
-        override_used = False
-        reason = "ml_model"
+        else:
+            rep_feedback = []
 
-        if olympic_label != "unknown":
-            final_label = olympic_label
-            override_used = True
-            reason = "biomechanics_override"
-
-        # ---------------- SET SUMMARY ----------------
         set_summary = build_set_summary(rep_feedback)
+
+        # ---------------- PHASE IMAGES ----------------
+        phase_images = None
+        if make_visuals:
+            try:
+                phase_images = get_phase_images(
+                    final_label,
+                    video_path,
+                    biomechanics,
+                )
+            except Exception as e:
+                print("phase image error:", e)
+
+        # ---------------- OVERLAY (S3 PIPELINE) ----------------
+        overlay_video_url = None
+
+        if make_overlay:
+            try:
+                overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+                overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+
+                overlay_video_url = draw_overlay_video(
+                    video_path,
+                    overlay_path,
+                    rep_feedback,
+                    final_label,
+                )
+
+            except Exception as e:
+                print("overlay error:", e)
+                overlay_video_url = None
 
         # ---------------- RETURN ----------------
         return {
@@ -5346,31 +5344,25 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "rep_feedback": rep_feedback,
             "set_summary": set_summary,
             "coaching_zones": build_coaching_zones(final_label, rep_feedback),
-            "overlay_video_url": None,
-            "phase_images": None,
+            "overlay_video_url": overlay_video_url,
+            "phase_images": phase_images,
             "debug": {
                 "original_prediction": raw_label,
                 "original_confidence": raw_confidence,
-                "final_prediction": final_label,
-                "override_used": override_used,
-                "classification_reason": reason,
+                "olympic_pred": olympic_pred,
+                "olympic_confidence": olympic_conf,
                 "frames_seen": total_frames,
                 "frames_processed": len(sequence),
                 "pose_frames": pose_frames,
                 "sample_every": sample_every,
                 "input_shape": str(seq.shape),
-                "olympic_label": olympic_label,
             },
         }
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-
-        return {
-            "error": True,
-            "message": str(e),
-        }
+        return {"error": True, "message": str(e)}
 
     finally:
         if cap is not None:
@@ -5497,63 +5489,6 @@ async def generate_visuals(
             os.remove(temp_path)
 
             
-def overlay_worker(job_id, temp_path, rep_feedback, exercise_label):
-    try:
-        overlay_jobs[job_id] = {"status": "processing"}
-
-        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
-        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
-
-        compressed_path = compress_video_for_overlay(temp_path)
-
-        made_overlay = draw_overlay_video(
-            input_path=compressed_path,
-            output_path=overlay_path,
-            rep_feedback=rep_feedback,
-            exercise_label=exercise_label or "unknown",
-            sample_every=1,
-        )
-
-        if made_overlay:
-            s3_key = f"overlays/{overlay_filename}"
-
-            s3_client.upload_file(
-                overlay_path,
-                S3_BUCKET,
-                s3_key,
-                ExtraArgs={
-                    "ContentType": "video/mp4",
-                },
-            )
-
-            overlay_url = (
-                f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
-            )
-
-            overlay_jobs[job_id] = {
-                "status": "ready",
-                "overlay_video_url": overlay_url,
-            }
-        else:
-            overlay_jobs[job_id] = {
-                "status": "error",
-                "message": "Could not generate overlay video.",
-            }
-
-    except Exception as e:
-        overlay_jobs[job_id] = {
-            "status": "error",
-            "message": str(e),
-        }
-
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-        if "overlay_path" in locals() and os.path.exists(overlay_path):
-            os.remove(overlay_path)
-
-
 def compress_video_for_overlay(input_path):
     compressed_path = input_path.rsplit(".", 1)[0] + "_compressed.mp4"
 
@@ -5583,65 +5518,6 @@ def compress_video_for_overlay(input_path):
         return input_path
 
 
-@app.post("/start_overlay")
-async def start_overlay(
-    file: UploadFile = File(...),
-    rep_json: str = Form(None),
-    exercise_label: str = Form(None),
-):
-    import json
-
-    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
-    temp_filename = f"overlay_input_{uuid.uuid4().hex[:8]}{suffix}"
-    temp_path = os.path.join(UPLOAD_DIR, temp_filename)
-
-    with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    rep_feedback = []
-
-    if rep_json:
-        rep = json.loads(rep_json)
-        rep_feedback = [rep] if isinstance(rep, dict) else rep
-
-    if not rep_feedback:
-        cap = cv2.VideoCapture(temp_path)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        cap.release()
-
-        rep_feedback = [{
-            "rep": 1,
-            "start_frame": 0,
-            "end_frame": min(90, max(1, total_frames - 1)),
-            "score": 10.0,
-            "grade": "Captured",
-            "issues": [],
-            "feedback": [],
-        }]
-
-    job_id = uuid.uuid4().hex[:12]
-    overlay_jobs[job_id] = {"status": "queued"}
-
-    threading.Thread(
-        target=overlay_worker,
-        args=(job_id, temp_path, rep_feedback, exercise_label),
-        daemon=True,
-    ).start()
-
-    return {
-        "job_id": job_id,
-        "status": "processing",
-    }
-
-
-@app.get("/overlay_status/{job_id}")
-async def overlay_status(job_id: str):
-    return overlay_jobs.get(job_id, {
-        "status": "not_found",
-        "message": "Overlay job not found.",
-    })
-
-
 @app.post("/generate_overlay")
 async def generate_overlay(
     file: UploadFile = File(...),
@@ -5665,8 +5541,8 @@ async def generate_overlay(
 
         if rep_json:
             try:
-                rep = json.loads(rep_json)
-                rep_feedback = [rep] if isinstance(rep, dict) else rep
+                parsed = json.loads(rep_json)
+                rep_feedback = [parsed] if isinstance(parsed, dict) else parsed
             except Exception as e:
                 print("OVERLAY REP JSON PARSE ERROR:", e)
 
@@ -5674,10 +5550,7 @@ async def generate_overlay(
             cap = cv2.VideoCapture(temp_path)
 
             if not cap.isOpened():
-                return {
-                    "overlay_video_url": None,
-                    "overlay_error": "Could not open uploaded video.",
-                }
+                raise RuntimeError("Could not open uploaded video.")
 
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             cap.release()
@@ -5692,30 +5565,19 @@ async def generate_overlay(
                 "feedback": [],
             }]
 
-        overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
-        overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
-
-        compressed_path = compress_video_for_overlay(temp_path)
-
-        made_overlay = draw_overlay_video(
-            input_path=compressed_path,
-            output_path=overlay_path,
-            rep_feedback=rep_feedback,
-            exercise_label=exercise_label or "unknown",
-            sample_every=1,
+        overlay_video_url = draw_overlay_video(
+            temp_path,
+            rep_feedback,
+            exercise_label or "unknown",
         )
+
+        if not overlay_video_url:
+            raise RuntimeError("Could not generate overlay video.")
 
         runtime = round(time.time() - started_at, 2)
 
-        if not made_overlay:
-            return {
-                "overlay_video_url": None,
-                "overlay_error": "Could not generate overlay video.",
-                "runtime_seconds": runtime,
-            }
-
         return {
-            "overlay_video_url": f"/outputs/{overlay_filename}",
+            "overlay_video_url": overlay_video_url,
             "overlay_error": None,
             "runtime_seconds": runtime,
         }
@@ -5735,7 +5597,11 @@ async def generate_overlay(
 
 
 @app.post("/analyze")
-async def analyze(file: UploadFile = File(...)):
+async def analyze(
+    file: UploadFile = File(...),
+    make_visuals: bool = Form(True),
+    make_overlay: bool = Form(True),
+):
     suffix = os.path.splitext(file.filename or "")[1] or ".mov"
     temp_filename = f"upload_{uuid.uuid4().hex[:8]}{suffix}"
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
@@ -5749,38 +5615,9 @@ async def analyze(file: UploadFile = File(...)):
 
         result = analyze_video(
             analysis_path,
-            make_visuals=False,
-            make_overlay=False,
+            make_visuals=make_visuals,
+            make_overlay=make_overlay,
         )
-
-        if result.get("rep_feedback"):
-            reps = result.get("rep_feedback", [])
-
-            rep = max(
-                reps,
-                key=lambda r: (
-                    r.get("end_frame", 0) - r.get("start_frame", 0),
-                    r.get("score", 0),
-                ),
-            )
-            label = str(result.get("exercise_label", "")).lower()
-
-            if "snatch" in label:
-                result["phase_images"] = create_olympic_lift_phase_images(
-                    analysis_path,
-                    OVERLAY_DIR,
-                    rep,
-                    sample_every=1,
-                    exercise_label=result.get("exercise_label", ""),
-                )
-
-            elif "thruster" in label or "push press" in label or "strict press" in label:
-                result["phase_images"] = create_push_press_phase_images(
-                    analysis_path,
-                    OVERLAY_DIR,
-                    rep,
-                    sample_every=1,
-                )
 
         return result
 
