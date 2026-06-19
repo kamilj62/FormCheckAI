@@ -5123,7 +5123,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         if (
             oly_label in ["clean_and_jerk", "snatch", "clean", "jerk", "split_jerk"]
-            and oly_confidence >= 0.85
+            and (
+                oly_confidence >= 0.55
+                or raw_label in ["deadlift", "push_press", "strict_press", "squat"]
+            )
             and raw_label in [
                 "olympic_lift",
                 "deadlift",
@@ -6085,4 +6088,3 @@ async def analyze(file: UploadFile = File(...)):
 
         if analysis_path and os.path.exists(analysis_path):
             os.remove(analysis_path)
-            
