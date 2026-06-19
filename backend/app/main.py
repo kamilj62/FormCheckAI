@@ -1912,10 +1912,7 @@ def analyze_clean_reps(biomechanics):
         return [], build_set_summary([])
 
     start_idx = 0
-    raw_end_idx = min(
-        len(biomechanics) - 1,
-        catch_idx + int(len(biomechanics) * 0.38)
-    )
+    raw_end_idx = len(biomechanics) - 1
     duration = raw_end_idx - start_idx
 
     #
@@ -2231,31 +2228,83 @@ def analyze_clean_and_jerk_reps(biomechanics):
         feedback = ["Good clean and jerk rep. Strong clean, overhead drive, and finish."]
 
 
-    start_frame = clean.get("start_frame", 0) if clean else 0
-    clean_catch_frame = clean.get("catch_frame", start_frame) if clean else start_frame
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
 
-    jerk_dip_frame = jerk.get("dip_frame", clean_catch_frame) if jerk else clean_catch_frame
-    jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
-    jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.5) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
 
+    n = len(biomechanics)
+    start_idx = 0
 
-    # Visual correction: clean catch should be close to the front-rack position
-    # immediately before the jerk dip, not early in the pull.
-    if jerk:
-        # For visuals, show the front-rack/deep catch immediately before the jerk dip.
-        clean_catch_frame = jerk_dip_frame
+    # Clean extension: most open/tall body position before the receiving phase.
+    clean_search_start = max(1, int(n * 0.12))
+    clean_search_end = max(clean_search_start + 2, int(n * 0.65))
 
-    # Force proper phase ordering
-    if jerk_dip_frame <= clean_catch_frame:
-        jerk_dip_frame = clean_catch_frame + 1
+    knee_norm = (knee - np.min(knee)) / (np.ptp(knee) + 1e-6)
+    hip_norm = (hip - np.min(hip)) / (np.ptp(hip) + 1e-6)
+    extension_signal = 0.60 * knee_norm + 0.40 * hip_norm
 
-    if jerk_drive_frame <= jerk_dip_frame:
-        jerk_drive_frame = jerk_dip_frame + 1
+    clean_extension_idx = clean_search_start + int(
+        np.argmax(extension_signal[clean_search_start:clean_search_end])
+    )
 
-    if jerk_catch_frame <= jerk_drive_frame:
-        jerk_catch_frame = jerk_drive_frame + 1
-        
-    end_frame = jerk.get("end_frame", clean.get("end_frame", 0)) if jerk else clean.get("end_frame", 0)
+    # First overhead frame usually belongs to the jerk, so clean catch must happen before it.
+    overhead = (wrist_y < shoulder_y) & (elbow > 145)
+    overhead_candidates = np.where(overhead & (np.arange(n) > clean_extension_idx))[0]
+    first_overhead_idx = int(overhead_candidates[0]) if len(overhead_candidates) else n - 1
+
+    # Clean catch: deepest knee bend after clean extension and before overhead jerk.
+    catch_start = min(n - 2, clean_extension_idx + 1)
+    catch_end = max(catch_start + 1, min(first_overhead_idx, int(n * 0.85)))
+
+    clean_catch_idx = catch_start + int(np.argmin(knee[catch_start:catch_end]))
+
+    # Recovery: first standing/tall frame after clean catch.
+    recovery_idx = clean_catch_idx
+    for i in range(clean_catch_idx + 1, n):
+        if knee[i] > 140 and hip[i] > 135:
+            recovery_idx = i
+            break
+
+    # Jerk dip: deepest knee bend after recovery, before overhead catch.
+    jerk_start = min(n - 2, max(recovery_idx + 1, clean_catch_idx + 3))
+    jerk_end = max(jerk_start + 1, first_overhead_idx)
+
+    jerk_dip_idx = jerk_start + int(np.argmin(knee[jerk_start:jerk_end]))
+
+    # Jerk drive: strongest extension after dip before overhead.
+    drive_start = min(n - 2, jerk_dip_idx + 1)
+    drive_end = max(drive_start + 1, first_overhead_idx)
+    drive_signal = extension_signal
+
+    jerk_drive_idx = drive_start + int(np.argmax(drive_signal[drive_start:drive_end]))
+
+    # Jerk catch: first overhead lockout after drive.
+    jerk_catch_idx = first_overhead_idx
+    for i in range(jerk_drive_idx + 1, n):
+        if overhead[i]:
+            jerk_catch_idx = i
+            break
+
+    # Finish: stable overhead after catch.
+    end_idx = min(n - 1, jerk_catch_idx + int(n * 0.20))
+    for i in range(jerk_catch_idx + 1, n):
+        if overhead[i] and elbow[i] > 150 and knee[i] > 130:
+            end_idx = i
+            break
+
+    start_frame = int(frame_numbers[start_idx])
+    clean_catch_frame = int(frame_numbers[clean_catch_idx])
+    jerk_dip_frame = int(frame_numbers[jerk_dip_idx])
+    jerk_drive_frame = int(frame_numbers[jerk_drive_idx])
+    jerk_catch_frame = int(frame_numbers[jerk_catch_idx])
+    end_frame = int(frame_numbers[end_idx])
 
     reps = [{
         "rep": 1,
@@ -5151,20 +5200,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             if "full_features" in b
         ]
 
+        olympic_pred, olympic_confidence = predict_olympic_lift_from_sequence(
+            oly_sequence
+        )
+
+        # Snatch rescue: low-confidence C&J predictions with lots of overhead time
+        # are often snatches.
         if (
-            raw_label == "clean_and_jerk"
-            and oly_confidence < 0.65
+            olympic_pred == "clean_and_jerk"
+            and olympic_confidence < 0.65
             and summary.get("wrist_above_shoulder_ratio", 0) > 0.45
         ):
-            # removed unsafe overwrite
-            oly_confidence = 0.66
+            olympic_pred = "snatch"
+            olympic_confidence = 0.66
 
         if (
-            raw_label in ["clean_and_jerk", "snatch", "clean", "jerk", "split_jerk"]
-            and (
-                oly_confidence >= 0.55
-                or raw_label in ["deadlift", "push_press", "strict_press", "squat"]
-            )
+            olympic_pred in ["clean_and_jerk", "snatch", "clean", "jerk", "split_jerk"]
+            and olympic_confidence >= 0.55
             and raw_label in [
                 "olympic_lift",
                 "deadlift",
@@ -5174,11 +5226,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "push_press",
                 "strict_press",
                 "pull_up",
-                "bar_muscle_up"
+                "bar_muscle_up",
             ]
         ):
-            raw_label = raw_label
-            raw_confidence = oly_confidence
+            raw_label = olympic_pred
+            raw_confidence = olympic_confidence
 
         # --------------------------------------------------
         # BAR MUSCLE-UP OVERRIDE
@@ -5254,11 +5306,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # CLEAN AND JERK OVERRIDE
         if (
             raw_label == "clean_and_jerk"
-            and oly_confidence is not None
-            and oly_confidence >= 0.55
+            and olympic_confidence is not None
+            and olympic_confidence >= 0.55
         ):
             raw_label = "clean_and_jerk"
-            raw_confidence = max(raw_confidence, oly_confidence)
+            raw_confidence = max(raw_confidence, olympic_confidence)
         
         # CLEAN OVERRIDE
         if (
@@ -5431,7 +5483,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         )
 
         raw_label = raw_label
-        oly_confidence = raw_confidence
+        olympic_confidence = raw_confidence
 
         if (
             raw_label in ["squat_back", "squat_front", "overhead_squat"]
@@ -5709,10 +5761,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "override_used": override_used,
                 "classification_reason": reason,
                 "raw_predictions": dict(zip(CLASS_NAMES, probs.tolist())),
-                "oly_router_prediction": raw_label,
+                "oly_router_prediction": locals().get("olympic_pred", raw_label),
                 "oly_router_confidence": (
-                    round(locals().get("oly_confidence", 0.0), 4)
-                    if locals().get("oly_confidence") is not None
+                    round(locals().get("olympic_confidence", raw_confidence), 4)
+                    if locals().get("olympic_confidence", raw_confidence) is not None
                     else None
                 ),
                 "overhead_router_prediction": overhead_router_label,
