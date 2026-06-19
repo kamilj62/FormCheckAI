@@ -68,8 +68,14 @@ def extract_features(video_path):
 
 
 def main():
-    # change this path to test
-    video = BASE_DIR / "Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g02_c02.avi"
+    import sys
+
+    if len(sys.argv) > 1:
+        video = Path(sys.argv[1])
+    else:
+        video = BASE_DIR / "Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g02_c02.avi"
+
+    print(f"\nTesting: {video}")
 
     X = extract_features(video)
 

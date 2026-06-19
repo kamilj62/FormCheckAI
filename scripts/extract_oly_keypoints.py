@@ -7,6 +7,7 @@ BASE_DIR = Path("/Users/josephkamil/Desktop/Capstone")
 
 DATASETS = {
     "clean_and_jerk": BASE_DIR / "Oly_Data/raw/clean_and_jerk",
+    "snatch": BASE_DIR / "Oly_Data/raw/snatch_mp4",
     "not_oly": BASE_DIR / "Oly_Data/raw/not_oly",
 }
 
@@ -83,7 +84,7 @@ def main():
         writer.writeheader()
 
         for label, input_dir in DATASETS.items():
-            videos = sorted(input_dir.glob("*.avi"))
+            videos = sorted(input_dir.glob("*.avi")) + sorted(input_dir.glob("*.mp4"))
 
             print("\n==============================")
             print(f"Label: {label}")
