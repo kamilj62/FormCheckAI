@@ -1917,9 +1917,15 @@ def analyze_clean_reps(biomechanics):
     #
     first_pull_idx = start_idx + int(duration * 0.18)
 
-    catch_idx = start_idx + int(duration * 0.78)
-
     extension_idx = start_idx + int(duration * 0.70)
+
+    # Clean catch should be the deepest receiving position.
+    # Prefer the minimum knee angle after extension.
+    catch_search_start = min(raw_end_idx, extension_idx + 1)
+    if catch_search_start < raw_end_idx:
+        catch_idx = catch_search_start + int(np.argmin(knee[catch_search_start:raw_end_idx + 1]))
+    else:
+        catch_idx = start_idx + int(duration * 0.78)
 
     end_idx = start_idx + int(duration * 0.88)
 
@@ -2179,7 +2185,7 @@ def analyze_clean_and_jerk_reps(biomechanics):
 
         jerk_biomechanics = [
             b for b in biomechanics
-            if b.get("frame_number", 0) >= clean_catch_frame
+            if b.get("frame_number", 0) >= clean_catch_frame + 25
         ]
 
         jerk_reps, _ = analyze_split_jerk_reps(jerk_biomechanics)
@@ -2224,6 +2230,12 @@ def analyze_clean_and_jerk_reps(biomechanics):
     jerk_dip_frame = jerk.get("dip_frame", clean_catch_frame) if jerk else clean_catch_frame
     jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
     jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
+
+    # Visual correction: clean catch should be close to the front-rack position
+    # immediately before the jerk dip, not early in the pull.
+    if jerk:
+        # For visuals, show the front-rack/deep catch immediately before the jerk dip.
+        clean_catch_frame = jerk_dip_frame
 
     # Force proper phase ordering
     if jerk_dip_frame <= clean_catch_frame:
@@ -4253,14 +4265,12 @@ def create_olympic_lift_phase_images(
     # CLEAN & JERK
     # -----------------------------------
     elif normalized_label == "clean_and_jerk":
-        duration = max(1, end - start)
-
         phase_frames = {
             "setup": start,
-            "clean_catch": start + int(duration * 0.55),
-            "jerk_dip": start + int(duration * 0.68),
-            "jerk_drive": start + int(duration * 0.75),
-            "jerk_catch": start + int(duration * 0.86),
+            "clean_catch": rep_frame("clean_catch_frame", start),
+            "jerk_dip": rep_frame("jerk_dip_frame", start),
+            "jerk_drive": rep_frame("jerk_drive_frame", start),
+            "jerk_catch": rep_frame("jerk_catch_frame", start),
             "finish": end,
         }
 
@@ -5762,10 +5772,7 @@ async def generate_visuals(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
         elif (
-            "clean and jerk" in label
-            or "snatch" in label
-            or "clean" in label
-            or "jerk" in label
+            "snatch" in label
         ):
             phase_images = create_olympic_lift_phase_images(
                 temp_path,
@@ -6068,7 +6075,7 @@ async def analyze(file: UploadFile = File(...)):
             )
             label = str(result.get("exercise_label", "")).lower()
 
-            if "clean and jerk" in label or "snatch" in label:
+            if "snatch" in label:
                 result["phase_images"] = create_olympic_lift_phase_images(
                     analysis_path,
                     OVERLAY_DIR,
