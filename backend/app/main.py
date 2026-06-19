@@ -4,7 +4,6 @@ from pathlib import Path
 
 import os
 from tracemalloc import start
-from turtle import width
 import uuid
 import shutil
 
