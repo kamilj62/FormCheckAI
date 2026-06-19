@@ -2265,23 +2265,58 @@ def analyze_clean_and_jerk_reps(biomechanics):
     # This is more reliable for C&J than treating the whole clip as one clean.
     anchor = first_overhead_idx
 
+    # Anchor jerk phases from the detected clean catch/front-rack moment,
+    # not from first overhead. First overhead is too late for C&J timing.
     clean_catch_idx = min(n - 1, anchor - max(2, int(n * 0.04)))
-    jerk_dip_idx = min(n - 1, anchor + max(2, int(n * 0.03)))
-    jerk_drive_idx = min(n - 1, anchor + max(3, int(n * 0.06)))
-    jerk_catch_idx = min(n - 1, anchor + max(5, int(n * 0.12)))
-    end_idx = min(n - 1, anchor + max(10, int(n * 0.24)))
-
     clean_catch_idx = max(clean_extension_idx + 1, clean_catch_idx)
+
+    cj_anchor = clean_catch_idx
+
+    jerk_dip_idx = min(n - 1, cj_anchor + max(4, int(n * 0.06)))
+    jerk_drive_idx = min(n - 1, cj_anchor + max(8, int(n * 0.10)))
+    jerk_catch_idx = min(n - 1, cj_anchor + max(12, int(n * 0.14)))
+    end_idx = min(n - 1, cj_anchor + max(20, int(n * 0.22)))
+
     jerk_dip_idx = max(clean_catch_idx + 1, jerk_dip_idx)
     jerk_drive_idx = max(jerk_dip_idx + 1, jerk_drive_idx)
-    jerk_catch_idx = max(jerk_drive_idx + 1, jerk_catch_idx)
-    end_idx = max(jerk_catch_idx + 1, end_idx)
+    jerk_catch_idx = min(n - 1, max(jerk_drive_idx + 1, jerk_catch_idx))
+
+    # Finish: best lockout/recovery frame after jerk catch.
+    overhead_lockout = (
+        (wrist_y < shoulder_y) &
+        (elbow > 160) &
+        (knee > 130)
+    )
+
+    finish_candidates = np.where(
+        overhead_lockout &
+        (np.arange(n) >= jerk_catch_idx)
+    )[0]
+
+    if len(finish_candidates):
+        # Prefer the tallest/upright recovered position.
+        finish_idx = int(
+            finish_candidates[
+                np.argmax(hip[finish_candidates] + knee[finish_candidates])
+            ]
+        )
+    else:
+        finish_idx = min(
+            n - 1,
+            jerk_catch_idx + max(4, int(n * 0.05))
+        )
+
+    # If finish collapses onto catch, keep it valid but allow duplicate only
+    # when the clip does not contain later usable pose frames.
+    finish_idx = min(n - 1, max(jerk_catch_idx, finish_idx))
+    end_idx = finish_idx
 
     start_frame = int(frame_numbers[start_idx])
     clean_catch_frame = int(frame_numbers[clean_catch_idx])
     jerk_dip_frame = int(frame_numbers[jerk_dip_idx])
     jerk_drive_frame = int(frame_numbers[jerk_drive_idx])
     jerk_catch_frame = int(frame_numbers[jerk_catch_idx])
+    finish_frame = int(frame_numbers[finish_idx])
     end_frame = int(frame_numbers[end_idx])
 
     reps = [{
@@ -2291,6 +2326,7 @@ def analyze_clean_and_jerk_reps(biomechanics):
         "jerk_dip_frame": int(jerk_dip_frame),
         "jerk_drive_frame": int(jerk_drive_frame),
         "jerk_catch_frame": int(jerk_catch_frame),
+        "finish_frame": int(finish_frame),
         "end_frame": int(end_frame),
         "score": score,
         "grade": grade_score(score),
@@ -4314,7 +4350,7 @@ def create_olympic_lift_phase_images(
             "jerk_dip": rep_frame("jerk_dip_frame", start),
             "jerk_drive": rep_frame("jerk_drive_frame", start),
             "jerk_catch": rep_frame("jerk_catch_frame", start),
-            "finish": end,
+            "finish": rep_frame("finish_frame", end),
         }
 
     elif normalized_label == "snatch":
