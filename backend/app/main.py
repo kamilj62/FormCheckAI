@@ -24,6 +24,7 @@ import subprocess
 
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
+
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -2224,12 +2225,20 @@ def analyze_clean_and_jerk_reps(biomechanics):
         score = max(score, 9.0)
         feedback = ["Good clean and jerk rep. Strong clean, overhead drive, and finish."]
 
+
     start_frame = clean.get("start_frame", 0) if clean else 0
     clean_catch_frame = clean.get("catch_frame", start_frame) if clean else start_frame
 
     jerk_dip_frame = jerk.get("dip_frame", clean_catch_frame) if jerk else clean_catch_frame
     jerk_drive_frame = jerk.get("drive_frame", jerk_dip_frame) if jerk else jerk_dip_frame
     jerk_catch_frame = jerk.get("catch_frame", jerk_drive_frame) if jerk else jerk_drive_frame
+
+    if detected:
+        start_frame = detected.get("setup_frame", start_frame)
+        clean_catch_frame = detected.get("clean_catch_frame", clean_catch_frame)
+        jerk_dip_frame = detected.get("jerk_dip_frame", jerk_dip_frame)
+        jerk_drive_frame = detected.get("jerk_drive_frame", jerk_drive_frame)
+        jerk_catch_frame = detected.get("jerk_catch_frame", jerk_catch_frame)
 
     # Visual correction: clean catch should be close to the front-rack position
     # immediately before the jerk dip, not early in the pull.
