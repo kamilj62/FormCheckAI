@@ -6190,7 +6190,7 @@ async def analyze(file: UploadFile = File(...)):
             )
             label = str(result.get("exercise_label", "")).lower()
 
-            if "snatch" in label:
+            if "snatch" in label or "clean and jerk" in label:
                 result["phase_images"] = create_olympic_lift_phase_images(
                     analysis_path,
                     OVERLAY_DIR,
