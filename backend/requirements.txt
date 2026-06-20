@@ -8,3 +8,5 @@ tensorflow
 python-multipart
 
 boto3
+celery
+redis

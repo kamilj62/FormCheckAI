@@ -1004,6 +1004,7 @@ export default function App() {
   const [overlayUrl, setOverlayUrl] = useState(null);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayProgress, setOverlayProgress] = useState("");
+  const [overlayStatus, setOverlayStatus] = useState("idle");
 
   const generateOverlay = async () => {
     try {
@@ -1097,53 +1098,67 @@ export default function App() {
     }
   };
 
-  const analyzeVideo = async () => {
-    if (!video) {
-      Alert.alert("Pick a video first");
-      return;
-    }
+  const pollOverlay = async (jobId) => {
+    const interval = setInterval(async () => {
+      const res = await fetch(`${API_URL}/overlay_status/${jobId}`);
+      const data = await res.json();
 
-    setLoading(true);
-    setResult(null);
-    setSelectedZone(null);
-    setVisualsLoading(false);
-
-    try {
-      const res = await fetch(`${API_URL}/analyze`, {
-        method: "POST",
-        body: await buildFormData(),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!data) {
-        throw new Error("Server returned an empty response.");
+      if (data.status === "done") {
+        clearInterval(interval);
+        setOverlayUrl(data.url);
+        setOverlayStatus("done");
       }
 
-      console.log("ANALYZE RESPONSE:", data);
-      console.log("STATUS:", res.status);
-
-      if (!res.ok) {
-        throw new Error(
-          data?.detail ||
-            data?.message ||
-            JSON.stringify(data) ||
-            "Analyze request failed",
-        );
+      if (data.status === "failed") {
+        clearInterval(interval);
+        setOverlayStatus("failed");
       }
-
-      await saveAnalysisHistory(data);
-
-      setResult(data);
-      setLoading(false);
-
-      // Visuals are now generated manually
-    } catch (err) {
-      setResult({ error: true, message: err.message });
-      setLoading(false);
-      setVisualsLoading(false);
-    }
+    }, 2000);
   };
+
+  const analyzeVideo = async () => {
+  if (!video) {
+    Alert.alert("Pick a video first");
+    return;
+  }
+
+  setLoading(true);
+  setResult(null);
+  setSelectedZone(null);
+  setVisualsLoading(false);
+
+  try {
+    const res = await fetch(`${API_URL}/analyze`, {
+      method: "POST",
+      body: await buildFormData(),
+    });
+
+    const data = await res.json();
+
+    console.log("ANALYZE RESPONSE:", data);
+
+    if (!res.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Analyze request failed"
+      );
+    }
+
+    setResult(data);
+
+    if (data.overlay_video_url) {
+      setOverlayUrl(fullUrl(data.overlay_video_url));
+    }
+
+    await saveAnalysisHistory(data);
+  } catch (err) {
+    console.error(err);
+    setResult({ error: true, message: err.message });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const reps = result?.rep_feedback || [];
 

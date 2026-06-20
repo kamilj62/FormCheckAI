@@ -7,6 +7,11 @@ from tracemalloc import start
 import uuid
 import shutil
 
+from threading import Thread
+import uuid
+
+overlay_jobs = {}
+
 from app.phase_detection.signal_engine import SignalEngine
 from app.phase_detection.phase_engine import get_phase_images
 
@@ -17,9 +22,14 @@ import tensorflow as tf
 
 import joblib
 
-import threading
+try:
+    from celery.result import AsyncResult
+    from app.celery_app import celery
+except Exception:
+    AsyncResult = None
+    celery = None
 
-overlay_jobs = {}
+import threading
 
 import boto3
 
@@ -101,7 +111,13 @@ SQUAT_ROUTER_LABELS = {
     2: "squat_front",
 }
 
-CLASS_NAMES = ["bench_press", "deadlift", "push_press", "squat"]
+CLASS_NAMES = [
+    "bench_press",
+    "deadlift",
+    "push_press",
+    "squat",
+    "thruster",
+]
 
 OLY_ROUTER_BUNDLE = joblib.load(MODEL_DIR / "oly_router_rf.joblib")
 OLY_ROUTER_MODEL = OLY_ROUTER_BUNDLE["model"]
@@ -3640,13 +3656,8 @@ def draw_overlay_video(
     exercise_label,
 ):
     print("🔥 DRAW_OVERLAY ENTERED")
-    print("INPUT PATH:", input_path)
-    print("OUTPUT PATH:", output_path)
-    print("REPS:", len(rep_feedback) if rep_feedback else 0)
 
     cap = cv2.VideoCapture(input_path)
-
-    print("OVERLAY DEBUG: cap.isOpened =", cap.isOpened())
 
     if not cap.isOpened():
         print("Overlay error: could not open input video")
@@ -3661,12 +3672,8 @@ def draw_overlay_video(
     if fps <= 0:
         fps = 30
 
-    source_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    source_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    upscale_factor = 3.0 if source_width < 800 else 1.0
-    width = int(source_width * upscale_factor)
-    height = int(source_height * upscale_factor)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     temp_output_path = output_path.replace(".mp4", "_raw.mp4")
 
@@ -3684,35 +3691,41 @@ def draw_overlay_video(
 
     print("OVERLAY DEBUG: entering loop")
 
-    best_rep = max(rep_feedback, key=lambda rep: float(rep.get("score", 0) or 0))
-    exercise = str(exercise_label or "").lower().replace(" ", "_")
-
-    frame_idx = 0
-    frames_written = 0
-    landmark_hits = 0
+    # ⚡ FAST SETTINGS
+    frame_skip = 2   # 🔥 speed boost
 
     with mp_pose.Pose(
         static_image_mode=False,
-        model_complexity=1,
-        min_detection_confidence=0.35,
-        min_tracking_confidence=0.35,
+        model_complexity=0,   # 🔥 FASTEST MODE
+        smooth_landmarks=False,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5,
     ) as pose:
+
+        frame_idx = 0
+        frames_written = 0
 
         while True:
             ret, frame = cap.read()
 
-            print("OVERLAY DEBUG: frame read =", ret)
-
             if not ret:
                 break
 
-            if upscale_factor != 1.0:
-                frame = cv2.resize(frame, (width, height))
+            # ⚡ skip frames for speed
+            if frame_idx % frame_skip != 0:
+                frame_idx += 1
+                continue
+
+            # ⚡ resize BEFORE inference (faster)
+            frame = cv2.resize(frame, (640, 360))
 
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
+            # TODO: overlay drawing logic here (keep minimal)
+
             writer.write(frame)
+
             frames_written += 1
             frame_idx += 1
 
@@ -3720,12 +3733,12 @@ def draw_overlay_video(
     writer.release()
 
     print("OVERLAY DEBUG: frames_written =", frames_written)
-    print("OVERLAY DEBUG: landmark_hits =", landmark_hits)
 
     if frames_written == 0:
         print("Overlay error: no frames written")
         return None
 
+    # ⚡ FASTER FFmpeg encoding
     import subprocess
 
     subprocess.run(
@@ -3734,16 +3747,18 @@ def draw_overlay_video(
             "-y",
             "-i", temp_output_path,
             "-vcodec", "libx264",
+            "-preset", "ultrafast",   # 🔥 HUGE SPEED BOOST
             "-pix_fmt", "yuv420p",
-            "-movflags", "+faststart",
             output_path,
         ],
         check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
-    if os.path.exists(temp_output_path):
-        os.remove(temp_output_path)
+    os.remove(temp_output_path)
 
+    # ---------------- S3 UPLOAD ----------------
     try:
         import boto3
         import uuid
@@ -5135,6 +5150,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # ---------------- ML MODEL ----------------
         probs = MODEL.predict_proba(seq)
         raw_idx = int(np.argmax(probs))
+        print("DEBUG PRED SHAPE:", getattr(probs, "shape", None))
+        print("DEBUG RAW IDX:", raw_idx)
+        print("DEBUG CLASS_NAMES LEN:", len(CLASS_NAMES))
+        print("DEBUG CLASS_NAMES:", CLASS_NAMES)
         raw_label = CLASS_NAMES[raw_idx]
         raw_confidence = float(np.max(probs))
 
@@ -5149,7 +5168,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             oly_sequence
         )
 
-        final_label = olympic_pred if olympic_pred else raw_label
+
+        # ---------------- THRUSTER PROTECTION ----------------
+        # Thruster can look like clean_and_jerk because both include front rack + overhead press.
+        # But thruster is squat -> press, usually without clean turnover or split jerk catch.
+        if raw_label == "thruster":
+            final_label = "thruster"
+        elif (
+            olympic_pred == "clean_and_jerk"
+            and raw_label in ["thruster", "push_press", "squat"]
+        ):
+            final_label = "thruster"
+        else:
+            final_label = olympic_pred if olympic_pred else raw_label
+
         final_confidence = max(raw_confidence, olympic_conf)
 
         # ---------------- REP ANALYSIS ----------------
@@ -5196,21 +5228,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # ---------------- OVERLAY (S3 PIPELINE) ----------------
         overlay_video_url = None
 
-        if make_overlay:
-            try:
-                overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
-                overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
+        job_id = str(uuid.uuid4())
 
-                overlay_video_url = draw_overlay_video(
-                    video_path,
-                    overlay_path,
-                    rep_feedback,
-                    final_label,
-                )
+        overlay_jobs[job_id] = {
+            "status": "queued",
+            "url": None,
+        }
 
-            except Exception as e:
-                print("overlay error:", e)
-
+        Thread(
+            target=overlay_worker,
+            daemon=True
+        ).start()
         # ---------------- RETURN ----------------
         return {
             "exercise_label": final_label,
@@ -5219,10 +5247,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "rep_feedback": rep_feedback,
             "set_summary": set_summary,
             "coaching_zones": build_coaching_zones(final_label, rep_feedback),
-            "overlay_video_url": overlay_video_url,
+            "overlay_job_id": job_id,
+            "overlay_video_url": None,
             "phase_images": phase_images,
             "debug": {
                 "original_prediction": raw_label,
+                "olympic_prediction": olympic_pred,
+                "final_label_debug": final_label,
                 "original_confidence": raw_confidence,
                 "olympic_pred": olympic_pred,
                 "olympic_confidence": olympic_conf,
@@ -5242,6 +5273,27 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
     finally:
         if cap is not None:
             cap.release()
+
+
+def overlay_worker(job_id, video_path, rep_feedback, exercise_label):
+    try:
+        overlay_jobs[job_id]["status"] = "processing"
+
+        overlay_path = f"/tmp/{job_id}.mp4"
+
+        url = draw_overlay_video(
+            video_path,
+            overlay_path,
+            rep_feedback,
+            exercise_label,
+        )
+
+        overlay_jobs[job_id]["status"] = "done"
+        overlay_jobs[job_id]["url"] = url
+
+    except Exception as e:
+        overlay_jobs[job_id]["status"] = "failed"
+        overlay_jobs[job_id]["error"] = str(e)
 
 
 @app.post("/debug_oly_phases")
@@ -5283,12 +5335,6 @@ async def debug_oly_phases(file: UploadFile = File(...)):
         overlay_filename = f"overlay_{uuid.uuid4().hex[:8]}.mp4"
         overlay_path = os.path.join(OVERLAY_DIR, overlay_filename)
 
-        overlay_video_url = draw_overlay_video(
-            temp_path,
-            overlay_path,
-            rep_feedback,
-            final_label,
-        )
 
         # ---------------- RESPONSE ----------------
         return {
@@ -5434,18 +5480,21 @@ async def generate_overlay(
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
 
     try:
+        # ---------------- SAVE FILE ----------------
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        # ---------------- PARSE REPS ----------------
         rep_feedback = []
 
         if rep_json:
             try:
                 parsed = json.loads(rep_json)
-                rep_feedback = [parsed] if isinstance(parsed, dict) else parsed
+                rep_feedback = parsed if isinstance(parsed, list) else [parsed]
             except Exception as e:
-                print("OVERLAY REP JSON PARSE ERROR:", e)
+                print("REP JSON PARSE ERROR:", e)
 
+        # fallback dummy rep
         if not rep_feedback:
             cap = cv2.VideoCapture(temp_path)
 
@@ -5458,23 +5507,30 @@ async def generate_overlay(
             rep_feedback = [{
                 "rep": 1,
                 "start_frame": 0,
-                "end_frame": min(90, max(1, total_frames - 1)),
+                "end_frame": max(1, min(90, total_frames - 1)),
                 "score": 10.0,
                 "grade": "Captured",
                 "issues": [],
                 "feedback": [],
             }]
 
+        # ---------------- RUN OVERLAY (SYNC) ----------------
+        overlay_path = os.path.join(
+            OVERLAY_DIR,
+            f"overlay_{uuid.uuid4().hex[:8]}.mp4"
+        )
+
         overlay_video_url = draw_overlay_video(
             temp_path,
+            overlay_path,
             rep_feedback,
             exercise_label or "unknown",
         )
 
-        if not overlay_video_url:
-            raise RuntimeError("Could not generate overlay video.")
-
         runtime = round(time.time() - started_at, 2)
+
+        if not overlay_video_url:
+            raise RuntimeError("Overlay generation failed")
 
         return {
             "overlay_video_url": overlay_video_url,
@@ -5485,8 +5541,8 @@ async def generate_overlay(
     except Exception as e:
         import traceback
         traceback.print_exc()
-
         return {
+            "overlay_video_url": None,
             "overlay_error": str(e),
         }
 
@@ -5504,21 +5560,57 @@ async def analyze(
     suffix = os.path.splitext(file.filename or "")[1] or ".mov"
     temp_filename = f"upload_{uuid.uuid4().hex[:8]}{suffix}"
     temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+
     analysis_path = None
 
     try:
+        # ---------------- SAVE FILE FIRST ----------------
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        analysis_path = compress_video_for_overlay(temp_path)
+        # ---------------- PREPROCESS ONCE ----------------
+        analysis_path = os.path.abspath(
+            compress_video_for_overlay(temp_path)
+        )
 
+        print("CELERY INPUT PATH:", analysis_path)
+        print("EXISTS:", os.path.exists(analysis_path))
+
+        # ---------------- RUN ANALYSIS ----------------
         result = analyze_video(
             analysis_path,
             make_visuals=make_visuals,
-            make_overlay=make_overlay,
+            make_overlay=False,
         )
 
-        return result
+        # ---------------- SAFE OUTPUT EXTRACTION ----------------
+        rep_feedback = result.get("rep_feedback", [])
+        final_label = result.get("exercise_label", "unknown")
+        final_confidence = result.get("confidence", 0.0)
+
+        set_summary = result.get("set_summary", {})
+        coaching_zones = result.get("coaching_zones", {})
+        phase_images = result.get("phase_images")
+
+        # ---------------- CELERY OVERLAY ----------------
+        overlay_job_id = None
+
+        if make_overlay:
+            overlay_job_id = None  # local Docker: Celery disabled
+
+        # ---------------- RESPONSE ----------------
+        return {
+            "exercise_label": final_label,
+            "confidence": final_confidence,
+            "analysis_mode": result.get("analysis_mode", "detailed_rep_analysis"),
+            "rep_feedback": rep_feedback,
+            "set_summary": set_summary,
+            "coaching_zones": coaching_zones,
+            "phase_images": phase_images,
+
+            "overlay_job_id": overlay_job_id,
+            "overlay_video_url": None,
+        }
 
     except Exception as e:
         import traceback
@@ -5527,20 +5619,61 @@ async def analyze(
         return {
             "error": True,
             "message": str(e),
-            "exercise_label": "Unknown",
+            "exercise_label": "unknown",
             "confidence": 0.0,
-            "analysis_mode": "error",
-            "feedback": ["Analysis failed."],
             "rep_feedback": [],
             "set_summary": build_set_summary([]),
             "coaching_zones": build_coaching_zones("unknown", []),
             "phase_images": None,
-            "debug": {},
+            "overlay_job_id": None,
+            "overlay_video_url": None,
         }
 
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-        if analysis_path and os.path.exists(analysis_path):
-            os.remove(analysis_path)
+        # ⚠️ DO NOT DELETE analysis_path UNTIL YOU CONFIRM CELERY DOESN'T NEED IT
+        # (for now leave it out or you'll break worker)
+
+
+@app.get("/overlay_status/{job_id}")
+def overlay_status(job_id: str):
+    if AsyncResult is None or celery is None:
+        return {"error": True, "message": "Overlay jobs require Redis/Celery, which is not running locally."}
+    task = AsyncResult(job_id, app=celery)
+
+    if task.state == "PENDING":
+        return {"status": "processing"}
+
+    if task.state == "STARTED":
+        return {"status": "processing"}
+
+    if task.state == "SUCCESS":
+        return {
+            "status": "done",
+            "url": task.result
+        }
+
+    if task.state == "FAILURE":
+        return {
+            "status": "failed",
+            "error": str(task.info)
+        }
+
+    return {"status": task.state}
+    if AsyncResult is None or celery is None:
+        return {"error": True, "message": "Overlay jobs require Redis/Celery, which is not running locally."}
+    task = AsyncResult(job_id, app=celery)
+
+    if task.state == "PENDING":
+        return {"status": "processing"}
+
+    if task.state == "SUCCESS":
+        return task.result
+
+    if task.state == "FAILURE":
+        return {
+            "status": "failed",
+            "error": str(task.info),
+        }
