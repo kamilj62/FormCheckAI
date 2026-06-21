@@ -40,6 +40,15 @@ def get_phase_images(label, video_path, biomechanics):
     # RETURN PHASE MAP
     # -------------------------
 
+    if label == "thruster":
+        return {
+            "setup": setup,
+            "descent": jerk_dip,
+            "bottom": clean_catch,
+            "drive": jerk_catch,
+            "lockout": finish,
+        }
+
     return {
         "setup": setup,
         "clean_catch": clean_catch,
