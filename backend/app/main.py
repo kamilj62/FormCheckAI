@@ -1971,13 +1971,18 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 "feedback": feedback or [good_rep_message],
             }
 
-            lockout_idx = min(end + 10, len(frame_numbers) - 1)
+            if exercise_label == "thruster":
+                catch_idx = min(end + 35, len(frame_numbers) - 1)
+                lockout_idx = min(end + 55, len(frame_numbers) - 1)
+            else:
+                catch_idx = min(end + 10, len(frame_numbers) - 1)
+                lockout_idx = min(catch_idx + 1, len(frame_numbers) - 1)
            
             rep_item.update({
                 "dip_frame": int(frame_numbers[start + dip_idx]),
-                "drive_frame": int(frame_numbers[min(start + dip_idx + 7, len(frame_numbers) - 1)]),
-                "catch_frame": int(frame_numbers[lockout_idx]),
-                "lockout_frame": int(frame_numbers[min(lockout_idx + 1, len(frame_numbers) - 1)]),
+                "drive_frame": int(frame_numbers[min(start + dip_idx + 18, catch_idx if exercise_label == "thruster" else len(frame_numbers) - 1)]),
+                "catch_frame": int(frame_numbers[catch_idx]),
+                "lockout_frame": int(frame_numbers[lockout_idx]),
             })
 
             reps.append(rep_item)
@@ -4166,7 +4171,7 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
     return saved if saved else None
 
 
-def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
+def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, exercise_label=None):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
@@ -4182,13 +4187,35 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1):
     end = max(start + 1, min(end, total_frames - 1))
 
     # THRUSTER: use actual detected phase frames
-    if rep.get("breakdown", {}).get("squat_depth"):
+    if str(exercise_label or "").lower() == "thruster" or rep.get("breakdown", {}).get("squat_depth"):
 
+        drive_frame = int(rep.get("drive_frame", start))
+        lockout_frame = int(rep.get("lockout_frame", end))
+
+        # Press starts roughly 35% of the way from drive to lockout.
+        press_frame = drive_frame + int(
+            (lockout_frame - drive_frame) * 0.35
+        )
+
+        setup_frame = int(rep.get("start_frame", start))
+        bottom_frame = int(rep.get("dip_frame", start))
+        drive_frame = int(rep.get("drive_frame", start))
+        overhead_frame = int(rep.get("catch_frame", end))
+        lockout_frame = min(
+            int(rep.get("lockout_frame", end)) + 20,
+            total_frames - 1,
+        )
+
+        press_frame = drive_frame + int((overhead_frame - drive_frame) * 0.5)
+
+        ascent_frame = drive_frame + int((overhead_frame - drive_frame) * 0.5)
+
+        # Thruster storyboard: use real detected movement events
         phase_frames = {
             "setup": int(rep.get("start_frame", start)),
-            "dip": int(rep.get("dip_frame", start)),
-            "drive": int(rep.get("drive_frame", start)),
-            "catch": int(rep.get("catch_frame", end)),
+            "bottom": int(rep.get("dip_frame", start)),
+            "ascent": int(rep.get("drive_frame", start)),
+            "press": int(rep.get("catch_frame", end)),
             "lockout": int(rep.get("lockout_frame", end)),
         }
 
@@ -5396,7 +5423,7 @@ async def generate_visuals(
             )
         elif "push press" in label or "thruster" in label:
             phase_images = create_push_press_phase_images(
-                temp_path, OVERLAY_DIR, rep, sample_every=1
+                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label=exercise_label
             )
         elif "bench" in label:
             phase_images = create_bench_press_phase_images(
