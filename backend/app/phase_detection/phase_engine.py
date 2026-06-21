@@ -62,6 +62,15 @@ def get_phase_images(label, video_path, biomechanics):
             "lockout": lockout,
         }
 
+    if label == "deadlift":
+        return {
+            "setup": setup,
+            "pull": max(0, int(n * 0.25)),
+            "mid": max(0, int(n * 0.50)),
+            "finish": max(0, int(n * 0.75)),
+            "lockout": finish,
+        }
+
     return {
         "setup": setup,
         "clean_catch": clean_catch,
