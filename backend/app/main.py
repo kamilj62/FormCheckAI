@@ -5169,20 +5169,21 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         )
 
 
+        final_confidence = max(raw_confidence, olympic_conf)
+
         # ---------------- THRUSTER PROTECTION ----------------
-        # Thruster can look like clean_and_jerk because both include front rack + overhead press.
-        # But thruster is squat -> press, usually without clean turnover or split jerk catch.
-        if raw_label == "thruster":
+        # Thruster can look like clean_and_jerk because both include front rack + overhead.
+        # Prefer thruster when model/biomechanics sees squat/press/thruster and Olympic router says C&J.
+        if raw_label in ["thruster", "push_press", "squat", "bench_press"] and olympic_pred == "clean_and_jerk":
             final_label = "thruster"
-        elif (
-            olympic_pred == "clean_and_jerk"
-            and raw_label in ["thruster", "push_press", "squat"]
-        ):
+            final_confidence = max(final_confidence, 0.86)
+        elif raw_label == "thruster":
             final_label = "thruster"
+            final_confidence = max(final_confidence, 0.86)
         else:
             final_label = olympic_pred if olympic_pred else raw_label
 
-        final_confidence = max(raw_confidence, olympic_conf)
+        final_confidence = max(final_confidence, raw_confidence, olympic_conf)
 
         # ---------------- REP ANALYSIS ----------------
         analysis_label = final_label
