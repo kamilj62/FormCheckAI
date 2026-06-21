@@ -41,12 +41,25 @@ def get_phase_images(label, video_path, biomechanics):
     # -------------------------
 
     if label == "thruster":
+        knee = [b.get("knee_angle", 180) for b in biomechanics]
+
+        bottom = int(min(range(len(knee)), key=lambda i: knee[i]))
+
+        descent = max(0, bottom // 2)
+
+        lockout = finish
+
+        drive = min(
+            lockout,
+            bottom + max(1, (lockout - bottom) // 2)
+        )
+
         return {
             "setup": setup,
-            "descent": jerk_dip,
-            "bottom": clean_catch,
-            "drive": jerk_catch,
-            "lockout": finish,
+            "descent": descent,
+            "bottom": bottom,
+            "drive": drive,
+            "lockout": lockout,
         }
 
     return {
