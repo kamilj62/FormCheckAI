@@ -781,6 +781,7 @@ export default function App() {
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [pendingVideos, setPendingVideos] = useState([]);
+  const webFileInputRef = useRef(null);
 
   useEffect(() => {
     loadPendingVideos(setPendingVideos);
@@ -826,38 +827,27 @@ export default function App() {
   };
 
   const pickWebVideoFile = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "video/*,.mov,.mp4,.m4v";
-    input.style.display = "none";
+    webFileInputRef.current?.click();
+  };
 
-    input.onchange = (e) => {
-      const file = e.target.files?.[0];
+  const handleWebFilePicked = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
 
-      const objectUrl = URL.createObjectURL(file);
+    setVideo({
+      file,
+      uri: objectUrl,
+      name: file.name || "upload.mov",
+      type: file.type || "video/quicktime",
+    });
 
-      setVideo({
-        file,
-        uri: objectUrl,
-        name: file.name || "upload.mov",
-        type: file.type || "video/quicktime",
-      });
+    setResult(null);
+    setSelectedZone(null);
+    setOverlayUrl(null);
 
-      setResult(null);
-      setSelectedZone(null);
-      setOverlayUrl(null);
-    };
-
-    document.body.appendChild(input);
-    input.click();
-
-    setTimeout(() => {
-      try {
-        document.body.removeChild(input);
-      } catch {}
-    }, 1000);
+    e.target.value = "";
   };
 
   const pickFromLibrary = async () => {
