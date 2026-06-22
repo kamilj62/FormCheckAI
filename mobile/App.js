@@ -883,10 +883,13 @@ export default function App() {
       }
 
       const selected = {
-        uri: a.uri,
+        uri:
+          Platform.OS === "web" && a.file
+            ? URL.createObjectURL(a.file)
+            : a.uri,
         file: a.file || null,
         name: a.name || a.fileName || "upload.mov",
-        type: a.mimeType || "video/quicktime",
+        type: a.mimeType || a.file?.type || "video/quicktime",
       };
 
       console.log("SELECTED VIDEO:", selected);
