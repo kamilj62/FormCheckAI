@@ -893,7 +893,7 @@ export default function App() {
       reset();
 
       const res = await DocumentPicker.getDocumentAsync({
-        type: ["video/*", "video/quicktime", "video/mp4"],
+        type: Platform.OS === "web" ? "*/*" : "video/*",
         copyToCacheDirectory: true,
         multiple: false,
       });
