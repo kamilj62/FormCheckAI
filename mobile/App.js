@@ -861,12 +861,12 @@ export default function App() {
   };
 
   const pickFromLibrary = async () => {
-    reset();
-
     if (Platform.OS === "web") {
       pickWebVideoFile();
       return;
     }
+
+    reset();
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -897,12 +897,12 @@ export default function App() {
   };
 
   const pickFromCloud = async () => {
-    reset();
-
     if (Platform.OS === "web") {
       pickWebVideoFile();
       return;
     }
+
+    reset();
 
     const res = await DocumentPicker.getDocumentAsync({
       type: "video/*",
