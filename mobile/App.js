@@ -888,27 +888,52 @@ export default function App() {
   };
 
   const pickFromCloud = async () => {
-    reset();
+    try {
+      console.log("FILES BUTTON CLICKED");
+      reset();
 
-    const res = await DocumentPicker.getDocumentAsync({
-      type: "video/*",
-      copyToCacheDirectory: true,
-    });
+      const res = await DocumentPicker.getDocumentAsync({
+        type: ["video/*", "video/quicktime", "video/mp4"],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
 
-    if (!res.canceled) {
-      const a = res.assets[0];
+      console.log("DOCUMENT PICKER RESPONSE:", res);
+
+      if (res.canceled) {
+        console.log("DOCUMENT PICKER CANCELED");
+        return;
+      }
+
+      const a = res.assets?.[0];
+      console.log("DOCUMENT PICKER ASSET:", a);
+
+      if (!a) {
+        Alert.alert("No file selected");
+        return;
+      }
 
       const selected = {
         uri: a.uri,
-        file: a.file,
-        name: a.name || "cloud.mov",
+        file: a.file || null,
+        name: a.name || a.fileName || "upload.mov",
         type: a.mimeType || "video/quicktime",
       };
 
-      setVideo(selected);
+      console.log("SELECTED VIDEO:", selected);
 
-      await savePendingVideo(selected);
-      await loadPendingVideos(setPendingVideos);
+      setVideo(selected);
+      setResult(null);
+      setSelectedZone(null);
+      setOverlayUrl(null);
+
+      if (Platform.OS !== "web") {
+        await savePendingVideo(selected);
+        await loadPendingVideos(setPendingVideos);
+      }
+    } catch (err) {
+      console.error("DOCUMENT PICKER ERROR:", err);
+      Alert.alert("File picker error", String(err?.message || err));
     }
   };
 
