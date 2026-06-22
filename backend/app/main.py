@@ -464,15 +464,8 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     elbow_range = max_elbow - min_elbow
 
     # THRUSTER RESCUE — must happen before confidence lock
-    if (
-        raw_label in ["burpee", "bench_press"]
-        and wrist_ratio > 0.18
-        and 20 < min_knee < 90
-        and 35 < min_hip < 100
-        and max_elbow > 160
-    ):
-        
-        return "thruster", max(confidence, 0.86), True, "thruster_biomechanics_detected"
+    # Disabled: this was causing clean / clean_and_jerk videos to become thruster.
+    # Only preserve thruster when the base model already predicts thruster.
     # HANDSTAND PUSH-UP RESCUE FROM BENCH
     if (
         raw_label == "bench_press"
@@ -5193,24 +5186,44 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         )
 
 
-        final_confidence = max(raw_confidence, olympic_conf)
+        final_label = raw_label
+        final_confidence = raw_confidence
+
+        # ---------------- OLYMPIC ROUTING ----------------
+        if olympic_pred in ["clean", "clean_and_jerk", "snatch", "split_jerk"] and olympic_conf > raw_confidence:
+            final_label = olympic_pred
+            final_confidence = olympic_conf
 
         # ---------------- DEADLIFT PROTECTION ----------------
-        # Deadlift can be falsely routed as clean_and_jerk by the Olympic router.
-        # If base model sees deadlift, keep it deadlift.
         if raw_label == "deadlift":
             final_label = "deadlift"
             final_confidence = max(final_confidence, raw_confidence)
 
         # ---------------- THRUSTER PROTECTION ----------------
-        # Only preserve thruster if the classifier/biomechanics already produced thruster.
-        # Do NOT convert squat, push press, bench, or overhead squat into thruster here.
         elif raw_label == "thruster":
-            final_label = "thruster"
-            final_confidence = max(final_confidence, 0.86)
+            # Clean/C&J can be falsely predicted as thruster by the base model.
+            # If Olympic router sees a real Olympic lift with decent confidence, trust it.
+            if olympic_pred in ["clean", "clean_and_jerk"] and olympic_conf >= 0.60:
+                final_label = olympic_pred
+                final_confidence = olympic_conf
+            else:
+                final_label = "thruster"
+                final_confidence = max(final_confidence, 0.86)
+
+        analysis_label = final_label
+
+        # ---------------- REP ANALYSIS ----------------
+        if analysis_label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
+            rep_feedback, _ = analyze_squat_reps(biomechanics, analysis_label)
+
+        elif analysis_label == "deadlift":
+            rep_feedback, _ = analyze_deadlift_reps(biomechanics)
 
         elif analysis_label in ["push_press", "strict_press", "thruster"]:
             rep_feedback, _ = analyze_push_press_reps(biomechanics, analysis_label)
+
+        elif analysis_label == "bench_press":
+            rep_feedback, _ = analyze_bench_press_reps(biomechanics)
 
         elif analysis_label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomechanics)
@@ -5238,6 +5251,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                     video_path,
                     biomechanics,
                 )
+
+                if final_label == "clean_and_jerk" and rep_feedback:
+                    r = rep_feedback[0]
+                    phase_images = {
+                        "setup": r.get("start_frame", 0),
+                        "clean_catch": r.get("clean_catch_frame"),
+                        "jerk_dip": r.get("jerk_dip_frame"),
+                        "jerk_catch": r.get("jerk_catch_frame"),
+                        "finish": r.get("end_frame"),
+                    }
             except Exception as e:
                 print("phase image error:", e)
 
@@ -5251,10 +5274,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "url": None,
         }
 
-        Thread(
-            target=overlay_worker,
-            daemon=True
-        ).start()
+        # Overlay worker disabled here; /analyze route handles overlay separately.
         # ---------------- RETURN ----------------
         return {
             "exercise_label": final_label,
@@ -5634,6 +5654,7 @@ async def analyze(
 
             "overlay_job_id": overlay_job_id,
             "overlay_video_url": None,
+            "debug": result.get("debug", {}),
         }
 
     except Exception as e:
@@ -5651,6 +5672,10 @@ async def analyze(
             "phase_images": None,
             "overlay_job_id": None,
             "overlay_video_url": None,
+            "debug": {
+                "error": str(e),
+                "traceback": traceback.format_exc()[-2000:],
+            },
         }
 
     finally:

@@ -18,6 +18,10 @@ def get_phase_images(label, video_path, biomechanics):
 
     n = len(biomechanics)
 
+    def frame(i):
+        i = max(0, min(int(i), n - 1))
+        return int(biomechanics[i].get("frame_number", i))
+
     # -------------------------
     # UNIVERSAL SIGNAL EVENTS
     # -------------------------
@@ -55,26 +59,26 @@ def get_phase_images(label, video_path, biomechanics):
         )
 
         return {
-            "setup": setup,
-            "descent": descent,
-            "bottom": bottom,
-            "drive": drive,
-            "lockout": lockout,
+            "setup": frame(setup),
+            "descent": frame(descent),
+            "bottom": frame(bottom),
+            "drive": frame(drive),
+            "lockout": frame(lockout),
         }
 
     if label == "deadlift":
         return {
-            "setup": setup,
-            "pull": max(0, int(n * 0.25)),
-            "mid": max(0, int(n * 0.50)),
-            "finish": max(0, int(n * 0.75)),
+            "setup": frame(setup),
+            "pull": frame(max(0, int(n * 0.25))),
+            "mid": frame(max(0, int(n * 0.50))),
+            "finish": frame(max(0, int(n * 0.75))),
             "lockout": finish,
         }
 
     return {
-        "setup": setup,
-        "clean_catch": clean_catch,
-        "jerk_dip": jerk_dip,
-        "jerk_catch": jerk_catch,
-        "finish": finish,
+        "setup": frame(setup),
+        "clean_catch": frame(clean_catch),
+        "jerk_dip": frame(jerk_dip),
+        "jerk_catch": frame(jerk_catch),
+        "finish": frame(finish),
     }
