@@ -941,7 +941,12 @@ export default function App() {
 
   const generateVisuals = async (analysisResult) => {
     if (visualsLoading) return;
-    if (result?.phase_images) return;
+    const hasUrls =
+      result?.phase_images &&
+      Object.values(result.phase_images).some(
+        (v) => typeof v === "string" && v.startsWith("/")
+      );
+    if (hasUrls) return;
 
     try {
       console.log("GENERATE VISUALS STARTED");
@@ -1180,7 +1185,13 @@ export default function App() {
     "Upload a clear side-angle video for analysis.";
 
   const phaseConfig = getPhaseConfig(result?.exercise_label);
-  const phaseImages = result?.phase_images || {};
+  const rawPhaseImages = result?.phase_images || {};
+  const phaseImages = Object.fromEntries(
+    Object.entries(rawPhaseImages).filter(
+      ([_, v]) => typeof v === "string" && v.startsWith("/")
+    )
+  );
+  const hasPhaseImageUrls = Object.keys(phaseImages).length > 0;
   const zones = getInteractiveZones(result);
   const activeZone = selectedZone || zones[0];
 
@@ -1445,16 +1456,16 @@ export default function App() {
               <TouchableOpacity
                 style={[
                   styles.analyzeButton,
-                  (visualsLoading || result?.phase_images) &&
+                  (visualsLoading || hasPhaseImageUrls) &&
                     styles.disabledButton,
                 ]}
                 onPress={() => generateVisuals(result)}
-                disabled={visualsLoading || !!result?.phase_images}
+                disabled={visualsLoading || hasPhaseImageUrls}
               >
                 <Text style={styles.analyzeButtonText}>
                   {visualsLoading
                     ? "Generating Phase Review..."
-                    : result?.phase_images
+                    : hasPhaseImageUrls
                       ? "Phase Review Generated"
                       : "Generate Phase Review"}
                 </Text>
