@@ -833,6 +833,7 @@ export default function App() {
 
   const handleWebFilePicked = (e) => {
     const file = e.target.files?.[0];
+    console.log("WEB FILE PICKED:", file);
     if (!file) return;
 
     const objectUrl = URL.createObjectURL(file);
@@ -1281,22 +1282,21 @@ export default function App() {
           </View>
         </View>
 
-          {Platform.OS === "web" && (
-            <input
-              ref={webFileInputRef}
-              type="file"
-              accept="video/*,.mov,.mp4,.m4v"
-              style={{
+          {Platform.OS === "web" &&
+            React.createElement("input", {
+              ref: webFileInputRef,
+              type: "file",
+              accept: "video/*,.mov,.mp4,.m4v",
+              onChange: handleWebFilePicked,
+              style: {
                 marginBottom: 12,
                 color: "#e5e7eb",
-                background: "#111827",
+                backgroundColor: "#111827",
                 padding: 12,
                 borderRadius: 12,
                 width: "100%",
-              }}
-              onChange={handleWebFilePicked}
-            />
-          )}
+              },
+            })}
 
         <View style={styles.actionRow}>
           <TouchableOpacity
