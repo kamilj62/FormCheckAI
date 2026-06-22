@@ -783,6 +783,7 @@ export default function App() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [pendingVideos, setPendingVideos] = useState([]);
   const webFileInputRef = useRef(null);
+  const webCameraInputRef = useRef(null);
 
   useEffect(() => {
     loadPendingVideos(setPendingVideos);
@@ -796,6 +797,11 @@ export default function App() {
 
   const recordWithCamera = async () => {
     reset();
+
+    if (Platform.OS === "web") {
+      webCameraInputRef.current?.click();
+      return;
+    }
 
     const permission = await ImagePicker.requestCameraPermissionsAsync();
 
@@ -1290,7 +1296,17 @@ export default function App() {
               },
             })}
 
-        <View style={styles.actionRow}>
+        {Platform.OS === "web" &&
+            React.createElement("input", {
+              ref: webCameraInputRef,
+              type: "file",
+              accept: "video/*",
+              capture: "environment",
+              onChange: handleWebFilePicked,
+              style: { display: "none" },
+            })}
+
+          <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={recordWithCamera}
