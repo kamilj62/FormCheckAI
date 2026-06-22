@@ -464,7 +464,6 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     elbow_range = max_elbow - min_elbow
 
     # THRUSTER RESCUE — must happen before confidence lock
-    # THRUSTER RESCUE — must happen before confidence lock
     if (
         raw_label in ["burpee", "bench_press"]
         and wrist_ratio > 0.18
@@ -485,14 +484,10 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "handstand_push_up", max(confidence, 0.82), True, "protect_handstand_push_up_from_bench"
 
-    if (
-        raw_label == "thruster"
-        and wrist_ratio > 0.45
-        and min_knee < 80
-        and min_hip < 80
-        and max_elbow > 160
-    ):
-        return "push_press", max(confidence, 0.80), True, "protect_push_press_from_thruster"
+    # If base model says thruster, preserve it.
+    # Do not demote thruster to push press; thruster includes a squat + press.
+    if raw_label == "thruster":
+        return "thruster", max(confidence, 0.86), True, "preserve_thruster"
 
     if (
         raw_label == "burpee"
@@ -530,6 +525,8 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         raw_label == "snatch"
         and wrist_ratio < 0.25
         and min_knee < 90
+        and min_hip < 95
+        and avg_torso < 55
         and max_elbow > 150
     ):
         return "thruster", max(confidence, 0.82), True, "protect_thruster_from_snatch"
@@ -5206,27 +5203,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_confidence = max(final_confidence, raw_confidence)
 
         # ---------------- THRUSTER PROTECTION ----------------
-        # Thruster can look like clean_and_jerk because both include front rack + overhead.
-        # Prefer thruster when model/biomechanics sees squat/press/thruster and Olympic router says C&J.
-        elif raw_label in ["thruster", "push_press", "squat", "bench_press"] and olympic_pred == "clean_and_jerk":
-            final_label = "thruster"
-            final_confidence = max(final_confidence, 0.86)
+        # Only preserve thruster if the classifier/biomechanics already produced thruster.
+        # Do NOT convert squat, push press, bench, or overhead squat into thruster here.
         elif raw_label == "thruster":
             final_label = "thruster"
             final_confidence = max(final_confidence, 0.86)
-        else:
-            final_label = olympic_pred if olympic_pred else raw_label
-
-        final_confidence = max(final_confidence, raw_confidence, olympic_conf)
-
-        # ---------------- REP ANALYSIS ----------------
-        analysis_label = final_label
-
-        if analysis_label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
-            rep_feedback, _ = analyze_squat_reps(biomechanics, analysis_label)
-
-        elif analysis_label == "deadlift":
-            rep_feedback, _ = analyze_deadlift_reps(biomechanics)
 
         elif analysis_label in ["push_press", "strict_press", "thruster"]:
             rep_feedback, _ = analyze_push_press_reps(biomechanics, analysis_label)
@@ -5420,7 +5401,11 @@ async def generate_visuals(
 
         label = str(exercise_label or "").lower()
 
-        if "squat" in label:
+        if "overhead squat" in label or "overhead_squat" in label:
+            phase_images = create_overhead_squat_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "squat" in label:
             phase_images = create_squat_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
@@ -5428,9 +5413,13 @@ async def generate_visuals(
             phase_images = create_deadlift_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
-        elif "push press" in label or "thruster" in label:
+        elif "thruster" in label:
             phase_images = create_push_press_phase_images(
-                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label=exercise_label
+                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="thruster"
+            )
+        elif "push press" in label or "push_press" in label:
+            phase_images = create_push_press_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="push_press"
             )
         elif "bench" in label:
             phase_images = create_bench_press_phase_images(
