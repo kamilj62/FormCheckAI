@@ -102,7 +102,7 @@ const getPhaseConfig = (exerciseLabel) => {
   };
 }
   
-  if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+  if (label.includes("clean_and_jerk") || label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return {
       title: "Clean & Jerk Phase Review",
       text: "Setup → Clean Catch → Jerk Dip → Jerk Drive → Jerk Catch → Finish",
@@ -584,7 +584,7 @@ const getInteractiveZones = (result) => {
   ];
 }
   
-  if (label.includes("clean & jerk") || label.includes("clean and jerk")) {
+  if (label.includes("clean_and_jerk") || label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return [
       {
         id: "setup",
