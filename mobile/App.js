@@ -853,38 +853,7 @@ export default function App() {
   };
 
   const pickFromLibrary = async () => {
-    reset();
-
-    if (Platform.OS === "web") {
-      return pickFromCloud();
-    }
-
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert("Library permission required");
-      return;
-    }
-
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      quality: 1,
-    });
-
-    if (!res.canceled) {
-      const a = res.assets[0];
-
-      const selected = {
-        uri: a.uri,
-        name: a.fileName || a.name || "library.mov",
-        type: a.mimeType || a.type || "video/quicktime",
-      };
-
-      setVideo(selected);
-
-      await savePendingVideo(selected);
-      await loadPendingVideos(setPendingVideos);
-    }
+    return pickFromCloud();
   };
 
   const pickFromCloud = async () => {
