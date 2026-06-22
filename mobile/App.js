@@ -828,22 +828,36 @@ export default function App() {
   const pickWebVideoFile = () => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "video/*";
+    input.accept = "video/*,.mov,.mp4,.m4v";
+    input.style.display = "none";
 
     input.onchange = (e) => {
       const file = e.target.files?.[0];
 
       if (!file) return;
 
+      const objectUrl = URL.createObjectURL(file);
+
       setVideo({
         file,
-        uri: URL.createObjectURL(file),
+        uri: objectUrl,
         name: file.name || "upload.mov",
-        type: file.type || "video/mp4",
+        type: file.type || "video/quicktime",
       });
+
+      setResult(null);
+      setSelectedZone(null);
+      setOverlayUrl(null);
     };
 
+    document.body.appendChild(input);
     input.click();
+
+    setTimeout(() => {
+      try {
+        document.body.removeChild(input);
+      } catch {}
+    }, 1000);
   };
 
   const pickFromLibrary = async () => {
@@ -1303,6 +1317,14 @@ export default function App() {
           <View style={styles.selectedCard}>
             <Text style={styles.cardLabel}>Selected Video</Text>
             <Text style={styles.selectedName}>{video.name}</Text>
+
+            <VideoView
+              player={previewPlayer}
+              style={styles.videoPlayer}
+              allowsFullscreen
+              nativeControls
+              contentFit="contain"
+            />
           </View>
         )}
 
