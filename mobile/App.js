@@ -1281,6 +1281,16 @@ export default function App() {
           </View>
         </View>
 
+          {Platform.OS === "web" && (
+            <input
+              ref={webFileInputRef}
+              type="file"
+              accept="video/*,.mov,.mp4,.m4v"
+              style={{ display: "none" }}
+              onChange={handleWebFilePicked}
+            />
+          )}
+
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.primaryButton}
