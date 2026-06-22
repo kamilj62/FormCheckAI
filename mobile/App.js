@@ -853,12 +853,11 @@ export default function App() {
   };
 
   const pickFromLibrary = async () => {
-    if (Platform.OS === "web") {
-      Alert.alert("Use the video file picker above.");
-      return;
-    }
-
     reset();
+
+    if (Platform.OS === "web") {
+      return pickFromCloud();
+    }
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -889,11 +888,6 @@ export default function App() {
   };
 
   const pickFromCloud = async () => {
-    if (Platform.OS === "web") {
-      Alert.alert("Use the video file picker above.");
-      return;
-    }
-
     reset();
 
     const res = await DocumentPicker.getDocumentAsync({
@@ -906,6 +900,7 @@ export default function App() {
 
       const selected = {
         uri: a.uri,
+        file: a.file,
         name: a.name || "cloud.mov",
         type: a.mimeType || "video/quicktime",
       };
