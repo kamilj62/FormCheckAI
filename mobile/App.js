@@ -1346,13 +1346,27 @@ export default function App() {
             <Text style={styles.cardLabel}>Selected Video</Text>
             <Text style={styles.selectedName}>{video.name}</Text>
 
-            <VideoView
-              player={previewPlayer}
-              style={styles.videoPlayer}
-              allowsFullscreen
-              nativeControls
-              contentFit="contain"
-            />
+            {Platform.OS === "web" ? (
+              React.createElement("video", {
+                src: video.uri,
+                controls: true,
+                style: {
+                  width: "100%",
+                  maxHeight: 360,
+                  borderRadius: 16,
+                  marginTop: 12,
+                  backgroundColor: "#000",
+                },
+              })
+            ) : (
+              <VideoView
+                player={previewPlayer}
+                style={styles.videoPlayer}
+                allowsFullscreen
+                nativeControls
+                contentFit="contain"
+              />
+            )}
           </View>
         )}
 
