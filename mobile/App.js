@@ -853,7 +853,7 @@ export default function App() {
 
   const pickFromLibrary = async () => {
     if (Platform.OS === "web") {
-      pickWebVideoFile();
+      Alert.alert("Use the video file picker above.");
       return;
     }
 
@@ -889,7 +889,7 @@ export default function App() {
 
   const pickFromCloud = async () => {
     if (Platform.OS === "web") {
-      pickWebVideoFile();
+      Alert.alert("Use the video file picker above.");
       return;
     }
 
@@ -1286,7 +1286,14 @@ export default function App() {
               ref={webFileInputRef}
               type="file"
               accept="video/*,.mov,.mp4,.m4v"
-              style={{ display: "none" }}
+              style={{
+                marginBottom: 12,
+                color: "#e5e7eb",
+                background: "#111827",
+                padding: 12,
+                borderRadius: 12,
+                width: "100%",
+              }}
               onChange={handleWebFilePicked}
             />
           )}
