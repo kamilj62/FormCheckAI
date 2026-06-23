@@ -2177,19 +2177,19 @@ def analyze_clean_reps(biomechanics):
     #
     # CLEAN PHASES
     #
-    first_pull_idx = start_idx + int(duration * 0.18)
+    first_pull_idx = start_idx + int(duration * 0.21)
 
-    extension_idx = start_idx + int(duration * 0.70)
+    extension_idx = start_idx + int(duration * 0.45)
 
     # Clean catch should be the deepest receiving position.
     # Prefer the minimum knee angle after extension.
-    catch_search_start = min(raw_end_idx, extension_idx + 1)
-    if catch_search_start < raw_end_idx:
-        catch_idx = catch_search_start + int(np.argmin(knee[catch_search_start:raw_end_idx + 1]))
-    else:
-        catch_idx = start_idx + int(duration * 0.78)
+    # Catch = front-rack receive shortly after extension.
+    # Use bounded timing to avoid picking the reset or the lowest squat later.
+    catch_idx = min(raw_end_idx, extension_idx + int(duration * 0.08))
 
-    end_idx = start_idx + int(duration * 0.88)
+    # Finish = standing front-rack position.
+    # Keep it closer to the catch so we don't drift into the bar-lowering phase.
+    end_idx = min(raw_end_idx, catch_idx + int(duration * 0.10))
 
     first_pull_idx = max(start_idx, min(first_pull_idx, raw_end_idx))
     extension_idx = max(first_pull_idx + 1, min(extension_idx, raw_end_idx))
@@ -4447,6 +4447,75 @@ def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1)
     return saved
 
 
+def create_clean_and_jerk_phase_images(input_path, output_dir, rep, sample_every=1):
+    import cv2, os, uuid
+
+    cap = cv2.VideoCapture(input_path)
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or int(rep.get("end_frame", 1))
+
+    start = int(rep.get("start_frame", 1))
+    end_frame = int(rep.get("end_frame", total))
+
+    # The analyzer's clean_catch_frame is often too early on C&J.
+    # Use stable percentage anchors across the rep window for visuals.
+    span = max(1, end_frame - start)
+
+    # Temporary robust anchors for 1-rep clean & jerk videos.
+    # These are later than the analyzer's current detected clean_catch/jerk frames.
+    phases = {
+        "setup": start,
+        "clean_catch": start + int(span * 0.82),
+        "jerk_dip": start + int(span * 0.90),
+        "jerk_drive": start + int(span * 0.96),
+        "jerk_catch": start + int(span * 0.99),
+        "finish": end_frame,
+    }
+
+    out = {}
+
+    for name, frame_no in phases.items():
+        frame_no = max(1, min(int(frame_no), total))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 1)
+        ok, frame = cap.read()
+        if not ok:
+            continue
+
+        filename = f"clean_and_jerk_{name}_{uuid.uuid4().hex[:8]}.jpg"
+        path = os.path.join(output_dir, filename)
+        cv2.imwrite(path, frame)
+        out[name] = f"/outputs/{filename}"
+
+    # Build one debug sheet showing exactly which phase frames were selected.
+    imgs = []
+    for name, url in out.items():
+        path = os.path.join(output_dir, url.split("/")[-1])
+        img = cv2.imread(path)
+        if img is None:
+            continue
+        img = cv2.resize(img, (320, 180))
+        cv2.putText(img, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
+        imgs.append(img)
+
+    if imgs:
+        import numpy as np, math
+        cols = 3
+        rows = math.ceil(len(imgs) / cols)
+        sheet = np.ones((rows * 180, cols * 320, 3), dtype=np.uint8) * 255
+        for i, img in enumerate(imgs):
+            r, c = divmod(i, cols)
+            sheet[r*180:(r+1)*180, c*320:(c+1)*320] = img
+
+        filename = f"clean_and_jerk_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        path = os.path.join(output_dir, filename)
+        cv2.imwrite(path, sheet)
+        out["debug_sheet"] = f"/outputs/{filename}"
+
+    cap.release()
+    return out
+
+
+
 def create_olympic_lift_phase_images(
     input_path,
     output_dir,
@@ -5204,8 +5273,18 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             # Clean/C&J can be falsely predicted as thruster by the base model.
             # If Olympic router sees a real Olympic lift with decent confidence, trust it.
             if olympic_pred in ["clean", "clean_and_jerk"] and olympic_conf >= 0.60:
+                pose_summary = summarize_biomechanics(biomechanics)
+                wrist_ratio = (
+                    pose_summary.get("wrist_above_shoulder_ratio", 0)
+                    if pose_summary else 0
+                )
+
                 final_label = olympic_pred
                 final_confidence = olympic_conf
+
+                if final_label == "clean_and_jerk" and wrist_ratio < 0.25:
+                    final_label = "clean"
+                    final_confidence = max(final_confidence, 0.82)
             else:
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.86)
@@ -5445,8 +5524,18 @@ async def generate_visuals(
             phase_images = create_bench_press_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
+        elif "clean_and_jerk" in label or "clean and jerk" in label:
+            phase_images = create_clean_and_jerk_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+
         elif (
             "snatch" in label
+            or "clean" in label
+            or "clean_and_jerk" in label
+            or "clean and jerk" in label
+            or "split_jerk" in label
+            or "split jerk" in label
         ):
             phase_images = create_olympic_lift_phase_images(
                 temp_path,
