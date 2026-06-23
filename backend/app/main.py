@@ -2170,144 +2170,196 @@ def analyze_clean_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    start_idx = 0
     raw_end_idx = len(biomechanics) - 1
-    duration = raw_end_idx - start_idx
+    duration = max(1, raw_end_idx)
 
+    # ------------------------------------------------------------
+    # CLEAN REP DETECTION
+    # ------------------------------------------------------------
+    # Single-rep fallback keeps the tuned timing that worked well:
+    # first_pull ≈ 0.21, extension ≈ 0.45, catch ≈ extension + 0.08,
+    # finish ≈ catch + 0.10.
     #
-    # CLEAN PHASES
-    #
-    first_pull_idx = start_idx + int(duration * 0.21)
+    # Multi-rep detection looks for repeated high-hand/front-rack moments.
+    # MediaPipe y is smaller when the wrist is higher, so local minima in
+    # smoothed wrist_y are candidate clean catches/front-rack positions.
+    # ------------------------------------------------------------
 
-    extension_idx = start_idx + int(duration * 0.45)
+    def smooth(arr, window=9):
+        if len(arr) < window:
+            return arr
+        kernel = np.ones(window) / window
+        return np.convolve(arr, kernel, mode="same")
 
-    # Clean catch should be the deepest receiving position.
-    # Prefer the minimum knee angle after extension.
-    # Catch = front-rack receive shortly after extension.
-    # Use bounded timing to avoid picking the reset or the lowest squat later.
-    catch_idx = min(raw_end_idx, extension_idx + int(duration * 0.08))
+    wrist_s = smooth(wrist_y, 9)
+    threshold = np.percentile(wrist_s, 45)
+    min_gap = max(35, int(duration * 0.12))
 
-    # Finish = standing front-rack position.
-    # Keep it closer to the catch so we don't drift into the bar-lowering phase.
-    end_idx = min(raw_end_idx, catch_idx + int(duration * 0.10))
+    raw_candidates = []
+    for i in range(2, raw_end_idx - 2):
+        if i < int(duration * 0.15) or i > int(duration * 0.92):
+            continue
 
-    first_pull_idx = max(start_idx, min(first_pull_idx, raw_end_idx))
-    extension_idx = max(first_pull_idx + 1, min(extension_idx, raw_end_idx))
-    catch_idx = max(extension_idx + 1, min(catch_idx, raw_end_idx))
-    end_idx = max(catch_idx + 1, min(end_idx, raw_end_idx))
-
-    min_knee = float(np.min(knee))
-    max_hip = float(np.max(hip))
-    max_torso = float(np.percentile(torso, 85))
-    min_elbow = float(np.min(elbow))
-    catch_elbow = float(elbow[min(catch_idx, len(elbow) - 1)])
-    rack_distance = float(
-        abs(
-            wrist_x[min(catch_idx, len(wrist_x) - 1)]
-            - shoulder_x[min(catch_idx, len(shoulder_x) - 1)]
-        )
-    )
-
-    issues = []
-    feedback = []
-
-    breakdown = {
-        "first_pull": "good",
-        "extension": "good",
-        "turnover": "good",
-        "catch": "good",
-        "front_rack": "good",
-        "bar_path": "good",
-    }
-
-    if max_torso > 75:
-        breakdown["first_pull"] = "poor"
-        issues.append("Torso may be losing position during the pull.")
-        feedback.append(
-            "Stay braced and keep your chest up through the first pull."
+        is_local_min = (
+            wrist_s[i] <= wrist_s[i - 1]
+            and wrist_s[i] <= wrist_s[i + 1]
+            and wrist_s[i] <= wrist_s[i - 2]
+            and wrist_s[i] <= wrist_s[i + 2]
         )
 
-    if max_hip < 150:
-        breakdown["extension"] = "incomplete"
-        issues.append("Hip extension may be incomplete.")
-        feedback.append(
-            "Finish your pull tall before pulling under the bar."
-        )
+        if is_local_min and wrist_s[i] <= threshold:
+            raw_candidates.append(i)
 
-    if min_elbow < 45:
-        breakdown["turnover"] = "early_arm_bend"
-        issues.append("Arms may be bending early during the pull.")
-        feedback.append(
-            "Keep arms long until you finish extending."
-        )
+    # Cluster nearby candidates and keep the highest-hand point in each cluster.
+    catch_candidates = []
+    for idx in raw_candidates:
+        if not catch_candidates:
+            catch_candidates.append(idx)
+            continue
 
-    if catch_elbow > 135:
-        breakdown["front_rack"] = "poor"
-        issues.append(
-            "Elbows may be slow coming through in the catch."
-        )
-        feedback.append(
-            "Whip elbows through fast and catch in a strong front rack."
-        )
+        if idx - catch_candidates[-1] < min_gap:
+            if wrist_s[idx] < wrist_s[catch_candidates[-1]]:
+                catch_candidates[-1] = idx
+        else:
+            catch_candidates.append(idx)
 
-    if min_knee > 125:
-        breakdown["catch"] = "power_catch"
-        issues.append("Catch position is high.")
-        feedback.append(
-            "Pull under the bar and receive lower if needed."
-        )
-    elif min_knee < 70:
-        breakdown["catch"] = "deep_catch"
+    # Avoid over-detecting tiny wrist wiggles.
+    # If candidates are too close together, keep only well-separated ones.
+    filtered = []
+    for idx in catch_candidates:
+        if not filtered or idx - filtered[-1] >= min_gap:
+            filtered.append(idx)
+    catch_candidates = filtered
 
-    if rack_distance > 0.22:
-        breakdown["bar_path"] = "drifting"
-        issues.append(
-            "Bar may be drifting away during the turnover."
-        )
-        feedback.append(
-            "Keep the bar close and pull yourself under it."
-        )
-
-    penalties = {
-        "first_pull": {"good": 0.0, "poor": 0.8},
-        "extension": {"good": 0.0, "incomplete": 1.0},
-        "turnover": {"good": 0.0, "early_arm_bend": 0.7},
-        "catch": {"good": 0.0, "power_catch": 0.4, "deep_catch": 0.0},
-        "front_rack": {"good": 0.0, "poor": 0.8},
-        "bar_path": {"good": 0.0, "drifting": 0.8},
-    }
-
-    score = 10.0
-
-    for key, value in breakdown.items():
-        score -= penalties.get(key, {}).get(value, 0.0)
-
-    score = round(max(1.0, min(10.0, score)), 1)
-
-    score += 0.8
-    score = min(10.0, score)
-
-    if issues:
-        score = min(score, 9.2)
-    else:
-        score = max(score, 9.0)
-        feedback = [
-            "Good clean rep. Strong pull and catch position."
+    # If we did not confidently find multiple reps, use the tuned single-rep path.
+    if len(catch_candidates) < 2:
+        catch_candidates = [
+            min(raw_end_idx, int(duration * 0.45) + int(duration * 0.08))
         ]
+        rep_span = duration
+    else:
+        rep_span = max(1, duration / len(catch_candidates))
 
-    reps = [{
-        "rep": 1,
-        "start_frame": int(frame_numbers[start_idx]),
-        "first_pull_frame": int(frame_numbers[first_pull_idx]),
-        "extension_frame": int(frame_numbers[extension_idx]),
-        "catch_frame": int(frame_numbers[catch_idx]),
-        "end_frame": int(frame_numbers[end_idx]),
-        "score": score,
-        "grade": grade_score(score),
-        "issues": issues,
-        "breakdown": breakdown,
-        "feedback": feedback,
-    }]
+    reps = []
+
+    for rep_i, catch_idx in enumerate(catch_candidates, start=1):
+        # Build phase anchors around each catch.
+        start_idx = max(0, int(catch_idx - rep_span * 0.53))
+        first_pull_idx = max(start_idx, int(catch_idx - rep_span * 0.32))
+        extension_idx = max(first_pull_idx + 1, int(catch_idx - rep_span * 0.08))
+        catch_idx = max(extension_idx + 1, min(int(catch_idx), raw_end_idx))
+        end_idx = min(raw_end_idx, int(catch_idx + rep_span * 0.26))
+
+        # Keep windows ordered and safe.
+        first_pull_idx = max(start_idx, min(first_pull_idx, raw_end_idx))
+        extension_idx = max(first_pull_idx + 1, min(extension_idx, raw_end_idx))
+        catch_idx = max(extension_idx + 1, min(catch_idx + int(rep_span * 0.04), raw_end_idx))
+        end_idx = max(catch_idx + 1, min(end_idx, raw_end_idx))
+
+        win_start = start_idx
+        win_end = end_idx
+
+        knee_w = knee[win_start:win_end + 1]
+        hip_w = hip[win_start:win_end + 1]
+        torso_w = torso[win_start:win_end + 1]
+        elbow_w = elbow[win_start:win_end + 1]
+
+        if len(knee_w) == 0:
+            continue
+
+        min_knee = float(np.min(knee_w))
+        max_hip = float(np.max(hip_w))
+        max_torso = float(np.percentile(torso_w, 85))
+        min_elbow = float(np.min(elbow_w))
+
+        catch_safe = min(catch_idx, len(elbow) - 1)
+        catch_elbow = float(elbow[catch_safe])
+        rack_distance = float(
+            abs(
+                wrist_x[catch_safe]
+                - shoulder_x[catch_safe]
+            )
+        )
+
+        issues = []
+        feedback = []
+
+        breakdown = {
+            "first_pull": "good",
+            "extension": "good",
+            "turnover": "good",
+            "catch": "good",
+            "front_rack": "good",
+            "bar_path": "good",
+        }
+
+        if max_torso > 75:
+            breakdown["first_pull"] = "poor"
+            issues.append("Torso may be losing position during the pull.")
+            feedback.append("Stay braced and keep your chest up through the first pull.")
+
+        if max_hip < 150:
+            breakdown["extension"] = "incomplete"
+            issues.append("Hip extension may be incomplete.")
+            feedback.append("Finish your pull tall before pulling under the bar.")
+
+        if min_elbow < 45:
+            breakdown["turnover"] = "early_arm_bend"
+            issues.append("Arms may be bending early during the pull.")
+            feedback.append("Keep arms long until you finish extending.")
+
+        if catch_elbow > 135:
+            breakdown["front_rack"] = "poor"
+            issues.append("Elbows may be slow coming through in the catch.")
+            feedback.append("Whip elbows through fast and catch in a strong front rack.")
+
+        if min_knee > 125:
+            breakdown["catch"] = "power_catch"
+            issues.append("Catch position is high.")
+            feedback.append("Pull under the bar and receive lower if needed.")
+        elif min_knee < 70:
+            breakdown["catch"] = "deep_catch"
+
+        if rack_distance > 0.22:
+            breakdown["bar_path"] = "drifting"
+            issues.append("Bar may be drifting away during the turnover.")
+            feedback.append("Keep the bar close and pull yourself under it.")
+
+        penalties = {
+            "first_pull": {"good": 0.0, "poor": 0.8},
+            "extension": {"good": 0.0, "incomplete": 1.0},
+            "turnover": {"good": 0.0, "early_arm_bend": 0.7},
+            "catch": {"good": 0.0, "power_catch": 0.4, "deep_catch": 0.0},
+            "front_rack": {"good": 0.0, "poor": 0.8},
+            "bar_path": {"good": 0.0, "drifting": 0.8},
+        }
+
+        score = 10.0
+        for key, value in breakdown.items():
+            score -= penalties.get(key, {}).get(value, 0.0)
+
+        score = round(max(1.0, min(10.0, score)), 1)
+        score = min(10.0, score + 0.8)
+
+        if issues:
+            score = min(score, 9.2)
+        else:
+            score = max(score, 9.0)
+            feedback = ["Good clean rep. Strong pull and catch position."]
+
+        reps.append({
+            "rep": rep_i,
+            "start_frame": int(frame_numbers[start_idx]),
+            "first_pull_frame": int(frame_numbers[first_pull_idx]),
+            "extension_frame": int(frame_numbers[extension_idx]),
+            "catch_frame": int(frame_numbers[catch_idx]),
+            "end_frame": int(frame_numbers[end_idx]),
+            "score": score,
+            "grade": grade_score(score),
+            "issues": issues,
+            "breakdown": breakdown,
+            "feedback": feedback,
+        })
 
     return reps, build_set_summary(reps)
 
@@ -3667,15 +3719,20 @@ def draw_overlay_video(
     if fps <= 0:
         fps = 30
 
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # Overlay frames are resized before writing, so writer size must match.
+    width, height = 640, 360
 
     temp_output_path = output_path.replace(".mp4", "_raw.mp4")
+
+    # ⚡ FAST SETTINGS
+    frame_skip = 2
+
+    output_fps = max(1, fps / frame_skip)
 
     writer = cv2.VideoWriter(
         temp_output_path,
         cv2.VideoWriter_fourcc(*"mp4v"),
-        fps,
+        output_fps,
         (width, height),
     )
 
@@ -3717,7 +3774,65 @@ def draw_overlay_video(
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
-            # TODO: overlay drawing logic here (keep minimal)
+            # ---------------- CLEAN OVERLAY DRAWING ----------------
+            height, width = frame.shape[:2]
+
+            if results.pose_landmarks:
+                frame = draw_user_skeleton(frame, results.pose_landmarks)
+
+            current_phase = "Clean"
+            score_text = ""
+
+            if rep_feedback:
+                rep = rep_feedback[0]
+                score = rep.get("score")
+                grade = rep.get("grade", "")
+
+                if score is not None:
+                    score_text = f"Score: {score}/10 {grade}"
+
+                start_f = int(rep.get("start_frame", 0))
+                first_pull_f = int(rep.get("first_pull_frame", start_f))
+                extension_f = int(rep.get("extension_frame", first_pull_f))
+                catch_f = int(rep.get("catch_frame", extension_f))
+                end_f = int(rep.get("end_frame", catch_f))
+
+                if frame_idx < first_pull_f:
+                    current_phase = "Setup"
+                elif frame_idx < extension_f:
+                    current_phase = "First Pull"
+                elif frame_idx < catch_f:
+                    current_phase = "Extension"
+                elif frame_idx < end_f:
+                    current_phase = "Catch / Recovery"
+                else:
+                    current_phase = "Finish"
+
+            # Top label bar
+            cv2.rectangle(frame, (0, 0), (width, 80), (2, 6, 23), -1)
+
+            cv2.putText(
+                frame,
+                f"{str(exercise_label or 'Lift').replace('_', ' ').title()} - {current_phase}",
+                (20, 32),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.85,
+                (134, 239, 172),
+                2,
+                cv2.LINE_AA,
+            )
+
+            if score_text:
+                cv2.putText(
+                    frame,
+                    score_text,
+                    (20, 64),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
 
             writer.write(frame)
 
@@ -3736,22 +3851,27 @@ def draw_overlay_video(
     # ⚡ FASTER FFmpeg encoding
     import subprocess
 
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-y",
-            "-i", temp_output_path,
-            "-vcodec", "libx264",
-            "-preset", "ultrafast",   # 🔥 HUGE SPEED BOOST
-            "-pix_fmt", "yuv420p",
-            output_path,
-        ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i", temp_output_path,
+                "-vcodec", "libx264",
+                "-preset", "ultrafast",
+                "-pix_fmt", "yuv420p",
+                output_path,
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
-    os.remove(temp_output_path)
+        os.remove(temp_output_path)
+
+    except Exception as e:
+        print("Final ffmpeg conversion failed, using raw overlay:", e)
+        output_path = temp_output_path
 
     # ---------------- S3 UPLOAD ----------------
     try:
@@ -3765,7 +3885,15 @@ def draw_overlay_video(
 
         s3_key = f"overlays/{uuid.uuid4().hex[:8]}.mp4"
 
-        s3.upload_file(output_path, bucket, s3_key)
+        s3.upload_file(
+            output_path,
+            bucket,
+            s3_key,
+            ExtraArgs={
+                "ContentType": "video/mp4",
+                "ContentDisposition": "inline",
+            },
+        )
 
         overlay_url = f"https://{bucket}.s3.{region}.amazonaws.com/{s3_key}"
 

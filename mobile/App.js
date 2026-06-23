@@ -1030,87 +1030,57 @@ export default function App() {
   const [overlayStatus, setOverlayStatus] = useState("idle");
 
   const generateOverlay = async () => {
+    console.log("GENERATE OVERLAY CLICKED", {
+      hasVideo: !!video,
+      hasResult: !!result,
+      exercise: result?.exercise_label,
+    });
+
     try {
       setOverlayLoading(true);
       setOverlayProgress("Generating overlay...");
 
       const bestRep = getBestRep(result?.rep_feedback || []);
 
-      const formPayload = {
-        rep_json: bestRep ? JSON.stringify(bestRep) : null,
-        exercise_label: result?.exercise_label || "",
-      };
-
-      // 1. Try fast direct overlay first
-      try {
-        const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
-          method: "POST",
-          body: await buildFormData(formPayload),
-        });
-
-        const overlayData = await overlayRes.json();
-
-        if (overlayRes.ok && overlayData.overlay_video_url) {
-          setOverlayProgress("Overlay ready!");
-          setOverlayUrl(fullUrl(overlayData.overlay_video_url));
-
-          setResult((prev) => ({
-            ...prev,
-            overlay_video_url: overlayData.overlay_video_url,
-            overlay_error: null,
-          }));
-
-          return;
-        }
-      } catch (directErr) {
-        console.log("DIRECT OVERLAY FAILED, FALLING BACK:", directErr);
-      }
-
-      // 2. Fallback to background overlay job
-      setOverlayProgress("Starting background overlay job...");
-
-      const startRes = await fetch(`${API_URL}/start_overlay`, {
+      const overlayRes = await fetch(`${API_URL}/generate_overlay`, {
         method: "POST",
-        body: await buildFormData(formPayload),
+        body: await buildFormData({
+          rep_json: bestRep ? JSON.stringify(bestRep) : null,
+          exercise_label: result?.exercise_label || "",
+        }),
       });
 
-      const startData = await startRes.json();
+      const overlayText = await overlayRes.text();
 
-      if (!startRes.ok || !startData.job_id) {
-        throw new Error(startData.message || "Could not start overlay job");
+      let overlayData = {};
+      try {
+        overlayData = JSON.parse(overlayText);
+      } catch {
+        overlayData = { message: overlayText || "Overlay returned non-JSON response" };
       }
 
-      const jobId = startData.job_id;
+      console.log("OVERLAY STATUS:", overlayRes.status);
+      console.log("OVERLAY RESPONSE:", overlayData);
 
-      for (let i = 0; i < 40; i++) {
-        setOverlayProgress(`Processing overlay... ${i + 1}/40`);
-
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-
-        const statusRes = await fetch(`${API_URL}/overlay_status/${jobId}`);
-        const statusData = await statusRes.json();
-
-        if (statusData.status === "ready") {
-          setOverlayProgress("Overlay ready!");
-          setOverlayUrl(fullUrl(statusData.overlay_video_url));
-
-          setResult((prev) => ({
-            ...prev,
-            overlay_video_url: statusData.overlay_video_url,
-            overlay_error: null,
-          }));
-
-          return;
-        }
-
-        if (statusData.status === "error") {
-          throw new Error(statusData.message || "Overlay generation failed");
-        }
+      if (!overlayRes.ok || !overlayData.overlay_video_url) {
+        throw new Error(
+          overlayData.overlay_error ||
+          overlayData.detail ||
+          overlayData.message ||
+          "Overlay generation failed"
+        );
       }
 
-      throw new Error("Overlay is still processing. Try again shortly.");
+      setOverlayProgress("Overlay ready!");
+      setOverlayUrl(fullUrl(overlayData.overlay_video_url));
+
+      setResult((prev) => ({
+        ...prev,
+        overlay_video_url: overlayData.overlay_video_url,
+        overlay_error: null,
+      }));
     } catch (err) {
-      setOverlayProgress("");
+      console.log("OVERLAY ERROR:", err);
 
       setResult((prev) => ({
         ...prev,
@@ -1118,6 +1088,7 @@ export default function App() {
       }));
     } finally {
       setOverlayLoading(false);
+      setOverlayProgress("");
     }
   };
 
@@ -1524,6 +1495,8 @@ export default function App() {
               })}
             </View>
 
+              {hasPhaseImageUrls && (
+                <>
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Interactive Coaching Map</Text>
               <Text style={styles.sectionSub}>
@@ -1625,6 +1598,9 @@ export default function App() {
                 })}
               </ScrollView>
             </View>
+
+                </>
+              )}
 
             <TouchableOpacity
               style={[
