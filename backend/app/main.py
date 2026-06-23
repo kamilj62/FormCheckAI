@@ -2232,6 +2232,17 @@ def analyze_clean_reps(biomechanics):
     catch_candidates = filtered
 
     # If we did not confidently find multiple reps, use the tuned single-rep path.
+    # Multi-rep clean detection:
+    # Keep multiple catches only when they are clearly separated.
+    # Otherwise fall back to one reliable clean rep.
+    if len(catch_candidates) >= 2:
+        strong = []
+        for idx in catch_candidates:
+            if not strong or idx - strong[-1] >= max(70, int(duration * 0.20)):
+                strong.append(idx)
+
+        catch_candidates = strong
+
     if len(catch_candidates) < 2:
         catch_candidates = [
             min(raw_end_idx, int(duration * 0.45) + int(duration * 0.08))
@@ -3696,6 +3707,126 @@ def draw_user_skeleton(frame, pose_landmarks):
     return frame
 
 
+def draw_ideal_clean_overlay(frame, pose_landmarks, phase="Clean"):
+    """
+    Safer ideal clean overlay:
+    Blue = idealized version of the athlete's own skeleton.
+    This avoids drawing a fake body far away from the lifter.
+    """
+    lm = pose_landmarks.landmark
+    h, w = frame.shape[:2]
+
+    def p(idx):
+        pt = lm[idx]
+        return np.array([pt.x * w, pt.y * h], dtype=np.float32)
+
+    # Use the more visible side.
+    left = {
+        "shoulder": mp_pose.PoseLandmark.LEFT_SHOULDER.value,
+        "elbow": mp_pose.PoseLandmark.LEFT_ELBOW.value,
+        "wrist": mp_pose.PoseLandmark.LEFT_WRIST.value,
+        "hip": mp_pose.PoseLandmark.LEFT_HIP.value,
+        "knee": mp_pose.PoseLandmark.LEFT_KNEE.value,
+        "ankle": mp_pose.PoseLandmark.LEFT_ANKLE.value,
+    }
+    right = {
+        "shoulder": mp_pose.PoseLandmark.RIGHT_SHOULDER.value,
+        "elbow": mp_pose.PoseLandmark.RIGHT_ELBOW.value,
+        "wrist": mp_pose.PoseLandmark.RIGHT_WRIST.value,
+        "hip": mp_pose.PoseLandmark.RIGHT_HIP.value,
+        "knee": mp_pose.PoseLandmark.RIGHT_KNEE.value,
+        "ankle": mp_pose.PoseLandmark.RIGHT_ANKLE.value,
+    }
+
+    left_vis = sum(lm[i].visibility for i in left.values())
+    right_vis = sum(lm[i].visibility for i in right.values())
+    side = left if left_vis >= right_vis else right
+
+    shoulder = p(side["shoulder"])
+    elbow = p(side["elbow"])
+    wrist = p(side["wrist"])
+    hip = p(side["hip"])
+    knee = p(side["knee"])
+    ankle = p(side["ankle"])
+
+    phase_l = str(phase or "").lower()
+
+    ideal_shoulder = shoulder.copy()
+    ideal_elbow = elbow.copy()
+    ideal_wrist = wrist.copy()
+    ideal_hip = hip.copy()
+    ideal_knee = knee.copy()
+    ideal_ankle = ankle.copy()
+
+    # Small phase-specific corrections only.
+    if "setup" in phase_l:
+        # chest slightly taller, bar close
+        ideal_shoulder[1] -= 12
+        ideal_hip[0] += (shoulder[0] - hip[0]) * 0.10
+        ideal_wrist[0] = wrist[0] * 0.8 + ankle[0] * 0.2
+
+    elif "first" in phase_l or "pull" in phase_l:
+        # shoulders over bar, hips and chest rise together
+        ideal_shoulder[1] -= 8
+        ideal_hip[1] -= 6
+        ideal_wrist[0] = wrist[0] * 0.75 + ankle[0] * 0.25
+
+    elif "extension" in phase_l:
+        # tall finish, hips/knees extended
+        ideal_knee[0] = ankle[0] * 0.85 + knee[0] * 0.15
+        ideal_hip[0] = ankle[0] * 0.55 + hip[0] * 0.45
+        ideal_shoulder[0] = hip[0] * 0.6 + shoulder[0] * 0.4
+        ideal_shoulder[1] -= 18
+        ideal_hip[1] -= 10
+        ideal_wrist[1] -= 10
+
+    elif "catch" in phase_l:
+        # vertical torso and fast elbows through
+        ideal_shoulder[0] = ideal_hip[0] + (shoulder[0] - hip[0]) * 0.35
+        ideal_shoulder[1] -= 12
+        ideal_elbow[1] -= 18
+        ideal_wrist[1] -= 10
+
+    else:
+        # finish: tall front-rack position
+        ideal_knee[0] = ankle[0] * 0.90 + knee[0] * 0.10
+        ideal_hip[0] = ankle[0] * 0.60 + hip[0] * 0.40
+        ideal_shoulder[0] = ideal_hip[0] + (shoulder[0] - hip[0]) * 0.20
+        ideal_shoulder[1] -= 12
+        ideal_elbow[1] -= 12
+        ideal_wrist[1] -= 8
+
+    blue = (255, 90, 0)  # bright blue in BGR
+
+    segments = [
+        (ideal_wrist, ideal_elbow),
+        (ideal_elbow, ideal_shoulder),
+        (ideal_shoulder, ideal_hip),
+        (ideal_hip, ideal_knee),
+        (ideal_knee, ideal_ankle),
+    ]
+
+    for a, b in segments:
+        cv2.line(frame, tuple(a.astype(int)), tuple(b.astype(int)), blue, 4, cv2.LINE_AA)
+
+    for joint in [ideal_wrist, ideal_elbow, ideal_shoulder, ideal_hip, ideal_knee, ideal_ankle]:
+        cv2.circle(frame, tuple(joint.astype(int)), 6, blue, -1, cv2.LINE_AA)
+
+    cv2.putText(
+        frame,
+        "BLUE = IDEAL",
+        (20, h - 24),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.65,
+        blue,
+        2,
+        cv2.LINE_AA,
+    )
+
+    return frame
+
+
+
 def draw_overlay_video(
     input_path,
     output_path,
@@ -3784,12 +3915,29 @@ def draw_overlay_video(
             score_text = ""
 
             if rep_feedback:
-                rep = rep_feedback[0]
+                active_rep = None
+
+                for candidate in rep_feedback:
+                    start_f = int(candidate.get("start_frame", 0))
+                    end_f = int(candidate.get("end_frame", start_f))
+                    if start_f <= frame_idx <= end_f:
+                        active_rep = candidate
+                        break
+
+                if active_rep is None:
+                    active_rep = min(
+                        rep_feedback,
+                        key=lambda r: abs(
+                            frame_idx - int(r.get("catch_frame", r.get("end_frame", 0)))
+                        ),
+                    )
+
+                rep = active_rep
                 score = rep.get("score")
                 grade = rep.get("grade", "")
 
                 if score is not None:
-                    score_text = f"Score: {score}/10 {grade}"
+                    score_text = f"Rep {rep.get('rep', 1)} | Score: {score}/10 {grade}"
 
                 start_f = int(rep.get("start_frame", 0))
                 first_pull_f = int(rep.get("first_pull_frame", start_f))
@@ -3807,6 +3955,16 @@ def draw_overlay_video(
                     current_phase = "Catch / Recovery"
                 else:
                     current_phase = "Finish"
+
+            if results.pose_landmarks:
+                frame = draw_ideal_clean_overlay(
+                    frame,
+                    results.pose_landmarks,
+                    current_phase,
+                )
+
+            if results.pose_landmarks:
+                frame = draw_ideal_clean_overlay(frame, results.pose_landmarks, current_phase)
 
             # Top label bar
             cv2.rectangle(frame, (0, 0), (width, 80), (2, 6, 23), -1)
