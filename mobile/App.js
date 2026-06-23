@@ -36,6 +36,24 @@ const fullUrl = (path) => {
   return `${MEDIA_URL}${path}`;
 };
 
+const hasRealPhaseImages = (phaseImages) => {
+  if (!phaseImages) return false;
+  return Object.values(phaseImages).some(
+    (v) => typeof v === "string" && v.startsWith("/")
+  );
+};
+
+const stripFrameNumberPhaseImages = (data) => {
+  if (
+    data?.phase_images &&
+    !hasRealPhaseImages(data.phase_images)
+  ) {
+    return { ...data, phase_images: null };
+  }
+  return data;
+};
+
+
 const formatLabel = (v) =>
   v
     ? String(v)
