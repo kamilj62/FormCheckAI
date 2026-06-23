@@ -2584,8 +2584,10 @@ def analyze_clean_and_jerk_reps(biomechanics):
     overhead_candidates = np.where(overhead & (np.arange(n) > clean_extension_idx))[0]
     first_overhead_idx = int(overhead_candidates[0]) if len(overhead_candidates) else n - 1
 
-    catch_start = min(n - 2, clean_extension_idx + 1)
-    catch_end = max(catch_start + 1, min(first_overhead_idx, int(n * 0.85)))
+    # Clean catch is the bottom/receive of the clean, before clean recovery.
+    # Do not start from clean_extension_idx; that can be too late and drift into recovery.
+    catch_start = max(1, int(n * 0.28))
+    catch_end = max(catch_start + 2, min(int(n * 0.36), first_overhead_idx))
 
     clean_catch_idx = catch_start + int(np.argmin(knee[catch_start:catch_end]))
 
@@ -2595,7 +2597,7 @@ def analyze_clean_and_jerk_reps(biomechanics):
             recovery_idx = i
             break
 
-    jerk_start = min(n - 2, max(recovery_idx + 1, clean_catch_idx + 3))
+    jerk_start = min(n - 2, max(recovery_idx + 1, clean_catch_idx + 3, int(n * 0.72)))
     jerk_end = max(jerk_start + 1, first_overhead_idx)
 
     jerk_dip_idx = jerk_start + int(np.argmin(knee[jerk_start:jerk_end]))
@@ -2605,16 +2607,29 @@ def analyze_clean_and_jerk_reps(biomechanics):
 
     jerk_drive_idx = drive_start + int(np.argmax(extension_signal[drive_start:drive_end]))
 
+    # Jerk catch should be a real overhead receive, not the first noisy
+    # frame where the wrist barely appears above the shoulder.
     jerk_catch_idx = first_overhead_idx
-    for i in range(jerk_drive_idx + 1, n):
-        if overhead[i]:
+    stable_needed = 3
+
+    for i in range(jerk_drive_idx + 1, n - stable_needed):
+        stable_overhead = all(overhead[i:i + stable_needed])
+        stable_lockout = np.mean(elbow[i:i + stable_needed]) > 150
+
+        if stable_overhead and stable_lockout:
             jerk_catch_idx = i
             break
 
-    end_idx = min(n - 1, jerk_catch_idx + int(n * 0.20))
+    # Finish should be clearly after the catch/recovery, not just immediate lockout.
+    min_finish_gap = max(8, int(n * 0.08))
+    end_idx = min(n - 1, jerk_catch_idx + max(min_finish_gap, int(n * 0.28)))
 
-    for i in range(jerk_catch_idx + 1, n):
-        if overhead[i] and elbow[i] > 150 and knee[i] > 130:
+    for i in range(jerk_catch_idx + min_finish_gap, n - stable_needed):
+        stable_overhead = all(overhead[i:i + stable_needed])
+        stable_lockout = np.mean(elbow[i:i + stable_needed]) > 150
+        standing = knee[i] > 145 and hip[i] > 140
+
+        if stable_overhead and stable_lockout and standing:
             end_idx = i
             break
 
@@ -2627,8 +2642,12 @@ def analyze_clean_and_jerk_reps(biomechanics):
     clean_catch_frame = int(frame_numbers[clean_catch_idx])
     jerk_dip_frame = int(frame_numbers[jerk_dip_idx])
     jerk_drive_frame = int(frame_numbers[jerk_drive_idx])
+    # Catch should show the overhead receiving position between drive and finish.
+    # Use a stable midpoint so catch is visually distinct from both drive and lockout.
+    jerk_catch_idx = jerk_drive_idx + int((end_idx - jerk_drive_idx) * 0.90)
+    jerk_catch_idx = max(jerk_drive_idx + 2, min(jerk_catch_idx, end_idx - 1))
     jerk_catch_frame = int(frame_numbers[jerk_catch_idx])
-    end_frame = int(frame_numbers[end_idx])
+    end_frame = int(frame_numbers[min(n - 1, max(end_idx, jerk_catch_idx + 26))])
 
     reps = [{
         "rep": 1,
@@ -4742,19 +4761,16 @@ def create_clean_and_jerk_phase_images(input_path, output_dir, rep, sample_every
     start = int(rep.get("start_frame", 1))
     end_frame = int(rep.get("end_frame", total))
 
-    # The analyzer's clean_catch_frame is often too early on C&J.
-    # Use stable percentage anchors across the rep window for visuals.
+    # Use analyzer/manual rep_json frames directly for clean & jerk visuals.
     span = max(1, end_frame - start)
 
-    # Temporary robust anchors for 1-rep clean & jerk videos.
-    # These are later than the analyzer's current detected clean_catch/jerk frames.
     phases = {
-        "setup": start,
-        "clean_catch": start + int(span * 0.82),
-        "jerk_dip": start + int(span * 0.90),
-        "jerk_drive": start + int(span * 0.96),
-        "jerk_catch": start + int(span * 0.99),
-        "finish": end_frame,
+        "setup": int(rep.get("start_frame", start)),
+        "clean_catch": int(rep.get("clean_catch_frame", start + int(span * 0.82))),
+        "jerk_dip": int(rep.get("jerk_dip_frame", start + int(span * 0.88))),
+        "jerk_drive": int(rep.get("jerk_drive_frame", start + int(span * 0.91))),
+        "jerk_catch": int(rep.get("jerk_catch_frame", start + int(span * 0.95))),
+        "finish": int(rep.get("end_frame", end_frame)),
     }
 
     out = {}
@@ -5545,7 +5561,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         final_confidence = raw_confidence
 
         # ---------------- OLYMPIC ROUTING ----------------
-        if olympic_pred in ["clean", "clean_and_jerk", "snatch", "split_jerk"] and olympic_conf > raw_confidence:
+        if olympic_pred in ["clean", "clean_and_jerk", "snatch", "split_jerk"] and (
+            olympic_conf > raw_confidence or olympic_conf >= 0.75
+        ):
             final_label = olympic_pred
             final_confidence = olympic_conf
 

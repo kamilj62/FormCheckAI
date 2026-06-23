@@ -1575,16 +1575,7 @@ export default function App() {
                           <Image
                             source={{ uri: url }}
                             style={styles.phaseImage}
-                              resizeMode={
-                                result?.exercise_label
-                                  ?.toLowerCase()
-                                  .includes("muscle") ||
-                                result?.exercise_label
-                                  ?.toLowerCase()
-                                  .includes("pull")
-                                  ? "contain"
-                                  : "cover"
-                              }
+                              resizeMode="contain"
                           />
                         ) : (
                           <View style={styles.emptyPhase}>
@@ -2010,7 +2001,8 @@ const styles = StyleSheet.create({
   phaseImage: {
     width: "100%",
     height: 260,
-    resizeMode: "cover",
+    resizeMode: "contain",
+    objectFit: "contain",
   },
   phaseCardsRow: {
     flexDirection: "row",
