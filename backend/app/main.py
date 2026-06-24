@@ -5567,6 +5567,22 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label = olympic_pred
             final_confidence = olympic_conf
 
+        # ---------------- SNATCH RESCUE ----------------
+        pose_summary = summarize_biomechanics(biomechanics)
+        wrist_ratio = (
+            pose_summary.get("wrist_above_shoulder_ratio", 0)
+            if pose_summary else 0
+        )
+
+        if (
+            raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
+            and olympic_pred in ["snatch", "clean_and_jerk"]
+            and olympic_conf >= 0.50
+            and wrist_ratio >= 0.25
+        ):
+            final_label = "snatch"
+            final_confidence = max(olympic_conf, 0.80)
+
         # ---------------- DEADLIFT PROTECTION ----------------
         if raw_label == "deadlift":
             final_label = "deadlift"
@@ -5642,6 +5658,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         "clean_catch": r.get("clean_catch_frame"),
                         "jerk_dip": r.get("jerk_dip_frame"),
                         "jerk_catch": r.get("jerk_catch_frame"),
+                        "finish": r.get("end_frame"),
+                    }
+
+                elif final_label == "snatch" and rep_feedback:
+                    r = rep_feedback[0]
+                    phase_images = {
+                        "setup": r.get("start_frame", 0),
+                        "first_pull": r.get("first_pull_frame"),
+                        "extension": r.get("extension_frame"),
+                        "catch": r.get("catch_frame"),
                         "finish": r.get("end_frame"),
                     }
             except Exception as e:
