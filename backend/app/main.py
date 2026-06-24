@@ -5703,6 +5703,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.84)
 
+        # ---------------- FINAL PUSH PRESS PROTECTION ----------------
+        # Do not let Olympic/thruster rescue override a confident push press.
+        if raw_label == "push_press" and raw_confidence >= 0.95:
+            final_label = "push_press"
+            final_confidence = max(final_confidence, raw_confidence)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
@@ -5763,6 +5769,24 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         "extension": r.get("extension_frame"),
                         "catch": r.get("catch_frame"),
                         "finish": r.get("end_frame"),
+                    }
+
+                elif final_label in ["push_press", "strict_press"] and rep_feedback:
+                    r = rep_feedback[0]
+                    phase_images = {
+                        "setup": r.get("start_frame", 0),
+                        "dip": r.get("dip_frame"),
+                        "drive": r.get("drive_frame"),
+                        "catch": r.get("catch_frame"),
+                        "lockout": r.get("lockout_frame"),
+                    }
+
+                elif final_label == "thruster" and rep_feedback:
+                    r = rep_feedback[0]
+                    phase_images = {
+                        "squat_dip": r.get("dip_frame"),
+                        "drive": r.get("drive_frame"),
+                        "lockout": r.get("lockout_frame"),
                     }
             except Exception as e:
                 print("phase image error:", e)

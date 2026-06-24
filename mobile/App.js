@@ -853,6 +853,10 @@ export default function App() {
 
       if (!file) return;
 
+      setResult(null);
+      setSelectedZone(null);
+      setOverlayUrl(null);
+
       setVideo({
         file,
         uri: URL.createObjectURL(file),
