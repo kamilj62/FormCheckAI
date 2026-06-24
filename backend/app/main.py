@@ -3903,8 +3903,12 @@ def draw_overlay_video(
     if fps <= 0:
         fps = 30
 
-    # Overlay frames are resized before writing, so writer size must match.
-    width, height = 640, 360
+    # Preserve original video dimensions
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    if width <= 0 or height <= 0:
+        width, height = 640, 360
 
     temp_output_path = output_path.replace(".mp4", "_raw.mp4")
 
@@ -3952,8 +3956,7 @@ def draw_overlay_video(
                 frame_idx += 1
                 continue
 
-            # ⚡ resize BEFORE inference (faster)
-            frame = cv2.resize(frame, (640, 360))
+            # Use original frame size for overlay rendering
 
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
@@ -4540,12 +4543,25 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
         ascent_frame = drive_frame + int((overhead_frame - drive_frame) * 0.5)
 
         # Thruster storyboard: use real detected movement events
+        dip_frame = int(rep.get("dip_frame", start))
+        drive_frame = int(rep.get("drive_frame", start))
+        catch_frame = int(rep.get("catch_frame", drive_frame))
+        lockout_frame = int(rep.get("lockout_frame", end))
+
+        # Thruster analyzer can sometimes mark the true squat bottom as lockout.
+        # For visuals, prefer a clear storyboard: bottom squat -> drive -> overhead finish.
+        if lockout_frame > end:
+            bottom_frame = lockout_frame
+            drive_frame = min(bottom_frame + 8, total_frames - 1)
+            lockout_frame = min(bottom_frame + 20, total_frames - 1)
+        else:
+            bottom_frame = dip_frame
+            lockout_frame = max(lockout_frame, catch_frame, end)
+
         phase_frames = {
-            "setup": int(rep.get("start_frame", start)),
-            "bottom": int(rep.get("dip_frame", start)),
-            "ascent": int(rep.get("drive_frame", start)),
-            "press": int(rep.get("catch_frame", end)),
-            "lockout": int(rep.get("lockout_frame", end)),
+            "squat_dip": bottom_frame,
+            "drive": drive_frame,
+            "lockout": lockout_frame,
         }
 
     # PUSH PRESS: use timing-based fallback
@@ -5682,6 +5698,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 and elbow_range > 45
                 and wrist_ratio >= 0.12
                 and final_label != "snatch"
+                and not (olympic_pred == "clean_and_jerk" and olympic_conf >= 0.70)
             ):
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.84)

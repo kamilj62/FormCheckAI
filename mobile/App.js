@@ -113,7 +113,7 @@ const getPhaseConfig = (exerciseLabel) => {
     title: "Thruster Phase Review",
     text: "Squat/Dip → Drive → Lockout",
     items: [
-      ["dip", "Squat/Dip"],
+      ["squat_dip", "Squat/Dip"],
       ["drive", "Drive"],
       ["lockout", "Lockout"],
     ],
@@ -300,7 +300,7 @@ const getInteractiveZones = (result) => {
     {
       id: "squat_dip",
       title: "Squat/Dip",
-      imageKey: "dip",
+      imageKey: "squat_dip",
       status: breakdown.squat_depth || "good",
       note: "Use a full squat before driving the bar overhead.",
     },
