@@ -2713,6 +2713,10 @@ def analyze_snatch_reps(biomechanics):
     turnover_idx = engine.turnover_start()
     catch_idx = engine.stabilization_point(extension_idx)
 
+    # Snatch catch should be the overhead receive, not immediate turnover.
+    min_catch_gap = max(6, int(len(biomechanics) * 0.06))
+    catch_idx = max(catch_idx, extension_idx + min_catch_gap)
+
     print("SNATCH DEBUG")
     print("frames:", len(biomechanics))
     print("extension_idx:", extension_idx)
