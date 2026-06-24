@@ -5745,11 +5745,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         phase_images = None
         if make_visuals:
             try:
-                phase_images = get_phase_images(
-                    final_label,
-                    video_path,
-                    biomechanics,
-                )
+                phase_images = get_phase_images(final_label, video_path, biomechanics)
 
                 if final_label == "clean_and_jerk" and rep_feedback:
                     r = rep_feedback[0]
@@ -5773,12 +5769,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
                 elif final_label in ["push_press", "strict_press"] and rep_feedback:
                     r = rep_feedback[0]
+                    setup = int(r.get("start_frame", 0) or 0)
+                    dip = int(r.get("dip_frame", setup + 5) or setup + 5)
+                    drive = int(r.get("drive_frame", dip + 8) or dip + 8)
+                    end_frame = int(r.get("end_frame", drive + 25) or drive + 25)
+                    catch = int(r.get("catch_frame", drive + 12) or drive + 12)
+                    lockout = int(r.get("lockout_frame", catch + 8) or catch + 8)
+                    catch = max(catch, drive + 8, end_frame + 8)
+                    lockout = max(lockout, catch + 8)
                     phase_images = {
-                        "setup": r.get("start_frame", 0),
-                        "dip": r.get("dip_frame"),
-                        "drive": r.get("drive_frame"),
-                        "catch": r.get("catch_frame"),
-                        "lockout": r.get("lockout_frame"),
+                        "setup": setup,
+                        "dip": dip,
+                        "drive": drive,
+                        "catch": catch,
+                        "lockout": lockout,
                     }
 
                 elif final_label == "thruster" and rep_feedback:

@@ -149,7 +149,7 @@ const getPhaseConfig = (exerciseLabel) => {
   };
 }
 
-  if (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk")) {
+  if (!label.includes("push_press") && !label.includes("push press") && (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk"))) {
     return {
       title: "Olympic Lift Phase Review",
       text: "Setup → First Pull → Extension → Catch → Finish",
@@ -163,7 +163,7 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-  if (label.includes("push press")) {
+  if (label.includes("push_press") || label.includes("push press")) {
     return {
       title: "Push Press Phase Review",
       text: "Setup → Dip → Drive → Catch → Lockout",
@@ -493,7 +493,7 @@ const getInteractiveZones = (result) => {
     ];
   }
 
-  if (label.includes("push press")) {
+  if (label.includes("push_press") || label.includes("push press")) {
     return [
       {
         id: "dip",
