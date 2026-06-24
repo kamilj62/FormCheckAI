@@ -2747,6 +2747,8 @@ def analyze_snatch_reps(biomechanics):
     wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
     bar_drift = float(np.percentile(wrist_x, 90) - np.percentile(wrist_x, 10))
     catch_bar_offset = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
+    catch_knee = float(knee[catch_idx])
+    catch_hip = float(hip[catch_idx])
 
     issues = []
     feedback = []
@@ -2785,10 +2787,12 @@ def analyze_snatch_reps(biomechanics):
         issues.append("Overhead position may not be stable.")
         feedback.append("Stabilize the bar overhead before standing.")
 
-    if min_knee > 125:
+    if catch_knee > 135 or catch_hip > 145:
         breakdown["overhead_catch"] = "power_catch"
         issues.append("Catch position is high.")
         feedback.append("Pull under the bar and receive lower if needed.")
+    elif catch_knee < 95 and catch_hip < 115:
+        breakdown["overhead_catch"] = "deep_catch"
 
     if bar_drift > 0.12 or catch_bar_offset > 0.28:
         breakdown["bar_path"] = "drifting"
@@ -5571,6 +5575,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label = olympic_pred
             final_confidence = olympic_conf
 
+        # ---------------- CLEAN & JERK RESCUE ----------------
+        if (
+            olympic_pred == "clean_and_jerk"
+            and olympic_conf >= 0.70
+            and raw_label in ["squat", "squat_back", "squat_front", "push_press", "deadlift", "bench_press"]
+        ):
+            final_label = "clean_and_jerk"
+            final_confidence = max(olympic_conf, 0.80)
+
         # ---------------- SNATCH RESCUE ----------------
         pose_summary = summarize_biomechanics(biomechanics)
         wrist_ratio = (
@@ -5580,8 +5593,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         if (
             raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
-            and olympic_pred in ["snatch", "clean_and_jerk"]
-            and olympic_conf >= 0.50
+            and olympic_pred == "snatch"
+            and (
+                olympic_conf >= 0.65
+                or raw_confidence >= 0.95
+            )
             and wrist_ratio >= 0.25
         ):
             final_label = "snatch"
@@ -5612,6 +5628,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             else:
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.86)
+
+        # ---------------- FINAL CLEAN & JERK OVERRIDE ----------------
+        # Let Olympic router rescue C&J from base-model squat/push/deadlift/bench misses.
+        if (
+            olympic_pred == "clean_and_jerk"
+            and olympic_conf >= 0.60
+            and raw_label in ["squat", "squat_back", "squat_front", "push_press", "deadlift", "bench_press"]
+        ):
+            final_label = "clean_and_jerk"
+            final_confidence = max(olympic_conf, 0.80)
 
         analysis_label = final_label
 
