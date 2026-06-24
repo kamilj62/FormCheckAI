@@ -466,6 +466,32 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     # THRUSTER RESCUE — must happen before confidence lock
     # Disabled: this was causing clean / clean_and_jerk videos to become thruster.
     # Only preserve thruster when the base model already predicts thruster.
+    # THRUSTER RESCUE FROM BENCH / SQUAT / PUSH PRESS
+    # Thruster = deep squat + overhead press in same clip.
+
+    if raw_label in ["bench_press", "squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]:
+        print(
+            "THRUSTER DEBUG",
+            {
+                "raw_label": raw_label,
+                "min_knee": round(min_knee, 1),
+                "min_hip": round(min_hip, 1),
+                "wrist_ratio": round(wrist_ratio, 3),
+                "elbow_range": round(elbow_range, 1),
+                "max_elbow": round(max_elbow, 1),
+            }
+        )
+
+    if (
+        raw_label in ["bench_press", "squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
+        and min_knee < 115
+        and min_hip < 125
+        and wrist_ratio > 0.12
+        and elbow_range > 45
+        and max_elbow > 130
+    ):
+        return "thruster", max(confidence, 0.84), True, "thruster_rescue_squat_to_press"
+
     # HANDSTAND PUSH-UP RESCUE FROM BENCH
     if (
         raw_label == "bench_press"
@@ -5638,6 +5664,27 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         ):
             final_label = "clean_and_jerk"
             final_confidence = max(olympic_conf, 0.80)
+
+        # ---------------- FINAL THRUSTER OVERRIDE ----------------
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary:
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
+            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+
+            if (
+                raw_label in ["bench_press", "squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
+                and pose_summary.get("min_knee_angle", 180) < 115
+                and pose_summary.get("min_hip_angle", 180) < 125
+                and knee_range > 45
+                and hip_range > 45
+                and elbow_range > 45
+                and wrist_ratio >= 0.12
+                and final_label != "snatch"
+            ):
+                final_label = "thruster"
+                final_confidence = max(final_confidence, 0.84)
 
         analysis_label = final_label
 
