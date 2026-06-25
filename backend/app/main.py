@@ -2546,6 +2546,114 @@ def analyze_clean_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
+
+def analyze_strict_press_reps(biomechanics):
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    n = len(biomechanics)
+    if n < 10:
+        return [], build_set_summary([])
+
+    start_idx = 0
+
+    # Lockout = highest wrist with straight elbows.
+    lockout_candidates = np.where(elbow >= 155)[0]
+    if len(lockout_candidates) > 0:
+        lockout_idx = int(lockout_candidates[np.argmin(wrist_y[lockout_candidates])])
+    else:
+        lockout_idx = int(np.argmin(wrist_y))
+
+    lockout_idx = max(lockout_idx, start_idx + 5)
+
+    press_idx = max(start_idx + 1, int(start_idx + (lockout_idx - start_idx) * 0.55))
+
+    # Strict press should not end the instant lockout is reached.
+    # Hold through lockout / early descent so the rep window includes the completed press.
+    # Keep the completed lockout in the rep window.
+    # Strict press videos often hold overhead briefly before lowering.
+    end_idx = min(n - 1, lockout_idx + max(70, int(n * 0.35)))
+
+    knee_range = float(np.max(knee[start_idx:end_idx + 1]) - np.min(knee[start_idx:end_idx + 1]))
+    hip_range = float(np.max(hip[start_idx:end_idx + 1]) - np.min(hip[start_idx:end_idx + 1]))
+    torso_max = float(np.percentile(torso[start_idx:end_idx + 1], 90))
+    elbow_lockout = float(elbow[lockout_idx])
+    bar_drift = float(np.percentile(wrist_x[start_idx:end_idx + 1], 90) - np.percentile(wrist_x[start_idx:end_idx + 1], 10))
+
+    issues = []
+    feedback = []
+
+    breakdown = {
+        "leg_drive": "good",
+        "torso_stack": "good",
+        "lockout": "good",
+        "bar_path": "good",
+        "knee_range": round(knee_range, 1),
+        "hip_range": round(hip_range, 1),
+    }
+
+    score = 10.0
+
+    if knee_range > 18:
+        breakdown["leg_drive"] = "leg_drive"
+        issues.append("Leg drive detected.")
+        feedback.append("Keep your knees locked and press without dipping.")
+        score -= 1.4
+    elif knee_range > 10:
+        breakdown["leg_drive"] = "minor_knee_bend"
+        issues.append("Slight knee bend detected.")
+        feedback.append("Stay strict through the legs.")
+        score -= 0.7
+
+    if hip_range > 25 or torso_max > 70:
+        breakdown["torso_stack"] = "leaning_back"
+        issues.append("Excessive layback detected.")
+        feedback.append("Keep ribs down and press from a stacked torso.")
+        score -= 0.9
+
+    if elbow_lockout < 155:
+        breakdown["lockout"] = "soft"
+        issues.append("Finish stronger overhead.")
+        feedback.append("Fully lock out with the bar stacked over your shoulders.")
+        score -= 0.8
+
+    if bar_drift > 0.16:
+        breakdown["bar_path"] = "drifting"
+        issues.append("Bar drift detected.")
+        feedback.append("Press straight up and move your head through as the bar passes.")
+        score -= 0.8
+
+    score = round(max(1.0, min(10.0, score)), 1)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Strong strict press. Stable torso and full overhead lockout."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "press_frame": int(frame_numbers[press_idx]),
+        "lockout_frame": int(frame_numbers[lockout_idx]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": score,
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_split_jerk_reps(biomechanics):
     knee = np.array([b["knee_angle"] for b in biomechanics])
     hip = np.array([b["hip_angle"] for b in biomechanics])
@@ -2565,7 +2673,23 @@ def analyze_split_jerk_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    start_idx = 0
+    # Ignore opening overhead hold from the previous jerk.
+    # Start the rep at the first meaningful dip after the athlete
+    # returns the bar to the shoulders.
+    search_start = int(len(knee) * 0.30)
+
+    dip_candidates = np.where(
+        (knee[search_start:] < 165) &
+        (hip[search_start:] < 170)
+    )[0]
+
+    if len(dip_candidates):
+        dip_idx = search_start + int(dip_candidates[0])
+    else:
+        dip_idx = int(np.argmin(knee))
+
+    # Start closer to the actual jerk setup.
+    start_idx = max(0, dip_idx - 10)
     end_idx = len(biomechanics) - 1
     duration = max(1, end_idx - start_idx)
 
@@ -4576,8 +4700,25 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
     start = max(0, min(start, total_frames - 1))
     end = max(start + 1, min(end, total_frames - 1))
 
+    if str(exercise_label or "").lower() == "strict_press":
+        setup_frame = int(rep.get("start_frame", start))
+        press_frame = int(rep.get("press_frame", start + int((end - start) * 0.55)))
+        lockout_frame = int(rep.get("lockout_frame", end))
+
+        # Strict press analyzer can fire early on screen-recorded clips.
+        # For visuals, spread phases across the detected rep window.
+        if lockout_frame <= press_frame + 45:
+            press_frame = setup_frame + int((end - setup_frame) * 0.50)
+            lockout_frame = end
+
+        phase_frames = {
+            "setup": setup_frame,
+            "press": press_frame,
+            "lockout": lockout_frame,
+        }
+
     # THRUSTER: use actual detected phase frames
-    if str(exercise_label or "").lower() == "thruster" or rep.get("breakdown", {}).get("squat_depth"):
+    elif str(exercise_label or "").lower() == "thruster" or rep.get("breakdown", {}).get("squat_depth"):
 
         drive_frame = int(rep.get("drive_frame", start))
         lockout_frame = int(rep.get("lockout_frame", end))
@@ -4953,13 +5094,16 @@ def pick_phase_frames_from_rep(rep, exercise_label, start, end, total_frames):
         return int(rep.get(key, fallback))
 
     if label == "split_jerk":
+        catch_frame = rf("catch_frame", start + int(duration * 0.60))
+        finish_frame = max(catch_frame + 10, end - 15)
+
         phase_frames = {
             "setup": start,
             "dip": rf("dip_frame", start + int(duration * 0.20)),
             "drive": rf("drive_frame", start + int(duration * 0.35)),
-            "catch": rf("catch_frame", start + int(duration * 0.60)),
+            "catch": catch_frame,
             "lockout": rf("lockout_frame", start + int(duration * 0.75)),
-            "finish": end,
+            "finish": finish_frame,
         }
 
     elif label == "clean_and_jerk":
@@ -5042,13 +5186,18 @@ def create_olympic_lift_phase_images(
     # SPLIT JERK
     # -----------------------------------
     if normalized_label == "split_jerk":
+        raw_dip_frame = rep_frame("dip_frame", start)
+        catch_frame = rep_frame("catch_frame", end)
+
+        setup_frame = max(start, raw_dip_frame - 13)
+        dip_frame = min(raw_dip_frame + 14, catch_frame - 8)
+        finish_frame = min(end - 10, catch_frame + 59)
+
         phase_frames = {
-            "setup": start,
-            "dip": rep_frame("dip_frame", start),
-            "drive": rep_frame("drive_frame", start),
-            "catch": rep_frame("catch_frame", start),
-            "lockout": rep_frame("lockout_frame", end),
-            "finish": end,
+            "setup": setup_frame,
+            "dip": dip_frame,
+            "catch": catch_frame,
+            "finish": finish_frame,
         }
 
     # -----------------------------------
@@ -5860,6 +6009,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         if (
             raw_label == "push_press"
             and olympic_pred == "clean_and_jerk"
+            and olympic_conf < 0.85
         ):
             final_label = "push_press"
             final_confidence = max(raw_confidence, 0.80)
@@ -5881,6 +6031,39 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = olympic_pred
                 final_confidence = max(final_confidence, olympic_conf)
 
+        # Split jerk rescue:
+        # Short jerk-only clips can be routed as clean_and_jerk by the Olympic router.
+        # If there is no visible clean/pull phase and the base model sees push_press,
+        # treat it as split_jerk.
+        if (
+            final_label == "clean_and_jerk"
+            and raw_label == "push_press"
+            and olympic_conf >= 0.85
+            and len(biomechanics) > 80
+        ):
+            final_label = "split_jerk"
+            final_confidence = max(final_confidence, olympic_conf)
+
+        # Strict press rescue from push press:
+        # Very low knee movement means this is a strict press, not a push press.
+        if final_label == "push_press":
+            pose_summary = summarize_biomechanics(biomechanics)
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180) if pose_summary else 999
+
+            if knee_range <= 12:
+                final_label = "strict_press"
+                final_confidence = max(final_confidence, 0.86)
+
+        # Strict press rescue from push press:
+        # Very low knee movement means this is a strict press, not a push press.
+        if final_label == "push_press":
+            pose_summary = summarize_biomechanics(biomechanics)
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180) if pose_summary else 999
+
+            if knee_range <= 12:
+                final_label = "strict_press"
+                final_confidence = max(final_confidence, 0.86)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
@@ -5890,8 +6073,19 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         elif analysis_label == "deadlift":
             rep_feedback, _ = analyze_deadlift_reps(biomechanics)
 
-        elif analysis_label in ["push_press", "strict_press", "thruster"]:
+        elif analysis_label == "strict_press":
+            rep_feedback, _ = analyze_strict_press_reps(biomechanics)
+
+        elif analysis_label in ["push_press", "thruster"]:
             rep_feedback, _ = analyze_push_press_reps(biomechanics, analysis_label)
+
+            if analysis_label == "push_press" and rep_feedback:
+                kr = rep_feedback[0].get("breakdown", {}).get("knee_range", 999)
+                if kr is not None and kr <= 12:
+                    final_label = "strict_press"
+                    analysis_label = "strict_press"
+                    final_confidence = max(final_confidence, 0.86)
+                    rep_feedback, _ = analyze_strict_press_reps(biomechanics)
 
         elif analysis_label == "bench_press":
             rep_feedback, _ = analyze_bench_press_reps(biomechanics)
@@ -5976,7 +6170,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # Overlay worker disabled here; /analyze route handles overlay separately.
         # ---------------- RETURN ----------------
         return {
-            "exercise_label": final_label,
+            "exercise_label": analysis_label,
             "confidence": round(final_confidence, 2),
             "analysis_mode": "detailed_rep_analysis",
             "rep_feedback": rep_feedback,
@@ -5988,7 +6182,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "debug": {
                 "original_prediction": raw_label,
                 "olympic_prediction": olympic_pred,
-                "final_label_debug": final_label,
+                "final_label_debug": analysis_label,
                 "original_confidence": raw_confidence,
                 "olympic_pred": olympic_pred,
                 "olympic_confidence": olympic_conf,
@@ -6073,7 +6267,7 @@ async def debug_oly_phases(file: UploadFile = File(...)):
 
         # ---------------- RESPONSE ----------------
         return {
-            "exercise_label": final_label,
+            "exercise_label": analysis_label,
             "confidence": 0.96,
             "rep_feedback": rep_feedback,
             "overlay_video_url": overlay_video_url,
@@ -6136,6 +6330,11 @@ async def generate_visuals(
             phase_images = create_push_press_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="thruster"
             )
+        elif "strict press" in label or "strict_press" in label:
+            phase_images = create_push_press_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="strict_press"
+            )
+
         elif "push press" in label or "push_press" in label:
             phase_images = create_push_press_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="push_press"
