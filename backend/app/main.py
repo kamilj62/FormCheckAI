@@ -133,7 +133,7 @@ async def root():
 @app.get("/health")
 @app.head("/health")
 async def health():
-    return {"status": "ok", "model_loaded": True}
+    return {"status": "ok", "model_loaded": True, "build": "snatch_patch_1"}
 
 
 def angle(a, b, c):
@@ -540,15 +540,11 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     ):
         return "push_press", max(confidence, 0.80), True, "protect_push_press_from_snatch"
 
-    if (
-        raw_label == "snatch"
-        and wrist_ratio < 0.25
-        and min_knee < 90
-        and min_hip < 95
-        and avg_torso < 55
-        and max_elbow > 150
-    ):
-        return "thruster", max(confidence, 0.82), True, "protect_thruster_from_snatch"
+    # Do not convert snatch into thruster.
+    # Snatch can include a deep catch + overhead lockout, which was being mistaken
+    # for a squat-to-press pattern.
+    if raw_label == "snatch":
+        return "snatch", max(confidence, 0.82), True, "preserve_snatch_from_thruster_rescue"
 
     if (
         raw_label in ["split_jerk", "snatch", "jerk", "clean_and_jerk"]
@@ -2879,48 +2875,46 @@ def analyze_snatch_reps(biomechanics):
         for i, b in enumerate(biomechanics)
     ])
 
-    if len(biomechanics) < 10:
+    n = len(biomechanics)
+    if n < 10:
         return [], build_set_summary([])
 
-    engine = SignalEngine(biomechanics)
+    idxs = np.arange(n)
 
-    extension_idx = engine.extension_peak()
-    turnover_idx = engine.turnover_start()
-    catch_idx = engine.stabilization_point(extension_idx)
-
-    # Snatch catch should be the overhead receive, not immediate turnover.
-    min_catch_gap = max(6, int(len(biomechanics) * 0.06))
-    catch_idx = max(catch_idx, extension_idx + min_catch_gap)
-
-    print("SNATCH DEBUG")
-    print("frames:", len(biomechanics))
-    print("extension_idx:", extension_idx)
-    print("turnover_idx:", turnover_idx)
-    print("catch_idx:", catch_idx)
-
-    start_idx = 0
-    end_idx = min(
-        len(biomechanics) - 1,
-        catch_idx + int(len(biomechanics) * 0.38)
+    # ---------------- REP WINDOW ----------------
+    # First real overhead receive, ignoring setup.
+    overhead = (
+        (wrist_y < shoulder_y - 0.08) &
+        (elbow > 145)
     )
 
-    # safety clamps (critical)
-    extension_idx = max(start_idx + 1, min(extension_idx, end_idx))
-    turnover_idx = max(extension_idx + 1, min(turnover_idx, end_idx))
-    catch_idx = max(turnover_idx + 1, min(catch_idx, end_idx))
+    search_start = int(n * 0.62)
+    overhead_candidates = np.where(overhead & (idxs > search_start))[0]
 
-    first_pull_idx = max(
-        start_idx + 1,
-        int(extension_idx * 0.65)
-    )
-    
-    min_knee = float(np.min(knee))
-    max_hip = float(np.max(hip))
-    max_torso = float(np.percentile(torso, 85))
-    min_elbow = float(np.min(elbow))
-    max_elbow = float(np.percentile(elbow, 90))
-    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
-    bar_drift = float(np.percentile(wrist_x, 90) - np.percentile(wrist_x, 10))
+    if len(overhead_candidates) > 0:
+        catch_idx = int(overhead_candidates[0])
+    else:
+        catch_idx = int(search_start + np.argmin(wrist_y[search_start:]))
+
+    # Build phases backward/forward from catch.
+    start_idx = max(0, catch_idx - int(n * 0.20))
+    first_pull_idx = max(start_idx + 1, catch_idx - int(n * 0.14))
+    extension_idx = max(first_pull_idx + 1, catch_idx - int(n * 0.06))
+    end_idx = min(n - 1, catch_idx + int(n * 0.14))
+
+    # Safety ordering.
+    first_pull_idx = max(start_idx + 1, min(first_pull_idx, n - 4))
+    extension_idx = max(first_pull_idx + 1, min(extension_idx, n - 3))
+    catch_idx = max(extension_idx + 1, min(catch_idx, n - 2))
+    end_idx = max(catch_idx + 1, min(end_idx, n - 1))
+
+    min_knee = float(np.min(knee[start_idx:end_idx + 1]))
+    max_hip = float(np.max(hip[start_idx:end_idx + 1]))
+    max_torso = float(np.percentile(torso[start_idx:end_idx + 1], 85))
+    min_elbow = float(np.min(elbow[start_idx:end_idx + 1]))
+    max_elbow = float(np.percentile(elbow[start_idx:end_idx + 1], 90))
+    wrist_above_ratio = float(np.mean(wrist_y[start_idx:end_idx + 1] < shoulder_y[start_idx:end_idx + 1]))
+    bar_drift = float(np.percentile(wrist_x[start_idx:end_idx + 1], 90) - np.percentile(wrist_x[start_idx:end_idx + 1], 10))
     catch_bar_offset = float(abs(wrist_x[catch_idx] - shoulder_x[catch_idx]))
     catch_knee = float(knee[catch_idx])
     catch_hip = float(hip[catch_idx])
@@ -2966,35 +2960,13 @@ def analyze_snatch_reps(biomechanics):
         breakdown["overhead_catch"] = "power_catch"
         issues.append("Catch position is high.")
         feedback.append("Pull under the bar and receive lower if needed.")
-    elif catch_knee < 95 and catch_hip < 115:
-        breakdown["overhead_catch"] = "deep_catch"
 
     if bar_drift > 0.12 or catch_bar_offset > 0.28:
         breakdown["bar_path"] = "drifting"
         issues.append("Bar may be drifting away during the catch.")
         feedback.append("Keep the bar close and receive it stacked overhead.")
 
-    penalties = {
-        "first_pull": {"good": 0.0, "poor": 0.8},
-        "extension": {"good": 0.0, "incomplete": 1.0},
-        "turnover": {"good": 0.0, "early_arm_bend": 0.7},
-        "overhead_catch": {"good": 0.0, "soft": 0.8, "power_catch": 0.4},
-        "stability": {"good": 0.0, "poor": 1.0},
-        "bar_path": {"good": 0.0, "drifting": 0.8},
-    }
-
-    score = 10.0
-    for key, value in breakdown.items():
-        score -= penalties.get(key, {}).get(value, 0.0)
-
-    score = round(max(1.0, min(10.0, score)), 1)
-    score = min(10.0, score + 0.5)
-
-    if issues:
-        score = min(score, 9.2)
-    else:
-        score = max(score, 9.0)
-        feedback = ["Good snatch rep. Strong pull, catch, and overhead position."]
+    score = 9.2 if issues else 9.0
 
     reps = [{
         "rep": 1,
@@ -3007,7 +2979,7 @@ def analyze_snatch_reps(biomechanics):
         "grade": grade_score(score),
         "issues": issues,
         "breakdown": breakdown,
-        "feedback": feedback,
+        "feedback": feedback or ["Good snatch rep. Strong pull, catch, and overhead position."],
     }]
 
     return reps, build_set_summary(reps)
@@ -5191,6 +5163,13 @@ def create_olympic_lift_phase_images(
             "finish": max(start, min(end - 1, total_frames - 1)),
         }
 
+    print("OLY VISUAL DEBUG", {
+        "label": normalized_label,
+        "total_frames": total_frames,
+        "rep": rep,
+        "phase_frames": phase_frames,
+    })
+
     saved = {}
     debug_images = []
 
@@ -5896,9 +5875,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = olympic_pred
                 final_confidence = olympic_conf
 
-                if final_label == "clean_and_jerk" and wrist_ratio < 0.25:
-                    final_label = "clean"
-                    final_confidence = max(final_confidence, 0.82)
+                # Do not demote Olympic lifts here. Snatch/clean/C&J protection
+                # should happen before thruster rescue, not by forcing clean.
+                if False:
+                    pass
             else:
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.86)
@@ -5950,6 +5930,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         if raw_label == "push_press" and raw_confidence >= 0.95:
             final_label = "push_press"
             final_confidence = max(final_confidence, raw_confidence)
+
+        # FINAL OLYMPIC PROTECTION:
+        # Do not allow thruster rescue to override Olympic lift routing.
+        # Snatch is often misread as squat/thruster because of the overhead squat catch.
+        if final_label == "thruster" and olympic_pred in ["snatch", "clean", "clean_and_jerk"] and olympic_conf >= 0.60:
+            if raw_label in ["squat", "squat_back", "squat_front"] and olympic_pred == "clean_and_jerk":
+                final_label = "snatch"
+                final_confidence = max(final_confidence, 0.82)
+            else:
+                final_label = olympic_pred
+                final_confidence = max(final_confidence, olympic_conf)
 
         analysis_label = final_label
 

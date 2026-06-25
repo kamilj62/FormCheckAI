@@ -44,21 +44,27 @@ class SignalEngine:
         return int(np.argmax(self.hip_velocity()))
 
     def turnover_start(self):
-        wv = self.wrist_velocity()
-        for i in range(1, len(wv)):
-            if wv[i - 1] > 0 and wv[i] < 0:
-                return i
-        return len(wv) // 2
-
-    def stabilization_point(self, start_idx=0):
-        if len(self.wrist_y) < 3:
+        n = len(self.wrist_y)
+        if n < 5:
             return 0
 
-        wv = self.wrist_velocity()
-        start_idx = max(0, min(start_idx, len(wv) - 1))
+        # Ignore the static setup.
+        search_start = int(n * 0.25)
 
-        for i in range(start_idx + 1, len(wv)):
-            if abs(wv[i]) < 0.02:
-                return i
+        wrist = self.wrist_y[search_start:]
+        vel = np.gradient(wrist)
 
-        return len(wv) - 1
+        # Strongest upward wrist movement (smallest y velocity).
+        return search_start + int(np.argmin(vel))
+
+    def stabilization_point(self, start_idx=0):
+        n = len(self.wrist_y)
+        if n < 5:
+            return 0
+
+        # Don't allow stabilization during the setup.
+        start_idx = max(start_idx, int(n * 0.30))
+        start_idx = min(start_idx, n - 2)
+
+        # Catch = highest wrist after turnover.
+        return start_idx + int(np.argmin(self.wrist_y[start_idx:]))
