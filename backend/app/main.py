@@ -2181,16 +2181,29 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             "feedback": [good_rep_message],
         })
 
+
+    # Thruster cleanup: remove duplicate overlapping detections from the same rep.
+    # This does NOT cap reps; it only collapses overlapping windows.
     if exercise_label == "thruster" and len(reps) > 1:
-        reps = [max(
-            reps,
-            key=lambda r: (
-                r.get("breakdown", {}).get("squat_depth") == "good",
-                r.get("lockout_frame", 0) - r.get("start_frame", 0),
-                r.get("score", 0),
-            )
-        )]
-        reps[0]["rep"] = 1
+        reps = sorted(reps, key=lambda r: r.get("start_frame", 0))
+        cleaned = []
+        for rep in reps:
+            if not cleaned:
+                cleaned.append(rep)
+                continue
+
+            prev = cleaned[-1]
+            if rep.get("start_frame", 0) <= prev.get("end_frame", 0):
+                prev_len = prev.get("end_frame", 0) - prev.get("start_frame", 0)
+                rep_len = rep.get("end_frame", 0) - rep.get("start_frame", 0)
+                if rep_len > prev_len:
+                    cleaned[-1] = rep
+            else:
+                cleaned.append(rep)
+
+        reps = cleaned
+        for n, rep in enumerate(reps, start=1):
+            rep["rep"] = n
 
     return reps, build_set_summary(reps)
 
@@ -2546,7 +2559,6 @@ def analyze_clean_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
-
 def analyze_strict_press_reps(biomechanics):
     knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
     hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
@@ -2686,6 +2698,7 @@ def analyze_strict_press_reps(biomechanics):
         }]
 
     return reps, build_set_summary(reps)
+
 
 def analyze_split_jerk_reps(biomechanics):
     knee = np.array([b["knee_angle"] for b in biomechanics])
@@ -4169,8 +4182,8 @@ def draw_overlay_video(
 
     with mp_pose.Pose(
         static_image_mode=False,
-        model_complexity=0,   # 🔥 FASTEST MODE
-        smooth_landmarks=False,
+        model_complexity=1,
+        smooth_landmarks=True,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5,
     ) as pose:
@@ -4754,7 +4767,7 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
     if str(exercise_label or "").lower() == "strict_press":
         setup_frame = int(rep.get("start_frame", start))
         press_frame = int(rep.get("press_frame", start + int((end - start) * 0.55)))
-        lockout_frame = int(rep.get("lockout_frame", end))
+        lockout_frame = min(total_frames - 1, int(rep.get("lockout_frame", end)) + 35)
 
         # Strict press analyzer can fire early on screen-recorded clips.
         # For visuals, spread phases across the detected rep window.
@@ -4779,7 +4792,7 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
             (lockout_frame - drive_frame) * 0.35
         )
 
-        setup_frame = int(rep.get("start_frame", start))
+        setup_frame = max(0, int(rep.get("start_frame", start)) - 25)
         bottom_frame = int(rep.get("dip_frame", start))
         drive_frame = int(rep.get("drive_frame", start))
         overhead_frame = int(rep.get("catch_frame", end))
@@ -4798,20 +4811,15 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
         catch_frame = int(rep.get("catch_frame", drive_frame))
         lockout_frame = int(rep.get("lockout_frame", end))
 
-        # Thruster analyzer can sometimes mark the true squat bottom as lockout.
-        # For visuals, prefer a clear storyboard: bottom squat -> drive -> overhead finish.
-        if lockout_frame > end:
-            bottom_frame = lockout_frame
-            drive_frame = min(bottom_frame + 8, total_frames - 1)
-            lockout_frame = min(bottom_frame + 20, total_frames - 1)
-        else:
-            bottom_frame = dip_frame
-            lockout_frame = max(lockout_frame, catch_frame, end)
+        # Thruster visuals: choose clear coach-facing frames.
+        # Start = before the squat, Squat = bottom, Lockout = first overhead catch.
+        setup_frame = max(0, int(rep.get("start_frame", start)) - 50)
+        squat_frame = int(rep.get("start_frame", start))
+        lockout_frame = min(total_frames - 1, int(rep.get("lockout_frame", end)) + 55)
 
         phase_frames = {
             "setup": setup_frame,
-            "dip": bottom_frame,
-            "drive": drive_frame,
+            "dip": squat_frame,
             "lockout": lockout_frame,
         }
 
@@ -5882,6 +5890,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         biomechanics = []
         frame_idx = 0
         pose_frames = 0
+        subject_center = None
+        subject_area = None
 
         # ---------------- POSE EXTRACTION ----------------
         with mp_pose.Pose(
@@ -5904,6 +5914,38 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
                 if not results.pose_landmarks:
                     continue
+
+                # Subject lock: reject sudden jumps to another athlete in busy gyms.
+                lm = results.pose_landmarks.landmark
+                pts = [
+                    lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value],
+                    lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value],
+                    lm[mp_pose.PoseLandmark.LEFT_HIP.value],
+                    lm[mp_pose.PoseLandmark.RIGHT_HIP.value],
+                ]
+
+                xs = [p.x for p in pts]
+                ys = [p.y for p in pts]
+                center = (sum(xs) / len(xs), sum(ys) / len(ys))
+                area = max(1e-6, (max(xs) - min(xs)) * (max(ys) - min(ys)))
+
+                if subject_center is None:
+                    subject_center = center
+                    subject_area = area
+                else:
+                    dx = center[0] - subject_center[0]
+                    dy = center[1] - subject_center[1]
+                    jump = (dx * dx + dy * dy) ** 0.5
+                    area_ratio = area / max(subject_area, 1e-6)
+
+                    if jump > 0.22 or area_ratio < 0.45 or area_ratio > 2.2:
+                        continue
+
+                    subject_center = (
+                        subject_center[0] * 0.85 + center[0] * 0.15,
+                        subject_center[1] * 0.85 + center[1] * 0.15,
+                    )
+                    subject_area = subject_area * 0.85 + area * 0.15
 
                 feats, bio = extract_features_and_biomechanics(results)
 
