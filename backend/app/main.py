@@ -2554,105 +2554,138 @@ def analyze_strict_press_reps(biomechanics):
     elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
     wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
     wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
-
-    frame_numbers = np.array([
-        b.get("frame_number", i)
-        for i, b in enumerate(biomechanics)
-    ])
+    frame_numbers = np.array([b.get("frame_number", i) for i, b in enumerate(biomechanics)])
 
     n = len(biomechanics)
     if n < 10:
         return [], build_set_summary([])
 
-    start_idx = 0
+    # y is smaller when wrist is higher. Detect repeated low-rack -> high-lockout cycles.
+    low_thr = np.percentile(wrist_y, 65)
+    high_thr = np.percentile(wrist_y, 25)
 
-    # Lockout = highest wrist with straight elbows.
-    lockout_candidates = np.where(elbow >= 155)[0]
-    if len(lockout_candidates) > 0:
-        lockout_idx = int(lockout_candidates[np.argmin(wrist_y[lockout_candidates])])
-    else:
+    reps = []
+    i = 0
+    while i < n - 8:
+        # Find rack/start: wrist lower in the frame.
+        while i < n - 8 and wrist_y[i] < low_thr:
+            i += 1
+        start_idx = i
+
+        # Find lockout: wrist rises high with mostly straight elbow.
+        j = start_idx + 3
+        lockout_idx = None
+        while j < n:
+            if wrist_y[j] <= high_thr and elbow[j] >= 145:
+                window_end = min(n, j + 12)
+                local = np.arange(j, window_end)
+                lockout_idx = int(local[np.argmin(wrist_y[local])])
+                break
+            j += 1
+
+        if lockout_idx is None:
+            break
+
+        # End when bar returns lower, or after a reasonable window.
+        end_idx = min(n - 1, lockout_idx + max(12, int(n * 0.12)))
+        k = lockout_idx + 3
+        while k < n:
+            if wrist_y[k] >= low_thr:
+                end_idx = k
+                break
+            k += 1
+
+        if end_idx - start_idx >= 8:
+            press_idx = max(start_idx + 1, int(start_idx + (lockout_idx - start_idx) * 0.55))
+
+            knee_range = float(np.max(knee[start_idx:end_idx + 1]) - np.min(knee[start_idx:end_idx + 1]))
+            hip_range = float(np.max(hip[start_idx:end_idx + 1]) - np.min(hip[start_idx:end_idx + 1]))
+            torso_max = float(np.percentile(torso[start_idx:end_idx + 1], 90))
+            elbow_lockout = float(elbow[lockout_idx])
+            bar_drift = float(np.percentile(wrist_x[start_idx:end_idx + 1], 90) - np.percentile(wrist_x[start_idx:end_idx + 1], 10))
+
+            issues = []
+            feedback = []
+            breakdown = {
+                "leg_drive": "good",
+                "torso_stack": "good",
+                "lockout": "good",
+                "bar_path": "good",
+                "knee_range": round(knee_range, 1),
+                "hip_range": round(hip_range, 1),
+            }
+
+            score = 9.2
+
+            if knee_range > 18:
+                breakdown["leg_drive"] = "leg_drive"
+                issues.append("Leg drive detected.")
+                feedback.append("Keep your knees locked and press without dipping.")
+                score -= 1.4
+            elif knee_range > 10:
+                breakdown["leg_drive"] = "minor_knee_bend"
+                issues.append("Slight knee bend detected.")
+                feedback.append("Stay strict through the legs.")
+                score -= 0.7
+
+            if hip_range > 25 or torso_max > 70:
+                breakdown["torso_stack"] = "leaning_back"
+                issues.append("Excessive layback detected.")
+                feedback.append("Keep ribs down and press from a stacked torso.")
+                score -= 0.9
+
+            if elbow_lockout < 155:
+                breakdown["lockout"] = "soft"
+                issues.append("Finish stronger overhead.")
+                feedback.append("Fully lock out with the bar stacked over your shoulders.")
+                score -= 0.8
+
+            if bar_drift > 0.16:
+                breakdown["bar_path"] = "drifting"
+                issues.append("Bar drift detected.")
+                feedback.append("Press straight up and move your head through as the bar passes.")
+                score -= 0.8
+
+            score = round(max(1.0, min(9.2, score)), 1)
+
+            if not issues:
+                feedback = ["Strong strict press. Stable torso and full overhead lockout."]
+
+            reps.append({
+                "rep": len(reps) + 1,
+                "start_frame": int(frame_numbers[start_idx]),
+                "press_frame": int(frame_numbers[press_idx]),
+                "lockout_frame": int(frame_numbers[lockout_idx]),
+                "end_frame": int(frame_numbers[end_idx]),
+                "score": score,
+                "grade": grade_score(score),
+                "issues": issues,
+                "breakdown": breakdown,
+                "feedback": feedback,
+            })
+
+        i = max(end_idx + 3, lockout_idx + 8)
+
+    if not reps:
+        # Fallback to one whole-video rep instead of failing.
+        start_idx = 0
         lockout_idx = int(np.argmin(wrist_y))
-
-    lockout_idx = max(lockout_idx, start_idx + 5)
-
-    press_idx = max(start_idx + 1, int(start_idx + (lockout_idx - start_idx) * 0.55))
-
-    # Strict press should not end the instant lockout is reached.
-    # Hold through lockout / early descent so the rep window includes the completed press.
-    # Keep the completed lockout in the rep window.
-    # Strict press videos often hold overhead briefly before lowering.
-    end_idx = min(n - 1, lockout_idx + max(70, int(n * 0.35)))
-
-    knee_range = float(np.max(knee[start_idx:end_idx + 1]) - np.min(knee[start_idx:end_idx + 1]))
-    hip_range = float(np.max(hip[start_idx:end_idx + 1]) - np.min(hip[start_idx:end_idx + 1]))
-    torso_max = float(np.percentile(torso[start_idx:end_idx + 1], 90))
-    elbow_lockout = float(elbow[lockout_idx])
-    bar_drift = float(np.percentile(wrist_x[start_idx:end_idx + 1], 90) - np.percentile(wrist_x[start_idx:end_idx + 1], 10))
-
-    issues = []
-    feedback = []
-
-    breakdown = {
-        "leg_drive": "good",
-        "torso_stack": "good",
-        "lockout": "good",
-        "bar_path": "good",
-        "knee_range": round(knee_range, 1),
-        "hip_range": round(hip_range, 1),
-    }
-
-    score = 10.0
-
-    if knee_range > 18:
-        breakdown["leg_drive"] = "leg_drive"
-        issues.append("Leg drive detected.")
-        feedback.append("Keep your knees locked and press without dipping.")
-        score -= 1.4
-    elif knee_range > 10:
-        breakdown["leg_drive"] = "minor_knee_bend"
-        issues.append("Slight knee bend detected.")
-        feedback.append("Stay strict through the legs.")
-        score -= 0.7
-
-    if hip_range > 25 or torso_max > 70:
-        breakdown["torso_stack"] = "leaning_back"
-        issues.append("Excessive layback detected.")
-        feedback.append("Keep ribs down and press from a stacked torso.")
-        score -= 0.9
-
-    if elbow_lockout < 155:
-        breakdown["lockout"] = "soft"
-        issues.append("Finish stronger overhead.")
-        feedback.append("Fully lock out with the bar stacked over your shoulders.")
-        score -= 0.8
-
-    if bar_drift > 0.16:
-        breakdown["bar_path"] = "drifting"
-        issues.append("Bar drift detected.")
-        feedback.append("Press straight up and move your head through as the bar passes.")
-        score -= 0.8
-
-    score = round(max(1.0, min(10.0, score)), 1)
-
-    if not issues:
-        score = max(score, 9.0)
-        feedback = ["Strong strict press. Stable torso and full overhead lockout."]
-
-    reps = [{
-        "rep": 1,
-        "start_frame": int(frame_numbers[start_idx]),
-        "press_frame": int(frame_numbers[press_idx]),
-        "lockout_frame": int(frame_numbers[lockout_idx]),
-        "end_frame": int(frame_numbers[end_idx]),
-        "score": score,
-        "grade": grade_score(score),
-        "issues": issues,
-        "breakdown": breakdown,
-        "feedback": feedback,
-    }]
+        press_idx = max(1, int(lockout_idx * 0.55))
+        end_idx = n - 1
+        reps = [{
+            "rep": 1,
+            "start_frame": int(frame_numbers[start_idx]),
+            "press_frame": int(frame_numbers[press_idx]),
+            "lockout_frame": int(frame_numbers[lockout_idx]),
+            "end_frame": int(frame_numbers[end_idx]),
+            "score": 8.0,
+            "grade": grade_score(8.0),
+            "issues": ["Rep timing was unclear."],
+            "breakdown": {},
+            "feedback": ["Strict press detected, but rep segmentation was unclear."],
+        }]
 
     return reps, build_set_summary(reps)
-
 
 def analyze_split_jerk_reps(biomechanics):
     knee = np.array([b["knee_angle"] for b in biomechanics])

@@ -276,16 +276,29 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
+    if (
+      label.includes("strict_press") ||
+      label.includes("strict press") ||
+      (label.includes("strict") && label.includes("press"))
+    ) {
+      return {
+        title: "Strict Press Phase Review",
+        text: "Setup → Press → Lockout",
+        items: [
+          ["setup", "Setup"],
+          ["press", "Press"],
+          ["lockout", "Lockout"],
+        ],
+      };
+    }
+
   return {
-    title: "Deadlift Phase Review",
-    text: "Setup → Pull → Mid → Finish → Lockout",
-    items: [
-      ["setup", "Setup"],
-      ["pull", "Pull"],
-      ["mid", "Mid"],
-      ["finish", "Finish"],
-      ["lockout", "Lockout"],
-    ],
+    title: "Movement Phase Review",
+    text: "Setup → Movement → Finish",
+      items: [
+        ["setup", "Setup"],
+        ["finish", "Finish"],
+      ],
   };
 };
 
@@ -683,6 +696,18 @@ const getInteractiveZones = (result) => {
         status: "good",
         note: "Stand tall and stabilize the finished position.",
       },
+    ];
+  }
+
+  if (
+    label.includes("strict_press") ||
+    label.includes("strict press") ||
+    (label.includes("strict") && label.includes("press"))
+  ) {
+    return [
+      { id: "setup", title: "Setup", imageKey: "setup", status: "good", note: "Start tall and braced." },
+      { id: "press", title: "Press Path", imageKey: "press", status: "good", note: "Press straight up." },
+      { id: "lockout", title: "Lockout", imageKey: "lockout", status: "good", note: "Finish stacked overhead." },
     ];
   }
 
