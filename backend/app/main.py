@@ -1868,9 +1868,9 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 else:
                     drift_severity = "minor"
             else:
-                if wrist_drift > 0.05:
+                if wrist_drift > 0.10:
                     drift_severity = "severe"
-                elif wrist_drift > 0.03:
+                elif wrist_drift > 0.07:
                     drift_severity = "moderate"
                 else:
                     drift_severity = "minor"
@@ -1887,7 +1887,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     issues.append("Dip is turning into a forward lean.")
                     feedback.append("Keep the dip vertical with chest tall.")
 
-                if drive_timing < -3:
+                if drive_timing < -12:
                     issues.append("Arms are pressing too early.")
                     feedback.append("Drive with your legs first, then press overhead.")
                 elif drive_timing > 25:
@@ -2008,7 +2008,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     else "borderline" if min_valgus < 0.60
                     else "good"
                 )
-                breakdown["active_finish"] = "good" if elbow_lockout >= 165 else "soft"
+                breakdown["active_finish"] = "good" if elbow_lockout >= 150 else "soft"
                 breakdown["knee_range"] = round(knee_range, 1)
                 breakdown["drive_timing_frames"] = int(drive_timing)
 
@@ -6082,18 +6082,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = olympic_pred
                 final_confidence = max(final_confidence, olympic_conf)
 
-        # Split jerk rescue:
-        # Short jerk-only clips can be routed as clean_and_jerk by the Olympic router.
-        # If there is no visible clean/pull phase and the base model sees push_press,
-        # treat it as split_jerk.
+        # Protect push press from being upgraded to split jerk.
+        # True split jerk needs a real split-stance detector, not just push_press + clean_and_jerk.
         if (
             final_label == "clean_and_jerk"
             and raw_label == "push_press"
             and olympic_conf >= 0.85
             and len(biomechanics) > 80
         ):
-            final_label = "split_jerk"
-            final_confidence = max(final_confidence, olympic_conf)
+            final_label = "push_press"
+            final_confidence = max(final_confidence, raw_confidence)
 
         # Strict press rescue from push press:
         # Very low knee movement means this is a strict press, not a push press.
