@@ -614,6 +614,97 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     return raw_label, confidence, False, "model_prediction"
 
 
+def pick_phase_frames_from_biomechanics(biomechanics, exercise_label):
+    if not biomechanics:
+        return {}
+
+    frames = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 170.0) for b in biomechanics])
+
+    wrist_y = np.array([
+        b.get("wrist_y", b.get("right_wrist_y", 0.5))
+        for b in biomechanics
+    ])
+
+    hip_y = np.array([
+        b.get("hip_y", b.get("right_hip_y", 0.5))
+        for b in biomechanics
+    ])
+
+    # In image coords, smaller y = higher on screen.
+    hip_velocity = np.gradient(hip_y)
+    wrist_velocity = np.gradient(wrist_y)
+
+    label = str(exercise_label).lower().replace(" ", "_")
+
+    start_frame = int(frames[0])
+    end_frame = int(frames[-1])
+
+    if label in ["push_press", "thruster", "strict_press"]:
+        dip_idx = int(np.argmin(knee))
+        drive_idx = int(np.argmin(hip_velocity))      # fastest upward hip movement
+        lockout_idx = int(np.argmin(wrist_y))         # highest wrist
+        catch_idx = lockout_idx
+
+        return {
+            "setup": start_frame,
+            "dip": int(frames[dip_idx]),
+            "drive": int(frames[drive_idx]),
+            "catch": int(frames[catch_idx]),
+            "lockout": int(frames[lockout_idx]),
+        }
+
+    if label in ["squat", "squat_back", "back_squat", "squat_front", "front_squat", "overhead_squat"]:
+        bottom_idx = int(np.argmin(knee))
+        descent_idx = max(0, bottom_idx // 2)
+        ascent_idx = bottom_idx + max(1, (len(frames) - bottom_idx) // 2)
+
+        return {
+            "setup": start_frame,
+            "descent": int(frames[descent_idx]),
+            "bottom": int(frames[bottom_idx]),
+            "ascent": int(frames[min(ascent_idx, len(frames)-1)]),
+            "lockout": end_frame,
+        }
+
+    if label in ["deadlift"]:
+        mid_idx = int(len(frames) * 0.50)
+        finish_idx = int(np.argmin(hip_y))
+
+        return {
+            "setup": start_frame,
+            "pull": int(frames[max(1, len(frames)//4)]),
+            "mid": int(frames[mid_idx]),
+            "finish": int(frames[finish_idx]),
+            "lockout": end_frame,
+        }
+
+    if label in ["clean", "clean_and_jerk", "snatch"]:
+        extension_idx = int(np.argmin(hip_y))
+        catch_idx = int(np.argmin(knee))
+        first_pull_idx = max(0, extension_idx // 2)
+
+        return {
+            "setup": start_frame,
+            "first_pull": int(frames[first_pull_idx]),
+            "extension": int(frames[extension_idx]),
+            "catch": int(frames[catch_idx]),
+            "finish": end_frame,
+        }
+
+    return {
+        "setup": start_frame,
+        "middle": int(frames[len(frames)//2]),
+        "finish": end_frame,
+    }
+
+
 def extract_olympic_signals(biomechanics):
     hip = np.array([b.get("hip_angle", 180) for b in biomechanics])
     knee = np.array([b.get("knee_angle", 180) for b in biomechanics])
@@ -1650,21 +1741,20 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
 def find_push_press_phase_window(start_idx, end_idx):
     span = max(1, end_idx - start_idx)
 
-    # Push press rep detection can be too tight.
-    # Widen the visual window so setup/dip/drive/catch/lockout are readable.
+    # Push press phases should be: setup -> dip -> drive -> lockout.
+    # No catch phase for push press.
     if span < 45:
         pad_before = 18
-        pad_after = 36
+        pad_after = 80
         start_idx = max(0, start_idx - pad_before)
         end_idx = end_idx + pad_after
         span = max(1, end_idx - start_idx)
 
     return {
         "setup": start_idx + int(span * 0.08),
-        "dip": start_idx + int(span * 0.24),
-        "drive": start_idx + int(span * 0.42),
-        "catch": start_idx + int(span * 0.68),
-        "lockout": start_idx + int(span * 0.88),
+        "dip": start_idx + int(span * 0.28),
+        "drive": start_idx + int(span * 0.52),
+        "lockout": start_idx + int(span * 0.92),
     }
 
 
@@ -1987,19 +2077,78 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 "feedback": feedback or [good_rep_message],
             }
 
+            dip_abs_idx = start + dip_idx
+
             if exercise_label == "thruster":
+                drive_idx = min(dip_abs_idx + 18, len(frame_numbers) - 1)
                 catch_idx = min(end + 35, len(frame_numbers) - 1)
                 lockout_idx = min(end + 55, len(frame_numbers) - 1)
             else:
-                catch_idx = min(end + 10, len(frame_numbers) - 1)
-                lockout_idx = min(catch_idx + 1, len(frame_numbers) - 1)
-           
-            rep_item.update({
-                "dip_frame": int(frame_numbers[start + dip_idx]),
-                "drive_frame": int(frame_numbers[min(start + dip_idx + 18, catch_idx if exercise_label == "thruster" else len(frame_numbers) - 1)]),
-                "catch_frame": int(frame_numbers[catch_idx]),
-                "lockout_frame": int(frame_numbers[lockout_idx]),
-            })
+                # Push press / strict press: no true catch phase.
+                # Use representative frames after the dip.
+                drive_idx = min(dip_abs_idx + 18, len(frame_numbers) - 1)
+                catch_idx = min(dip_abs_idx + 30, len(frame_numbers) - 1)
+                lockout_idx = min(dip_abs_idx + 45, len(frame_numbers) - 1)
+
+            rep_item["end_frame"] = int(frame_numbers[lockout_idx])
+
+            rep_item["end_frame"] = int(frame_numbers[lockout_idx])
+
+            # Biomechanical push press phase frames.
+            # Dip = deepest knee bend.
+            # Drive = first clear knee extension after dip.
+            # Lockout = highest wrist after drive with near-straight elbows.
+            if exercise_label == "push_press":
+                rep_len = len(rep_knee)
+
+                dip_local = int(np.argmin(rep_knee))
+                dip_abs_idx = start + dip_local
+
+                # Drive: after dip, find first frame where knees have mostly re-extended.
+                post_knee = rep_knee[dip_local:]
+                knee_bottom = float(np.min(rep_knee))
+                knee_top = float(np.max(rep_knee))
+                drive_threshold = knee_bottom + 0.70 * (knee_top - knee_bottom)
+
+                drive_candidates = np.where(post_knee >= drive_threshold)[0]
+                if len(drive_candidates) > 0:
+                    drive_idx = start + dip_local + int(drive_candidates[0])
+                else:
+                    drive_idx = min(start + dip_local + max(6, rep_len // 4), end)
+
+                # Push press lockout: avoid early false lockout.
+                # Search later in the overhead window and pick highest wrist.
+                lockout_search_start = min(len(frame_numbers) - 1, drive_idx + 55)
+                lockout_search_end = min(len(frame_numbers), drive_idx + 95)
+
+                search_wrist = wrist_y[lockout_search_start:lockout_search_end]
+
+                if len(search_wrist) > 0:
+                    lockout_idx = lockout_search_start + int(np.argmin(search_wrist))
+                else:
+                    lockout_idx = min(drive_idx + 68, len(frame_numbers) - 1)
+
+                # Keep phases ordered and separated.
+                drive_idx = max(drive_idx, dip_abs_idx + 6)
+                lockout_idx = max(lockout_idx, drive_idx + 10)
+
+                drive_idx = min(drive_idx, len(frame_numbers) - 1)
+                lockout_idx = min(lockout_idx, len(frame_numbers) - 1)
+
+                rep_item.update({
+                    "dip_frame": int(frame_numbers[dip_abs_idx]),
+                    "drive_frame": int(frame_numbers[drive_idx]),
+                    "lockout_frame": int(frame_numbers[lockout_idx]),
+                    "end_frame": int(frame_numbers[lockout_idx]),
+                })
+
+            else:
+                rep_item.update({
+                    "dip_frame": int(frame_numbers[dip_abs_idx]),
+                    "drive_frame": int(frame_numbers[drive_idx]),
+                    "catch_frame": int(frame_numbers[catch_idx]),
+                    "lockout_frame": int(frame_numbers[lockout_idx]),
+                })
 
             reps.append(rep_item)
 
@@ -3879,7 +4028,6 @@ def draw_ideal_clean_overlay(frame, pose_landmarks, phase="Clean"):
     return frame
 
 
-
 def draw_overlay_video(
     input_path,
     output_path,
@@ -4566,7 +4714,26 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
 
     # PUSH PRESS: use timing-based fallback
     else:
-        phase_frames = find_push_press_phase_window(start, end)
+        # Push press visuals should use detected rep phase frames,
+        # not percentage-based guesses.
+        setup_frame = int(rep.get("start_frame", start))
+        dip_frame = int(rep.get("dip_frame", start))
+        lockout_frame = int(rep.get("end_frame", rep.get("lockout_frame", end)))
+
+        # Drive should show the bar starting to leave the shoulders.
+        # For push press visuals, this should be closer to the dip than lockout.
+        # This avoids Drive looking like another lockout or late press frame.
+        drive_frame = int(rep.get(
+            "drive_frame",
+            dip_frame + int((lockout_frame - dip_frame) * 0.35)
+        ))
+
+        phase_frames = {
+            "setup": setup_frame,
+            "dip": dip_frame,
+            "drive": drive_frame,
+            "lockout": lockout_frame,
+        }
 
     saved = {}
 
@@ -4866,6 +5033,71 @@ def create_clean_and_jerk_phase_images(input_path, output_dir, rep, sample_every
     cap.release()
     return out
 
+
+def pick_phase_frames_from_rep(rep, exercise_label, start, end, total_frames):
+    label = exercise_label.lower().replace(" ", "_")
+    duration = max(1, end - start)
+
+    def rf(key, fallback):
+        return int(rep.get(key, fallback))
+
+    if label == "split_jerk":
+        phase_frames = {
+            "setup": start,
+            "dip": rf("dip_frame", start + int(duration * 0.20)),
+            "drive": rf("drive_frame", start + int(duration * 0.35)),
+            "catch": rf("catch_frame", start + int(duration * 0.60)),
+            "lockout": rf("lockout_frame", start + int(duration * 0.75)),
+            "finish": end,
+        }
+
+    elif label == "clean_and_jerk":
+        phase_frames = {
+            "setup": start,
+            "clean_catch": rf("clean_catch_frame", start + int(duration * 0.35)),
+            "jerk_dip": rf("jerk_dip_frame", start + int(duration * 0.55)),
+            "jerk_drive": rf("jerk_drive_frame", start + int(duration * 0.65)),
+            "jerk_catch": rf("jerk_catch_frame", start + int(duration * 0.78)),
+            "finish": end,
+        }
+
+    elif label in ["snatch", "clean"]:
+        phase_frames = {
+            "setup": start,
+            "first_pull": rf("first_pull_frame", start + int(duration * 0.22)),
+            "extension": rf("extension_frame", start + int(duration * 0.48)),
+            "catch": rf("catch_frame", start + int(duration * 0.72)),
+            "finish": end,
+        }
+
+    else:
+        phase_frames = {
+            "setup": start,
+            "first_pull": start + int(duration * 0.22),
+            "extension": start + int(duration * 0.48),
+            "catch": start + int(duration * 0.72),
+            "finish": end,
+        }
+
+    # Force frames to be valid and separated so images don't all look identical.
+    min_gap = max(3, duration // 12)
+    ordered = {}
+    last = start - min_gap
+
+    for phase, frame in phase_frames.items():
+        frame = max(0, min(int(frame), total_frames - 1))
+
+        if phase != "setup" and phase != "finish":
+            frame = max(frame, last + min_gap)
+            frame = min(frame, end - 1)
+
+        if phase == "finish":
+            frame = end
+
+        ordered[phase] = frame
+        last = frame
+
+    return ordered
 
 
 def create_olympic_lift_phase_images(
@@ -5703,6 +5935,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.84)
 
+        # ---------------- PUSH PRESS VS CLEAN & JERK GUARD ----------------
+        # If the base model sees push press, do not let Olympic router call it
+        # clean_and_jerk unless the clean portion is actually visible in the clip.
+        if (
+            raw_label == "push_press"
+            and olympic_pred == "clean_and_jerk"
+        ):
+            final_label = "push_press"
+            final_confidence = max(raw_confidence, 0.80)
+
         # ---------------- FINAL PUSH PRESS PROTECTION ----------------
         # Do not let Olympic/thruster rescue override a confident push press.
         if raw_label == "push_press" and raw_confidence >= 0.95:
@@ -5745,6 +5987,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         phase_images = None
         if make_visuals:
             try:
+                # Ensure phase images use the protected final label.
+                if raw_label == "push_press" and raw_confidence >= 0.95:
+                    final_label = "push_press"
+
                 phase_images = get_phase_images(final_label, video_path, biomechanics)
 
                 if final_label == "clean_and_jerk" and rep_feedback:
@@ -5769,20 +6015,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
                 elif final_label in ["push_press", "strict_press"] and rep_feedback:
                     r = rep_feedback[0]
-                    setup = int(r.get("start_frame", 0) or 0)
-                    dip = int(r.get("dip_frame", setup + 5) or setup + 5)
-                    drive = int(r.get("drive_frame", dip + 8) or dip + 8)
-                    end_frame = int(r.get("end_frame", drive + 25) or drive + 25)
-                    catch = int(r.get("catch_frame", drive + 12) or drive + 12)
-                    lockout = int(r.get("lockout_frame", catch + 8) or catch + 8)
-                    catch = max(catch, drive + 8, end_frame + 8)
-                    lockout = max(lockout, catch + 8)
                     phase_images = {
-                        "setup": setup,
-                        "dip": dip,
-                        "drive": drive,
-                        "catch": catch,
-                        "lockout": lockout,
+                        "setup": r.get("start_frame"),
+                        "dip": r.get("dip_frame"),
+                        "drive": r.get("drive_frame"),
+                        "lockout": r.get("lockout_frame"),
                     }
 
                 elif final_label == "thruster" and rep_feedback:
@@ -5792,6 +6029,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                         "drive": r.get("drive_frame"),
                         "lockout": r.get("lockout_frame"),
                     }
+
             except Exception as e:
                 print("phase image error:", e)
 
