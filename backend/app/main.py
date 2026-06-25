@@ -4679,7 +4679,8 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
             lockout_frame = max(lockout_frame, catch_frame, end)
 
         phase_frames = {
-            "squat_dip": bottom_frame,
+            "setup": setup_frame,
+            "dip": bottom_frame,
             "drive": drive_frame,
             "lockout": lockout_frame,
         }
