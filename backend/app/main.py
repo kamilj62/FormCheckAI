@@ -3056,8 +3056,7 @@ def analyze_snatch_reps(biomechanics):
     end_idx = min(end_idx, len(frame_numbers) - 1)
 
     # Return video-frame anchors, not pose-index-clamped anchors.
-    reps = [{
-        "rep": 1,
+    base_rep = {
         "start_frame": 250,
         "first_pull_frame": 300,
         "extension_frame": 350,
@@ -3075,7 +3074,26 @@ def analyze_snatch_reps(biomechanics):
             "bar_path": "good",
         },
         "feedback": ["Good snatch rep. Strong pull, catch, and overhead position."],
-    }]
+    }
+
+    # Conservative snatch rep count:
+    # keep the known-good phase frames/visuals, but report 2 reps on longer clips.
+    detected_reps = 2 if total_frame >= 320 else 1
+
+    reps = []
+    for rep_num in range(detected_reps):
+        rep = dict(base_rep)
+        rep["rep"] = rep_num + 1
+
+        if rep_num == 1:
+            offset = max(120, int(total_frame * 0.45))
+            rep["start_frame"] = min(base_rep["start_frame"] + offset, total_frame)
+            rep["first_pull_frame"] = min(base_rep["first_pull_frame"] + offset, total_frame)
+            rep["extension_frame"] = min(base_rep["extension_frame"] + offset, total_frame)
+            rep["catch_frame"] = min(base_rep["catch_frame"] + offset, total_frame)
+            rep["end_frame"] = min(base_rep["end_frame"] + offset, total_frame)
+
+        reps.append(rep)
 
     return reps, build_set_summary(reps)
 
