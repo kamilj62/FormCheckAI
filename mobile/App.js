@@ -166,12 +166,11 @@ const getPhaseConfig = (exerciseLabel) => {
   if (label.includes("push_press") || label.includes("push press")) {
     return {
       title: "Push Press Phase Review",
-      text: "Setup → Dip → Drive → Catch → Lockout",
+      text: "Setup → Dip → Drive → Lockout",
       items: [
         ["setup", "Setup"],
         ["dip", "Dip"],
         ["drive", "Drive"],
-        ["catch", "Catch"],
         ["lockout", "Lockout"],
       ],
     };
@@ -508,13 +507,6 @@ const getInteractiveZones = (result) => {
         imageKey: "drive",
         status: breakdown.bar_path || "good",
         note: "Keep the bar close and drive straight overhead.",
-      },
-      {
-        id: "catch",
-        title: "Catch",
-        imageKey: "catch",
-        status: breakdown.control || "good",
-        note: "Catch the bar stacked over your shoulders and midfoot.",
       },
       {
         id: "lockout",
@@ -1143,7 +1135,12 @@ export default function App() {
       );
     }
 
-    setResult(data);
+    setSelectedZone(null);
+    setOverlayUrl(null);
+    setResult({
+      ...data,
+      phase_images: data.phase_images || {},
+    });
 
     if (data.overlay_video_url) {
       setOverlayUrl(fullUrl(data.overlay_video_url));
@@ -1189,14 +1186,7 @@ export default function App() {
   const activeZone = selectedZone || zones[0];
 
   const activeImagePath =
-    phaseImages?.[activeZone?.imageKey] ||
-    phaseImages?.setup ||
-    phaseImages?.bottom ||
-    phaseImages?.pull ||
-    phaseImages?.mid ||
-    phaseImages?.press ||
-    phaseImages?.lockout ||
-    null;
+    phaseImages?.[activeZone?.imageKey] || null;
 
   const activeImageUrl = fullUrl(activeImagePath);
   const overlayPlayer = useVideoPlayer(overlayUrl, (player) => {
