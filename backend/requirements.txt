@@ -1,12 +1,16 @@
 fastapi
 uvicorn
-numpy
-opencv-python
-mediapipe==0.10.14
+numpy==1.26.4
+opencv-python==4.11.0.86
+mediapipe==0.10.21
 scikit-learn
-tensorflow
+tensorflow==2.19.0
 python-multipart
 
 boto3
 celery
 redis
+
+ultralytics==8.4.78
+torch
+torchvision
