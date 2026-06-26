@@ -13,13 +13,13 @@ class CropResult:
 
 
 class YOLOTracker:
-    def __init__(self, model_path="models/yolov8n.pt", pad=100):
+    def __init__(self, model_path="models/yolov8n.pt", pad=100, initial_target_id=None):
         if not Path(model_path).exists():
             raise FileNotFoundError(f"YOLO model not found: {model_path}")
 
         self.model = YOLO(model_path)
         self.pad = pad
-        self.target_id = None
+        self.target_id = initial_target_id
         self.last_box = None
 
     def get_crop(self, frame):
