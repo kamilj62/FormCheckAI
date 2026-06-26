@@ -111,10 +111,10 @@ const getPhaseConfig = (exerciseLabel) => {
   if (label.includes("thruster")) {
   return {
     title: "Thruster Phase Review",
-    text: "Squat/Dip → Drive → Lockout",
+    text: "Start → Squat → Lockout",
     items: [
-      ["squat_dip", "Squat/Dip"],
-      ["drive", "Drive"],
+      ["setup", "Start"],
+      ["dip", "Squat"],
       ["lockout", "Lockout"],
     ],
   };
@@ -308,30 +308,30 @@ const getInteractiveZones = (result) => {
   const breakdown = bestRep?.breakdown || {};
 
     if (label.includes("thruster")) {
-  return [
-    {
-      id: "squat_dip",
-      title: "Squat/Dip",
-      imageKey: "squat_dip",
-      status: breakdown.squat_depth || "good",
-      note: "Use a full squat before driving the bar overhead.",
-    },
-    {
-      id: "drive",
-      title: "Drive",
-      imageKey: "drive",
-      status: breakdown.torso_stack || "good",
-      note: "Stay tall and drive through the bar.",
-    },
-    {
-      id: "lockout",
-      title: "Lockout",
-      imageKey: "lockout",
-      status: breakdown.lockout || breakdown.active_finish || "good",
-      note: "Finish fully locked out overhead.",
-    },
-  ];
-}
+    return [
+      {
+        id: "start",
+        title: "Start",
+        imageKey: "setup",
+        status: "good",
+        note: "Start tall and braced with the bar in the front rack.",
+      },
+      {
+        id: "squat",
+        title: "Squat",
+        imageKey: "dip",
+        status: "good",
+        note: "Use a full squat before driving the bar overhead.",
+      },
+      {
+        id: "lockout",
+        title: "Lockout",
+        imageKey: "lockout",
+        status: "good",
+        note: "Finish fully locked out overhead.",
+      },
+    ];
+  }
 
   if (label.includes("burpee")) {
     return [
@@ -1318,12 +1318,12 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {video && (
-          <View style={styles.selectedCard}>
-            <Text style={styles.cardLabel}>Selected Video</Text>
-            <Text style={styles.selectedName}>{video.name}</Text>
-          </View>
-        )}
+          {video && (
+            <View style={styles.selectedCard}>
+              <Text style={styles.cardLabel}>Selected Video</Text>
+              <Text style={styles.selectedName}>{video.name}</Text>
+            </View>
+          )}
 
         {pendingVideos.length > 0 && (
           <View style={styles.card}>
