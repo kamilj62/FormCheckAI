@@ -43,10 +43,11 @@ from fastapi.middleware.cors import CORSMiddleware
 # Experimental: use YOLO to isolate the foreground athlete before pose estimation.
 USE_YOLO_TRACKING = False
 
-from app.tracking import (
-    YOLOTracker,
-    remap_crop_landmarks_to_full_frame,
-)
+try:
+    from app.tracking import YOLOTracker, remap_crop_landmarks_to_full_frame
+except Exception:
+    YOLOTracker = None
+    remap_crop_landmarks_to_full_frame = None
 
 app = FastAPI()
 
@@ -5901,7 +5902,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         subject_center = None
         subject_area = None
 
-        yolo_tracker = YOLOTracker("models/yolov8n.pt", pad=100) if USE_YOLO_TRACKING else None
+        yolo_tracker = (
+            YOLOTracker("models/yolov8n.pt", pad=220)
+            if USE_YOLO_TRACKING and YOLOTracker is not None
+            else None
+        )
 
         # ---------------- POSE EXTRACTION ----------------
         with mp_pose.Pose(
@@ -5919,7 +5924,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
-                if USE_YOLO_TRACKING:
+                if USE_YOLO_TRACKING and yolo_tracker is not None:
                     crop_result = yolo_tracker.get_crop(frame)
                     analysis_frame = crop_result.crop if crop_result.crop is not None else frame
                 else:
