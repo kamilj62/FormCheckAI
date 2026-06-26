@@ -40,6 +40,14 @@ from fastapi.staticfiles import StaticFiles
 
 from fastapi.middleware.cors import CORSMiddleware
 
+# Experimental: use YOLO to isolate the foreground athlete before pose estimation.
+USE_YOLO_TRACKING = False
+
+from app.tracking import (
+    YOLOTracker,
+    remap_crop_landmarks_to_full_frame,
+)
+
 app = FastAPI()
 
 UPLOAD_DIR = "uploads"
@@ -5893,6 +5901,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         subject_center = None
         subject_area = None
 
+        yolo_tracker = YOLOTracker("models/yolov8n.pt", pad=100) if USE_YOLO_TRACKING else None
+
         # ---------------- POSE EXTRACTION ----------------
         with mp_pose.Pose(
             static_image_mode=False,
@@ -5909,7 +5919,14 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                if USE_YOLO_TRACKING:
+                    crop_result = yolo_tracker.get_crop(frame)
+                    analysis_frame = crop_result.crop if crop_result.crop is not None else frame
+                else:
+                    crop_result = None
+                    analysis_frame = frame
+
+                rgb = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
                 results = pose.process(rgb)
 
                 if not results.pose_landmarks:
