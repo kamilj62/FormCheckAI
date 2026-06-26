@@ -6096,6 +6096,29 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label = "clean_and_jerk"
             final_confidence = max(olympic_conf, 0.80)
 
+        # ---------------- BENCH FALSE-POSITIVE THRUSTER RESCUE ----------------
+        # Some floor-start thrusters can look like bench to the base model.
+        # Only rescue when we also see squat + overhead press behavior.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary:
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
+            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+
+            if (
+                raw_label == "bench_press"
+                and olympic_pred == "clean_and_jerk"
+                and pose_summary.get("min_knee_angle", 180) < 130
+                and pose_summary.get("min_hip_angle", 180) < 140
+                and knee_range > 30
+                and hip_range > 30
+                and elbow_range > 35
+                and wrist_ratio >= 0.10
+            ):
+                final_label = "thruster"
+                final_confidence = max(final_confidence, 0.84)
+
         # ---------------- FINAL THRUSTER OVERRIDE ----------------
         pose_summary = summarize_biomechanics(biomechanics)
         if pose_summary:
