@@ -10,7 +10,3 @@ python-multipart
 boto3
 celery
 redis
-
-ultralytics==8.4.78
-torch
-torchvision
