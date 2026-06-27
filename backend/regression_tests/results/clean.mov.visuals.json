@@ -1,12 +1,12 @@
 {
   "exercise_label": "clean",
   "phase_images": {
-    "setup": "/outputs/clean_setup_89209210.jpg",
-    "first_pull": "/outputs/clean_first_pull_a8539b83.jpg",
-    "extension": "/outputs/clean_extension_17d4d4db.jpg",
-    "catch": "/outputs/clean_catch_00d0f139.jpg",
-    "finish": "/outputs/clean_finish_620aac49.jpg",
-    "debug_sheet": "/outputs/clean_phase_debug_dcf59366.jpg"
+    "setup": "/outputs/clean_setup_1bfd9b41.jpg",
+    "first_pull": "/outputs/clean_first_pull_db1fe69d.jpg",
+    "extension": "/outputs/clean_extension_cf53a2ed.jpg",
+    "catch": "/outputs/clean_catch_f7137457.jpg",
+    "finish": "/outputs/clean_finish_c53086e5.jpg",
+    "debug_sheet": "/outputs/clean_phase_debug_0a761081.jpg"
   },
   "visuals_error": null
 }

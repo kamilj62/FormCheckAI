@@ -1,12 +1,12 @@
 {
   "exercise_label": "bench_press",
   "phase_images": {
-    "setup": "/outputs/bench_press_setup_aa6353cc.jpg",
-    "descent": "/outputs/bench_press_descent_b2c13e70.jpg",
-    "bottom": "/outputs/bench_press_bottom_cb6e6541.jpg",
-    "press": "/outputs/bench_press_press_6bf18020.jpg",
-    "lockout": "/outputs/bench_press_lockout_d7555ccc.jpg",
-    "debug_sheet": "/outputs/bench_press_phase_debug_82816aec.jpg"
+    "setup": "/outputs/bench_press_setup_6153f51f.jpg",
+    "descent": "/outputs/bench_press_descent_5e0176d5.jpg",
+    "bottom": "/outputs/bench_press_bottom_046073b7.jpg",
+    "press": "/outputs/bench_press_press_a9c072a9.jpg",
+    "lockout": "/outputs/bench_press_lockout_6f353621.jpg",
+    "debug_sheet": "/outputs/bench_press_phase_debug_45e5540a.jpg"
   },
   "visuals_error": null
 }

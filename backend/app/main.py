@@ -6324,7 +6324,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 and elbow_range < 145
             )
 
-            if wrist_ratio >= 0.03 and elbow_range < 160 and not looks_like_snatch:
+            if 0.03 <= wrist_ratio <= 0.55 and elbow_range < 160 and not looks_like_snatch:
                 final_label = "squat_front"
                 final_confidence = max(final_confidence, 0.86)
                 front_squat_rescue_debug["rescued"] = True
@@ -6386,6 +6386,24 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         ):
             final_label = "clean"
             final_confidence = max(final_confidence, 0.74)
+
+        # Pull-up rescue:
+        # Pull-ups can be misread as squat variants because the legs move while the
+        # wrists stay above the shoulders. A very high wrist-over-shoulder ratio
+        # with squat-family routing is a strong pull-up signal.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if (
+            pose_summary
+            and final_label in ["squat_back", "squat_front", "squat"]
+            and base_raw_label == "squat"
+        ):
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+            min_knee = pose_summary.get("min_knee_angle", 180)
+            min_hip = pose_summary.get("min_hip_angle", 180)
+
+            if wrist_ratio >= 0.65 and min_knee > 90 and min_hip > 90:
+                final_label = "pull_up"
+                final_confidence = max(final_confidence, 0.82)
 
         analysis_label = final_label
 
@@ -6619,25 +6637,31 @@ async def generate_visuals(
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        label = str(exercise_label or "").lower()
+
         if not rep_json:
-            return {
-                "exercise_label": exercise_label or "Unknown",
-                "phase_images": None,
-                "visuals_error": "Missing rep data. Analyze the video first.",
-            }
+            if "pull_up" in label or "pull-up" in label or "pull up" in label:
+                rep_json = "{}"
+            else:
+                return {
+                    "exercise_label": exercise_label or "Unknown",
+                    "phase_images": None,
+                    "visuals_error": "Missing rep data. Analyze the video first.",
+                }
 
         rep = json.loads(rep_json)
         if isinstance(rep, list):
             rep = rep[0] if rep else None
 
         if not rep:
-            return {
-                "exercise_label": exercise_label or "Unknown",
-                "phase_images": None,
-                "visuals_error": "No usable rep found.",
-            }
-
-        label = str(exercise_label or "").lower()
+            if "pull_up" in label or "pull-up" in label or "pull up" in label:
+                rep = {}
+            else:
+                return {
+                    "exercise_label": exercise_label or "Unknown",
+                    "phase_images": None,
+                    "visuals_error": "No usable rep found.",
+                }
 
         if "overhead squat" in label or "overhead_squat" in label:
             phase_images = create_overhead_squat_phase_images(
@@ -6666,6 +6690,10 @@ async def generate_visuals(
             )
         elif "bench" in label:
             phase_images = create_bench_press_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "pull_up" in label or "pull-up" in label or "pull up" in label:
+            phase_images = create_pull_up_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
         elif "clean_and_jerk" in label or "clean and jerk" in label:

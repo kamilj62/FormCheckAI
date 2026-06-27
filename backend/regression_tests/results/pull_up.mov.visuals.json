@@ -1,11 +1,12 @@
 {
-  "exercise_label": "squat_back",
+  "exercise_label": "pull_up",
   "phase_images": {
-    "setup": "/outputs/squat_setup_3d74632f.jpg",
-    "descent": "/outputs/squat_descent_dcbb4647.jpg",
-    "bottom": "/outputs/squat_bottom_c154c0e8.jpg",
-    "ascent": "/outputs/squat_ascent_615e87cc.jpg",
-    "lockout": "/outputs/squat_lockout_49252358.jpg"
+    "hang": "/outputs/pull_up_hang_d6f5193a.jpg",
+    "pull": "/outputs/pull_up_pull_a2ccdc19.jpg",
+    "top": "/outputs/pull_up_top_e88dfc6c.jpg",
+    "descent": "/outputs/pull_up_descent_cb6ba532.jpg",
+    "debug_sheet": "/outputs/pull_up_phase_debug_532b02c6.jpg",
+    "finish": "/outputs/pull_up_descent_cb6ba532.jpg"
   },
   "visuals_error": null
 }
