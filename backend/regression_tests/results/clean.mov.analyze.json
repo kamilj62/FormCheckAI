@@ -1,0 +1,110 @@
+{
+  "exercise_label": "clean_and_jerk",
+  "confidence": 0.64,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 1,
+      "clean_catch_frame": 103,
+      "jerk_dip_frame": 281,
+      "jerk_drive_frame": 357,
+      "jerk_catch_frame": 360,
+      "end_frame": 360,
+      "score": 8.2,
+      "grade": "Good",
+      "issues": [
+        "Clean: Arms may be bending early during the pull.",
+        "Jerk: Overhead position is not held long enough.",
+        "Jerk: Torso is leaning during the catch.",
+        "Jerk: Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "clean": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "early_arm_bend",
+          "catch": "good",
+          "front_rack": "good",
+          "bar_path": "good"
+        },
+        "jerk": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "incomplete",
+          "split_catch": "good",
+          "torso_stack": "leaning",
+          "bar_path": "good"
+        }
+      },
+      "feedback": [
+        "Keep arms long until you finish extending.",
+        "Catch and stabilize the bar overhead.",
+        "Keep ribs stacked and torso vertical under the bar.",
+        "Drive knees out and keep a stable receiving position."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 1,
+    "avg_rep_score": 8.2,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set.",
+    "biggest_fix": "Keep building consistent reps."
+  },
+  "coaching_zones": {
+    "clean": {
+      "label": "clean",
+      "status": "good",
+      "score": 1.0,
+      "message": "Clean is good overall.",
+      "issue_count": 4
+    },
+    "jerk": {
+      "label": "jerk",
+      "status": "good",
+      "score": 1.0,
+      "message": "Jerk is good overall.",
+      "issue_count": 4
+    },
+    "clean_first_pull": {
+      "label": "Clean First Pull",
+      "status": "unknown",
+      "message": "Focus on keeping bar close during first pull."
+    },
+    "clean_catch": {
+      "label": "Clean Catch",
+      "status": "unknown",
+      "message": "Improve rack position and stability on catch."
+    },
+    "jerk_dip": {
+      "label": "Jerk Dip",
+      "status": "unknown",
+      "message": "Keep vertical dip without knee collapse."
+    }
+  },
+  "phase_images": {
+    "setup": 1,
+    "clean_catch": 103,
+    "jerk_dip": 281,
+    "jerk_catch": 360,
+    "finish": 360
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "thruster",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "clean_and_jerk",
+    "original_confidence": 0.7881633043289185,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.644,
+    "frames_seen": 360,
+    "frames_processed": 308,
+    "pose_frames": 308,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null
+  }
+}

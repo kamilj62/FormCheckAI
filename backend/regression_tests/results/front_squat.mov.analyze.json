@@ -1,105 +1,117 @@
 {
-  "exercise_label": "squat",
-  "confidence": 0.98,
+  "exercise_label": "snatch",
+  "confidence": 0.84,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
-      "rep": 1,
-      "start_frame": 164,
-      "descent_frame": 175,
-      "bottom_frame": 185,
-      "ascent_frame": 187,
-      "end_frame": 190,
-      "score": 8.6,
-      "grade": "Good",
-      "issues": [
-        "Depth may be shallow."
-      ],
+      "start_frame": 250,
+      "first_pull_frame": 300,
+      "extension_frame": 350,
+      "catch_frame": 400,
+      "end_frame": 450,
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
       "breakdown": {
-        "depth": "poor",
-        "torso": "good",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good"
       },
       "feedback": [
-        "Try to reach better squat depth."
-      ]
+        "Good snatch rep. Strong pull, catch, and overhead position."
+      ],
+      "rep": 1
     }
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 8.6,
+    "avg_rep_score": 9.0,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Squat deeper until your hips pass below your knees."
+    "biggest_fix": "Keep building consistent reps."
   },
   "coaching_zones": {
-    "depth": {
-      "label": "depth",
-      "status": "poor",
-      "score": 0.0,
-      "message": "Depth is poor overall.",
-      "issue_count": 1
-    },
-    "torso": {
-      "label": "torso",
+    "first_pull": {
+      "label": "first_pull",
       "status": "good",
       "score": 1.0,
-      "message": "Torso is good overall.",
-      "issue_count": 1
+      "message": "First Pull is good overall.",
+      "issue_count": 0
     },
-    "knees": {
-      "label": "knees",
+    "extension": {
+      "label": "extension",
       "status": "good",
       "score": 1.0,
-      "message": "Knees is good overall.",
-      "issue_count": 1
+      "message": "Extension is good overall.",
+      "issue_count": 0
     },
-    "heels": {
-      "label": "heels",
+    "turnover": {
+      "label": "turnover",
       "status": "good",
       "score": 1.0,
-      "message": "Heels is good overall.",
-      "issue_count": 1
+      "message": "Turnover is good overall.",
+      "issue_count": 0
     },
-    "neck": {
-      "label": "neck",
+    "overhead_catch": {
+      "label": "overhead_catch",
       "status": "good",
       "score": 1.0,
-      "message": "Neck is good overall.",
-      "issue_count": 1
+      "message": "Overhead Catch is good overall.",
+      "issue_count": 0
     },
-    "butt_wink": {
-      "label": "butt_wink",
+    "stability": {
+      "label": "stability",
       "status": "good",
       "score": 1.0,
-      "message": "Butt Wink is good overall.",
-      "issue_count": 1
+      "message": "Stability is good overall.",
+      "issue_count": 0
+    },
+    "bar_path": {
+      "label": "bar_path",
+      "status": "good",
+      "score": 1.0,
+      "message": "Bar Path is good overall.",
+      "issue_count": 0
+    },
+    "overhead_stability": {
+      "label": "Overhead Stability",
+      "status": "unknown",
+      "message": "Maintain stable overhead position without drift."
     }
   },
   "phase_images": {
-    "setup": 1,
-    "clean_catch": 42,
-    "jerk_dip": 245,
-    "jerk_catch": 252,
-    "finish": 275
+    "setup": 250,
+    "first_pull": 300,
+    "extension": 350,
+    "catch": 400,
+    "finish": 450
   },
   "overlay_job_id": null,
   "overlay_video_url": null,
   "debug": {
     "original_prediction": "squat",
     "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "squat",
-    "original_confidence": 0.9845851063728333,
+    "final_label_debug": "snatch",
+    "original_confidence": 0.9994179010391235,
     "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.816,
-    "frames_seen": 275,
-    "frames_processed": 157,
-    "pose_frames": 157,
+    "olympic_confidence": 0.638,
+    "frames_seen": 230,
+    "frames_processed": 100,
+    "pose_frames": 100,
     "sample_every": 1,
-    "input_shape": "(30, 136)"
+    "input_shape": "(30, 136)",
+    "squat_router": {
+      "squat_label": "squat_back",
+      "squat_confidence": 0.9854382276535034,
+      "squat_probs": [
+        0.0035168007016181946,
+        0.9854382276535034,
+        0.011044944636523724
+      ]
+    }
   }
 }

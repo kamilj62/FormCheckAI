@@ -1,0 +1,10 @@
+{
+  "exercise_label": "thruster",
+  "phase_images": {
+    "setup": "/outputs/push_press_setup_ed1aaca2.jpg",
+    "dip": "/outputs/push_press_dip_26ec3baf.jpg",
+    "lockout": "/outputs/push_press_lockout_a211703b.jpg",
+    "debug_sheet": "/outputs/push_press_phase_debug_52a0be63.jpg"
+  },
+  "visuals_error": null
+}

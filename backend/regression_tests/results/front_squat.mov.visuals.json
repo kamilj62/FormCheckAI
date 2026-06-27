@@ -1,11 +1,5 @@
 {
-  "exercise_label": "squat",
-  "phase_images": {
-    "setup": "/outputs/squat_setup_6ec9b536.jpg",
-    "descent": "/outputs/squat_descent_02591e91.jpg",
-    "bottom": "/outputs/squat_bottom_14beb602.jpg",
-    "ascent": "/outputs/squat_ascent_02955dcc.jpg",
-    "lockout": "/outputs/squat_lockout_a092dbd4.jpg"
-  },
-  "visuals_error": null
+  "exercise_label": "snatch",
+  "phase_images": {},
+  "visuals_error": "Phase images unavailable for this lift."
 }
