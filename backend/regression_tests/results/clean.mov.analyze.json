@@ -1,94 +1,124 @@
 {
-  "exercise_label": "clean_and_jerk",
-  "confidence": 0.64,
+  "exercise_label": "clean",
+  "confidence": 0.74,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 1,
-      "clean_catch_frame": 103,
-      "jerk_dip_frame": 281,
-      "jerk_drive_frame": 357,
-      "jerk_catch_frame": 360,
-      "end_frame": 360,
-      "score": 8.2,
-      "grade": "Good",
+      "start_frame": 86,
+      "first_pull_frame": 118,
+      "extension_frame": 159,
+      "catch_frame": 178,
+      "end_frame": 248,
+      "score": 9.2,
+      "grade": "Excellent",
       "issues": [
-        "Clean: Arms may be bending early during the pull.",
-        "Jerk: Overhead position is not held long enough.",
-        "Jerk: Torso is leaning during the catch.",
-        "Jerk: Knees may cave during the dip or catch."
+        "Arms may be bending early during the pull."
       ],
       "breakdown": {
-        "clean": {
-          "first_pull": "good",
-          "extension": "good",
-          "turnover": "early_arm_bend",
-          "catch": "good",
-          "front_rack": "good",
-          "bar_path": "good"
-        },
-        "jerk": {
-          "dip": "knee_cave",
-          "drive": "good",
-          "lockout": "incomplete",
-          "split_catch": "good",
-          "torso_stack": "leaning",
-          "bar_path": "good"
-        }
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "early_arm_bend",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good"
       },
       "feedback": [
-        "Keep arms long until you finish extending.",
-        "Catch and stabilize the bar overhead.",
-        "Keep ribs stacked and torso vertical under the bar.",
-        "Drive knees out and keep a stable receiving position."
+        "Keep arms long until you finish extending."
+      ]
+    },
+    {
+      "rep": 2,
+      "start_frame": 190,
+      "first_pull_frame": 257,
+      "extension_frame": 294,
+      "catch_frame": 315,
+      "end_frame": 348,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Arms may be bending early during the pull."
+      ],
+      "breakdown": {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "early_arm_bend",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Keep arms long until you finish extending."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 1,
-    "avg_rep_score": 8.2,
+    "detected_reps": 2,
+    "avg_rep_score": 9.2,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set.",
     "biggest_fix": "Keep building consistent reps."
   },
   "coaching_zones": {
-    "clean": {
-      "label": "clean",
+    "first_pull": {
+      "label": "first_pull",
       "status": "good",
       "score": 1.0,
-      "message": "Clean is good overall.",
-      "issue_count": 4
+      "message": "First Pull is good overall.",
+      "issue_count": 2
     },
-    "jerk": {
-      "label": "jerk",
+    "extension": {
+      "label": "extension",
       "status": "good",
       "score": 1.0,
-      "message": "Jerk is good overall.",
-      "issue_count": 4
+      "message": "Extension is good overall.",
+      "issue_count": 2
+    },
+    "turnover": {
+      "label": "turnover",
+      "status": "good",
+      "score": 1.0,
+      "message": "Turnover is good overall.",
+      "issue_count": 2
+    },
+    "catch": {
+      "label": "catch",
+      "status": "good",
+      "score": 1.0,
+      "message": "Catch is good overall.",
+      "issue_count": 2
+    },
+    "front_rack": {
+      "label": "front_rack",
+      "status": "good",
+      "score": 1.0,
+      "message": "Front Rack is good overall.",
+      "issue_count": 2
+    },
+    "bar_path": {
+      "label": "bar_path",
+      "status": "good",
+      "score": 1.0,
+      "message": "Bar Path is good overall.",
+      "issue_count": 2
     },
     "clean_first_pull": {
       "label": "Clean First Pull",
-      "status": "unknown",
+      "status": "good",
       "message": "Focus on keeping bar close during first pull."
     },
     "clean_catch": {
       "label": "Clean Catch",
-      "status": "unknown",
+      "status": "good",
       "message": "Improve rack position and stability on catch."
-    },
-    "jerk_dip": {
-      "label": "Jerk Dip",
-      "status": "unknown",
-      "message": "Keep vertical dip without knee collapse."
     }
   },
   "phase_images": {
     "setup": 1,
-    "clean_catch": 103,
-    "jerk_dip": 281,
-    "jerk_catch": 360,
+    "clean_catch": 181,
+    "jerk_dip": 128,
+    "jerk_catch": 176,
     "finish": 360
   },
   "overlay_job_id": null,
@@ -96,7 +126,7 @@
   "debug": {
     "original_prediction": "thruster",
     "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "clean_and_jerk",
+    "final_label_debug": "clean",
     "original_confidence": 0.7881633043289185,
     "olympic_pred": "clean_and_jerk",
     "olympic_confidence": 0.644,
@@ -105,6 +135,7 @@
     "pose_frames": 308,
     "sample_every": 1,
     "input_shape": "(30, 136)",
-    "squat_router": null
+    "squat_router": null,
+    "front_squat_rescue": null
   }
 }

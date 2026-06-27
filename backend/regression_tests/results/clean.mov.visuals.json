@@ -1,13 +1,12 @@
 {
-  "exercise_label": "clean_and_jerk",
+  "exercise_label": "clean",
   "phase_images": {
-    "setup": "/outputs/clean_and_jerk_setup_eb726d3f.jpg",
-    "clean_catch": "/outputs/clean_and_jerk_clean_catch_a9672c04.jpg",
-    "jerk_dip": "/outputs/clean_and_jerk_jerk_dip_f373e1cc.jpg",
-    "jerk_drive": "/outputs/clean_and_jerk_jerk_drive_f19ab027.jpg",
-    "jerk_catch": "/outputs/clean_and_jerk_jerk_catch_dae93ad0.jpg",
-    "finish": "/outputs/clean_and_jerk_finish_9778589a.jpg",
-    "debug_sheet": "/outputs/clean_and_jerk_phase_debug_963f267f.jpg"
+    "setup": "/outputs/clean_setup_89209210.jpg",
+    "first_pull": "/outputs/clean_first_pull_a8539b83.jpg",
+    "extension": "/outputs/clean_extension_17d4d4db.jpg",
+    "catch": "/outputs/clean_catch_00d0f139.jpg",
+    "finish": "/outputs/clean_finish_620aac49.jpg",
+    "debug_sheet": "/outputs/clean_phase_debug_dcf59366.jpg"
   },
   "visuals_error": null
 }

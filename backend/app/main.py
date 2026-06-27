@@ -6375,6 +6375,18 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "strict_press"
                 final_confidence = max(final_confidence, 0.86)
 
+        # Clean-only rescue:
+        # Clean clips can be base-routed as thruster and Olympic-routed as low-confidence
+        # clean_and_jerk. If Olympic confidence is modest, treat it as clean.
+        if (
+            final_label == "clean_and_jerk"
+            and base_raw_label == "thruster"
+            and olympic_pred == "clean_and_jerk"
+            and olympic_conf < 0.75
+        ):
+            final_label = "clean"
+            final_confidence = max(final_confidence, 0.74)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
