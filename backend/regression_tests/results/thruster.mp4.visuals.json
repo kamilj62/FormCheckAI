@@ -1,10 +1,10 @@
 {
   "exercise_label": "thruster",
   "phase_images": {
-    "setup": "/outputs/push_press_setup_ee67b2c1.jpg",
-    "dip": "/outputs/push_press_dip_d1d71112.jpg",
-    "lockout": "/outputs/push_press_lockout_a81b7584.jpg",
-    "debug_sheet": "/outputs/push_press_phase_debug_f9a53ec0.jpg"
+    "setup": "/outputs/push_press_setup_7c30c476.jpg",
+    "dip": "/outputs/push_press_dip_42a4821e.jpg",
+    "lockout": "/outputs/push_press_lockout_3c980669.jpg",
+    "debug_sheet": "/outputs/push_press_phase_debug_29dc22a7.jpg"
   },
   "visuals_error": null
 }

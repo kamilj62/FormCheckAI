@@ -1,102 +1,115 @@
 {
-  "exercise_label": "split_jerk",
-  "confidence": 0.8,
+  "exercise_label": "strict_press",
+  "confidence": 0.86,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 73,
-      "dip_frame": 125,
-      "drive_frame": 139,
-      "catch_frame": 162,
-      "lockout_frame": 174,
-      "end_frame": 198,
-      "score": 7.3,
-      "grade": "Solid",
-      "issues": [
-        "Overhead position is not held long enough.",
-        "Split catch may be too shallow.",
-        "Knees may cave during the dip or catch."
-      ],
+      "start_frame": 3,
+      "press_frame": 44,
+      "lockout_frame": 108,
+      "end_frame": 130,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [],
       "breakdown": {
-        "dip": "knee_cave",
-        "drive": "good",
-        "lockout": "incomplete",
-        "split_catch": "shallow",
+        "leg_drive": "good",
         "torso_stack": "good",
-        "bar_path": "good"
+        "lockout": "good",
+        "bar_path": "good",
+        "knee_range": 8.7,
+        "hip_range": 5.8
       },
       "feedback": [
-        "Catch and stabilize the bar overhead.",
-        "Drop under the bar into a stronger split position.",
-        "Drive knees out and keep a stable receiving position."
+        "Strong strict press. Stable torso and full overhead lockout."
+      ]
+    },
+    {
+      "rep": 2,
+      "start_frame": 136,
+      "press_frame": 156,
+      "lockout_frame": 174,
+      "end_frame": 209,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "leg_drive": "good",
+        "torso_stack": "good",
+        "lockout": "good",
+        "bar_path": "good",
+        "knee_range": 8.9,
+        "hip_range": 5.5
+      },
+      "feedback": [
+        "Strong strict press. Stable torso and full overhead lockout."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 1,
-    "avg_rep_score": 7.3,
+    "detected_reps": 2,
+    "avg_rep_score": 9.2,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set.",
     "biggest_fix": "Keep building consistent reps."
   },
   "coaching_zones": {
-    "dip": {
-      "label": "dip",
+    "leg_drive": {
+      "label": "leg_drive",
       "status": "good",
       "score": 1.0,
-      "message": "Dip is good overall.",
-      "issue_count": 3
-    },
-    "drive": {
-      "label": "drive",
-      "status": "good",
-      "score": 1.0,
-      "message": "Drive is good overall.",
-      "issue_count": 3
-    },
-    "lockout": {
-      "label": "lockout",
-      "status": "poor",
-      "score": 0.0,
-      "message": "Lockout is poor overall.",
-      "issue_count": 3
-    },
-    "split_catch": {
-      "label": "split_catch",
-      "status": "good",
-      "score": 1.0,
-      "message": "Split Catch is good overall.",
-      "issue_count": 3
+      "message": "Leg Drive is good overall.",
+      "issue_count": 0
     },
     "torso_stack": {
       "label": "torso_stack",
       "status": "good",
       "score": 1.0,
       "message": "Torso Stack is good overall.",
-      "issue_count": 3
+      "issue_count": 0
+    },
+    "lockout": {
+      "label": "lockout",
+      "status": "good",
+      "score": 1.0,
+      "message": "Lockout is good overall.",
+      "issue_count": 0
     },
     "bar_path": {
       "label": "bar_path",
       "status": "good",
       "score": 1.0,
       "message": "Bar Path is good overall.",
-      "issue_count": 3
+      "issue_count": 0
+    },
+    "knee_range": {
+      "label": "knee_range",
+      "status": "good",
+      "score": 1.0,
+      "message": "Knee Range is good overall.",
+      "issue_count": 0
+    },
+    "hip_range": {
+      "label": "hip_range",
+      "status": "good",
+      "score": 1.0,
+      "message": "Hip Range is good overall.",
+      "issue_count": 0
     }
   },
   "phase_images": {
-    "setup": 73,
-    "dip": 125,
-    "drive": 139,
-    "lockout": 174
+    "setup": 3,
+    "dip": null,
+    "drive": null,
+    "lockout": 108
   },
   "overlay_job_id": null,
   "overlay_video_url": null,
   "debug": {
     "original_prediction": "push_press",
     "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "split_jerk",
+    "final_label_debug": "strict_press",
     "original_confidence": 0.9967418313026428,
     "olympic_pred": "clean_and_jerk",
     "olympic_confidence": 0.908,
@@ -105,6 +118,7 @@
     "pose_frames": 196,
     "sample_every": 1,
     "input_shape": "(30, 136)",
-    "squat_router": null
+    "squat_router": null,
+    "front_squat_rescue": null
   }
 }

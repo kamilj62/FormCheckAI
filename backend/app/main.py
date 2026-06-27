@@ -6363,6 +6363,18 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label = "snatch"
             final_confidence = max(final_confidence, 0.84)
 
+        # Strict press rescue:
+        # If the base model sees push_press but knee movement is very small,
+        # this is a strict press, not a split jerk.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary and base_raw_label == "push_press":
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
+            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
+
+            if knee_range <= 15 and hip_range <= 25:
+                final_label = "strict_press"
+                final_confidence = max(final_confidence, 0.86)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
