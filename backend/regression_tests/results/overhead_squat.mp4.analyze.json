@@ -100,6 +100,7 @@
     "pose_frames": 115,
     "sample_every": 1,
     "input_shape": "(30, 136)",
-    "squat_router": null
+    "squat_router": null,
+    "front_squat_rescue": null
   }
 }

@@ -6222,12 +6222,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and olympic_conf >= 0.60
             and raw_label in ["squat", "squat_back", "squat_front", "overhead_squat", "push_press", "thruster"]
         ):
-            if raw_label in ["squat", "squat_back", "squat_front"] and olympic_pred == "clean_and_jerk":
-                final_label = "snatch"
-                final_confidence = max(final_confidence, 0.82)
-            else:
-                final_label = olympic_pred
-                final_confidence = max(final_confidence, olympic_conf)
+            # Do not convert squat-family + clean_and_jerk into snatch.
+            # That caused front squats to be mislabeled as snatch.
+            final_label = olympic_pred
+            final_confidence = max(final_confidence, olympic_conf)
 
         # Protect push press from being upgraded to split jerk.
         # True split jerk needs a real split-stance detector, not just push_press + clean_and_jerk.
@@ -6302,6 +6300,39 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label = squat_variant_label
             final_confidence = float(squat_variant_conf)
 
+        # Front squat rescue:
+        # Front squats often appear as squat_back to the squat router if the bar/front rack
+        # is hard to see. If the base model is a very confident squat and the wrists stay
+        # near or above the shoulders, prefer squat_front.
+        pose_summary = summarize_biomechanics(biomechanics)
+        front_squat_rescue_debug = None
+        if pose_summary and final_label == "squat_back" and base_raw_label == "squat":
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+
+            front_squat_rescue_debug = {
+                "wrist_ratio": wrist_ratio,
+                "elbow_range": elbow_range,
+                "final_label_before": final_label,
+                "base_raw_label": base_raw_label,
+            }
+
+            looks_like_snatch = (
+                base_raw_confidence < 0.98
+                and olympic_conf >= 0.60
+                and wrist_ratio >= 0.20
+                and elbow_range < 145
+            )
+
+            if wrist_ratio >= 0.03 and elbow_range < 160 and not looks_like_snatch:
+                final_label = "squat_front"
+                final_confidence = max(final_confidence, 0.86)
+                front_squat_rescue_debug["rescued"] = True
+                front_squat_rescue_debug["looks_like_snatch"] = looks_like_snatch
+            else:
+                front_squat_rescue_debug["rescued"] = False
+                front_squat_rescue_debug["looks_like_snatch"] = looks_like_snatch
+
         # Overhead squat rescue:
         # Some overhead squats are misread as push_press because wrists stay overhead.
         # If the athlete reaches squat depth with wrists overhead, prefer overhead_squat.
@@ -6320,6 +6351,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             ):
                 final_label = "overhead_squat"
                 final_confidence = max(final_confidence, 0.86)
+
+        # Snatch rescue:
+        # Snatch catch can look like squat_back/front after squat routing.
+        if (
+            final_label in ["squat_back", "squat_front", "squat"]
+            and base_raw_label == "squat"
+            and olympic_conf >= 0.60
+            and base_raw_confidence < 0.98
+        ):
+            final_label = "snatch"
+            final_confidence = max(final_confidence, 0.84)
 
         analysis_label = final_label
 
@@ -6449,6 +6491,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "sample_every": sample_every,
                 "input_shape": str(seq.shape),
                 "squat_router": squat_router_debug,
+                "front_squat_rescue": front_squat_rescue_debug,
             },
         }
 

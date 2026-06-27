@@ -109,6 +109,14 @@
         0.9775787591934204,
         0.01918717660009861
       ]
+    },
+    "front_squat_rescue": {
+      "wrist_ratio": 0.08433734939759036,
+      "elbow_range": 160.8113311967907,
+      "final_label_before": "squat_back",
+      "base_raw_label": "squat",
+      "rescued": false,
+      "looks_like_snatch": false
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "exercise_label": "snatch",
-  "confidence": 0.84,
+  "confidence": 0.97,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
@@ -134,6 +134,14 @@
         0.9685702919960022,
         0.025264110416173935
       ]
+    },
+    "front_squat_rescue": {
+      "wrist_ratio": 0.24579124579124578,
+      "elbow_range": 133.48381160936754,
+      "final_label_before": "squat_back",
+      "base_raw_label": "squat",
+      "rescued": false,
+      "looks_like_snatch": true
     }
   }
 }
