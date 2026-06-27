@@ -478,7 +478,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     # THRUSTER RESCUE FROM BENCH / SQUAT / PUSH PRESS
     # Thruster = deep squat + overhead press in same clip.
 
-    if raw_label in ["bench_press", "squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]:
+    if raw_label in ["squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]:
         print(
             "THRUSTER DEBUG",
             {
@@ -492,7 +492,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         )
 
     if (
-        raw_label in ["bench_press", "squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
+        raw_label in ["squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
         and min_knee < 115
         and min_hip < 125
         and wrist_ratio > 0.12
@@ -6128,7 +6128,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
 
             if (
-                raw_label in ["bench_press", "squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
+                raw_label in ["squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
                 and pose_summary.get("min_knee_angle", 180) < 115
                 and pose_summary.get("min_hip_angle", 180) < 125
                 and knee_range > 45
@@ -6161,7 +6161,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # FINAL OLYMPIC PROTECTION:
         # Do not allow thruster rescue to override Olympic lift routing.
         # Snatch is often misread as squat/thruster because of the overhead squat catch.
-        if final_label == "thruster" and olympic_pred in ["snatch", "clean", "clean_and_jerk"] and olympic_conf >= 0.60:
+        if (
+            final_label == "thruster"
+            and olympic_pred in ["snatch", "clean", "clean_and_jerk"]
+            and olympic_conf >= 0.60
+            and raw_label in ["squat", "squat_back", "squat_front", "overhead_squat", "push_press", "thruster"]
+        ):
             if raw_label in ["squat", "squat_back", "squat_front"] and olympic_pred == "clean_and_jerk":
                 final_label = "snatch"
                 final_confidence = max(final_confidence, 0.82)
