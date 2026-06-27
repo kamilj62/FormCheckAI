@@ -6360,11 +6360,19 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         # Snatch rescue:
         # Snatch catch can look like squat_back/front after squat routing.
+        # Keep this narrow so clean_and_jerk clips with large elbow turnover
+        # are not stolen by snatch.
+        pose_summary = summarize_biomechanics(biomechanics)
+        elbow_range = 999
+        if pose_summary:
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+
         if (
             final_label in ["squat_back", "squat_front", "squat"]
             and base_raw_label == "squat"
             and olympic_conf >= 0.60
             and base_raw_confidence < 0.98
+            and elbow_range < 145
         ):
             final_label = "snatch"
             final_confidence = max(final_confidence, 0.84)
@@ -6424,6 +6432,24 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         ):
             final_label = "burpee"
             final_confidence = max(final_confidence, 0.84)
+
+        # Clean & Jerk rescue:
+        # C&J clips can pass through squat routing after the clean catch.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary:
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+
+            if (
+                final_label in ["squat_back", "squat_front", "squat"]
+                and base_raw_label == "squat"
+                and olympic_pred == "clean_and_jerk"
+                and olympic_conf >= 0.75
+                and 0.15 <= wrist_ratio <= 0.35
+                and elbow_range >= 150
+            ):
+                final_label = "clean_and_jerk"
+                final_confidence = max(final_confidence, olympic_conf, 0.78)
 
         analysis_label = final_label
 

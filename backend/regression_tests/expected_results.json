@@ -76,5 +76,11 @@
     "min_confidence": 0.6,
     "min_reps": 0,
     "analysis_mode": "detailed_rep_analysis"
+  },
+  "clean_and_jerk.mp4": {
+    "label": "clean_and_jerk",
+    "min_confidence": 0.6,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
   }
 }
