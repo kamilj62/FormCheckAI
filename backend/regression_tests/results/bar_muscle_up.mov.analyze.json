@@ -1,0 +1,39 @@
+{
+  "exercise_label": "muscle_up",
+  "confidence": 0.82,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [],
+  "set_summary": {
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected.",
+    "biggest_fix": "Record a clearer set for analysis."
+  },
+  "coaching_zones": {},
+  "phase_images": {
+    "setup": 1,
+    "clean_catch": 129,
+    "jerk_dip": 180,
+    "jerk_catch": 181,
+    "finish": 201
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "thruster",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "muscle_up",
+    "original_confidence": 0.9984861016273499,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.708,
+    "frames_seen": 201,
+    "frames_processed": 197,
+    "pose_frames": 197,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null,
+    "front_squat_rescue": null
+  }
+}

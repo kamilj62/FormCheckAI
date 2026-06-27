@@ -1,12 +1,12 @@
 {
   "exercise_label": "overhead_squat",
   "phase_images": {
-    "setup": "/outputs/overhead_squat_setup_fbb4c402.jpg",
-    "descent": "/outputs/overhead_squat_descent_459c339d.jpg",
-    "bottom": "/outputs/overhead_squat_bottom_152764e4.jpg",
-    "ascent": "/outputs/overhead_squat_ascent_ce04ee95.jpg",
-    "lockout": "/outputs/overhead_squat_lockout_4f2b9651.jpg",
-    "debug_sheet": "/outputs/overhead_squat_phase_debug_723690ee.jpg"
+    "setup": "/outputs/overhead_squat_setup_8af026f0.jpg",
+    "descent": "/outputs/overhead_squat_descent_75251355.jpg",
+    "bottom": "/outputs/overhead_squat_bottom_eef7716f.jpg",
+    "ascent": "/outputs/overhead_squat_ascent_3a89c07f.jpg",
+    "lockout": "/outputs/overhead_squat_lockout_267e3016.jpg",
+    "debug_sheet": "/outputs/overhead_squat_phase_debug_3d15c803.jpg"
   },
   "visuals_error": null
 }

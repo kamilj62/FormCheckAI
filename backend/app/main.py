@@ -6451,6 +6451,31 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "clean_and_jerk"
                 final_confidence = max(final_confidence, olympic_conf, 0.78)
 
+        # Muscle-up rescue:
+        # Bar/ring muscle-ups can look like clean, thruster, or overhead_squat.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary:
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+
+            if (
+                final_label in ["clean", "thruster", "squat"]
+                and wrist_ratio >= 0.45
+                and elbow_range >= 70
+            ):
+                final_label = "muscle_up"
+                final_confidence = max(final_confidence, 0.82)
+
+            elif (
+                final_label == "overhead_squat"
+                and base_raw_label == "squat"
+                and base_raw_confidence < 0.99
+                and wrist_ratio >= 0.45
+                and elbow_range >= 70
+            ):
+                final_label = "muscle_up"
+                final_confidence = max(final_confidence, 0.82)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
@@ -6686,7 +6711,7 @@ async def generate_visuals(
         label = str(exercise_label or "").lower()
 
         if not rep_json:
-            if "pull_up" in label or "pull-up" in label or "pull up" in label or "burpee" in label:
+            if "pull_up" in label or "pull-up" in label or "pull up" in label or "burpee" in label or "muscle_up" in label or "muscle-up" in label or "muscle up" in label:
                 rep_json = "{}"
             else:
                 return {
@@ -6700,7 +6725,7 @@ async def generate_visuals(
             rep = rep[0] if rep else None
 
         if not rep:
-            if "pull_up" in label or "pull-up" in label or "pull up" in label or "burpee" in label:
+            if "pull_up" in label or "pull-up" in label or "pull up" in label or "burpee" in label or "muscle_up" in label or "muscle-up" in label or "muscle up" in label:
                 rep = {}
             else:
                 return {
@@ -6740,6 +6765,10 @@ async def generate_visuals(
             )
         elif "pull_up" in label or "pull-up" in label or "pull up" in label:
             phase_images = create_pull_up_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "muscle_up" in label or "muscle-up" in label or "muscle up" in label:
+            phase_images = create_bar_muscle_up_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
         elif "burpee" in label:

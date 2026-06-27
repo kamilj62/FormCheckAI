@@ -1,0 +1,13 @@
+{
+  "exercise_label": "muscle_up",
+  "phase_images": {
+    "hang": "/outputs/bar_muscle_up_hang_b7f1f3a8.jpg",
+    "pull": "/outputs/bar_muscle_up_pull_a8db44d5.jpg",
+    "transition": "/outputs/bar_muscle_up_transition_53c1cb7c.jpg",
+    "dip": "/outputs/bar_muscle_up_dip_5ad3d36c.jpg",
+    "lockout": "/outputs/bar_muscle_up_lockout_66576e4d.jpg",
+    "finish": "/outputs/bar_muscle_up_finish_6739268c.jpg",
+    "debug_sheet": "/outputs/bar_muscle_up_phase_debug_c9f3df57.jpg"
+  },
+  "visuals_error": null
+}

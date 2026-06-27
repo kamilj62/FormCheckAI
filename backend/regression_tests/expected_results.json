@@ -82,5 +82,17 @@
     "min_confidence": 0.6,
     "min_reps": 1,
     "analysis_mode": "detailed_rep_analysis"
+  },
+  "bar_muscle_up.mov": {
+    "label": "muscle_up",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "ring_muscle_up.mov": {
+    "label": "muscle_up",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis"
   }
 }
