@@ -1,129 +1,30 @@
 {
-  "exercise_label": "thruster",
+  "exercise_label": "burpee",
   "confidence": 1.0,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "start_frame": 184,
-      "end_frame": 274,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [
-        "Torso is leaning too far forward during the thruster."
-      ],
-      "breakdown": {
-        "lockout": "good",
-        "bar_path": "good",
-        "bar_severity": "minor",
-        "squat_depth": "good",
-        "torso_stack": "leaning_forward",
-        "active_finish": "good",
-        "knee_range": 70.1
-      },
-      "feedback": [
-        "Stay tall through the squat and drive straight overhead."
-      ],
-      "dip_frame": 201,
-      "drive_frame": 220,
-      "catch_frame": 243,
-      "lockout_frame": 274
-    },
-    {
-      "rep": 2,
-      "start_frame": 303,
-      "end_frame": 313,
-      "score": 10.0,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "lockout": "good",
-        "bar_path": "good",
-        "bar_severity": "minor",
-        "squat_depth": "good",
-        "torso_stack": "good",
-        "active_finish": "good",
-        "knee_range": 17.9
-      },
-      "feedback": [
-        "Good thruster rep."
-      ],
-      "dip_frame": 308,
-      "drive_frame": 313,
-      "catch_frame": 313,
-      "lockout_frame": 313
-    }
-  ],
+  "rep_feedback": [],
   "set_summary": {
-    "detected_reps": 2,
-    "avg_rep_score": 9.6,
-    "best_rep": 2,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected.",
+    "biggest_fix": "Record a clearer set for analysis."
   },
-  "coaching_zones": {
-    "lockout": {
-      "label": "lockout",
-      "status": "good",
-      "score": 1.0,
-      "message": "Lockout is good overall.",
-      "issue_count": 1
-    },
-    "bar_path": {
-      "label": "bar_path",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Path is good overall.",
-      "issue_count": 1
-    },
-    "bar_severity": {
-      "label": "bar_severity",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Severity is good overall.",
-      "issue_count": 1
-    },
-    "squat_depth": {
-      "label": "squat_depth",
-      "status": "good",
-      "score": 1.0,
-      "message": "Squat Depth is good overall.",
-      "issue_count": 1
-    },
-    "torso_stack": {
-      "label": "torso_stack",
-      "status": "good",
-      "score": 1.0,
-      "message": "Torso Stack is good overall.",
-      "issue_count": 1
-    },
-    "active_finish": {
-      "label": "active_finish",
-      "status": "good",
-      "score": 1.0,
-      "message": "Active Finish is good overall.",
-      "issue_count": 1
-    },
-    "knee_range": {
-      "label": "knee_range",
-      "status": "good",
-      "score": 1.0,
-      "message": "Knee Range is good overall.",
-      "issue_count": 1
-    }
-  },
+  "coaching_zones": {},
   "phase_images": {
-    "squat_dip": 201,
-    "drive": 220,
-    "lockout": 274
+    "setup": 1,
+    "clean_catch": 48,
+    "jerk_dip": 205,
+    "jerk_catch": 287,
+    "finish": 313
   },
   "overlay_job_id": null,
   "overlay_video_url": null,
   "debug": {
     "original_prediction": "squat",
     "olympic_prediction": "snatch",
-    "final_label_debug": "thruster",
+    "final_label_debug": "burpee",
     "original_confidence": 0.9998409748077393,
     "olympic_pred": "snatch",
     "olympic_confidence": 0.528,
@@ -140,6 +41,7 @@
         0.004908063914626837,
         0.003731684759259224
       ]
-    }
+    },
+    "front_squat_rescue": null
   }
 }

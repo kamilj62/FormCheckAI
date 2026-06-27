@@ -5794,23 +5794,29 @@ def create_burpee_phase_images(
 
     if rep:
         start = int(rep.get("start_frame", 0))
-        hands_down = int(rep.get("hands_down_frame", start))
-        plank = int(rep.get("plank_frame", start))
-
-        jump_in = int(
-            rep.get(
-                "jump_in_frame",
-                rep.get("plank_frame", start)
-            )
-        )
-
-        stand = int(rep.get("stand_frame", start))
         finish = int(rep.get("end_frame", total_frames - 1))
 
+        duration = max(1, finish - start)
+
+        hands_down = int(rep.get("hands_down_frame", start + int(duration * 0.20)))
+        plank = int(rep.get("plank_frame", start + int(duration * 0.40)))
+        jump_in = int(rep.get("jump_in_frame", start + int(duration * 0.65)))
+        stand = int(rep.get("stand_frame", start + int(duration * 0.85)))
+    else:
+        start = 0
+        finish = max(0, total_frames - 1)
+        duration = max(1, finish - start)
+
+        hands_down = start + int(duration * 0.20)
+        plank = start + int(duration * 0.40)
+        jump_in = start + int(duration * 0.65)
+        stand = start + int(duration * 0.85)
+
     phase_frames = {
-        "start": hands_down,
-        "hands_down": plank,
-        "plank": jump_in,
+        "start": start,
+        "hands_down": hands_down,
+        "plank": plank,
+        "jump_in": jump_in,
         "stand": stand,
         "finish": finish,
     }
@@ -6405,6 +6411,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "pull_up"
                 final_confidence = max(final_confidence, 0.82)
 
+        # Burpee rescue:
+        # Burpees can look like squat/thruster due to squat + jump/press-like motion.
+        # If routing ends as thruster but the base model was a very confident squat,
+        # and the squat router thinks overhead_squat, treat this known bodyweight pattern as burpee.
+        if (
+            final_label == "thruster"
+            and base_raw_label == "squat"
+            and base_raw_confidence >= 0.95
+            and squat_router_debug
+            and squat_router_debug.get("squat_label") == "overhead_squat"
+        ):
+            final_label = "burpee"
+            final_confidence = max(final_confidence, 0.84)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
@@ -6640,7 +6660,7 @@ async def generate_visuals(
         label = str(exercise_label or "").lower()
 
         if not rep_json:
-            if "pull_up" in label or "pull-up" in label or "pull up" in label:
+            if "pull_up" in label or "pull-up" in label or "pull up" in label or "burpee" in label:
                 rep_json = "{}"
             else:
                 return {
@@ -6654,7 +6674,7 @@ async def generate_visuals(
             rep = rep[0] if rep else None
 
         if not rep:
-            if "pull_up" in label or "pull-up" in label or "pull up" in label:
+            if "pull_up" in label or "pull-up" in label or "pull up" in label or "burpee" in label:
                 rep = {}
             else:
                 return {
@@ -6694,6 +6714,10 @@ async def generate_visuals(
             )
         elif "pull_up" in label or "pull-up" in label or "pull up" in label:
             phase_images = create_pull_up_phase_images(
+                temp_path, OVERLAY_DIR, rep, sample_every=1
+            )
+        elif "burpee" in label:
+            phase_images = create_burpee_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
         elif "clean_and_jerk" in label or "clean and jerk" in label:
