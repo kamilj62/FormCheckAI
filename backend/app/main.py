@@ -6141,13 +6141,38 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "thruster"
                 final_confidence = max(final_confidence, 0.84)
 
+        # ---------------- PUSH PRESS RESCUE FROM SQUAT + CLEAN & JERK ----------------
+        # Push press can be misread as squat by the base model and C&J by the Olympic router.
+        # If the lower-body motion is shallow and the wrists go overhead, treat it as push press.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary:
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
+            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
+            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+
+            if (
+                final_label == "clean_and_jerk"
+                and raw_label in ["squat", "squat_back", "squat_front"]
+                and olympic_pred == "clean_and_jerk"
+                and olympic_conf < 0.95
+                and pose_summary.get("min_knee_angle", 180) > 105
+                and pose_summary.get("min_hip_angle", 180) > 110
+                and knee_range > 15
+                and hip_range < 65
+                and elbow_range > 35
+                and wrist_ratio >= 0.12
+            ):
+                final_label = "push_press"
+                final_confidence = max(final_confidence, raw_confidence, 0.86)
+
         # ---------------- PUSH PRESS VS CLEAN & JERK GUARD ----------------
         # If the base model sees push press, do not let Olympic router call it
         # clean_and_jerk unless the clean portion is actually visible in the clip.
         if (
             raw_label == "push_press"
             and olympic_pred == "clean_and_jerk"
-            and olympic_conf < 0.85
+            and olympic_conf < 0.95
         ):
             final_label = "push_press"
             final_confidence = max(raw_confidence, 0.80)
