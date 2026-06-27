@@ -1,0 +1,12 @@
+{
+  "exercise_label": "overhead_squat",
+  "phase_images": {
+    "setup": "/outputs/overhead_squat_setup_651eaff2.jpg",
+    "descent": "/outputs/overhead_squat_descent_d2f4c56d.jpg",
+    "bottom": "/outputs/overhead_squat_bottom_a42791ae.jpg",
+    "ascent": "/outputs/overhead_squat_ascent_5919d3fb.jpg",
+    "lockout": "/outputs/overhead_squat_lockout_afd9c65d.jpg",
+    "debug_sheet": "/outputs/overhead_squat_phase_debug_54e76910.jpg"
+  },
+  "visuals_error": null
+}

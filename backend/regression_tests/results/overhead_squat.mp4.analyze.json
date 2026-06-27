@@ -1,0 +1,105 @@
+{
+  "exercise_label": "overhead_squat",
+  "confidence": 1.0,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 45,
+      "descent_frame": 58,
+      "bottom_frame": 70,
+      "ascent_frame": 76,
+      "end_frame": 84,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 1,
+    "avg_rep_score": 6.5,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set.",
+    "biggest_fix": "Drive knees out over your toes."
+  },
+  "coaching_zones": {
+    "depth": {
+      "label": "depth",
+      "status": "good",
+      "score": 1.0,
+      "message": "Depth is good overall.",
+      "issue_count": 1
+    },
+    "torso": {
+      "label": "torso",
+      "status": "good",
+      "score": 1.0,
+      "message": "Torso is good overall.",
+      "issue_count": 1
+    },
+    "knees": {
+      "label": "knees",
+      "status": "poor",
+      "score": 0.0,
+      "message": "Knees is poor overall.",
+      "issue_count": 1
+    },
+    "heels": {
+      "label": "heels",
+      "status": "good",
+      "score": 1.0,
+      "message": "Heels is good overall.",
+      "issue_count": 1
+    },
+    "neck": {
+      "label": "neck",
+      "status": "good",
+      "score": 1.0,
+      "message": "Neck is good overall.",
+      "issue_count": 1
+    },
+    "butt_wink": {
+      "label": "butt_wink",
+      "status": "good",
+      "score": 1.0,
+      "message": "Butt Wink is good overall.",
+      "issue_count": 1
+    }
+  },
+  "phase_images": {
+    "setup": 45,
+    "dip": null,
+    "drive": null,
+    "lockout": null
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "push_press",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "overhead_squat",
+    "original_confidence": 0.9971252083778381,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.802,
+    "frames_seen": 115,
+    "frames_processed": 115,
+    "pose_frames": 115,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null
+  }
+}

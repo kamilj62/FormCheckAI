@@ -6008,6 +6008,36 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         print("DEBUG CLASS_NAMES:", CLASS_NAMES)
         raw_label = CLASS_NAMES[raw_idx]
         raw_confidence = float(np.max(probs))
+        base_raw_label = raw_label
+        base_raw_confidence = raw_confidence
+
+        # ---------------- SQUAT VARIANT ROUTER ----------------
+        # Base model predicts generic "squat"; this router specializes it into
+        # overhead_squat, squat_back, or squat_front.
+        squat_router_debug = None
+        squat_variant_label = None
+        squat_variant_conf = 0.0
+        if raw_label == "squat":
+            try:
+                squat_probs = SQUAT_ROUTER_MODEL.predict(
+                    np.expand_dims(seq_base, axis=0),
+                    verbose=0
+                )[0]
+                squat_idx = int(np.argmax(squat_probs))
+                squat_label = SQUAT_ROUTER_LABELS.get(squat_idx, "squat")
+                squat_conf = float(squat_probs[squat_idx])
+                squat_router_debug = {
+                    "squat_label": squat_label,
+                    "squat_confidence": squat_conf,
+                    "squat_probs": [float(x) for x in squat_probs],
+                }
+
+                if squat_conf >= 0.55:
+                    squat_variant_label = squat_label
+                    squat_variant_conf = squat_conf
+
+            except Exception as e:
+                squat_router_debug = {"error": str(e)}
 
         # ---------------- OLYMPIC MODEL ----------------
         oly_sequence = [
@@ -6230,6 +6260,67 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = "strict_press"
                 final_confidence = max(final_confidence, 0.86)
 
+        # ---------------- REGRESSION SAFETY GUARDS ----------------
+        # These guards protect known stable examples from over-aggressive routing overrides.
+
+        # A very confident deadlift should not be converted into clean_and_jerk.
+        if raw_label == "deadlift" and raw_confidence >= 0.90:
+            final_label = "deadlift"
+            final_confidence = float(raw_confidence)
+
+        # A very confident squat-family prediction should not be converted into clean_and_jerk.
+        if (
+            final_label == "clean_and_jerk"
+            and base_raw_label == "squat"
+            and olympic_pred == "clean_and_jerk"
+            and base_raw_confidence >= 0.90
+        ):
+            final_label = raw_label
+            final_confidence = float(raw_confidence)
+
+        # A very confident squat should not become strict_press.
+        if (
+            final_label == "strict_press"
+            and raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
+            and raw_confidence >= 0.90
+        ):
+            final_label = raw_label
+            final_confidence = float(raw_confidence)
+
+        # Strong Olympic jerk signal + push_press base prediction is likely split_jerk.
+        if (
+            raw_label == "push_press"
+            and olympic_pred == "clean_and_jerk"
+            and olympic_conf >= 0.90
+        ):
+            final_label = "split_jerk"
+            final_confidence = 0.80
+
+        # Apply squat variant only after all higher-priority routing decisions.
+        # This prevents push press / snatch from being permanently rewritten as squat_back.
+        if final_label == "squat" and squat_variant_label and squat_variant_conf >= 0.55:
+            final_label = squat_variant_label
+            final_confidence = float(squat_variant_conf)
+
+        # Overhead squat rescue:
+        # Some overhead squats are misread as push_press because wrists stay overhead.
+        # If the athlete reaches squat depth with wrists overhead, prefer overhead_squat.
+        pose_summary = summarize_biomechanics(biomechanics)
+        if pose_summary and final_label == "push_press":
+            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
+            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
+            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
+
+            if (
+                pose_summary.get("min_knee_angle", 180) < 120
+                and pose_summary.get("min_hip_angle", 180) < 130
+                and knee_range > 35
+                and hip_range > 35
+                and wrist_ratio >= 0.55
+            ):
+                final_label = "overhead_squat"
+                final_confidence = max(final_confidence, 0.86)
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
@@ -6346,10 +6437,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "overlay_video_url": None,
             "phase_images": phase_images,
             "debug": {
-                "original_prediction": raw_label,
+                "original_prediction": base_raw_label,
                 "olympic_prediction": olympic_pred,
                 "final_label_debug": analysis_label,
-                "original_confidence": raw_confidence,
+                "original_confidence": base_raw_confidence,
                 "olympic_pred": olympic_pred,
                 "olympic_confidence": olympic_conf,
                 "frames_seen": total_frames,
@@ -6357,6 +6448,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "pose_frames": pose_frames,
                 "sample_every": sample_every,
                 "input_shape": str(seq.shape),
+                "squat_router": squat_router_debug,
             },
         }
 

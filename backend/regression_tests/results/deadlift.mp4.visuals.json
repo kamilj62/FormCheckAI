@@ -1,0 +1,12 @@
+{
+  "exercise_label": "deadlift",
+  "phase_images": {
+    "setup": "/outputs/deadlift_setup_00707d6d.jpg",
+    "pull": "/outputs/deadlift_pull_5e91188a.jpg",
+    "mid": "/outputs/deadlift_mid_443c1c43.jpg",
+    "finish": "/outputs/deadlift_finish_a7bf2886.jpg",
+    "lockout": "/outputs/deadlift_lockout_224ebce9.jpg",
+    "debug_sheet": "/outputs/deadlift_phase_debug_8cf5ba07.jpg"
+  },
+  "visuals_error": null
+}

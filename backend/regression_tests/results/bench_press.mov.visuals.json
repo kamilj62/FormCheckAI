@@ -1,0 +1,12 @@
+{
+  "exercise_label": "bench_press",
+  "phase_images": {
+    "setup": "/outputs/bench_press_setup_5d36552f.jpg",
+    "descent": "/outputs/bench_press_descent_cadef0a0.jpg",
+    "bottom": "/outputs/bench_press_bottom_d9ea2651.jpg",
+    "press": "/outputs/bench_press_press_fd78baae.jpg",
+    "lockout": "/outputs/bench_press_lockout_28a45586.jpg",
+    "debug_sheet": "/outputs/bench_press_phase_debug_386f63f9.jpg"
+  },
+  "visuals_error": null
+}

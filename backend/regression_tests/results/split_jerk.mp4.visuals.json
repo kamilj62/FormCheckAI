@@ -1,0 +1,11 @@
+{
+  "exercise_label": "split_jerk",
+  "phase_images": {
+    "setup": "/outputs/split_jerk_setup_929dce57.jpg",
+    "dip": "/outputs/split_jerk_dip_cf5da62f.jpg",
+    "catch": "/outputs/split_jerk_catch_4ede5f61.jpg",
+    "finish": "/outputs/split_jerk_finish_39b7064d.jpg",
+    "debug_sheet": "/outputs/split_jerk_phase_debug_aec7e0f9.jpg"
+  },
+  "visuals_error": null
+}

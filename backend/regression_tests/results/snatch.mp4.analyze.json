@@ -1,0 +1,139 @@
+{
+  "exercise_label": "snatch",
+  "confidence": 0.84,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "start_frame": 250,
+      "first_pull_frame": 300,
+      "extension_frame": 350,
+      "catch_frame": 400,
+      "end_frame": 450,
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Good snatch rep. Strong pull, catch, and overhead position."
+      ],
+      "rep": 1
+    },
+    {
+      "start_frame": 360,
+      "first_pull_frame": 360,
+      "extension_frame": 360,
+      "catch_frame": 360,
+      "end_frame": 360,
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Good snatch rep. Strong pull, catch, and overhead position."
+      ],
+      "rep": 2
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 2,
+    "avg_rep_score": 9.0,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set.",
+    "biggest_fix": "Keep building consistent reps."
+  },
+  "coaching_zones": {
+    "first_pull": {
+      "label": "first_pull",
+      "status": "good",
+      "score": 1.0,
+      "message": "First Pull is good overall.",
+      "issue_count": 0
+    },
+    "extension": {
+      "label": "extension",
+      "status": "good",
+      "score": 1.0,
+      "message": "Extension is good overall.",
+      "issue_count": 0
+    },
+    "turnover": {
+      "label": "turnover",
+      "status": "good",
+      "score": 1.0,
+      "message": "Turnover is good overall.",
+      "issue_count": 0
+    },
+    "overhead_catch": {
+      "label": "overhead_catch",
+      "status": "good",
+      "score": 1.0,
+      "message": "Overhead Catch is good overall.",
+      "issue_count": 0
+    },
+    "stability": {
+      "label": "stability",
+      "status": "good",
+      "score": 1.0,
+      "message": "Stability is good overall.",
+      "issue_count": 0
+    },
+    "bar_path": {
+      "label": "bar_path",
+      "status": "good",
+      "score": 1.0,
+      "message": "Bar Path is good overall.",
+      "issue_count": 0
+    },
+    "overhead_stability": {
+      "label": "Overhead Stability",
+      "status": "unknown",
+      "message": "Maintain stable overhead position without drift."
+    }
+  },
+  "phase_images": {
+    "setup": 250,
+    "first_pull": 300,
+    "extension": 350,
+    "catch": 400,
+    "finish": 450
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "squat",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "snatch",
+    "original_confidence": 0.9549692273139954,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.646,
+    "frames_seen": 360,
+    "frames_processed": 297,
+    "pose_frames": 297,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": {
+      "squat_label": "squat_back",
+      "squat_confidence": 0.9685702919960022,
+      "squat_probs": [
+        0.006165549624711275,
+        0.9685702919960022,
+        0.025264110416173935
+      ]
+    }
+  }
+}

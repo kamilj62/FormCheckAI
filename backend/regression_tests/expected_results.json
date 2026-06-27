@@ -1,0 +1,50 @@
+{
+  "back_squat.mov": {
+    "label": "squat_back",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "bench_press.mov": {
+    "label": "Bench Press",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "deadlift.mp4": {
+    "label": "Deadlift",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "overhead_squat.mp4": {
+    "label": "overhead_squat",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "push_press.mov": {
+    "label": "Push Press",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "snatch.mp4": {
+    "label": "Snatch",
+    "min_confidence": 0.7,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "split_jerk.mp4": {
+    "label": "Split Jerk",
+    "min_confidence": 0.7,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  },
+  "thruster.mp4": {
+    "label": "Thruster",
+    "min_confidence": 0.7,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis"
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "exercise_label": "deadlift",
+  "confidence": 1.0,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 6,
+      "pull_frame": 22,
+      "mid_frame": 35,
+      "finish_frame": 45,
+      "bottom_frame": 1,
+      "end_frame": 51,
+      "score": 3.7,
+      "grade": "Poor",
+      "issues": [
+        "Back may be rounding during the pull.",
+        "Incomplete lockout at the top."
+      ],
+      "breakdown": {
+        "setup": "good",
+        "back": "poor",
+        "neck": "good",
+        "hinge": "good",
+        "lockout": "incomplete",
+        "knees": "good",
+        "bar_path": "good",
+        "control": "good"
+      },
+      "feedback": [
+        "Brace your core and keep a neutral spine.",
+        "Finish tall by squeezing glutes and standing fully upright."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 1,
+    "avg_rep_score": 3.7,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set.",
+    "biggest_fix": "Keep building consistent reps."
+  },
+  "coaching_zones": {
+    "setup": {
+      "label": "setup",
+      "status": "good",
+      "score": 1.0,
+      "message": "Setup is good overall.",
+      "issue_count": 2
+    },
+    "back": {
+      "label": "back",
+      "status": "poor",
+      "score": 0.0,
+      "message": "Back is poor overall.",
+      "issue_count": 2
+    },
+    "neck": {
+      "label": "neck",
+      "status": "good",
+      "score": 1.0,
+      "message": "Neck is good overall.",
+      "issue_count": 2
+    },
+    "hinge": {
+      "label": "hinge",
+      "status": "good",
+      "score": 1.0,
+      "message": "Hinge is good overall.",
+      "issue_count": 2
+    },
+    "lockout": {
+      "label": "lockout",
+      "status": "poor",
+      "score": 0.0,
+      "message": "Lockout is poor overall.",
+      "issue_count": 2
+    },
+    "knees": {
+      "label": "knees",
+      "status": "good",
+      "score": 1.0,
+      "message": "Knees is good overall.",
+      "issue_count": 2
+    },
+    "bar_path": {
+      "label": "bar_path",
+      "status": "good",
+      "score": 1.0,
+      "message": "Bar Path is good overall.",
+      "issue_count": 2
+    },
+    "control": {
+      "label": "control",
+      "status": "good",
+      "score": 1.0,
+      "message": "Control is good overall.",
+      "issue_count": 2
+    }
+  },
+  "phase_images": {
+    "setup": 1,
+    "pull": 26,
+    "mid": 51,
+    "finish": 76,
+    "lockout": 100
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "deadlift",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "deadlift",
+    "original_confidence": 0.9994280934333801,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.842,
+    "frames_seen": 101,
+    "frames_processed": 101,
+    "pose_frames": 101,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "exercise_label": "push_press",
+  "confidence": 0.92,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 38,
+      "end_frame": 182,
+      "score": 8.0,
+      "grade": "Good",
+      "issues": [
+        "Arms are pressing too early.",
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 22.4,
+        "drive_timing_frames": -25
+      },
+      "feedback": [
+        "Drive with your legs first, then press overhead.",
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 63,
+      "drive_frame": 121,
+      "lockout_frame": 182
+    },
+    {
+      "rep": 2,
+      "start_frame": 192,
+      "end_frame": 293,
+      "score": 8.0,
+      "grade": "Good",
+      "issues": [
+        "Arms are pressing too early.",
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 13.1,
+        "drive_timing_frames": -23
+      },
+      "feedback": [
+        "Drive with your legs first, then press overhead.",
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 215,
+      "drive_frame": 227,
+      "lockout_frame": 293
+    },
+    {
+      "rep": 3,
+      "start_frame": 343,
+      "end_frame": 360,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 17.3,
+        "drive_timing_frames": -6
+      },
+      "feedback": [
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 349,
+      "drive_frame": 355,
+      "lockout_frame": 360
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 3,
+    "avg_rep_score": 8.4,
+    "best_rep": 3,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set.",
+    "biggest_fix": "Keep building consistent reps."
+  },
+  "coaching_zones": {
+    "lockout": {
+      "label": "lockout",
+      "status": "good",
+      "score": 1.0,
+      "message": "Lockout is good overall.",
+      "issue_count": 5
+    },
+    "bar_path": {
+      "label": "bar_path",
+      "status": "good",
+      "score": 1.0,
+      "message": "Bar Path is good overall.",
+      "issue_count": 5
+    },
+    "bar_severity": {
+      "label": "bar_severity",
+      "status": "good",
+      "score": 1.0,
+      "message": "Bar Severity is good overall.",
+      "issue_count": 5
+    },
+    "dip": {
+      "label": "dip",
+      "status": "good",
+      "score": 1.0,
+      "message": "Dip is good overall.",
+      "issue_count": 5
+    },
+    "dip_verticality": {
+      "label": "dip_verticality",
+      "status": "good",
+      "score": 1.0,
+      "message": "Dip Verticality is good overall.",
+      "issue_count": 5
+    },
+    "timing": {
+      "label": "timing",
+      "status": "good",
+      "score": 1.0,
+      "message": "Timing is good overall.",
+      "issue_count": 5
+    },
+    "valgus": {
+      "label": "valgus",
+      "status": "good",
+      "score": 1.0,
+      "message": "Valgus is good overall.",
+      "issue_count": 5
+    },
+    "active_finish": {
+      "label": "active_finish",
+      "status": "good",
+      "score": 1.0,
+      "message": "Active Finish is good overall.",
+      "issue_count": 5
+    },
+    "knee_range": {
+      "label": "knee_range",
+      "status": "good",
+      "score": 1.0,
+      "message": "Knee Range is good overall.",
+      "issue_count": 5
+    },
+    "drive_timing_frames": {
+      "label": "drive_timing_frames",
+      "status": "good",
+      "score": 1.0,
+      "message": "Drive Timing Frames is good overall.",
+      "issue_count": 5
+    }
+  },
+  "phase_images": {
+    "setup": 38,
+    "dip": 63,
+    "drive": 121,
+    "lockout": 182
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "squat",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "push_press",
+    "original_confidence": 0.6772940754890442,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.916,
+    "frames_seen": 360,
+    "frames_processed": 360,
+    "pose_frames": 360,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": {
+      "squat_label": "squat_back",
+      "squat_confidence": 0.9452108144760132,
+      "squat_probs": [
+        0.00221684155985713,
+        0.9452108144760132,
+        0.05257241427898407
+      ]
+    }
+  }
+}

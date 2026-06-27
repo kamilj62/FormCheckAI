@@ -1,0 +1,133 @@
+{
+  "exercise_label": "squat",
+  "confidence": 1.0,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 120,
+      "descent_frame": 127,
+      "bottom_frame": 133,
+      "ascent_frame": 141,
+      "end_frame": 151,
+      "score": 5.1,
+      "grade": "Needs Work",
+      "issues": [
+        "Depth may be shallow.",
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "poor",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Try to reach better squat depth.",
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 2,
+      "start_frame": 205,
+      "descent_frame": 219,
+      "bottom_frame": 231,
+      "ascent_frame": 235,
+      "end_frame": 242,
+      "score": 5.1,
+      "grade": "Needs Work",
+      "issues": [
+        "Depth may be shallow.",
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "poor",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Try to reach better squat depth.",
+        "Drive knees out over your toes."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 2,
+    "avg_rep_score": 5.1,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set.",
+    "biggest_fix": "Drive knees out over your toes."
+  },
+  "coaching_zones": {
+    "depth": {
+      "label": "depth",
+      "status": "poor",
+      "score": 0.0,
+      "message": "Depth is poor overall.",
+      "issue_count": 4
+    },
+    "torso": {
+      "label": "torso",
+      "status": "good",
+      "score": 1.0,
+      "message": "Torso is good overall.",
+      "issue_count": 4
+    },
+    "knees": {
+      "label": "knees",
+      "status": "poor",
+      "score": 0.0,
+      "message": "Knees is poor overall.",
+      "issue_count": 4
+    },
+    "heels": {
+      "label": "heels",
+      "status": "good",
+      "score": 1.0,
+      "message": "Heels is good overall.",
+      "issue_count": 4
+    },
+    "neck": {
+      "label": "neck",
+      "status": "good",
+      "score": 1.0,
+      "message": "Neck is good overall.",
+      "issue_count": 4
+    },
+    "butt_wink": {
+      "label": "butt_wink",
+      "status": "good",
+      "score": 1.0,
+      "message": "Butt Wink is good overall.",
+      "issue_count": 4
+    }
+  },
+  "phase_images": {
+    "setup": 11,
+    "clean_catch": 159,
+    "jerk_dip": 115,
+    "jerk_catch": 246,
+    "finish": 292
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "squat",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "squat",
+    "original_confidence": 0.9997453093528748,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.816,
+    "frames_seen": 292,
+    "frames_processed": 239,
+    "pose_frames": 239,
+    "sample_every": 1,
+    "input_shape": "(30, 136)"
+  }
+}

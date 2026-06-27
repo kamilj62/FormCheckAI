@@ -1,0 +1,11 @@
+{
+  "exercise_label": "push_press",
+  "phase_images": {
+    "setup": "/outputs/push_press_setup_f8c743e2.jpg",
+    "dip": "/outputs/push_press_dip_33ec7449.jpg",
+    "drive": "/outputs/push_press_drive_5748a4ad.jpg",
+    "lockout": "/outputs/push_press_lockout_d27df882.jpg",
+    "debug_sheet": "/outputs/push_press_phase_debug_5846ac66.jpg"
+  },
+  "visuals_error": null
+}
