@@ -33,6 +33,18 @@
     "pose_frames": 222,
     "sample_every": 1,
     "input_shape": "(30, 136)",
+    "yolo_tracking": false,
+    "yolo_diagnostics": false,
+    "yolo_crop_frames": 294,
+    "yolo_full_fallback_frames": 66,
+    "yolo_target_ids": [
+      55,
+      59,
+      63
+    ],
+    "yolo_subject_validation": true,
+    "yolo_subject_keep_frames": 356,
+    "yolo_subject_reject_frames": 0,
     "squat_router": {
       "squat_label": "overhead_squat",
       "squat_confidence": 0.9968405961990356,

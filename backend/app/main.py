@@ -45,6 +45,12 @@ USE_YOLO_TRACKING = (
     os.getenv("USE_YOLO_TRACKING", "false").lower() == "true"
 )
 
+# Experimental: use YOLO to validate that MediaPipe is following
+# the selected athlete, while still running MediaPipe on the full frame.
+USE_YOLO_SUBJECT_VALIDATION = (
+    os.getenv("USE_YOLO_SUBJECT_VALIDATION", "false").lower() == "true"
+)
+
 USE_YOLO_DIAGNOSTICS = (
     os.getenv("USE_YOLO_DIAGNOSTICS", "false").lower() == "true"
 )
@@ -4967,6 +4973,7 @@ def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1)
 
             lm = results.pose_landmarks.landmark
 
+
             left_wrist = lm[mp_pose.PoseLandmark.LEFT_WRIST.value]
             right_wrist = lm[mp_pose.PoseLandmark.RIGHT_WRIST.value]
             left_shoulder = lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
@@ -5917,13 +5924,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         yolo_tracker = (
             YOLOTracker("models/yolov8n.pt", pad=220)
-            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS) and YOLOTracker is not None
+            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION) and YOLOTracker is not None
             else None
         )
 
         yolo_crop_frames = 0
         yolo_full_fallback_frames = 0
         yolo_target_ids = set()
+        yolo_subject_keep_frames = 0
+        yolo_subject_reject_frames = 0
 
         # ---------------- POSE EXTRACTION ----------------
         with mp_pose.Pose(
@@ -5941,7 +5950,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
-                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS) and yolo_tracker is not None:
+                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION) and yolo_tracker is not None:
                     crop_result = yolo_tracker.get_crop(frame)
 
                     full_box = (0, 0, frame.shape[1], frame.shape[0])
@@ -5957,6 +5966,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                     if USE_YOLO_TRACKING:
                         analysis_frame = crop_result.crop if crop_result.crop is not None else frame
                     else:
+                        # Diagnostics / subject validation: keep MediaPipe full-frame.
                         analysis_frame = frame
                 else:
                     crop_result = None
@@ -5970,6 +5980,35 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
                 # Subject lock: reject sudden jumps to another athlete in busy gyms.
                 lm = results.pose_landmarks.landmark
+                  # YOLO subject validation
+                if USE_YOLO_SUBJECT_VALIDATION and crop_result is not None and crop_result.box is not None:
+                    x1, y1, x2, y2 = crop_result.box
+                    fh, fw = frame.shape[:2]
+
+                    bw = x2 - x1
+                    bh = y2 - y1
+                    pad_x = bw * 0.35
+                    pad_y = bh * 0.35
+
+                    ex1 = max(0, x1 - pad_x)
+                    ey1 = max(0, y1 - pad_y)
+                    ex2 = min(fw, x2 + pad_x)
+                    ey2 = min(fh, y2 + pad_y)
+
+                    l_sh = lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+                    r_sh = lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
+                    l_hip = lm[mp_pose.PoseLandmark.LEFT_HIP.value]
+                    r_hip = lm[mp_pose.PoseLandmark.RIGHT_HIP.value]
+
+                    torso_x = ((l_sh.x + r_sh.x + l_hip.x + r_hip.x) / 4) * fw
+                    torso_y = ((l_sh.y + r_sh.y + l_hip.y + r_hip.y) / 4) * fh
+
+                    if not (ex1 <= torso_x <= ex2 and ey1 <= torso_y <= ey2):
+                        yolo_subject_reject_frames += 1
+                        continue
+
+                    yolo_subject_keep_frames += 1
+
                 pts = [
                     lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value],
                     lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value],
@@ -6663,6 +6702,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "yolo_crop_frames": yolo_crop_frames,
                 "yolo_full_fallback_frames": yolo_full_fallback_frames,
                 "yolo_target_ids": sorted(list(yolo_target_ids)),
+                "yolo_subject_validation": USE_YOLO_SUBJECT_VALIDATION,
+                "yolo_subject_keep_frames": yolo_subject_keep_frames,
+                "yolo_subject_reject_frames": yolo_subject_reject_frames,
                 "squat_router": squat_router_debug,
                 "front_squat_rescue": front_squat_rescue_debug,
             },

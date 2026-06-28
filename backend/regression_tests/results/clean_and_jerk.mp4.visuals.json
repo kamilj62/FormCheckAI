@@ -1,13 +1,13 @@
 {
   "exercise_label": "clean_and_jerk",
   "phase_images": {
-    "setup": "/outputs/clean_and_jerk_setup_9c4df99f.jpg",
-    "clean_catch": "/outputs/clean_and_jerk_clean_catch_5bfcb659.jpg",
-    "jerk_dip": "/outputs/clean_and_jerk_jerk_dip_156fb192.jpg",
-    "jerk_drive": "/outputs/clean_and_jerk_jerk_drive_54873007.jpg",
-    "jerk_catch": "/outputs/clean_and_jerk_jerk_catch_d008ab87.jpg",
-    "finish": "/outputs/clean_and_jerk_finish_58627d1f.jpg",
-    "debug_sheet": "/outputs/clean_and_jerk_phase_debug_8d92ca52.jpg"
+    "setup": "/outputs/clean_and_jerk_setup_41e64ecc.jpg",
+    "clean_catch": "/outputs/clean_and_jerk_clean_catch_246949e9.jpg",
+    "jerk_dip": "/outputs/clean_and_jerk_jerk_dip_88583605.jpg",
+    "jerk_drive": "/outputs/clean_and_jerk_jerk_drive_8f3463f6.jpg",
+    "jerk_catch": "/outputs/clean_and_jerk_jerk_catch_7b1520ed.jpg",
+    "finish": "/outputs/clean_and_jerk_finish_a1c4d3bd.jpg",
+    "debug_sheet": "/outputs/clean_and_jerk_phase_debug_a7ec45a2.jpg"
   },
   "visuals_error": null
 }

@@ -192,6 +192,16 @@
     "pose_frames": 360,
     "sample_every": 1,
     "input_shape": "(30, 136)",
+    "yolo_tracking": false,
+    "yolo_diagnostics": false,
+    "yolo_crop_frames": 360,
+    "yolo_full_fallback_frames": 0,
+    "yolo_target_ids": [
+      27
+    ],
+    "yolo_subject_validation": true,
+    "yolo_subject_keep_frames": 360,
+    "yolo_subject_reject_frames": 0,
     "squat_router": {
       "squat_label": "squat_back",
       "squat_confidence": 0.9452108144760132,

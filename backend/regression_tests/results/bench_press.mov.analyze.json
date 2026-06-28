@@ -152,6 +152,16 @@
     "pose_frames": 142,
     "sample_every": 1,
     "input_shape": "(30, 136)",
+    "yolo_tracking": false,
+    "yolo_diagnostics": false,
+    "yolo_crop_frames": 166,
+    "yolo_full_fallback_frames": 27,
+    "yolo_target_ids": [
+      22
+    ],
+    "yolo_subject_validation": true,
+    "yolo_subject_keep_frames": 152,
+    "yolo_subject_reject_frames": 0,
     "squat_router": null,
     "front_squat_rescue": null
   }

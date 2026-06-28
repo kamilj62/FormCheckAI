@@ -1,12 +1,12 @@
 {
   "exercise_label": "pull_up",
   "phase_images": {
-    "hang": "/outputs/pull_up_hang_7c691ba5.jpg",
-    "pull": "/outputs/pull_up_pull_113ec2c7.jpg",
-    "top": "/outputs/pull_up_top_cf3b2ea5.jpg",
-    "descent": "/outputs/pull_up_descent_d684ef80.jpg",
-    "debug_sheet": "/outputs/pull_up_phase_debug_90e03376.jpg",
-    "finish": "/outputs/pull_up_descent_d684ef80.jpg"
+    "hang": "/outputs/pull_up_hang_83e97d07.jpg",
+    "pull": "/outputs/pull_up_pull_b19688a6.jpg",
+    "top": "/outputs/pull_up_top_595e1438.jpg",
+    "descent": "/outputs/pull_up_descent_07ca11d3.jpg",
+    "debug_sheet": "/outputs/pull_up_phase_debug_c648965d.jpg",
+    "finish": "/outputs/pull_up_descent_07ca11d3.jpg"
   },
   "visuals_error": null
 }
