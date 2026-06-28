@@ -1,0 +1,172 @@
+
+========================================
+FORMCHECK AI REGRESSION SUITE
+========================================
+
+--- back_squat.mov ---
+❌ Classification failed
+   expected label: squat_back
+   actual label:   squat_front
+   confidence:     0.98 minimum=0.75
+   reps:           1 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/1276e38b.mp4
+
+--- bench_press.mov ---
+❌ Classification failed
+   expected label: Bench Press
+   actual label:   thruster
+   confidence:     0.91 minimum=0.75
+   reps:           1 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 4 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/2ceac2f9.mp4
+
+--- deadlift.mp4 ---
+✅ Classification: deadlift confidence=1.0 reps=1
+✅ Analysis fields present
+✅ Visuals generated: 6 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/662c839a.mp4
+
+--- overhead_squat.mp4 ---
+❌ Classification failed
+   expected label: overhead_squat
+   actual label:   clean_and_jerk
+   confidence:     0.8 minimum=0.75
+   reps:           1 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 7 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/9c4a6f81.mp4
+
+--- push_press.mov ---
+✅ Classification: push_press confidence=1.0 reps=3
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/9f7570a8.mp4
+
+--- snatch.mp4 ---
+❌ Classification failed
+   expected label: Snatch
+   actual label:   thruster
+   confidence:     0.99 minimum=0.7
+   reps:           3 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 4 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/3b213dbe.mp4
+
+--- split_jerk.mp4 ---
+❌ Classification failed
+   expected label: Split Jerk
+   actual label:   push_press
+   confidence:     1.0 minimum=0.7
+   reps:           8 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/65547860.mp4
+
+--- thruster.mp4 ---
+❌ Classification failed
+   expected label: Thruster
+   actual label:   push_press
+   confidence:     0.8 minimum=0.7
+   reps:           2 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/e7991b4a.mp4
+
+--- front_squat.mov ---
+✅ Classification: squat_front confidence=0.99 reps=2
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/4522756f.mp4
+
+--- strict_press.mov ---
+✅ Classification: strict_press confidence=0.86 reps=2
+✅ Analysis fields present
+✅ Visuals generated: 4 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/d644b707.mp4
+
+--- clean.mov ---
+❌ Classification failed
+   expected label: clean
+   actual label:   squat_front
+   confidence:     0.98 minimum=0.6
+   reps:           3 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/7e7f0d56.mp4
+
+--- pull_up.mov ---
+❌ Classification failed
+   expected label: pull_up
+   actual label:   push_press
+   confidence:     1.0 minimum=0.6
+   reps:           7 minimum=0
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/0653cf28.mp4
+
+--- burpee.mov ---
+✅ Classification: burpee confidence=1.0 reps=0
+✅ Analysis fields present
+✅ Visuals generated: 7 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/af51a665.mp4
+
+--- clean_and_jerk.mp4 ---
+❌ Classification failed
+   expected label: clean_and_jerk
+   actual label:   squat_front
+   confidence:     0.98 minimum=0.6
+   reps:           4 minimum=1
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/f3da88d3.mp4
+
+--- bar_muscle_up.mov ---
+❌ Classification failed
+   expected label: muscle_up
+   actual label:   clean
+   confidence:     0.74 minimum=0.6
+   reps:           2 minimum=0
+✅ Analysis fields present
+✅ Visuals generated: 6 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/388fbe7b.mp4
+
+--- ring_muscle_up.mov ---
+❌ Classification failed
+   expected label: muscle_up
+   actual label:   overhead_squat
+   confidence:     1.0 minimum=0.6
+   reps:           6 minimum=0
+✅ Analysis fields present
+✅ Visuals generated: 5 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/61d1ebab.mp4
+
+--- push_up.mp4 ---
+✅ Classification: push_up confidence=1.0 reps=0
+✅ Analysis fields present
+✅ Visuals generated: 6 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/53489542.mp4
+
+--- handstand_push_up.mov ---
+❌ Classification failed
+   expected label: handstand_push_up
+   actual label:   thruster
+   confidence:     0.89 minimum=0.6
+   reps:           2 minimum=0
+✅ Analysis fields present
+✅ Visuals generated: 4 images
+✅ Overlay generated: https://formcheck-ai-overlays-kamilj.s3.us-west-2.amazonaws.com/overlays/df54ac35.mp4
+
+========================================
+FORMCHECK AI REGRESSION REPORT
+========================================
+Classification  passed=6 failed=12
+Analysis        passed=18 failed=0
+Visuals         passed=18 failed=0
+Overlay         passed=18 failed=0
+
+Runtime: 1063.7s
+
+OVERALL STATUS: FAIL
