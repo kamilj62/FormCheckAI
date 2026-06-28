@@ -5901,7 +5901,7 @@ def normalize_sequence(biomechanics):
     return feats
 
 
-def analyze_video(video_path, make_visuals=True, make_overlay=True):
+def analyze_video(video_path, make_visuals=True, make_overlay=True, force_yolo_subject_validation=False):
     try:
         cap = cv2.VideoCapture(video_path)
 
@@ -5930,7 +5930,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         yolo_tracker = (
             YOLOTracker("models/yolov8n.pt", pad=220)
-            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION or AUTO_YOLO_SUBJECT_VALIDATION) and YOLOTracker is not None
+            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION or AUTO_YOLO_SUBJECT_VALIDATION or force_yolo_subject_validation) and YOLOTracker is not None
             else None
         )
 
@@ -5956,7 +5956,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
-                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION or AUTO_YOLO_SUBJECT_VALIDATION) and yolo_tracker is not None:
+                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION or AUTO_YOLO_SUBJECT_VALIDATION or force_yolo_subject_validation) and yolo_tracker is not None:
                     crop_result = yolo_tracker.get_crop(frame)
 
                     full_box = (0, 0, frame.shape[1], frame.shape[0])
@@ -5987,7 +5987,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 # Subject lock: reject sudden jumps to another athlete in busy gyms.
                 lm = results.pose_landmarks.landmark
                   # YOLO subject validation
-                if USE_YOLO_SUBJECT_VALIDATION and crop_result is not None and crop_result.box is not None:
+                if (USE_YOLO_SUBJECT_VALIDATION or force_yolo_subject_validation) and crop_result is not None and crop_result.box is not None:
                     x1, y1, x2, y2 = crop_result.box
                     fh, fw = frame.shape[:2]
 
@@ -6714,6 +6714,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "auto_yolo_subject_validation": AUTO_YOLO_SUBJECT_VALIDATION,
                 "effective_subject_validation": (
                     USE_YOLO_SUBJECT_VALIDATION
+                    or force_yolo_subject_validation
                     or (
                         AUTO_YOLO_SUBJECT_VALIDATION
                         and yolo_tracker is not None
