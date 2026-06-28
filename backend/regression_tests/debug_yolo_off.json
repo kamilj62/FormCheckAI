@@ -1,0 +1,146 @@
+
+====================
+LOADING CLEAN WEIGHTS MODEL
+/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/app/models/movement_classifier.weights.h5
+====================
+
+
+==============================
+regression_tests/videos/pull_up.mov
+==============================
+{
+  "label": "Unknown",
+  "confidence": 0.0,
+  "rep_count": 0,
+  "debug": {
+    "frames_processed": 3
+  }
+}
+
+==============================
+regression_tests/videos/ring_muscle_up.mov
+==============================
+DEBUG PRED SHAPE: (5,)
+DEBUG RAW IDX: 3
+DEBUG CLASS_NAMES LEN: 5
+DEBUG CLASS_NAMES: ['bench_press', 'deadlift', 'push_press', 'squat', 'thruster']
+{
+  "label": "muscle_up",
+  "confidence": 1.0,
+  "rep_count": 0,
+  "debug": {
+    "original_prediction": "squat",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "muscle_up",
+    "original_confidence": 0.9093023538589478,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.71,
+    "frames_seen": 589,
+    "frames_processed": 392,
+    "pose_frames": 392,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": {
+      "squat_label": "overhead_squat",
+      "squat_confidence": 0.9969006776809692,
+      "squat_probs": [
+        0.9969006776809692,
+        0.0012036648113280535,
+        0.0018957644933834672
+      ]
+    },
+    "front_squat_rescue": null
+  }
+}
+
+==============================
+regression_tests/videos/handstand_push_up.mov
+==============================
+DEBUG PRED SHAPE: (5,)
+DEBUG RAW IDX: 0
+DEBUG CLASS_NAMES LEN: 5
+DEBUG CLASS_NAMES: ['bench_press', 'deadlift', 'push_press', 'squat', 'thruster']
+{
+  "label": "bench_press",
+  "confidence": 0.84,
+  "rep_count": 0,
+  "debug": {
+    "original_prediction": "bench_press",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "bench_press",
+    "original_confidence": 0.8429933786392212,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.58,
+    "frames_seen": 480,
+    "frames_processed": 460,
+    "pose_frames": 460,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null,
+    "front_squat_rescue": null
+  }
+}
+
+==============================
+regression_tests/videos/thruster.mp4
+==============================
+DEBUG PRED SHAPE: (5,)
+DEBUG RAW IDX: 0
+DEBUG CLASS_NAMES LEN: 5
+DEBUG CLASS_NAMES: ['bench_press', 'deadlift', 'push_press', 'squat', 'thruster']
+{
+  "label": "thruster",
+  "confidence": 0.99,
+  "rep_count": 1,
+  "debug": {
+    "original_prediction": "bench_press",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "thruster",
+    "original_confidence": 0.9938724040985107,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.566,
+    "frames_seen": 180,
+    "frames_processed": 115,
+    "pose_frames": 115,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null,
+    "front_squat_rescue": null
+  }
+}
+
+==============================
+regression_tests/videos/front_squat.mov
+==============================
+DEBUG PRED SHAPE: (5,)
+DEBUG RAW IDX: 3
+DEBUG CLASS_NAMES LEN: 5
+DEBUG CLASS_NAMES: ['bench_press', 'deadlift', 'push_press', 'squat', 'thruster']
+{
+  "label": "thruster",
+  "confidence": 0.98,
+  "rep_count": 2,
+  "debug": {
+    "original_prediction": "squat",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "thruster",
+    "original_confidence": 0.9759411215782166,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.55,
+    "frames_seen": 300,
+    "frames_processed": 168,
+    "pose_frames": 168,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": {
+      "squat_label": "squat_back",
+      "squat_confidence": 0.9835197329521179,
+      "squat_probs": [
+        0.002721228636801243,
+        0.9835197329521179,
+        0.013759073801338673
+      ]
+    },
+    "front_squat_rescue": null
+  }
+}

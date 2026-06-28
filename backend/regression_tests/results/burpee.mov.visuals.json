@@ -1,13 +1,13 @@
 {
   "exercise_label": "burpee",
   "phase_images": {
-    "start": "/outputs/burpee_start_3cbce821.jpg",
-    "hands_down": "/outputs/burpee_hands_down_142b3fad.jpg",
-    "plank": "/outputs/burpee_plank_81e475c3.jpg",
-    "jump_in": "/outputs/burpee_jump_in_d11bf57f.jpg",
-    "stand": "/outputs/burpee_stand_8cdd77d1.jpg",
-    "debug_sheet": "/outputs/burpee_phase_debug_ac7bfed0.jpg",
-    "finish": "/outputs/burpee_stand_8cdd77d1.jpg"
+    "start": "/outputs/burpee_start_ae34028b.jpg",
+    "hands_down": "/outputs/burpee_hands_down_4ddbdaf0.jpg",
+    "plank": "/outputs/burpee_plank_3f211c7e.jpg",
+    "jump_in": "/outputs/burpee_jump_in_e71e84db.jpg",
+    "stand": "/outputs/burpee_stand_561aed16.jpg",
+    "debug_sheet": "/outputs/burpee_phase_debug_229219f6.jpg",
+    "finish": "/outputs/burpee_stand_561aed16.jpg"
   },
   "visuals_error": null
 }
