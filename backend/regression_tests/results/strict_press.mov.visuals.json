@@ -1,10 +1,10 @@
 {
   "exercise_label": "strict_press",
   "phase_images": {
-    "setup": "/outputs/push_press_setup_2f4e2c62.jpg",
-    "press": "/outputs/push_press_press_aceff561.jpg",
-    "lockout": "/outputs/push_press_lockout_f29da739.jpg",
-    "debug_sheet": "/outputs/push_press_phase_debug_b15a2f33.jpg"
+    "setup": "/outputs/push_press_setup_6799064e.jpg",
+    "press": "/outputs/push_press_press_fcc83799.jpg",
+    "lockout": "/outputs/push_press_lockout_c069eedf.jpg",
+    "debug_sheet": "/outputs/push_press_phase_debug_9b102218.jpg"
   },
   "visuals_error": null
 }

@@ -94,5 +94,11 @@
     "min_confidence": 0.6,
     "min_reps": 0,
     "analysis_mode": "detailed_rep_analysis"
+  },
+  "push_up.mp4": {
+    "label": "push_up",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "exercise_label": "push_up",
+  "phase_images": {
+    "setup": "/outputs/push_up_setup_93037e9c.jpg",
+    "descent": "/outputs/push_up_descent_e7fbbe54.jpg",
+    "bottom": "/outputs/push_up_bottom_2875a351.jpg",
+    "ascent": "/outputs/push_up_ascent_3b1c8bf4.jpg",
+    "lockout": "/outputs/push_up_lockout_ef2fe1ea.jpg",
+    "debug_sheet": "/outputs/push_up_phase_debug_cf536145.jpg"
+  },
+  "visuals_error": null
+}

@@ -1,12 +1,12 @@
 {
   "exercise_label": "snatch",
   "phase_images": {
-    "setup": "/outputs/snatch_setup_0c782bd9.jpg",
-    "first_pull": "/outputs/snatch_first_pull_ee728d60.jpg",
-    "extension": "/outputs/snatch_extension_94bed6b0.jpg",
-    "catch": "/outputs/snatch_catch_09993ca7.jpg",
-    "finish": "/outputs/snatch_finish_bb3dd3d8.jpg",
-    "debug_sheet": "/outputs/snatch_phase_debug_ca7b40b1.jpg"
+    "setup": "/outputs/snatch_setup_2453900c.jpg",
+    "first_pull": "/outputs/snatch_first_pull_12073a15.jpg",
+    "extension": "/outputs/snatch_extension_36ec4532.jpg",
+    "catch": "/outputs/snatch_catch_d64285ad.jpg",
+    "finish": "/outputs/snatch_finish_df7bb587.jpg",
+    "debug_sheet": "/outputs/snatch_phase_debug_fe6bc949.jpg"
   },
   "visuals_error": null
 }
