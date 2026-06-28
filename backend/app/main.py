@@ -41,7 +41,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 # Experimental: use YOLO to isolate the foreground athlete before pose estimation.
-USE_YOLO_TRACKING = False
+USE_YOLO_TRACKING = (
+    os.getenv("USE_YOLO_TRACKING", "false").lower() == "true"
+)
 
 try:
     from app.tracking import YOLOTracker, remap_crop_landmarks_to_full_frame
