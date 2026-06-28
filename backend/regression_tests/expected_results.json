@@ -100,5 +100,11 @@
     "min_confidence": 0.6,
     "min_reps": 0,
     "analysis_mode": "detailed_rep_analysis"
+  },
+  "handstand_push_up.mov": {
+    "label": "handstand_push_up",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis"
   }
 }

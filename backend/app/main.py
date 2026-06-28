@@ -2996,6 +2996,7 @@ def analyze_clean_and_jerk_reps(biomechanics):
     # Use a stable midpoint so catch is visually distinct from both drive and lockout.
     jerk_catch_idx = jerk_drive_idx + int((end_idx - jerk_drive_idx) * 0.90)
     jerk_catch_idx = max(jerk_drive_idx + 2, min(jerk_catch_idx, end_idx - 1))
+    jerk_catch_idx = max(0, min(int(jerk_catch_idx), len(frame_numbers) - 1))
     jerk_catch_frame = int(frame_numbers[jerk_catch_idx])
     end_frame = int(frame_numbers[min(n - 1, max(end_idx, jerk_catch_idx + 26))])
 
@@ -6494,6 +6495,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             ):
                 final_label = "push_up"
                 final_confidence = max(final_confidence, 0.82)
+
+        # Handstand push-up rescue:
+        # Compressed HSPU can route through clean_and_jerk after bench-like press detection.
+        if (
+            final_label == "clean_and_jerk"
+            and base_raw_label == "bench_press"
+            and base_raw_confidence < 0.90
+            and olympic_conf < 0.70
+        ):
+            final_label = "handstand_push_up"
+            final_confidence = max(final_confidence, 0.84)
 
         analysis_label = final_label
 

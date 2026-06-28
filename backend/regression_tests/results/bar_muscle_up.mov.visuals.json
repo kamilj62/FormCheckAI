@@ -1,13 +1,13 @@
 {
   "exercise_label": "muscle_up",
   "phase_images": {
-    "hang": "/outputs/bar_muscle_up_hang_b4abcec9.jpg",
-    "pull": "/outputs/bar_muscle_up_pull_4cb1fb75.jpg",
-    "transition": "/outputs/bar_muscle_up_transition_04be71d6.jpg",
-    "dip": "/outputs/bar_muscle_up_dip_60212610.jpg",
-    "lockout": "/outputs/bar_muscle_up_lockout_07eda8c5.jpg",
-    "debug_sheet": "/outputs/bar_muscle_up_phase_debug_f7fd9e87.jpg",
-    "finish": "/outputs/bar_muscle_up_lockout_07eda8c5.jpg"
+    "hang": "/outputs/bar_muscle_up_hang_15e62779.jpg",
+    "pull": "/outputs/bar_muscle_up_pull_f2ba46ca.jpg",
+    "transition": "/outputs/bar_muscle_up_transition_8055aa69.jpg",
+    "dip": "/outputs/bar_muscle_up_dip_b8b9b920.jpg",
+    "lockout": "/outputs/bar_muscle_up_lockout_20f6b7c4.jpg",
+    "debug_sheet": "/outputs/bar_muscle_up_phase_debug_73653b80.jpg",
+    "finish": "/outputs/bar_muscle_up_lockout_20f6b7c4.jpg"
   },
   "visuals_error": null
 }
