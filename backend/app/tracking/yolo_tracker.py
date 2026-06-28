@@ -45,6 +45,12 @@ class YOLOTracker:
         self.missed_frames = 0
         self.max_missed_frames = 30
 
+        # Diagnostics for auto subject validation.
+        self.frames_seen = 0
+        self.multi_person_frames = 0
+        self.max_people = 0
+        self.current_people = 0
+
     def get_crop(self, frame):
         h, w = frame.shape[:2]
 
@@ -58,17 +64,30 @@ class YOLOTracker:
         boxes = result.boxes
         candidates = []
 
+        self.frames_seen += 1
+        meaningful_people = 0
+        frame_area = max(1, h * w)
+
         if boxes is not None and boxes.id is not None:
             for box, track_id in zip(boxes.xyxy, boxes.id):
                 x1, y1, x2, y2 = map(int, box)
                 tid = int(track_id.item())
 
                 area = max(1, (x2 - x1) * (y2 - y1))
+                area_ratio = area / frame_area
+                if area_ratio >= 0.04:
+                    meaningful_people += 1
+
                 cx = (x1 + x2) / 2
                 bottom = y2
 
                 score = area + bottom * 250 - abs(cx - w / 2) * 2
                 candidates.append((score, tid, x1, y1, x2, y2))
+
+        self.current_people = meaningful_people
+        self.max_people = max(self.max_people, meaningful_people)
+        if meaningful_people >= 2:
+            self.multi_person_frames += 1
 
         if not candidates:
             return CropResult(crop=frame, box=(0, 0, w, h), target_id=None)

@@ -51,6 +51,12 @@ USE_YOLO_SUBJECT_VALIDATION = (
     os.getenv("USE_YOLO_SUBJECT_VALIDATION", "false").lower() == "true"
 )
 
+# Automatically run YOLO subject validation only when YOLO detects
+# meaningful multi-person risk. Disabled by default because it adds latency.
+AUTO_YOLO_SUBJECT_VALIDATION = (
+    os.getenv("AUTO_YOLO_SUBJECT_VALIDATION", "false").lower() == "true"
+)
+
 USE_YOLO_DIAGNOSTICS = (
     os.getenv("USE_YOLO_DIAGNOSTICS", "false").lower() == "true"
 )
@@ -5924,7 +5930,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         yolo_tracker = (
             YOLOTracker("models/yolov8n.pt", pad=220)
-            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION) and YOLOTracker is not None
+            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION or AUTO_YOLO_SUBJECT_VALIDATION) and YOLOTracker is not None
             else None
         )
 
@@ -5950,7 +5956,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
-                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION) and yolo_tracker is not None:
+                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS or USE_YOLO_SUBJECT_VALIDATION or AUTO_YOLO_SUBJECT_VALIDATION) and yolo_tracker is not None:
                     crop_result = yolo_tracker.get_crop(frame)
 
                     full_box = (0, 0, frame.shape[1], frame.shape[0])
@@ -6705,6 +6711,21 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "yolo_subject_validation": USE_YOLO_SUBJECT_VALIDATION,
                 "yolo_subject_keep_frames": yolo_subject_keep_frames,
                 "yolo_subject_reject_frames": yolo_subject_reject_frames,
+                "auto_yolo_subject_validation": AUTO_YOLO_SUBJECT_VALIDATION,
+                "effective_subject_validation": (
+                    USE_YOLO_SUBJECT_VALIDATION
+                    or (
+                        AUTO_YOLO_SUBJECT_VALIDATION
+                        and yolo_tracker is not None
+                        and getattr(yolo_tracker, "max_people", 0) >= 2
+                        and (
+                            getattr(yolo_tracker, "multi_person_frames", 0)
+                            / max(1, getattr(yolo_tracker, "frames_seen", 0))
+                        ) >= 0.05
+                    )
+                ),
+                "yolo_max_people": getattr(yolo_tracker, "max_people", 0) if yolo_tracker is not None else 0,
+                "yolo_multi_person_frames": getattr(yolo_tracker, "multi_person_frames", 0) if yolo_tracker is not None else 0,
                 "squat_router": squat_router_debug,
                 "front_squat_rescue": front_squat_rescue_debug,
             },
