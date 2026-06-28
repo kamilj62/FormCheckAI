@@ -45,6 +45,10 @@ USE_YOLO_TRACKING = (
     os.getenv("USE_YOLO_TRACKING", "false").lower() == "true"
 )
 
+USE_YOLO_DIAGNOSTICS = (
+    os.getenv("USE_YOLO_DIAGNOSTICS", "false").lower() == "true"
+)
+
 try:
     from app.tracking import YOLOTracker, remap_crop_landmarks_to_full_frame
 except Exception:
@@ -5913,9 +5917,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         yolo_tracker = (
             YOLOTracker("models/yolov8n.pt", pad=220)
-            if USE_YOLO_TRACKING and YOLOTracker is not None
+            if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS) and YOLOTracker is not None
             else None
         )
+
+        yolo_crop_frames = 0
+        yolo_full_fallback_frames = 0
+        yolo_target_ids = set()
 
         # ---------------- POSE EXTRACTION ----------------
         with mp_pose.Pose(
@@ -5933,9 +5941,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
-                if USE_YOLO_TRACKING and yolo_tracker is not None:
+                if (USE_YOLO_TRACKING or USE_YOLO_DIAGNOSTICS) and yolo_tracker is not None:
                     crop_result = yolo_tracker.get_crop(frame)
-                    analysis_frame = crop_result.crop if crop_result.crop is not None else frame
+
+                    full_box = (0, 0, frame.shape[1], frame.shape[0])
+
+                    if crop_result.crop is not None and crop_result.box != full_box:
+                        yolo_crop_frames += 1
+                    else:
+                        yolo_full_fallback_frames += 1
+
+                    if crop_result.target_id is not None:
+                        yolo_target_ids.add(crop_result.target_id)
+
+                    if USE_YOLO_TRACKING:
+                        analysis_frame = crop_result.crop if crop_result.crop is not None else frame
+                    else:
+                        analysis_frame = frame
                 else:
                     crop_result = None
                     analysis_frame = frame
@@ -6636,6 +6658,11 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "pose_frames": pose_frames,
                 "sample_every": sample_every,
                 "input_shape": str(seq.shape),
+                "yolo_tracking": USE_YOLO_TRACKING,
+                "yolo_diagnostics": USE_YOLO_DIAGNOSTICS,
+                "yolo_crop_frames": yolo_crop_frames,
+                "yolo_full_fallback_frames": yolo_full_fallback_frames,
+                "yolo_target_ids": sorted(list(yolo_target_ids)),
                 "squat_router": squat_router_debug,
                 "front_squat_rescue": front_squat_rescue_debug,
             },
