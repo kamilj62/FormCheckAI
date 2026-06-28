@@ -1,11 +1,11 @@
 {
   "exercise_label": "push_press",
   "phase_images": {
-    "setup": "/outputs/push_press_setup_ca6e91ba.jpg",
-    "dip": "/outputs/push_press_dip_4527e112.jpg",
-    "drive": "/outputs/push_press_drive_989c09e8.jpg",
-    "lockout": "/outputs/push_press_lockout_d1346528.jpg",
-    "debug_sheet": "/outputs/push_press_phase_debug_05c53a04.jpg"
+    "setup": "/outputs/push_press_setup_554e08fb.jpg",
+    "dip": "/outputs/push_press_dip_400b1ef4.jpg",
+    "drive": "/outputs/push_press_drive_8804c026.jpg",
+    "lockout": "/outputs/push_press_lockout_3ac464cf.jpg",
+    "debug_sheet": "/outputs/push_press_phase_debug_75f83bfd.jpg"
   },
   "visuals_error": null
 }

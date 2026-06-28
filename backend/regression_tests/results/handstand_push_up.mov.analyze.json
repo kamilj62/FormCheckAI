@@ -1,0 +1,39 @@
+{
+  "exercise_label": "handstand_push_up",
+  "confidence": 0.84,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [],
+  "set_summary": {
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected.",
+    "biggest_fix": "Record a clearer set for analysis."
+  },
+  "coaching_zones": {},
+  "phase_images": {
+    "setup": 1,
+    "clean_catch": 179,
+    "jerk_dip": 480,
+    "jerk_catch": 480,
+    "finish": 480
+  },
+  "overlay_job_id": null,
+  "overlay_video_url": null,
+  "debug": {
+    "original_prediction": "bench_press",
+    "olympic_prediction": "clean_and_jerk",
+    "final_label_debug": "handstand_push_up",
+    "original_confidence": 0.8429933786392212,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_confidence": 0.58,
+    "frames_seen": 480,
+    "frames_processed": 460,
+    "pose_frames": 460,
+    "sample_every": 1,
+    "input_shape": "(30, 136)",
+    "squat_router": null,
+    "front_squat_rescue": null
+  }
+}

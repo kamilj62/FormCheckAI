@@ -1,11 +1,11 @@
 {
   "exercise_label": "split_jerk",
   "phase_images": {
-    "setup": "/outputs/split_jerk_setup_713d9307.jpg",
-    "dip": "/outputs/split_jerk_dip_91c8fe05.jpg",
-    "catch": "/outputs/split_jerk_catch_361d2f64.jpg",
-    "finish": "/outputs/split_jerk_finish_e48f0c66.jpg",
-    "debug_sheet": "/outputs/split_jerk_phase_debug_6bbd0304.jpg"
+    "setup": "/outputs/split_jerk_setup_7838d78a.jpg",
+    "dip": "/outputs/split_jerk_dip_b4366c8e.jpg",
+    "catch": "/outputs/split_jerk_catch_c0d6544c.jpg",
+    "finish": "/outputs/split_jerk_finish_18a6fe88.jpg",
+    "debug_sheet": "/outputs/split_jerk_phase_debug_58c356c3.jpg"
   },
   "visuals_error": null
 }
