@@ -1,0 +1,13 @@
+diff --git a/backend/app/main.py b/backend/app/main.py
+index 169c4d9..d01799c 100644
+--- a/backend/app/main.py
++++ b/backend/app/main.py
+@@ -4653,8 +4653,6 @@ def create_deadlift_phase_images(input_path, output_dir, rep, sample_every=1):
+     return saved if saved else None
+ 
+ 
+-
+-
+ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_frames):
+     """
+     Experimental biomechanics-based squat visual picker.
