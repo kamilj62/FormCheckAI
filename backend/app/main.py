@@ -4653,6 +4653,131 @@ def create_deadlift_phase_images(input_path, output_dir, rep, sample_every=1):
     return saved if saved else None
 
 
+
+
+def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_frames):
+    """
+    Experimental biomechanics-based squat visual picker.
+    Not wired into production unless create_squat_phase_images calls it.
+    Returns: setup, descent, bottom, ascent, lockout.
+    """
+    start = max(0, min(int(start), total_frames - 1))
+    bottom = max(start, min(int(bottom), total_frames - 1))
+    end = max(bottom + 1, min(int(end), total_frames - 1))
+
+    fallback = {
+        "setup": start,
+        "descent": start + int((bottom - start) * 0.50),
+        "bottom": bottom,
+        "ascent": bottom + int((end - bottom) * 0.50),
+        "lockout": end,
+    }
+
+    cap = cv2.VideoCapture(input_path)
+    if not cap.isOpened():
+        return fallback
+
+    records = []
+
+    def angle(a, b, c):
+        import math
+        bax, bay = a[0] - b[0], a[1] - b[1]
+        bcx, bcy = c[0] - b[0], c[1] - b[1]
+        dot = bax * bcx + bay * bcy
+        mag1 = math.sqrt(bax * bax + bay * bay)
+        mag2 = math.sqrt(bcx * bcx + bcy * bcy)
+        if mag1 == 0 or mag2 == 0:
+            return 180.0
+        cosang = max(-1.0, min(1.0, dot / (mag1 * mag2)))
+        return math.degrees(math.acos(cosang))
+
+    with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5) as pose:
+        for frame_idx in range(start, end + 1, 2):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            ret, frame = cap.read()
+            if not ret:
+                continue
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            res = pose.process(rgb)
+            if not res.pose_landmarks:
+                continue
+
+            lm = res.pose_landmarks.landmark
+            P = mp_pose.PoseLandmark
+
+            def pt(x):
+                return (lm[x.value].x, lm[x.value].y)
+
+            l_sh, r_sh = pt(P.LEFT_SHOULDER), pt(P.RIGHT_SHOULDER)
+            l_hip, r_hip = pt(P.LEFT_HIP), pt(P.RIGHT_HIP)
+            l_knee, r_knee = pt(P.LEFT_KNEE), pt(P.RIGHT_KNEE)
+            l_ankle, r_ankle = pt(P.LEFT_ANKLE), pt(P.RIGHT_ANKLE)
+
+            hip_y = (l_hip[1] + r_hip[1]) / 2.0
+            knee_angle = (
+                angle(l_hip, l_knee, l_ankle) +
+                angle(r_hip, r_knee, r_ankle)
+            ) / 2.0
+            hip_angle = (
+                angle(l_sh, l_hip, l_knee) +
+                angle(r_sh, r_hip, r_knee)
+            ) / 2.0
+
+            records.append({
+                "frame": frame_idx,
+                "hip_y": hip_y,
+                "knee": knee_angle,
+                "hip": hip_angle,
+            })
+
+    cap.release()
+
+    if len(records) < 5:
+        return fallback
+
+    # Bottom = lowest hips, with knee bend as tie-breaker.
+    bottom_rec = max(records, key=lambda r: (r["hip_y"], 180.0 - r["knee"]))
+    bottom_frame = bottom_rec["frame"]
+
+    before = [r for r in records if r["frame"] <= bottom_frame]
+    after = [r for r in records if r["frame"] >= bottom_frame]
+
+    setup_candidates = [
+        r for r in before
+        if r["knee"] >= 155 and r["hip"] >= 130
+    ]
+    lockout_candidates = [
+        r for r in after
+        if r["knee"] >= 155 and r["hip"] >= 130
+    ]
+
+    setup_frame = setup_candidates[-1]["frame"] if setup_candidates else start
+    lockout_frame = lockout_candidates[0]["frame"] if lockout_candidates else end
+
+    if setup_frame >= bottom_frame:
+        setup_frame = start
+    if lockout_frame <= bottom_frame:
+        lockout_frame = end
+
+    descent_target = setup_frame + int((bottom_frame - setup_frame) * 0.50)
+    ascent_target = bottom_frame + int((lockout_frame - bottom_frame) * 0.50)
+
+    descent_pool = [r for r in records if setup_frame <= r["frame"] <= bottom_frame]
+    ascent_pool = [r for r in records if bottom_frame <= r["frame"] <= lockout_frame]
+
+    descent_frame = min(descent_pool, key=lambda r: abs(r["frame"] - descent_target))["frame"] if descent_pool else fallback["descent"]
+    ascent_frame = min(ascent_pool, key=lambda r: abs(r["frame"] - ascent_target))["frame"] if ascent_pool else fallback["ascent"]
+
+    return {
+        "setup": setup_frame,
+        "descent": descent_frame,
+        "bottom": bottom_frame,
+        "ascent": ascent_frame,
+        "lockout": lockout_frame,
+    }
+
+
 def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
     cap = cv2.VideoCapture(input_path)
 
