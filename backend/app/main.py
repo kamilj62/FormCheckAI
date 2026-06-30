@@ -1,6 +1,7 @@
 from sys import prefix
 import tempfile
 from pathlib import Path
+import traceback
 
 import os
 from tracemalloc import start
@@ -10,7 +11,7 @@ import shutil
 from threading import Thread
 import uuid
 
-from backend.profiles.athlete_profile import load_profile
+from profiles.athlete_profile import load_profile
 
 overlay_jobs = {}
 
@@ -7175,89 +7176,104 @@ async def create_job(file: UploadFile = File(...)):
 
     def process():
 
-        # ---------------------------------------------------
-        # 1. EXTRACT POSE
-        # ---------------------------------------------------
-        records = extract_pose_records(video_path, 0, 600, 1)
+        try:
+            # ---------------------------------------------------
+            # 1. EXTRACT POSE
+            # ---------------------------------------------------
+            records = extract_pose_records(video_path, 0, 600, 1)
 
-        if not records:
-            job_store[job_id] = {"status": "failed", "error": "no_pose_data"}
-            return
+            if not records:
+                job_store[job_id] = {"status": "failed", "error": "no_pose_data"}
+                return
 
-        # ---------------------------------------------------
-        # 2. SEGMENT REPS
-        # ---------------------------------------------------
-        reps = segment_reps(records)
+            # ---------------------------------------------------
+            # 2. SEGMENT REPS
+            # ---------------------------------------------------
+            reps = segment_reps(records)
 
-        # ---------------------------------------------------
-        # 3. FEATURE EXTRACTION (ONCE)
-        # ---------------------------------------------------
-        rep_features = [
-            extract_rep_features(records, rep)
-            for rep in reps
-        ]
+            if not reps:
+                job_store[job_id] = {"status": "failed", "error": "no_reps_detected"}
+                return
 
-        # ---------------------------------------------------
-        # 4. FATIGUE CURVE (REAL SIGNAL)
-        # ---------------------------------------------------
-        fatigue_curve = compute_fatigue_curve(rep_features)
+            # ---------------------------------------------------
+            # 3. FEATURE EXTRACTION (ONCE)
+            # ---------------------------------------------------
+            rep_features = [
+                extract_rep_features(records, rep)
+                for rep in reps
+            ]
 
-        # ---------------------------------------------------
-        # 5. COACHING
-        # ---------------------------------------------------
-        results = []
+            # ---------------------------------------------------
+            # 4. FATIGUE CURVE
+            # ---------------------------------------------------
+            fatigue_curve = compute_fatigue_curve(rep_features)
 
-        for i, rep in enumerate(reps):
+            # ---------------------------------------------------
+            # 5. COACHING
+            # ---------------------------------------------------
+            results = []
 
-            start = rep["start"]
-            bottom = rep["bottom"]
-            end = rep["end"]
+            for i, rep in enumerate(reps):
 
-            result = coach_rep(records, start, bottom, end)
+                start = rep["start"]
+                bottom = rep["bottom"]
+                end = rep["end"]
 
-            fatigue_penalty = fatigue_curve[i]
+                result = coach_rep(records, start, bottom, end)
 
-            adjusted_score = result["score"] - fatigue_penalty
+                fatigue_penalty = fatigue_curve[i] if i < len(fatigue_curve) else 0
 
-            results.append({
-                "start": start,
-                "bottom": bottom,
-                "end": end,
-                "score": result["score"],
-                "adjusted_score": round(max(0, min(10, adjusted_score)), 2),
-                "strengths": result["strengths"],
-                "issues": result["issues"],
-                "phase_feedback": result["phase_feedback"],
-                "priority_fix": result["priority_fix"],
-                "set_context": {
-                    "fatigue_index": float(fatigue_penalty)
-                }
-            })
+                adjusted_score = result["score"] - fatigue_penalty
 
-        # ---------------------------------------------------
-        # 6. ATHLETE MEMORY SYSTEM
-        # ---------------------------------------------------
-        from profiles.athlete_profile import (
-            load_profile,
-            update_profile,
-            save_profile
-        )
+                results.append({
+                    "start": start,
+                    "bottom": bottom,
+                    "end": end,
+                    "score": result["score"],
+                    "adjusted_score": round(max(0, min(10, adjusted_score)), 2),
+                    "strengths": result["strengths"],
+                    "issues": result["issues"],
+                    "phase_feedback": result["phase_feedback"],
+                    "priority_fix": result["priority_fix"],
+                    "set_context": {
+                        "fatigue_index": float(fatigue_penalty)
+                    }
+                })
 
-        user_id = "default_user"
+            # ---------------------------------------------------
+            # 6. ATHLETE MEMORY SYSTEM
+            # ---------------------------------------------------
+            from profiles.athlete_profile import (
+                load_profile,
+                update_profile,
+                save_profile
+            )
 
-        profile = load_profile(user_id)
-        profile = update_profile(profile, results)
-        save_profile(user_id, profile)
+            user_id = "default_user"
+
+            profile = load_profile(user_id)
+            profile = update_profile(profile, results)
+            save_profile(user_id, profile)
 
         # ---------------------------------------------------
         # 7. STORE RESULT
         # ---------------------------------------------------
-        job_store[job_id] = {
-            "status": "done",
-            "num_reps": len(results),
-            "result": results,
-            "athlete_profile": profile
-        }
+            job_store[job_id] = {
+                "status": "done",
+                "num_reps": len(results),
+                "result": results,
+                "athlete_profile": profile
+            }
+
+        except Exception as e:
+            job_store[job_id] = {
+                "status": "failed",
+                "error": str(e),
+                "trace": traceback.format_exc()
+            }
+            print(traceback.format_exc())
+            
+            return
     # run async
     threading.Thread(target=process).start()
 

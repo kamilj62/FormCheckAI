@@ -1,0 +1,21 @@
+{
+  "user_id": "default_user",
+  "sessions": 1,
+  "metrics": {
+    "depth": 1.9533333333333336,
+    "stability": 1.9306666666666668,
+    "valgus": 0.5777029936967625
+  },
+  "trend": {
+    "depth": [],
+    "stability": [],
+    "valgus": [],
+    "score": [
+      7.766666666666667
+    ],
+    "fatigue": [
+      0.11148503151618798
+    ]
+  },
+  "flags": []
+}
