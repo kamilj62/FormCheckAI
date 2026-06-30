@@ -1,3 +1,4 @@
+from app.phase_engine.squat_v4 import find_bottom_v4
 import math
 import cv2
 import mediapipe as mp
@@ -67,8 +68,20 @@ def extract_pose_records(video_path, start, end, sample_step=2):
             l_ankle, r_ankle = pt(P.LEFT_ANKLE), pt(P.RIGHT_ANKLE)
 
             hip_y = (l_hip[1] + r_hip[1]) / 2.0
-            knee = (_angle(l_hip, l_knee, l_ankle) + _angle(r_hip, r_knee, r_ankle)) / 2.0
-            hip = (_angle(l_sh, l_hip, l_knee) + _angle(r_sh, r_hip, r_knee)) / 2.0
+
+            knee = (_angle(l_hip, l_knee, l_ankle) +
+                    _angle(r_hip, r_knee, r_ankle)) / 2.0
+
+            hip = (_angle(l_sh, l_hip, l_knee) +
+                   _angle(r_sh, r_hip, r_knee)) / 2.0
+
+            # ---------------- SAFE FILTER ----------------
+            if (
+                knee is None or hip is None or
+                not np.isfinite(knee) or not np.isfinite(hip) or
+                knee <= 0 or hip <= 0
+            ):
+                continue
 
             records.append({
                 "frame": frame_idx,
@@ -88,24 +101,73 @@ def extract_pose_records(video_path, start, end, sample_step=2):
     upright_n = _norm([r["knee"] + r["hip"] - (r["hip_y"] * 120.0) for r in records])
 
     for i, r in enumerate(records):
-        r["bottom_score"] = 0.45 * hip_y_n[i] + 0.35 * knee_flex_n[i] + 0.20 * hip_flex_n[i]
+        r["bottom_score"] = (
+            0.85 * hip_y_n[i] +
+            0.10 * knee_flex_n[i] +
+            0.05 * hip_flex_n[i]
+        )
         r["upright_score"] = float(upright_n[i])
 
     return records
 
+def find_bottom_v4(records, approx_bottom, radius=20):
+    """
+    Pick the visual squat bottom.
 
-def find_bottom(records, approx_bottom, radius=16):
+    Important:
+    Some athletes pause or sink at the bottom. MediaPipe hip/knee signals can
+    keep drifting after the visually correct bottom. So we do NOT blindly choose
+    the deepest/latest frame. We combine biomechanical bottom score with a
+    temporal prior around the analyzer's approximate bottom.
+    """
+    approx_bottom = int(approx_bottom)
+
     pool = [
         r for r in records
-        if abs(r["frame"] - int(approx_bottom)) <= radius
+        if abs(r["frame"] - approx_bottom) <= radius
     ]
 
     if not pool:
         pool = records
 
-    max_score = max(r["bottom_score"] for r in pool)
-    plateau = [r for r in pool if r["bottom_score"] >= max_score * 0.98]
-    return plateau[0] if plateau else max(pool, key=lambda r: r["bottom_score"])
+    def combined_score(r):
+    
+        bottom = float(r.get("bottom_score", 0.0))
+
+        proximity = 1.0 - min(abs(r["frame"] - approx_bottom) / max(radius, 1), 1.0)
+
+        # NEW FIX: reward TRUE depth more heavily
+        stability = float(r.get("upright_score", 0.0))
+
+        return (
+            0.75 * bottom +        # stronger bottom signal
+            0.20 * proximity +     # reduce timing bias
+            0.05 * stability       # prevent early dip selection
+        )
+    best_score = max(combined_score(r) for r in pool)
+
+    plateau = [
+        r for r in pool
+        if combined_score(r) >= best_score * 0.98
+    ]
+
+    if plateau:
+        best_score = max(combined_score(r) for r in pool)
+
+        plateau = [
+            r for r in pool
+            if combined_score(r) >= best_score * 0.98
+        ]
+
+        # FIX: choose temporal CENTER of plateau
+        center_frame = np.mean([p["frame"] for p in plateau])
+
+        return min(
+            plateau,
+            key=lambda r: abs(r["frame"] - center_frame)
+        )
+
+    return max(pool, key=combined_score)
 
 
 def find_setup_before_bottom(records, bottom):
@@ -155,7 +217,7 @@ def pick_squat_visual_phases(
     if len(records) < 8:
         return {"error": "not_enough_pose_frames", "records": len(records)}
 
-    bottom = find_bottom(records, bottom_frame)
+    bottom = find_bottom_v4(records, bottom_frame)
     setup = find_setup_before_bottom(records, bottom)
     lockout = find_lockout_after_bottom(records, bottom)
 

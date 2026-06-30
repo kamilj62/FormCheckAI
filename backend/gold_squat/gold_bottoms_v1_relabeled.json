@@ -4,21 +4,21 @@
     "rep": 1,
     "bottom_start": 58,
     "bottom_end": 62,
-    "bottom_center": 58
+    "bottom_center": 62
   },
   {
     "video": "squat_13.mp4",
     "rep": 1,
     "bottom_start": 148,
     "bottom_end": 152,
-    "bottom_center": 148
+    "bottom_center": 152
   },
   {
     "video": "squat_13.mp4",
     "rep": 2,
     "bottom_start": 268,
     "bottom_end": 272,
-    "bottom_center": 268
+    "bottom_center": 272
   },
   {
     "video": "squat_20.mp4",
@@ -39,14 +39,14 @@
     "rep": 1,
     "bottom_start": 26,
     "bottom_end": 28,
-    "bottom_center": 26
+    "bottom_center": 27
   },
   {
     "video": "squat_21.mp4",
     "rep": 2,
     "bottom_start": 184,
     "bottom_end": 186,
-    "bottom_center": 184
+    "bottom_center": 185
   },
   {
     "video": "squat_22.mp4",
@@ -60,35 +60,35 @@
     "rep": 2,
     "bottom_start": 192,
     "bottom_end": 196,
-    "bottom_center": 192
+    "bottom_center": 196
   },
   {
     "video": "squat_23.mp4",
     "rep": 1,
     "bottom_start": 84,
     "bottom_end": 96,
-    "bottom_center": 84
+    "bottom_center": 96
   },
   {
     "video": "squat_23.mp4",
     "rep": 2,
     "bottom_start": 318,
     "bottom_end": 320,
-    "bottom_center": 318
+    "bottom_center": 319
   },
   {
     "video": "squat_24.mp4",
     "rep": 1,
     "bottom_start": 144,
     "bottom_end": 156,
-    "bottom_center": 144
+    "bottom_center": 156
   },
   {
     "video": "squat_25.mp4",
     "rep": 1,
     "bottom_start": 54,
     "bottom_end": 66,
-    "bottom_center": 54
+    "bottom_center": 66
   },
   {
     "video": "squat_25.mp4",
@@ -102,41 +102,41 @@
     "rep": 3,
     "bottom_start": 308,
     "bottom_end": 316,
-    "bottom_center": 308
+    "bottom_center": 316
   },
   {
     "video": "squat_27.mp4",
     "rep": 1,
     "bottom_start": 147,
     "bottom_end": 153,
-    "bottom_center": 147
+    "bottom_center": 153
   },
   {
     "video": "squat_27.mp4",
     "rep": 2,
     "bottom_start": 357,
     "bottom_end": 363,
-    "bottom_center": 357
+    "bottom_center": 363
   },
   {
     "video": "squat_27.mp4",
     "rep": 3,
     "bottom_start": 537,
     "bottom_end": 543,
-    "bottom_center": 537
+    "bottom_center": 543
   },
   {
     "video": "squat_8.mp4",
     "rep": 1,
     "bottom_start": 86,
     "bottom_end": 92,
-    "bottom_center": 86
+    "bottom_center": 92
   },
   {
     "video": "squat_8.mp4",
     "rep": 2,
     "bottom_start": 208,
     "bottom_end": 214,
-    "bottom_center": 208
+    "bottom_center": 214
   }
 ]

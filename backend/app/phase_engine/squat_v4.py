@@ -1,26 +1,31 @@
 import numpy as np
 
 def find_bottom_v4(records, approx_bottom, radius=25):
+
     pool = [
         r for r in records
         if abs(r["frame"] - approx_bottom) <= radius
     ]
 
-    if not pool:
+    if len(pool) < 5:
         pool = records
 
-    knee = np.array([r.get("knee", 0.0) for r in pool])
-    hip = np.array([r.get("hip", 0.0) for r in pool])
+    knee = np.array([r["knee"] for r in pool])
+    hip = np.array([r["hip"] for r in pool])
 
-    # raw motion energy (NO smoothing)
-    energy = np.abs(np.gradient(knee)) + np.abs(np.gradient(hip))
+    # stability signal (low movement = bottom region)
+    stability = -(np.abs(np.gradient(knee)) + np.abs(np.gradient(hip)))
 
-    # take early part of minimum region instead of absolute minimum
-    candidates = np.where(energy <= np.percentile(energy, 20))[0]
-    idx = int(candidates[0]) if len(candidates) > 0 else int(np.argmin(energy))
+    # smooth signal a bit
+    kernel = np.ones(5) / 5
+    stability = np.convolve(stability, kernel, mode="same")
 
-    # 🔥 CRITICAL FIX: compensate MediaPipe lag
-    # (this is the real-world correction factor)
-    idx = max(0, idx - 12)
+    # -------------------------------------------------------
+    # YOUR DECISION BLOCK (THIS IS WHAT YOU ASKED ABOUT)
+    # -------------------------------------------------------
+    if len(candidates := np.where(stability <= np.percentile(stability, 20))[0]) == 0:
+        idx = int(np.argmax(stability))
+    else:
+        idx = int(np.median(candidates)) + 2
 
-    return pool[idx]
+    return pool[min(idx, len(pool) - 1)]

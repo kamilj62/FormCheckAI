@@ -15,6 +15,10 @@ overlay_jobs = {}
 from app.phase_detection.signal_engine import SignalEngine
 from app.phase_detection.phase_engine import get_phase_images
 
+from app.phase_engine.rep_segmenter import segment_reps
+from app.phase_engine.rep_scorer import score_rep
+from app.phase_engine.bottom_detector import find_bottom_v1
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -4653,8 +4657,6 @@ def create_deadlift_phase_images(input_path, output_dir, rep, sample_every=1):
     return saved if saved else None
 
 
-
-
 def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_frames):
     """
     Experimental biomechanics-based squat visual picker.
@@ -7096,94 +7098,75 @@ async def generate_overlay(
 
 
 @app.post("/analyze")
-async def analyze(
-    file: UploadFile = File(...),
-    make_visuals: bool = Form(True),
-    make_overlay: bool = Form(True),
-):
-    suffix = os.path.splitext(file.filename or "")[1] or ".mov"
-    temp_filename = f"upload_{uuid.uuid4().hex[:8]}{suffix}"
-    temp_path = os.path.join(UPLOAD_DIR, temp_filename)
+async def analyze(file: UploadFile = File(...)):
 
-    analysis_path = None
+    # -------------------------------------------------------
+    # 1. Save video temporarily
+    # -------------------------------------------------------
+    video_path = f"/tmp/{file.filename}"
+    with open(video_path, "wb") as f:
+        f.write(await file.read())
 
-    try:
-        # ---------------- SAVE FILE FIRST ----------------
-        with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+    # -------------------------------------------------------
+    # 2. Extract pose
+    # -------------------------------------------------------
+    records = extract_pose_records(
+        video_path,
+        start=0,
+        end=600,
+        sample_step=1
+    )
 
-        # ---------------- PREPROCESS ONCE ----------------
-        analysis_path = os.path.abspath(
-            compress_video_for_overlay(temp_path)
-        )
+    if not records:
+        return {"error": "no_pose_data"}
 
-        print("CELERY INPUT PATH:", analysis_path)
-        print("EXISTS:", os.path.exists(analysis_path))
+    # -------------------------------------------------------
+    # 3. Segment reps
+    # -------------------------------------------------------
+    reps = segment_reps(records)
 
-        # ---------------- RUN ANALYSIS ----------------
-        result = analyze_video(
-            analysis_path,
-            make_visuals=make_visuals,
-            make_overlay=False,
-        )
+    results = []
 
-        # ---------------- SAFE OUTPUT EXTRACTION ----------------
-        rep_feedback = result.get("rep_feedback", [])
-        final_label = result.get("exercise_label", "unknown")
-        final_confidence = result.get("confidence", 0.0)
+    # -------------------------------------------------------
+    # 4. Score each rep + detect precise bottom
+    # -------------------------------------------------------
+    for rep in reps:
 
-        set_summary = result.get("set_summary", {})
-        coaching_zones = result.get("coaching_zones", {})
-        phase_images = result.get("phase_images")
+        start = rep["start"]
+        end = rep["end"]
 
-        # ---------------- CELERY OVERLAY ----------------
-        overlay_job_id = None
+        segment = records[start:end + 1]
 
-        if make_overlay:
-            overlay_job_id = None  # local Docker: Celery disabled
+        if len(segment) < 5:
+            continue
 
-        # ---------------- RESPONSE ----------------
-        return {
-            "exercise_label": final_label,
-            "confidence": final_confidence,
-            "analysis_mode": result.get("analysis_mode", "detailed_rep_analysis"),
-            "rep_feedback": rep_feedback,
-            "set_summary": set_summary,
-            "coaching_zones": coaching_zones,
-            "phase_images": phase_images,
+        # estimate bottom using detector
+        approx_bottom = rep["bottom"]
 
-            "overlay_job_id": overlay_job_id,
-            "overlay_video_url": None,
-            "debug": result.get("debug", {}),
-        }
+        bottom_frame = find_bottom_v1(segment, approx_bottom)
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+        # convert local bottom to global index
+        bottom_idx = start + segment.index(bottom_frame)
 
-        return {
-            "error": True,
-            "message": str(e),
-            "exercise_label": "unknown",
-            "confidence": 0.0,
-            "rep_feedback": [],
-            "set_summary": build_set_summary([]),
-            "coaching_zones": build_coaching_zones("unknown", []),
-            "phase_images": None,
-            "overlay_job_id": None,
-            "overlay_video_url": None,
-            "debug": {
-                "error": str(e),
-                "traceback": traceback.format_exc()[-2000:],
-            },
-        }
+        # score rep
+        score = score_rep(records, start, bottom_idx, end)
 
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        results.append({
+            "start": start,
+            "bottom": bottom_idx,
+            "end": end,
+            "score": score["score"],
+            "feedback": score["feedback"],
+            "breakdown": score["breakdown"]
+        })
 
-        # ⚠️ DO NOT DELETE analysis_path UNTIL YOU CONFIRM CELERY DOESN'T NEED IT
-        # (for now leave it out or you'll break worker)
+    # -------------------------------------------------------
+    # 5. Return full response
+    # -------------------------------------------------------
+    return {
+        "num_reps": len(results),
+        "reps": results
+    }
 
 
 @app.get("/overlay_status/{job_id}")
