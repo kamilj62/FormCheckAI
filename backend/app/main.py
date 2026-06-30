@@ -10,7 +10,13 @@ import shutil
 from threading import Thread
 import uuid
 
+from backend.profiles.athlete_profile import load_profile
+
 overlay_jobs = {}
+
+job_store = {}
+
+from app.phase_engine.squat_v3 import extract_pose_records
 
 from app.phase_detection.signal_engine import SignalEngine
 from app.phase_detection.phase_engine import get_phase_images
@@ -18,6 +24,12 @@ from app.phase_detection.phase_engine import get_phase_images
 from app.phase_engine.rep_segmenter import segment_reps
 from app.phase_engine.rep_scorer import score_rep
 from app.phase_engine.bottom_detector import find_bottom_v1
+from app.phase_engine.rep_coach import coach_rep
+
+from app.phase_engine.fatigue_engine import (
+    extract_rep_features,
+    compute_fatigue_curve
+)
 
 import cv2
 import mediapipe as mp
@@ -3028,22 +3040,6 @@ def normalize_label(label):
     return str(label).lower().replace(" ", "_")
 
 
-def smooth_coach_score(score, exercise_label):
-    label = normalize_label(exercise_label)
-
-    if label in ["clean_and_jerk", "snatch"]:
-        if score < 4:
-            score += 0.8
-        elif score < 7:
-            score += 0.4
-
-    elif label in ["squat", "squat_back", "squat_front", "overhead_squat", "deadlift"]:
-        if score > 8:
-            score -= 0.2
-
-    return max(0, min(10, round(score, 1)))
-
-
 def analyze_snatch_reps(biomechanics):
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -4780,9 +4776,9 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
     }
 
 
-def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
-    cap = cv2.VideoCapture(input_path)
+def create_squat_phase_images(input_path, output_dir, rep, mp_pose, uuid, os, cv2):
 
+    cap = cv2.VideoCapture(input_path)
     if not cap.isOpened():
         print("Squat phase error")
         return None
@@ -4790,62 +4786,48 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
 
-    start = int(rep.get("start_frame", 0))
-    bottom = int(rep.get("bottom_frame", start))
-    end = int(rep.get("end_frame", total_frames - 1))
+    # ---------------------------------------------------
+    # KEEP EXISTING NAMES (CRITICAL FOR FRONTEND)
+    # ---------------------------------------------------
+    start = int(rep["start"])
+    bottom = int(rep["bottom"])
+    end = int(rep["end"])
 
     start = max(0, min(start, total_frames - 1))
     bottom = max(start, min(bottom, total_frames - 1))
     end = max(bottom + 1, min(end, total_frames - 1))
 
-    # Use exact detected phase frames from the selected rep.
-    setup_frame = int(rep.get("start_frame", start))
-    descent_frame = int(rep.get("descent_frame", start + int((bottom - start) * 0.60)))
-    bottom_frame = int(rep.get("bottom_frame", bottom))
-    ascent_frame = int(rep.get("ascent_frame", bottom + int((end - bottom) * 0.45)))
-    lockout_frame = int(rep.get("end_frame", end))
-
-    setup_frame = max(0, min(setup_frame, total_frames - 1))
-    descent_frame = max(setup_frame, min(descent_frame, total_frames - 1))
-    bottom_frame = max(descent_frame, min(bottom_frame, total_frames - 1))
-    ascent_frame = max(bottom_frame, min(ascent_frame, total_frames - 1))
-    lockout_frame = max(ascent_frame, min(lockout_frame, total_frames - 1))
-
+    # ---------------------------------------------------
+    # DERIVED PHASES (NO SCHEMA CHANGE)
+    # ---------------------------------------------------
     phase_frames = {
-        "setup": setup_frame,
-        "descent": descent_frame,
-        "bottom": bottom_frame,
-        "ascent": ascent_frame,
-        "lockout": lockout_frame,
+        "setup": start,
+        "descent": int(start + (bottom - start) * 0.6),
+        "bottom": bottom,
+        "ascent": int(bottom + (end - bottom) * 0.45),
+        "lockout": end,
     }
-
-    print("SQUAT PHASE FRAME PICKS:", phase_frames)
 
     saved = {}
 
-    def read_frame_safely(target_frame):
-        local_cap = cv2.VideoCapture(input_path)
-        if not local_cap.isOpened():
-            return None
-
-        local_cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
-        ret, frame = local_cap.read()
-        local_cap.release()
-
+    def get_frame(idx):
+        cap = cv2.VideoCapture(input_path)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+        ret, frame = cap.read()
+        cap.release()
         return frame if ret else None
 
     with mp_pose.Pose(
         static_image_mode=True,
         min_detection_confidence=0.5,
     ) as pose:
-        for phase_name, frame_idx in phase_frames.items():
-            frame = read_frame_safely(frame_idx)
 
+        for phase, idx in phase_frames.items():
+
+            frame = get_frame(idx)
             if frame is None:
-                print(f"Could not read frame for {phase_name}: {frame_idx}")
                 continue
 
-            height, width = frame.shape[:2]
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
@@ -4854,15 +4836,15 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
                 frame = draw_ideal_squat_overlay(
                     frame,
                     results.pose_landmarks,
-                    width,
-                    height,
+                    frame.shape[1],
+                    frame.shape[0],
                 )
 
             cv2.rectangle(frame, (20, 20), (360, 82), (0, 0, 0), -1)
 
             cv2.putText(
                 frame,
-                phase_name.upper(),
+                phase.upper(),
                 (35, 64),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.0,
@@ -4871,17 +4853,11 @@ def create_squat_phase_images(input_path, output_dir, rep, sample_every=1):
                 cv2.LINE_AA,
             )
 
-            filename = f"squat_{phase_name}_{uuid.uuid4().hex[:8]}.jpg"
+            filename = f"squat_{phase}_{uuid.uuid4().hex[:8]}.jpg"
             filepath = os.path.join(output_dir, filename)
 
-            ok = cv2.imwrite(filepath, frame)
-
-            if ok:
-                saved[phase_name] = f"/outputs/{filename}"
-            else:
-                print(f"Could not save image for {phase_name}: {filepath}")
-
-    print("Saved squat phase images:", saved)
+            if cv2.imwrite(filepath, frame):
+                saved[phase] = f"/outputs/{filename}"
 
     return saved if saved else None
 
@@ -7101,14 +7077,14 @@ async def generate_overlay(
 async def analyze(file: UploadFile = File(...)):
 
     # -------------------------------------------------------
-    # 1. Save video temporarily
+    # 1. SAVE VIDEO
     # -------------------------------------------------------
     video_path = f"/tmp/{file.filename}"
     with open(video_path, "wb") as f:
         f.write(await file.read())
 
     # -------------------------------------------------------
-    # 2. Extract pose
+    # 2. POSE EXTRACTION
     # -------------------------------------------------------
     records = extract_pose_records(
         video_path,
@@ -7121,52 +7097,176 @@ async def analyze(file: UploadFile = File(...)):
         return {"error": "no_pose_data"}
 
     # -------------------------------------------------------
-    # 3. Segment reps
+    # 3. SEGMENT REPS
     # -------------------------------------------------------
     reps = segment_reps(records)
 
     results = []
 
     # -------------------------------------------------------
-    # 4. Score each rep + detect precise bottom
+    # 4. PER-REP COACHING (CLEAN + CONSISTENT)
     # -------------------------------------------------------
     for rep in reps:
 
         start = rep["start"]
+        bottom = rep["bottom"]
         end = rep["end"]
 
         segment = records[start:end + 1]
 
-        if len(segment) < 5:
-            continue
+    # ---------------------------------------------------
+    # 🧠 COMPUTE BIOMECHANICS HERE (THIS WAS MISSING)
+    # ---------------------------------------------------
+        knee = np.array([r["knee"] for r in segment])
+        hip = np.array([r["hip"] for r in segment])
 
-        # estimate bottom using detector
-        approx_bottom = rep["bottom"]
+        depth = np.clip((180 - np.min(knee)) / 90, 0, 1)
+        stability = 1 - np.std(knee) / 30
+        valgus = np.mean([abs(r.get("knee", 0) - r.get("hip", 0)) for r in segment])
 
-        bottom_frame = find_bottom_v1(segment, approx_bottom)
-
-        # convert local bottom to global index
-        bottom_idx = start + segment.index(bottom_frame)
-
-        # score rep
-        score = score_rep(records, start, bottom_idx, end)
+    # ---------------------------------------------------
+    # COACHING
+    # ---------------------------------------------------
+        result = coach_rep(records, start, bottom, end)
 
         results.append({
             "start": start,
-            "bottom": bottom_idx,
+            "bottom": bottom,
             "end": end,
-            "score": score["score"],
-            "feedback": score["feedback"],
-            "breakdown": score["breakdown"]
+            "score": result["score"],
+            "strengths": result["strengths"],
+            "issues": result["issues"],
+            "phase_feedback": result["phase_feedback"],
+            "priority_fix": result["priority_fix"],
+
+            # now this works
+            "debug": {
+                "depth": float(depth),
+                "stability": float(stability),
+                "valgus": float(valgus)
+            }
         })
 
     # -------------------------------------------------------
-    # 5. Return full response
+    # 5. RETURN RESPONSE
     # -------------------------------------------------------
     return {
         "num_reps": len(results),
         "reps": results
     }
+
+
+@app.post("/jobs/create")
+async def create_job(file: UploadFile = File(...)):
+
+    import uuid
+    import threading
+
+    job_id = str(uuid.uuid4())
+
+    video_path = f"/tmp/{job_id}.mp4"
+    with open(video_path, "wb") as f:
+        f.write(await file.read())
+
+    job_store[job_id] = {
+        "status": "processing",
+        "result": None
+    }
+
+    def process():
+
+        # ---------------------------------------------------
+        # 1. EXTRACT POSE
+        # ---------------------------------------------------
+        records = extract_pose_records(video_path, 0, 600, 1)
+
+        if not records:
+            job_store[job_id] = {"status": "failed", "error": "no_pose_data"}
+            return
+
+        # ---------------------------------------------------
+        # 2. SEGMENT REPS
+        # ---------------------------------------------------
+        reps = segment_reps(records)
+
+        # ---------------------------------------------------
+        # 3. FEATURE EXTRACTION (ONCE)
+        # ---------------------------------------------------
+        rep_features = [
+            extract_rep_features(records, rep)
+            for rep in reps
+        ]
+
+        # ---------------------------------------------------
+        # 4. FATIGUE CURVE (REAL SIGNAL)
+        # ---------------------------------------------------
+        fatigue_curve = compute_fatigue_curve(rep_features)
+
+        # ---------------------------------------------------
+        # 5. COACHING
+        # ---------------------------------------------------
+        results = []
+
+        for i, rep in enumerate(reps):
+
+            start = rep["start"]
+            bottom = rep["bottom"]
+            end = rep["end"]
+
+            result = coach_rep(records, start, bottom, end)
+
+            fatigue_penalty = fatigue_curve[i]
+
+            adjusted_score = result["score"] - fatigue_penalty
+
+            results.append({
+                "start": start,
+                "bottom": bottom,
+                "end": end,
+                "score": result["score"],
+                "adjusted_score": round(max(0, min(10, adjusted_score)), 2),
+                "strengths": result["strengths"],
+                "issues": result["issues"],
+                "phase_feedback": result["phase_feedback"],
+                "priority_fix": result["priority_fix"],
+                "set_context": {
+                    "fatigue_index": float(fatigue_penalty)
+                }
+            })
+
+        # ---------------------------------------------------
+        # 6. ATHLETE MEMORY SYSTEM
+        # ---------------------------------------------------
+        from profiles.athlete_profile import (
+            load_profile,
+            update_profile,
+            save_profile
+        )
+
+        user_id = "default_user"
+
+        profile = load_profile(user_id)
+        profile = update_profile(profile, results)
+        save_profile(user_id, profile)
+
+        # ---------------------------------------------------
+        # 7. STORE RESULT
+        # ---------------------------------------------------
+        job_store[job_id] = {
+            "status": "done",
+            "num_reps": len(results),
+            "result": results,
+            "athlete_profile": profile
+        }
+    # run async
+    threading.Thread(target=process).start()
+
+    return {"job_id": job_id}
+
+
+@app.get("/jobs/{job_id}")
+async def get_job(job_id: str):
+    return job_store.get(job_id, {"error": "not found"})
 
 
 @app.get("/overlay_status/{job_id}")

@@ -2,72 +2,55 @@ import numpy as np
 
 
 def segment_reps(records):
-    """
-    Returns list of:
-    {start, bottom, end}
-    """
 
-    if len(records) < 10:
-        return []
-
-    knee = np.array([r.get("knee", 0.0) for r in records])
-    hip = np.array([r.get("hip", 0.0) for r in records])
-
-    signal = knee + hip
-
-    # smooth signal
-    kernel = np.ones(5) / 5
-    signal = np.convolve(signal, kernel, mode="same")
-
+    signal = np.array([r["knee"] + r["hip"] for r in records])
+    signal = np.convolve(signal, np.ones(7)/7, mode="same")
     velocity = np.gradient(signal)
-
-    bottoms = []
-
-    # detect local minima + low velocity
-    for i in range(2, len(signal) - 2):
-        if (
-            signal[i] < signal[i - 1]
-            and signal[i] < signal[i + 1]
-            and abs(velocity[i]) < np.percentile(np.abs(velocity), 30)
-        ):
-            bottoms.append(i)
-
-    if not bottoms:
-        return []
-
-    # cluster nearby bottoms
-    clustered = []
-    group = [bottoms[0]]
-
-    for b in bottoms[1:]:
-        if b - group[-1] < 10:
-            group.append(b)
-        else:
-            clustered.append(int(np.mean(group)))
-            group = [b]
-
-    clustered.append(int(np.mean(group)))
-
-    bottoms = clustered
 
     reps = []
 
-    for i, b in enumerate(bottoms):
+    state = "idle"
+    start = None
+    bottom = None
 
-        if i == 0:
-            start = max(0, b - 30)
-        else:
-            start = int((bottoms[i - 1] + b) / 2)
+    for i in range(1, len(signal)-1):
 
-        if i == len(bottoms) - 1:
-            end = min(len(records) - 1, b + 30)
-        else:
-            end = int((b + bottoms[i + 1]) / 2)
+        going_down = velocity[i] < 0
+        going_up = velocity[i] > 0
 
-        reps.append({
-            "start": start,
-            "bottom": b,
-            "end": end
-        })
+        # START REP
+        if state == "idle" and going_down:
+            state = "down"
+            start = i
+            bottom = i
+
+        # TRACK BOTTOM
+        elif state == "down":
+            if signal[i] < signal[bottom]:
+                bottom = i
+
+            if going_up:
+                state = "up"
+
+        # END REP
+        elif state == "up":
+
+            if going_down:
+                # reject micro oscillation
+                continue
+
+            # rep ends when we have moved enough upward
+            if signal[i] > signal[bottom]:
+
+                end = i
+
+                if end - start > 25:
+                    reps.append({
+                        "start": start,
+                        "bottom": bottom,
+                        "end": end
+                    })
+
+                state = "idle"
 
     return reps
