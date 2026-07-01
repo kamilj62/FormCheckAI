@@ -152,13 +152,13 @@ const getPhaseConfig = (exerciseLabel) => {
   if (!label.includes("push_press") && !label.includes("push press") && (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk"))) {
     return {
       title: "Olympic Lift Phase Review",
-      text: "Setup → First Pull → Extension → Catch → Finish",
+      text: "Setup → First Pull → Pull Under → Catch → Lockout",
       items: [
         ["setup", "Setup"],
         ["first_pull", "First Pull"],
-        ["extension", "Extension"],
+        ["extension", "Pull Under"],
         ["catch", "Catch"],
-        ["finish", "Finish"],
+        ["finish", "Lockout"],
       ],
     };
   }

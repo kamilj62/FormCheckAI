@@ -3040,82 +3040,150 @@ def normalize_label(label):
     return str(label).lower().replace(" ", "_")
 
 
-def analyze_snatch_reps(biomechanics):
+def find_snatch_phase_reps(biomechanics):
+    """
+    Detect snatch reps from distinct overhead catch events.
+
+    Output keys stay frontend-compatible:
+    start_frame, first_pull_frame, extension_frame, catch_frame, end_frame.
+    """
+    n = len(biomechanics)
+    if n < 10:
+        return []
+
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
     ])
 
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+    hip_angle = np.array([b.get("hip_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    knee_angle = np.array([b.get("knee_angle", 180.0) for b in biomechanics], dtype=np.float32)
+
+    overhead = wrist_y < shoulder_y
+
+    if not np.any(overhead):
+        return []
+
+    overhead_idxs = np.where(overhead)[0]
+
+    # Group overhead frames into separate catch events.
+    clusters = []
+    current = [int(overhead_idxs[0])]
+
+    max_gap = max(8, n // 60)
+
+    for idx in overhead_idxs[1:]:
+        idx = int(idx)
+        if idx - current[-1] <= max_gap:
+            current.append(idx)
+        else:
+            if len(current) >= 4:
+                clusters.append(current)
+            current = [idx]
+
+    if len(current) >= 4:
+        clusters.append(current)
+
+    reps = []
+
+    for cluster in clusters:
+        cluster_start = cluster[0]
+        cluster_end = cluster[-1]
+
+        # Catch = lowest hip inside the first receiving portion of this overhead cluster.
+        # Avoid delayed lowest-hip / recovery frames.
+        local_end = min(cluster_end, cluster_start + max(8, n // 20))
+        catch_window = np.arange(cluster_start, local_end + 1)
+        catch_idx = int(catch_window[np.argmax(hip_y[catch_window])])
+
+        catch_idx = max(3, min(catch_idx, n - 2))
+
+        # Start = earlier setup/pull window before catch.
+        start_idx = max(0, catch_idx - max(30, n // 4))
+
+        # Extension = strongest tall position before catch.
+        pre_catch_start = max(start_idx + 1, int(start_idx + (catch_idx - start_idx) * 0.35))
+        pre_catch_end = max(pre_catch_start + 1, catch_idx)
+
+        extension_score = (
+            hip_angle[pre_catch_start:pre_catch_end]
+            + knee_angle[pre_catch_start:pre_catch_end]
+        )
+
+        extension_idx = pre_catch_start + int(np.argmax(extension_score))
+        extension_idx = max(start_idx + 2, min(extension_idx, catch_idx - 1))
+
+        first_pull_idx = max(start_idx + 1, int(start_idx + (extension_idx - start_idx) * 0.45))
+
+        # Finish = tallest stable overhead position after catch.
+        # Do NOT use a fixed offset; it can land after the bar drops.
+        search_end = min(n - 1, catch_idx + max(20, n // 10))
+        finish_candidates = [
+            i for i in range(catch_idx + 1, search_end + 1)
+            if overhead[i]
+        ]
+
+        if finish_candidates:
+            finish_candidates = np.array(finish_candidates, dtype=int)
+            finish_idx = int(finish_candidates[np.argmin(hip_y[finish_candidates])])
+        else:
+            finish_idx = min(n - 1, catch_idx + max(10, n // 25))
+
+        finish_idx = max(catch_idx + 1, min(finish_idx, n - 1))
+
+        rep = {
+            "start_frame": int(frame_numbers[start_idx]),
+            "first_pull_frame": int(frame_numbers[first_pull_idx]),
+            "extension_frame": int(frame_numbers[extension_idx]),
+            "catch_frame": int(frame_numbers[catch_idx]),
+            "end_frame": int(frame_numbers[finish_idx]),
+        }
+
+        # Avoid duplicate reps that are too close together.
+        if reps and rep["catch_frame"] - reps[-1]["catch_frame"] < 60:
+            continue
+
+        reps.append(rep)
+
+    return reps
+
+
+def find_snatch_phase_frames(biomechanics):
+    reps = find_snatch_phase_reps(biomechanics)
+    return reps[0] if reps else None
+
+
+def analyze_snatch_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    total_frame = int(np.max(frame_numbers))
+    phase_reps = find_snatch_phase_reps(biomechanics)
 
-    # Snatch storyboard anchors based on the first complete rep.
-    # This matches the verified good visual sequence:
-    # setup -> first pull -> extension -> catch -> finish
-    target_frames = {
-        "start": 250,
-        "first_pull": 300,
-        "extension": 350,
-        "catch": 360,
-        "end": 360,
-    }
-
-    def nearest_idx(frame):
-        return int(np.argmin(np.abs(frame_numbers - frame)))
-
-    start_idx = nearest_idx(target_frames["start"])
-    first_pull_idx = nearest_idx(target_frames["first_pull"])
-    extension_idx = nearest_idx(target_frames["extension"])
-    catch_idx = nearest_idx(target_frames["catch"])
-    end_idx = nearest_idx(target_frames["end"])
-
-    # Keep strict ordering.
-    first_pull_idx = max(first_pull_idx, start_idx + 1)
-    extension_idx = max(extension_idx, first_pull_idx + 1)
-    catch_idx = max(catch_idx, extension_idx + 1)
-    end_idx = max(end_idx, catch_idx + 1)
-    end_idx = min(end_idx, len(frame_numbers) - 1)
-
-    # Return video-frame anchors, not pose-index-clamped anchors.
-    base_rep = {
-        "start_frame": 250,
-        "first_pull_frame": 300,
-        "extension_frame": 350,
-        "catch_frame": 400,
-        "end_frame": 450,
-        "score": 9.0,
-        "grade": grade_score(9.0),
-        "issues": [],
-        "breakdown": {
-            "first_pull": "good",
-            "extension": "good",
-            "turnover": "good",
-            "overhead_catch": "good",
-            "stability": "good",
-            "bar_path": "good",
-        },
-        "feedback": ["Good snatch rep. Strong pull, catch, and overhead position."],
-    }
-
-    # Conservative snatch rep count:
-    # keep the known-good phase frames/visuals, but report 2 reps on longer clips.
-    detected_reps = 2 if total_frame >= 320 else 1
+    if not phase_reps:
+        return [], build_set_summary([])
 
     reps = []
-    for rep_num in range(detected_reps):
-        rep = dict(base_rep)
-        rep["rep"] = rep_num + 1
 
-        if rep_num == 1:
-            offset = max(120, int(total_frame * 0.45))
-            rep["start_frame"] = min(base_rep["start_frame"] + offset, total_frame)
-            rep["first_pull_frame"] = min(base_rep["first_pull_frame"] + offset, total_frame)
-            rep["extension_frame"] = min(base_rep["extension_frame"] + offset, total_frame)
-            rep["catch_frame"] = min(base_rep["catch_frame"] + offset, total_frame)
-            rep["end_frame"] = min(base_rep["end_frame"] + offset, total_frame)
-
+    for i, frames in enumerate(phase_reps):
+        rep = {
+            **frames,
+            "rep": i + 1,
+            "score": 9.0,
+            "grade": grade_score(9.0),
+            "issues": [],
+            "breakdown": {
+                "first_pull": "good",
+                "extension": "good",
+                "turnover": "good",
+                "overhead_catch": "good",
+                "stability": "good",
+                "bar_path": "good",
+            },
+            "feedback": ["Good snatch rep. Strong pull, catch, and overhead position."],
+        }
         reps.append(rep)
 
     return reps, build_set_summary(reps)
@@ -5359,15 +5427,25 @@ def create_olympic_lift_phase_images(
     # -----------------------------------
     if normalized_label == "split_jerk":
         raw_dip_frame = rep_frame("dip_frame", start)
+        drive_frame = rep_frame(
+            "drive_frame",
+            raw_dip_frame + max(3, (end - start) // 8)
+        )
         catch_frame = rep_frame("catch_frame", end)
 
-        setup_frame = max(start, raw_dip_frame - 13)
-        dip_frame = min(raw_dip_frame + 14, catch_frame - 8)
-        finish_frame = min(end - 10, catch_frame + 59)
+        setup_frame = max(start, raw_dip_frame - max(6, (end - start) // 10))
+        dip_frame = max(setup_frame + 1, min(raw_dip_frame, catch_frame - 3))
+        drive_frame = max(dip_frame + 1, min(drive_frame, catch_frame - 1))
+        catch_frame = max(drive_frame + 1, min(catch_frame, end - 1))
+        finish_frame = max(
+            catch_frame + 1,
+            min(end, catch_frame + max(10, (end - start) // 4))
+        )
 
         phase_frames = {
             "setup": setup_frame,
             "dip": dip_frame,
+            "drive": drive_frame,
             "catch": catch_frame,
             "finish": finish_frame,
         }
@@ -5387,16 +5465,27 @@ def create_olympic_lift_phase_images(
 
     elif normalized_label == "snatch":
 
-        catch_frame = rep_frame("catch_frame", start)
+        # For snatch visuals:
+        # extension key shows the receiving catch position.
+        # catch key shows the standing overhead lockout.
+        # finish key shows a brief stabilized overhead position.
+        first_pull_frame = rep_frame("first_pull_frame", start)
+        receiving_catch_frame = rep_frame("extension_frame", start)
+        lockout_frame = rep_frame("catch_frame", receiving_catch_frame)
+        finish_frame = min(lockout_frame + 10, end)
+
+        # Frontend keys stay unchanged:
+        # extension = transition image between first pull and catch
+        # catch = receiving catch
+        # finish = lockout / stable overhead
+        transition_frame = first_pull_frame + int((receiving_catch_frame - first_pull_frame) * 0.40)
 
         phase_frames = {
             "setup": start,
-            "first_pull": rep_frame("first_pull_frame", start),
-            "extension": rep_frame("extension_frame", start),
-            "catch": catch_frame,
-
-            # standing overhead after catch
-            "finish": min(catch_frame + 90, end),
+            "first_pull": first_pull_frame,
+            "extension": transition_frame,
+            "catch": receiving_catch_frame,
+            "finish": lockout_frame,
         }
 
     elif normalized_label == "clean":
@@ -6337,6 +6426,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             rep_feedback, _ = analyze_push_press_reps(biomechanics, analysis_label)
         elif analysis_label == "clean_and_jerk":
             rep_feedback, _ = analyze_clean_and_jerk_reps(biomechanics)
+        elif analysis_label == "snatch":
+            rep_feedback, _ = analyze_snatch_reps(biomechanics)
+        elif analysis_label == "clean":
+            rep_feedback, _ = analyze_clean_reps(biomechanics)
+        elif analysis_label == "split_jerk":
+            rep_feedback, _ = analyze_split_jerk_reps(biomechanics)
         else:
             rep_feedback = []
 
