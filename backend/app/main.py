@@ -6793,6 +6793,18 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label = "snatch"
             final_confidence = max(float(olympic_conf), 0.60)
 
+        # Clean & Jerk rescue: C&J often looks squat-like because of the clean catch.
+        elif (
+            run_oly_router
+            and olympic_pred == "clean_and_jerk"
+            and olympic_conf >= 0.50
+            and wrist_above_shoulder_ratio > 0.15
+            and min_hip_angle < 90
+            and raw_label in {"squat", "squat_back", "squat_front", "deadlift", "push_press", "thruster"}
+        ):
+            final_label = "clean_and_jerk"
+            final_confidence = max(float(olympic_conf), 0.75)
+
         else:
             best = max(candidates, key=arbitration_score)
 
