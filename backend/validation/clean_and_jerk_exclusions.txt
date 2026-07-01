@@ -1,0 +1,3 @@
+v_CleanAndJerk_g13_c04.avi - far away / poor visibility
+v_CleanAndJerk_g03_c05.avi - jerk-only or partial clean & jerk
+v_CleanAndJerk_g12_c05.avi - push press / thruster-like, not split jerk clean & jerk

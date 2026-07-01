@@ -123,14 +123,14 @@ const getPhaseConfig = (exerciseLabel) => {
   if (label.includes("clean_and_jerk") || label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return {
       title: "Clean & Jerk Phase Review",
-      text: "Setup → Clean Catch → Jerk Dip → Jerk Drive → Jerk Catch → Finish",
+        text: "Setup → Clean Catch → Clean Recovery → Jerk Dip → Jerk Catch → Finish",
       items: [
-        ["setup", "Setup"],
-        ["clean_catch", "Clean Catch"],
-        ["jerk_dip", "Jerk Dip"],
-        ["jerk_drive", "Jerk Drive"],
-        ["jerk_catch", "Jerk Catch"],
-        ["finish", "Finish"],
+          ["setup", "Setup"],
+          ["clean_catch", "Clean Catch"],
+          ["clean_recovery", "Clean Recovery"],
+          ["jerk_dip", "Jerk Dip"],
+          ["jerk_catch", "Jerk Catch"],
+          ["finish", "Finish"],
       ],
     };
   }
@@ -631,12 +631,12 @@ const getInteractiveZones = (result) => {
         note: "Dip straight down with a vertical torso.",
       },
       {
-        id: "jerk_drive",
-        title: "Jerk Drive",
-        imageKey: "jerk_drive",
-        status: "good",
-        note: "Drive powerfully through the legs.",
-      },
+          id: "clean_recovery",
+          title: "Clean Recovery",
+          imageKey: "clean_recovery",
+          status: "good",
+          note: "Stand up smoothly from the clean before initiating the jerk.",
+        },
       {
         id: "jerk_catch",
         title: "Jerk Catch",
