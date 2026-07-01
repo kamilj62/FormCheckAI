@@ -32,6 +32,8 @@ from app.phase_engine.fatigue_engine import (
     compute_fatigue_curve
 )
 
+from app.feature_engine.feature_engine_rf import build_rf_features
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -145,8 +147,16 @@ CLASS_NAMES = [
     "thruster",
 ]
 
-OLY_ROUTER_BUNDLE = joblib.load(MODEL_DIR / "oly_router_rf.joblib")
+OLY_ROUTER_BUNDLE = joblib.load(MODEL_DIR / "oly_router_v2.joblib")
 OLY_ROUTER_MODEL = OLY_ROUTER_BUNDLE["model"]
+OLY_ROUTER_ENCODER = OLY_ROUTER_BUNDLE.get("label_encoder")
+
+OLY_ROUTER_LABELS = {
+    0: "clean",
+    1: "clean_and_jerk",
+    2: "snatch",
+    3: "split_jerk"
+}
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
@@ -206,12 +216,22 @@ def formatLabel(v):
 
 
 def extract_features_and_biomechanics(results):
+    def safe_float(x):
+        try:
+            if x is None:
+                return 0.0
+            return float(x)
+        except:
+            return 0.0
+
     if not results.pose_landmarks:
         return None, None
 
     landmarks = results.pose_landmarks.landmark
 
-    # EXACT 68 features used by your main classifier/router
+    # -------------------------------
+    # 1. 68-feature base vector
+    # -------------------------------
     FEATURE_LANDMARKS = [
         "NOSE",
         "LEFT_EAR", "RIGHT_EAR",
@@ -231,141 +251,107 @@ def extract_features_and_biomechanics(results):
         lm = landmarks[idx]
 
         features.extend([
-            lm.x,
-            lm.y,
-            lm.z,
-            lm.visibility,
+            safe_float(lm.x),
+            safe_float(lm.y),
+            safe_float(lm.z),
+            safe_float(lm.visibility),
         ])
 
-    # Full 33-landmark features for Olympic router
-    # 33 landmarks × 4 values = 132 features
-    full_features = []
+    features = np.array(features, dtype=np.float32)
 
-    for lm in landmarks:
-        full_features.extend([
-            lm.x,
-            lm.y,
-            lm.z,
-            lm.visibility,
-        ])
-
-    pts = np.array([
-        [lm.x, lm.y, lm.z]
+    # -------------------------------
+    # 2. full 33-landmark vector (RF + future models)
+    # -------------------------------
+    full_features = np.array([
+        safe_float(v)
         for lm in landmarks
-    ])
+        for v in [lm.x, lm.y, lm.z, lm.visibility]
+    ], dtype=np.float32)
 
-    nose = pts[mp_pose.PoseLandmark.NOSE.value]
+    # -------------------------------
+    # 3. key points (SAFE)
+    # -------------------------------
+    def pt(lm):
+        return np.array([safe_float(lm.x), safe_float(lm.y)], dtype=np.float32)
 
-    left_shoulder = point(landmarks, mp_pose.PoseLandmark.LEFT_SHOULDER)
-    right_shoulder = point(landmarks, mp_pose.PoseLandmark.RIGHT_SHOULDER)
+    left_shoulder = pt(landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value])
+    right_shoulder = pt(landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value])
+    left_elbow = pt(landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value])
+    right_elbow = pt(landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value])
+    left_wrist = pt(landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value])
+    right_wrist = pt(landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value])
+    left_hip = pt(landmarks[mp_pose.PoseLandmark.LEFT_HIP.value])
+    right_hip = pt(landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value])
+    left_knee = pt(landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value])
+    right_knee = pt(landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value])
+    left_ankle = pt(landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value])
+    right_ankle = pt(landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value])
+    left_heel = pt(landmarks[mp_pose.PoseLandmark.LEFT_HEEL.value])
+    right_heel = pt(landmarks[mp_pose.PoseLandmark.RIGHT_HEEL.value])
+    nose = pt(landmarks[mp_pose.PoseLandmark.NOSE.value])
 
-    left_elbow = point(landmarks, mp_pose.PoseLandmark.LEFT_ELBOW)
-    right_elbow = point(landmarks, mp_pose.PoseLandmark.RIGHT_ELBOW)
-
-    left_wrist = point(landmarks, mp_pose.PoseLandmark.LEFT_WRIST)
-    right_wrist = point(landmarks, mp_pose.PoseLandmark.RIGHT_WRIST)
-
-    left_hip = point(landmarks, mp_pose.PoseLandmark.LEFT_HIP)
-    right_hip = point(landmarks, mp_pose.PoseLandmark.RIGHT_HIP)
-
-    left_knee = point(landmarks, mp_pose.PoseLandmark.LEFT_KNEE)
-    right_knee = point(landmarks, mp_pose.PoseLandmark.RIGHT_KNEE)
-
-    left_ankle = point(landmarks, mp_pose.PoseLandmark.LEFT_ANKLE)
-    right_ankle = point(landmarks, mp_pose.PoseLandmark.RIGHT_ANKLE)
-
-    left_heel = point(landmarks, mp_pose.PoseLandmark.LEFT_HEEL)
-    right_heel = point(landmarks, mp_pose.PoseLandmark.RIGHT_HEEL)
-
+    # -------------------------------
+    # 4. derived metrics (SAFE)
+    # -------------------------------
     ankle_mid = (left_ankle + right_ankle) / 2
     heel_mid = (left_heel + right_heel) / 2
-    heel_lift = float(ankle_mid[1] - heel_mid[1])
+    heel_lift = safe_float(ankle_mid[1] - heel_mid[1])
 
     shoulder_mid = (left_shoulder + right_shoulder) / 2
-    elbow_mid = (left_elbow + right_elbow) / 2
     hip_mid = (left_hip + right_hip) / 2
     knee_mid = (left_knee + right_knee) / 2
+    elbow_mid = (left_elbow + right_elbow) / 2
     wrist_mid = (left_wrist + right_wrist) / 2
 
-    left_knee_angle = angle(left_hip, left_knee, left_ankle)
-    right_knee_angle = angle(right_hip, right_knee, right_ankle)
-    knee_angle = float(np.mean([left_knee_angle, right_knee_angle]))
+    knee_angle = safe_float(angle(left_hip, left_knee, left_ankle))
+    hip_angle = safe_float(angle(left_shoulder, left_hip, left_knee))
+    elbow_angle = safe_float(angle(left_shoulder, left_elbow, left_wrist))
 
-    left_hip_angle = angle(left_shoulder, left_hip, left_knee)
-    right_hip_angle = angle(right_shoulder, right_hip, right_knee)
-    hip_angle = float(np.mean([left_hip_angle, right_hip_angle]))
+    torso_angle = safe_float(angle(shoulder_mid, hip_mid, hip_mid + np.array([0, -1])))
 
-    left_elbow_angle = angle(left_shoulder, left_elbow, left_wrist)
-    right_elbow_angle = angle(right_shoulder, right_elbow, right_wrist)
-    elbow_angle = float(np.mean([left_elbow_angle, right_elbow_angle]))
-
-    vertical_point = hip_mid + np.array([0, -1], dtype=np.float32)
-    torso_angle = angle(shoulder_mid, hip_mid, vertical_point)
-
-    hip_y = float(hip_mid[1])
-    knee_y = float(knee_mid[1])
-    wrist_x = float(wrist_mid[0])
-    wrist_y = float(wrist_mid[1])
-    elbow_y = float(elbow_mid[1])
-    shoulder_y = float(shoulder_mid[1])
-
-    hip_x = float(hip_mid[0])
-    shoulder_x = float(shoulder_mid[0])
-    knee_x = float(knee_mid[0])
-
-    shoulder_hip_distance = float(np.linalg.norm(shoulder_mid - hip_mid))
-    hip_knee_distance = float(np.linalg.norm(hip_mid - knee_mid))
-    wrist_shoulder_distance = float(np.linalg.norm(wrist_mid - shoulder_mid))
-
-    knee_width = abs(float(left_knee[0]) - float(right_knee[0]))
-    ankle_width = abs(float(left_ankle[0]) - float(right_ankle[0]))
-    valgus_ratio = knee_width / (ankle_width + 1e-6)
-    valgus_ratio = float(np.clip(valgus_ratio, 0.50, 1.50))
-    
-    wrist_x = float((left_wrist[0] + right_wrist[0]) / 2)
-    ankle_x = float((left_ankle[0] + right_ankle[0]) / 2)
-    bar_distance = abs(wrist_x - ankle_x)
-
-    wrist_above_shoulder = float(wrist_y < shoulder_y)
-
-    shoulder_mid_x = float((left_shoulder[0] + right_shoulder[0]) / 2)
-    shoulder_mid_y = float((left_shoulder[1] + right_shoulder[1]) / 2)
-
-    nose_x = float(nose[0])
-    nose_y = float(nose[1])
-
-    head_drop = nose_y - shoulder_mid_y
-    head_forward = abs(nose_x - shoulder_mid_x)
+    valgus_ratio = safe_float(
+        np.clip(
+            abs(left_knee[0] - right_knee[0]) /
+            (abs(left_ankle[0] - right_ankle[0]) + 1e-6),
+            0.5, 1.5
+        )
+    )
 
     biomechanics = {
         "knee_angle": knee_angle,
         "hip_angle": hip_angle,
-        "torso_angle": torso_angle,
         "elbow_angle": elbow_angle,
-        "hip_y": hip_y,
-        "knee_y": knee_y,
-        "wrist_x": wrist_x,
-        "wrist_y": wrist_y,
-        "elbow_y": elbow_y,
-        "shoulder_y": shoulder_y,
-        "hip_x": hip_x,
-        "shoulder_x": shoulder_x,
-        "knee_x": knee_x,
-        "shoulder_hip_distance": shoulder_hip_distance,
-        "hip_knee_distance": hip_knee_distance,
-        "wrist_shoulder_distance": wrist_shoulder_distance,
-        "wrist_above_shoulder": wrist_above_shoulder,
-        "valgus_ratio": float(valgus_ratio),
-        "bar_distance": bar_distance,
-        "head_drop": float(head_drop),
-        "head_forward": float(head_forward),
+        "torso_angle": torso_angle,
+
+        "hip_y": safe_float(hip_mid[1]),
+        "knee_y": safe_float(knee_mid[1]),
+        "shoulder_y": safe_float(shoulder_mid[1]),
+        "wrist_y": safe_float(wrist_mid[1]),
+        "elbow_y": safe_float(elbow_mid[1]),
+
+        "hip_x": safe_float(hip_mid[0]),
+        "knee_x": safe_float(knee_mid[0]),
+        "shoulder_x": safe_float(shoulder_mid[0]),
+
+        "wrist_x": safe_float(wrist_mid[0]),
+
+        "shoulder_hip_distance": safe_float(np.linalg.norm(shoulder_mid - hip_mid)),
+        "hip_knee_distance": safe_float(np.linalg.norm(hip_mid - knee_mid)),
+        "wrist_shoulder_distance": safe_float(np.linalg.norm(wrist_mid - shoulder_mid)),
+
+        "valgus_ratio": valgus_ratio,
+        "bar_distance": safe_float(abs(wrist_mid[0] - ankle_mid[0])),
+
+        "head_drop": safe_float(nose[1] - shoulder_mid[1]),
+        "head_forward": safe_float(abs(nose[0] - shoulder_mid[0])),
+
         "heel_lift": heel_lift,
 
-        # Used only by Olympic router
-        "full_features": np.array(full_features, dtype=np.float32),
+        # RF input
+        "full_features": full_features,
     }
 
-    return np.array(features, dtype=np.float32), biomechanics
+    return features, biomechanics
 
 
 def pad_or_trim(sequence, target_len=30):
@@ -1181,6 +1167,19 @@ def find_squat_phase_window(start, bottom=None, end=None):
         "ascent": ascent_frame,
         "lockout": lockout_frame,
     }
+
+
+def smooth_coach_score(score, exercise_label=None):
+    """
+    Safe fallback score smoother.
+    Keeps current analyzer behavior stable without requiring old helper imports.
+    """
+    try:
+        score = float(score)
+    except Exception:
+        score = 0.0
+
+    return max(0.0, min(10.0, score))
 
 
 def analyze_deadlift_reps(biomechanics):
@@ -5971,19 +5970,75 @@ def create_burpee_phase_images(
     return saved
 
 
-def normalize_sequence(biomechanics):
-    feats = [
-        b["full_features"]
-        for b in biomechanics
-        if "full_features" in b
+def build_oly_router_v2_features(biomechanics):
+    """
+    Must match train_oly_router_v2.py:
+    9 columns × 6 stats = 54 features.
+    """
+    rows = []
+    for b in biomechanics:
+        wrist_y = float(b.get("wrist_y", 0.0))
+        shoulder_y = float(b.get("shoulder_y", 0.0))
+
+        rows.append({
+            "knee_angle": float(b.get("knee_angle", 0.0)),
+            "hip_angle": float(b.get("hip_angle", 0.0)),
+            "elbow_angle": float(b.get("elbow_angle", 0.0)),
+            "wrist_y": wrist_y,
+            "shoulder_y": shoulder_y,
+            "hip_y": float(b.get("hip_y", 0.0)),
+            "knee_y": float(b.get("knee_y", 0.0)),
+            "wrist_shoulder_distance": float(b.get("wrist_shoulder_distance", 0.0)),
+            "wrist_above_shoulder": 1.0 if wrist_y < shoulder_y else 0.0,
+        })
+
+    if not rows:
+        return np.zeros(54, dtype=np.float32)
+
+    cols = [
+        "knee_angle",
+        "hip_angle",
+        "elbow_angle",
+        "wrist_y",
+        "shoulder_y",
+        "hip_y",
+        "knee_y",
+        "wrist_shoulder_distance",
+        "wrist_above_shoulder",
     ]
 
-    feats = pad_or_trim(np.array(feats), target_len=30)
+    feats = []
+    for col in cols:
+        vals = np.array([r[col] for r in rows], dtype=np.float32)
+        feats.extend([
+            float(np.mean(vals)),
+            float(np.std(vals)),
+            float(np.min(vals)),
+            float(np.max(vals)),
+            float(np.percentile(vals, 25)),
+            float(np.percentile(vals, 75)),
+        ])
 
-    # IMPORTANT: DO NOT MODIFY FEATURES
-    # MUST MATCH TRAINING PIPELINE EXACTLY
+    return np.array(feats, dtype=np.float32)
 
-    return feats
+
+def normalize_sequence(sequence):
+    """
+    Normalize ONLY the 68-feature base classifier sequence.
+
+    Do not use biomechanics["full_features"] here.
+    full_features is 132 features and RF build output is 528 features.
+    The main movement classifier/router must only receive the 68-feature base vector.
+    """
+    feats = np.asarray(sequence, dtype=np.float32)
+
+    if feats.ndim == 1:
+        feats = feats.reshape(1, -1)
+
+    if feats.shape[1] != 68:
+        raise ValueError(f"normalize_sequence expected 68 features, got {feats.shape[1]}")
+
+    return pad_or_trim(feats, target_len=30)
 
 
 def analyze_video(video_path, make_visuals=True, make_overlay=True):
@@ -6010,6 +6065,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         biomechanics = []
         frame_idx = 0
         pose_frames = 0
+
         subject_center = None
         subject_area = None
 
@@ -6035,12 +6091,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if frame_idx % sample_every != 0:
                     continue
 
+                analysis_frame = frame
+
                 if USE_YOLO_TRACKING and yolo_tracker is not None:
                     crop_result = yolo_tracker.get_crop(frame)
-                    analysis_frame = crop_result.crop if crop_result.crop is not None else frame
-                else:
-                    crop_result = None
-                    analysis_frame = frame
+                    if crop_result and crop_result.crop is not None:
+                        analysis_frame = crop_result.crop
 
                 rgb = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
                 results = pose.process(rgb)
@@ -6048,7 +6104,6 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if not results.pose_landmarks:
                     continue
 
-                # Subject lock: reject sudden jumps to another athlete in busy gyms.
                 lm = results.pose_landmarks.landmark
                 pts = [
                     lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value],
@@ -6059,7 +6114,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
                 xs = [p.x for p in pts]
                 ys = [p.y for p in pts]
-                center = (sum(xs) / len(xs), sum(ys) / len(ys))
+                center = (sum(xs) / 4, sum(ys) / 4)
                 area = max(1e-6, (max(xs) - min(xs)) * (max(ys) - min(ys)))
 
                 if subject_center is None:
@@ -6092,7 +6147,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         cap.release()
 
-        # ---------------- INSUFFICIENT DATA ----------------
+        # ---------------- EARLY EXIT ----------------
         if len(sequence) < 10:
             return {
                 "exercise_label": "Unknown",
@@ -6107,37 +6162,114 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             }
 
         # ---------------- FEATURE PROCESSING ----------------
-        seq_base = pad_or_trim(np.array(sequence), target_len=30)
+        seq_array = np.asarray(sequence, dtype=np.float32)
+
+        if seq_array.ndim != 2 or seq_array.shape[1] != 68:
+            raise ValueError(f"Main classifier expected raw sequence shape (frames, 68), got {seq_array.shape}")
+
+        seq_base = pad_or_trim(seq_array, target_len=30)
         seq = add_velocity(seq_base)
 
-        # ---------------- ML MODEL ----------------
         probs = MODEL.predict_proba(seq)
         raw_idx = int(np.argmax(probs))
-        print("DEBUG PRED SHAPE:", getattr(probs, "shape", None))
-        print("DEBUG RAW IDX:", raw_idx)
-        print("DEBUG CLASS_NAMES LEN:", len(CLASS_NAMES))
-        print("DEBUG CLASS_NAMES:", CLASS_NAMES)
-        raw_label = CLASS_NAMES[raw_idx]
-        raw_confidence = float(np.max(probs))
-        base_raw_label = raw_label
-        base_raw_confidence = raw_confidence
 
-        # ---------------- SQUAT VARIANT ROUTER ----------------
-        # Base model predicts generic "squat"; this router specializes it into
-        # overhead_squat, squat_back, or squat_front.
+        raw_label = CLASS_NAMES[raw_idx]
+        base_raw_label = raw_label
+        base_raw_confidence = float(np.max(probs))
+
+        # ---------------- OLIMPIC ROUTER ----------------
+        olympic_pred = None
+        olympic_conf = 0.0
+
+        OLY_CANDIDATES = {"clean", "clean_and_jerk", "snatch", "split_jerk"}
+
+        wrist_above_shoulder_ratio = float(np.mean([
+            1.0 if b.get("wrist_y", 1.0) < b.get("shoulder_y", 0.0) else 0.0
+            for b in biomechanics
+        ])) if biomechanics else 0.0
+
+        max_wrist_shoulder_distance = float(np.max([
+            b.get("wrist_shoulder_distance", 0.0)
+            for b in biomechanics
+        ])) if biomechanics else 0.0
+
+        min_hip_angle = float(np.min([
+            b.get("hip_angle", 180.0)
+            for b in biomechanics
+        ])) if biomechanics else 180.0
+
+        oly_shape_candidate = (
+            (
+                raw_label not in {"strict_press", "thruster"}
+                and raw_label != "push_press"
+                and (
+                    wrist_above_shoulder_ratio > 0.15
+                    or max_wrist_shoulder_distance > 0.35
+                    or min_hip_angle < 80
+                )
+            )
+            or (
+                raw_label == "push_press"
+                and wrist_above_shoulder_ratio > 0.65
+                and (
+                    min_hip_angle < 60
+                    or max_wrist_shoulder_distance > 0.20
+                )
+            )
+        )
+
+        run_oly_router = (
+            raw_label in OLY_CANDIDATES
+            or oly_shape_candidate
+        )
+
+        if OLY_ROUTER_MODEL is not None and run_oly_router:
+
+            rf_features = build_oly_router_v2_features(biomechanics).reshape(1, -1)
+
+            if hasattr(OLY_ROUTER_MODEL, "predict_proba"):
+                olympic_probs = OLY_ROUTER_MODEL.predict_proba(rf_features)[0]
+                olympic_idx = int(np.argmax(olympic_probs))
+
+                if OLY_ROUTER_ENCODER is not None:
+                    olympic_pred = str(OLY_ROUTER_ENCODER.inverse_transform([olympic_idx])[0])
+                elif hasattr(OLY_ROUTER_MODEL, "classes_"):
+                    olympic_pred = str(OLY_ROUTER_MODEL.classes_[olympic_idx])
+                else:
+                    olympic_pred = OLY_ROUTER_LABELS.get(olympic_idx, "unknown")
+
+                olympic_conf = float(olympic_probs[olympic_idx])
+            else:
+                olympic_pred = str(OLY_ROUTER_MODEL.predict(rf_features)[0])
+                olympic_conf = 1.0
+
+        # ---------------- SQUAT ROUTER ----------------
         squat_router_debug = None
         squat_variant_label = None
         squat_variant_conf = 0.0
-        if raw_label == "squat":
-            try:
+
+        try:
+            if raw_label in [
+                "squat",
+                "clean_and_jerk",
+                "snatch",
+                "unknown",
+                "deadlift",
+                "burpee",
+                "push_press",
+            ]:
+
                 squat_probs = SQUAT_ROUTER_MODEL.predict(
                     np.expand_dims(seq_base, axis=0),
                     verbose=0
                 )[0]
+
                 squat_idx = int(np.argmax(squat_probs))
                 squat_label = SQUAT_ROUTER_LABELS.get(squat_idx, "squat")
                 squat_conf = float(squat_probs[squat_idx])
+
                 squat_router_debug = {
+                    "input_label": raw_label,
                     "squat_label": squat_label,
                     "squat_confidence": squat_conf,
                     "squat_probs": [float(x) for x in squat_probs],
@@ -6147,574 +6279,80 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                     squat_variant_label = squat_label
                     squat_variant_conf = squat_conf
 
-            except Exception as e:
-                squat_router_debug = {"error": str(e)}
+        except Exception as e:
+            squat_router_debug = {"error": str(e)}
 
-        # ---------------- OLYMPIC MODEL ----------------
-        oly_sequence = [
-            b["full_features"]
+        # ---------------- SNATCH RESCUE ----------------
+        # Snatch often gets confused with clean_and_jerk by the RF router.
+        # Use wide/overhead movement signals to rescue likely snatch clips.
+        max_wrist_shoulder_distance = float(np.max([
+            b.get("wrist_shoulder_distance", 0.0)
             for b in biomechanics
-            if "full_features" in b
-        ]
+        ])) if biomechanics else 0.0
 
-        olympic_pred, olympic_conf = predict_olympic_lift_from_sequence(
-            oly_sequence
-        )
+        wrist_above_shoulder_ratio = float(np.mean([
+            1.0 if b.get("wrist_y", 1.0) < b.get("shoulder_y", 0.0) else 0.0
+            for b in biomechanics
+        ])) if biomechanics else 0.0
 
-
-        final_label = raw_label
-        final_confidence = raw_confidence
-
-        # ---------------- OLYMPIC ROUTING ----------------
-        if olympic_pred in ["clean", "clean_and_jerk", "snatch", "split_jerk"] and (
-            olympic_conf > raw_confidence or olympic_conf >= 0.75
+        if (
+            olympic_pred == "clean_and_jerk"
+            and olympic_conf >= 0.60
+            and wrist_above_shoulder_ratio > 0.12
+            and max_wrist_shoulder_distance > 0.20
         ):
+            olympic_pred = "snatch"
+            olympic_conf = max(olympic_conf, 0.66)
+
+        # ---------------- FINAL LABEL DECISION ----------------
+        final_label = raw_label
+        final_confidence = base_raw_confidence
+
+        if olympic_conf >= 0.65 and olympic_pred in [
+            "clean_and_jerk", "snatch", "clean", "split_jerk"
+        ]:
             final_label = olympic_pred
             final_confidence = olympic_conf
 
-        # ---------------- CLEAN & JERK RESCUE ----------------
-        if (
-            olympic_pred == "clean_and_jerk"
-            and olympic_conf >= 0.70
-            and raw_label in ["squat", "squat_back", "squat_front", "push_press", "deadlift", "bench_press"]
-        ):
-            final_label = "clean_and_jerk"
-            final_confidence = max(olympic_conf, 0.80)
-
-        # ---------------- SNATCH RESCUE ----------------
-        pose_summary = summarize_biomechanics(biomechanics)
-        wrist_ratio = (
-            pose_summary.get("wrist_above_shoulder_ratio", 0)
-            if pose_summary else 0
-        )
-
-        if (
-            raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
-            and olympic_pred == "snatch"
-            and (
-                olympic_conf >= 0.65
-                or raw_confidence >= 0.95
-            )
-            and wrist_ratio >= 0.25
-        ):
-            final_label = "snatch"
-            final_confidence = max(olympic_conf, 0.80)
-
-        # ---------------- DEADLIFT PROTECTION ----------------
-        if raw_label == "deadlift":
-            final_label = "deadlift"
-            final_confidence = max(final_confidence, raw_confidence)
-
-        # ---------------- THRUSTER PROTECTION ----------------
-        elif raw_label == "thruster":
-            # Clean/C&J can be falsely predicted as thruster by the base model.
-            # If Olympic router sees a real Olympic lift with decent confidence, trust it.
-            if olympic_pred in ["clean", "clean_and_jerk"] and olympic_conf >= 0.60:
-                pose_summary = summarize_biomechanics(biomechanics)
-                wrist_ratio = (
-                    pose_summary.get("wrist_above_shoulder_ratio", 0)
-                    if pose_summary else 0
-                )
-
-                final_label = olympic_pred
-                final_confidence = olympic_conf
-
-                # Do not demote Olympic lifts here. Snatch/clean/C&J protection
-                # should happen before thruster rescue, not by forcing clean.
-                if False:
-                    pass
-            else:
-                final_label = "thruster"
-                final_confidence = max(final_confidence, 0.86)
-
-        # ---------------- FINAL CLEAN & JERK OVERRIDE ----------------
-        # Let Olympic router rescue C&J from base-model squat/push/deadlift/bench misses.
-        if (
-            olympic_pred == "clean_and_jerk"
-            and olympic_conf >= 0.60
-            and raw_label in ["squat", "squat_back", "squat_front", "push_press", "deadlift", "bench_press"]
-        ):
-            final_label = "clean_and_jerk"
-            final_confidence = max(olympic_conf, 0.80)
-
-        # ---------------- BENCH FALSE-POSITIVE THRUSTER RESCUE ----------------
-        # Some floor-start thrusters can look like bench to the base model.
-        # Only rescue when we also see squat + overhead press behavior.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary:
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
-            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-
-            if (
-                raw_label == "bench_press"
-                and olympic_pred == "clean_and_jerk"
-                and pose_summary.get("min_knee_angle", 180) < 130
-                and pose_summary.get("min_hip_angle", 180) < 140
-                and knee_range > 30
-                and hip_range > 30
-                and elbow_range > 35
-                and wrist_ratio >= 0.10
-            ):
-                final_label = "thruster"
-                final_confidence = max(final_confidence, 0.84)
-
-        # ---------------- FINAL THRUSTER OVERRIDE ----------------
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary:
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
-            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-
-            if (
-                raw_label in ["squat", "squat_back", "squat_front", "push_press", "clean_and_jerk"]
-                and pose_summary.get("min_knee_angle", 180) < 115
-                and pose_summary.get("min_hip_angle", 180) < 125
-                and knee_range > 45
-                and hip_range > 45
-                and elbow_range > 45
-                and wrist_ratio >= 0.12
-                and final_label != "snatch"
-                and not (olympic_pred == "clean_and_jerk" and olympic_conf >= 0.70)
-            ):
-                final_label = "thruster"
-                final_confidence = max(final_confidence, 0.84)
-
-        # ---------------- PUSH PRESS RESCUE FROM SQUAT + CLEAN & JERK ----------------
-        # Push press can be misread as squat by the base model and C&J by the Olympic router.
-        # If the lower-body motion is shallow and the wrists go overhead, treat it as push press.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary:
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
-            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-
-            if (
-                final_label == "clean_and_jerk"
-                and raw_label in ["squat", "squat_back", "squat_front"]
-                and olympic_pred == "clean_and_jerk"
-                and olympic_conf < 0.95
-                and pose_summary.get("min_knee_angle", 180) > 105
-                and pose_summary.get("min_hip_angle", 180) > 110
-                and knee_range > 15
-                and hip_range < 65
-                and elbow_range > 35
-                and wrist_ratio >= 0.12
-            ):
-                final_label = "push_press"
-                final_confidence = max(final_confidence, raw_confidence, 0.86)
-
-        # ---------------- PUSH PRESS VS CLEAN & JERK GUARD ----------------
-        # If the base model sees push press, do not let Olympic router call it
-        # clean_and_jerk unless the clean portion is actually visible in the clip.
-        if (
-            raw_label == "push_press"
-            and olympic_pred == "clean_and_jerk"
-            and olympic_conf < 0.95
-        ):
-            final_label = "push_press"
-            final_confidence = max(raw_confidence, 0.80)
-
-        # ---------------- FINAL PUSH PRESS PROTECTION ----------------
-        # Do not let Olympic/thruster rescue override a confident push press.
-        if raw_label == "push_press" and raw_confidence >= 0.95:
-            final_label = "push_press"
-            final_confidence = max(final_confidence, raw_confidence)
-
-        # FINAL OLYMPIC PROTECTION:
-        # Do not allow thruster rescue to override Olympic lift routing.
-        # Snatch is often misread as squat/thruster because of the overhead squat catch.
-        if (
-            final_label == "thruster"
-            and olympic_pred in ["snatch", "clean", "clean_and_jerk"]
-            and olympic_conf >= 0.60
-            and raw_label in ["squat", "squat_back", "squat_front", "overhead_squat", "push_press", "thruster"]
-        ):
-            # Do not convert squat-family + clean_and_jerk into snatch.
-            # That caused front squats to be mislabeled as snatch.
-            final_label = olympic_pred
-            final_confidence = max(final_confidence, olympic_conf)
-
-        # Protect push press from being upgraded to split jerk.
-        # True split jerk needs a real split-stance detector, not just push_press + clean_and_jerk.
-        if (
-            final_label == "clean_and_jerk"
-            and raw_label == "push_press"
-            and olympic_conf >= 0.85
-            and len(biomechanics) > 80
-        ):
-            final_label = "push_press"
-            final_confidence = max(final_confidence, raw_confidence)
-
-        # Strict press rescue from push press:
-        # Very low knee movement means this is a strict press, not a push press.
-        if final_label == "push_press":
-            pose_summary = summarize_biomechanics(biomechanics)
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180) if pose_summary else 999
-
-            if knee_range <= 12:
-                final_label = "strict_press"
-                final_confidence = max(final_confidence, 0.86)
-
-        # Strict press rescue from push press:
-        # Very low knee movement means this is a strict press, not a push press.
-        if final_label == "push_press":
-            pose_summary = summarize_biomechanics(biomechanics)
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180) if pose_summary else 999
-
-            if knee_range <= 12:
-                final_label = "strict_press"
-                final_confidence = max(final_confidence, 0.86)
-
-        # ---------------- REGRESSION SAFETY GUARDS ----------------
-        # These guards protect known stable examples from over-aggressive routing overrides.
-
-        # A very confident deadlift should not be converted into clean_and_jerk.
-        if raw_label == "deadlift" and raw_confidence >= 0.90:
-            final_label = "deadlift"
-            final_confidence = float(raw_confidence)
-
-        # A very confident squat-family prediction should not be converted into clean_and_jerk.
-        if (
-            final_label == "clean_and_jerk"
-            and base_raw_label == "squat"
-            and olympic_pred == "clean_and_jerk"
-            and base_raw_confidence >= 0.90
-        ):
-            final_label = raw_label
-            final_confidence = float(raw_confidence)
-
-        # A very confident squat should not become strict_press.
-        if (
-            final_label == "strict_press"
-            and raw_label in ["squat", "squat_back", "squat_front", "overhead_squat"]
-            and raw_confidence >= 0.90
-        ):
-            final_label = raw_label
-            final_confidence = float(raw_confidence)
-
-        # Strong Olympic jerk signal + push_press base prediction is likely split_jerk.
-        if (
-            raw_label == "push_press"
-            and olympic_pred == "clean_and_jerk"
-            and olympic_conf >= 0.90
-        ):
-            final_label = "split_jerk"
-            final_confidence = 0.80
-
-        # Apply squat variant only after all higher-priority routing decisions.
-        # This prevents push press / snatch from being permanently rewritten as squat_back.
-        if final_label == "squat" and squat_variant_label and squat_variant_conf >= 0.55:
-            final_label = squat_variant_label
-            final_confidence = float(squat_variant_conf)
-
-        # Front squat rescue:
-        # Front squats often appear as squat_back to the squat router if the bar/front rack
-        # is hard to see. If the base model is a very confident squat and the wrists stay
-        # near or above the shoulders, prefer squat_front.
-        pose_summary = summarize_biomechanics(biomechanics)
-        front_squat_rescue_debug = None
-        if pose_summary and final_label == "squat_back" and base_raw_label == "squat":
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-
-            front_squat_rescue_debug = {
-                "wrist_ratio": wrist_ratio,
-                "elbow_range": elbow_range,
-                "final_label_before": final_label,
-                "base_raw_label": base_raw_label,
-            }
-
-            looks_like_snatch = (
-                base_raw_confidence < 0.98
-                and olympic_conf >= 0.60
-                and wrist_ratio >= 0.20
-                and elbow_range < 145
-            )
-
-            if 0.03 <= wrist_ratio <= 0.55 and elbow_range < 160 and not looks_like_snatch:
-                final_label = "squat_front"
-                final_confidence = max(final_confidence, 0.86)
-                front_squat_rescue_debug["rescued"] = True
-                front_squat_rescue_debug["looks_like_snatch"] = looks_like_snatch
-            else:
-                front_squat_rescue_debug["rescued"] = False
-                front_squat_rescue_debug["looks_like_snatch"] = looks_like_snatch
-
-        # Overhead squat rescue:
-        # Some overhead squats are misread as push_press because wrists stay overhead.
-        # If the athlete reaches squat depth with wrists overhead, prefer overhead_squat.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary and final_label == "push_press":
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
-            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-
-            if (
-                pose_summary.get("min_knee_angle", 180) < 120
-                and pose_summary.get("min_hip_angle", 180) < 130
-                and knee_range > 35
-                and hip_range > 35
-                and wrist_ratio >= 0.55
-            ):
-                final_label = "overhead_squat"
-                final_confidence = max(final_confidence, 0.86)
-
-        # Snatch rescue:
-        # Snatch catch can look like squat_back/front after squat routing.
-        # Keep this narrow so clean_and_jerk clips with large elbow turnover
-        # are not stolen by snatch.
-        pose_summary = summarize_biomechanics(biomechanics)
-        elbow_range = 999
-        if pose_summary:
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-
-        if (
-            final_label in ["squat_back", "squat_front", "squat"]
-            and base_raw_label == "squat"
-            and olympic_conf >= 0.60
-            and base_raw_confidence < 0.98
-            and elbow_range < 145
-        ):
-            final_label = "snatch"
-            final_confidence = max(final_confidence, 0.84)
-
-        # Strict press rescue:
-        # If the base model sees push_press but knee movement is very small,
-        # this is a strict press, not a split jerk.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary and base_raw_label == "push_press":
-            knee_range = pose_summary.get("max_knee_angle", 180) - pose_summary.get("min_knee_angle", 180)
-            hip_range = pose_summary.get("max_hip_angle", 180) - pose_summary.get("min_hip_angle", 180)
-
-            if knee_range <= 15 and hip_range <= 25:
-                final_label = "strict_press"
-                final_confidence = max(final_confidence, 0.86)
-
-        # Clean-only rescue:
-        # Clean clips can be base-routed as thruster and Olympic-routed as low-confidence
-        # clean_and_jerk. If Olympic confidence is modest, treat it as clean.
-        if (
-            final_label == "clean_and_jerk"
-            and base_raw_label == "thruster"
-            and olympic_pred == "clean_and_jerk"
-            and olympic_conf < 0.75
-        ):
-            final_label = "clean"
-            final_confidence = max(final_confidence, 0.74)
-
-        # Pull-up rescue:
-        # Pull-ups can be misread as squat variants because the legs move while the
-        # wrists stay above the shoulders. A very high wrist-over-shoulder ratio
-        # with squat-family routing is a strong pull-up signal.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if (
-            pose_summary
-            and final_label in ["squat_back", "squat_front", "squat"]
-            and base_raw_label == "squat"
-        ):
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-            min_knee = pose_summary.get("min_knee_angle", 180)
-            min_hip = pose_summary.get("min_hip_angle", 180)
-
-            if wrist_ratio >= 0.65 and min_knee > 90 and min_hip > 90:
-                final_label = "pull_up"
-                final_confidence = max(final_confidence, 0.82)
-
-        # Burpee rescue:
-        # Burpees can look like squat/thruster due to squat + jump/press-like motion.
-        # If routing ends as thruster but the base model was a very confident squat,
-        # and the squat router thinks overhead_squat, treat this known bodyweight pattern as burpee.
-        if (
-            final_label == "thruster"
-            and base_raw_label == "squat"
-            and base_raw_confidence >= 0.95
-            and squat_router_debug
-            and squat_router_debug.get("squat_label") == "overhead_squat"
-        ):
-            final_label = "burpee"
-            final_confidence = max(final_confidence, 0.84)
-
-        # Clean & Jerk rescue:
-        # C&J clips can pass through squat routing after the clean catch.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary:
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-
-            if (
-                final_label in ["squat_back", "squat_front", "squat"]
-                and base_raw_label == "squat"
-                and olympic_pred == "clean_and_jerk"
-                and olympic_conf >= 0.75
-                and 0.15 <= wrist_ratio <= 0.35
-                and elbow_range >= 150
-            ):
-                final_label = "clean_and_jerk"
-                final_confidence = max(final_confidence, olympic_conf, 0.78)
-
-        # Muscle-up rescue:
-        # Bar/ring muscle-ups can look like clean, thruster, or overhead_squat.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary:
-            wrist_ratio = pose_summary.get("wrist_above_shoulder_ratio", 0)
-            elbow_range = pose_summary.get("max_elbow_angle", 180) - pose_summary.get("min_elbow_angle", 180)
-
-            if (
-                final_label in ["clean", "thruster", "squat"]
-                and wrist_ratio >= 0.45
-                and elbow_range >= 70
-            ):
-                final_label = "muscle_up"
-                final_confidence = max(final_confidence, 0.82)
-
-            elif (
-                final_label == "overhead_squat"
-                and base_raw_label == "squat"
-                and base_raw_confidence < 0.99
-                and wrist_ratio >= 0.45
-                and elbow_range >= 70
-            ):
-                final_label = "muscle_up"
-                final_confidence = max(final_confidence, 0.82)
-
-        # Push-up rescue:
-        # Push-ups can be misread as deadlifts because both are hip/torso hinge-like
-        # from side-view pose geometry. A deadlift prediction with the athlete mostly
-        # horizontal and no squat-router involvement is treated as push_up.
-        pose_summary = summarize_biomechanics(biomechanics)
-        if pose_summary:
-            max_torso = pose_summary.get("max_torso_angle", 90)
-            min_hip = pose_summary.get("min_hip_angle", 180)
-            min_knee = pose_summary.get("min_knee_angle", 180)
-
-            if (
-                final_label == "deadlift"
-                and base_raw_label == "deadlift"
-                and squat_router_debug is None
-                and olympic_conf < 0.70
-            ):
-                final_label = "push_up"
-                final_confidence = max(final_confidence, 0.82)
-
-        # Handstand push-up rescue:
-        # Compressed HSPU can route through clean_and_jerk after bench-like press detection.
-        if (
-            final_label == "clean_and_jerk"
-            and base_raw_label == "bench_press"
-            and base_raw_confidence < 0.90
+        elif (
+            squat_variant_label is not None
+            and raw_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
             and olympic_conf < 0.70
         ):
-            final_label = "handstand_push_up"
-            final_confidence = max(final_confidence, 0.84)
+            final_label = squat_variant_label
+            final_confidence = squat_variant_conf
+
+        elif raw_label == "clean_and_jerk" and olympic_conf < 0.70:
+            final_label = "squat_back"
+            final_confidence = 0.60
 
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
-        if analysis_label in ["squat", "squat_back", "squat_front", "overhead_squat"]:
+        if analysis_label in ["squat", "squat_back", "squat_front"]:
             rep_feedback, _ = analyze_squat_reps(biomechanics, analysis_label)
-
         elif analysis_label == "deadlift":
             rep_feedback, _ = analyze_deadlift_reps(biomechanics)
-
-        elif analysis_label == "strict_press":
-            rep_feedback, _ = analyze_strict_press_reps(biomechanics)
-
-        elif analysis_label in ["push_press", "thruster"]:
+        elif analysis_label == "push_press":
             rep_feedback, _ = analyze_push_press_reps(biomechanics, analysis_label)
-
-            if analysis_label == "push_press" and rep_feedback:
-                kr = rep_feedback[0].get("breakdown", {}).get("knee_range", 999)
-                if kr is not None and kr <= 12:
-                    final_label = "strict_press"
-                    analysis_label = "strict_press"
-                    final_confidence = max(final_confidence, 0.86)
-                    rep_feedback, _ = analyze_strict_press_reps(biomechanics)
-
-        elif analysis_label == "bench_press":
-            rep_feedback, _ = analyze_bench_press_reps(biomechanics)
-
-        elif analysis_label == "clean":
-            rep_feedback, _ = analyze_clean_reps(biomechanics)
-
         elif analysis_label == "clean_and_jerk":
             rep_feedback, _ = analyze_clean_and_jerk_reps(biomechanics)
-
-        elif analysis_label == "snatch":
-            rep_feedback, _ = analyze_snatch_reps(biomechanics)
-
-        elif analysis_label == "split_jerk":
-            rep_feedback, _ = analyze_split_jerk_reps(biomechanics)
-
         else:
             rep_feedback = []
 
         set_summary = build_set_summary(rep_feedback)
 
-        # ---------------- PHASE IMAGES ----------------
-        phase_images = None
-        if make_visuals:
-            try:
-                # Ensure phase images use the protected final label.
-                if raw_label == "push_press" and raw_confidence >= 0.95:
-                    final_label = "push_press"
+        # ---------------- FIXED REP METRICS (MUST BE BEFORE RETURN) ----------------
+        rep_feedback = rep_feedback or []
 
-                phase_images = get_phase_images(final_label, video_path, biomechanics)
+        for i, r in enumerate(rep_feedback):
+            r["rep_index"] = i
+            r.setdefault("metrics", {
+                "depth": 0.5,
+                "stability": 0.5,
+                "valgus": 0.5
+            })
 
-                if final_label == "clean_and_jerk" and rep_feedback:
-                    r = rep_feedback[0]
-                    phase_images = {
-                        "setup": r.get("start_frame", 0),
-                        "clean_catch": r.get("clean_catch_frame"),
-                        "jerk_dip": r.get("jerk_dip_frame"),
-                        "jerk_catch": r.get("jerk_catch_frame"),
-                        "finish": r.get("end_frame"),
-                    }
-
-                elif final_label == "snatch" and rep_feedback:
-                    r = rep_feedback[0]
-                    phase_images = {
-                        "setup": r.get("start_frame", 0),
-                        "first_pull": r.get("first_pull_frame"),
-                        "extension": r.get("extension_frame"),
-                        "catch": r.get("catch_frame"),
-                        "finish": r.get("end_frame"),
-                    }
-
-                elif final_label in ["push_press", "strict_press"] and rep_feedback:
-                    r = rep_feedback[0]
-                    phase_images = {
-                        "setup": r.get("start_frame"),
-                        "dip": r.get("dip_frame"),
-                        "drive": r.get("drive_frame"),
-                        "lockout": r.get("lockout_frame"),
-                    }
-
-                elif final_label == "thruster" and rep_feedback:
-                    r = rep_feedback[0]
-                    phase_images = {
-                        "squat_dip": r.get("dip_frame"),
-                        "drive": r.get("drive_frame"),
-                        "lockout": r.get("lockout_frame"),
-                    }
-
-            except Exception as e:
-                print("phase image error:", e)
-
-        # ---------------- OVERLAY (S3 PIPELINE) ----------------
-        overlay_video_url = None
-
-        job_id = str(uuid.uuid4())
-
-        overlay_jobs[job_id] = {
-            "status": "queued",
-            "url": None,
-        }
-
-        # Overlay worker disabled here; /analyze route handles overlay separately.
         # ---------------- RETURN ----------------
         return {
             "exercise_label": analysis_label,
@@ -6722,31 +6360,30 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "analysis_mode": "detailed_rep_analysis",
             "rep_feedback": rep_feedback,
             "set_summary": set_summary,
-            "coaching_zones": build_coaching_zones(final_label, rep_feedback),
-            "overlay_job_id": job_id,
             "overlay_video_url": None,
-            "phase_images": phase_images,
+            "phase_images": None,
             "debug": {
                 "original_prediction": base_raw_label,
                 "olympic_prediction": olympic_pred,
-                "final_label_debug": analysis_label,
-                "original_confidence": base_raw_confidence,
-                "olympic_pred": olympic_pred,
+                "final_label": analysis_label,
                 "olympic_confidence": olympic_conf,
-                "frames_seen": total_frames,
                 "frames_processed": len(sequence),
                 "pose_frames": pose_frames,
-                "sample_every": sample_every,
-                "input_shape": str(seq.shape),
                 "squat_router": squat_router_debug,
-                "front_squat_rescue": front_squat_rescue_debug,
+                "oly_gate": {
+                    "wrist_above_shoulder_ratio": wrist_above_shoulder_ratio,
+                    "max_wrist_shoulder_distance": max_wrist_shoulder_distance,
+                    "min_hip_angle": min_hip_angle,
+                    "run_oly_router": run_oly_router,
+                },
             },
         }
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return {"error": True, "message": str(e)}
+        tb = traceback.format_exc()
+        print(tb)
+        return {"error": True, "message": str(e), "traceback": tb}
 
     finally:
         if cap is not None:
@@ -7076,252 +6713,34 @@ async def generate_overlay(
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
+    temp_path = f"/tmp/{uuid.uuid4().hex}_{file.filename}"
 
-    # -------------------------------------------------------
-    # 1. SAVE VIDEO
-    # -------------------------------------------------------
-    video_path = f"/tmp/{file.filename}"
-    with open(video_path, "wb") as f:
-        f.write(await file.read())
+    try:
+        with open(temp_path, "wb") as f:
+            f.write(await file.read())
 
-    # -------------------------------------------------------
-    # 2. POSE EXTRACTION
-    # -------------------------------------------------------
-    records = extract_pose_records(
-        video_path,
-        start=0,
-        end=600,
-        sample_step=1
-    )
+        return analyze_video(
+            temp_path,
+            make_visuals=True,
+            make_overlay=True,
+        )
 
-    if not records:
-        return {"error": "no_pose_data"}
-
-    # -------------------------------------------------------
-    # 3. SEGMENT REPS
-    # -------------------------------------------------------
-    reps = segment_reps(records)
-
-    results = []
-
-    # -------------------------------------------------------
-    # 4. PER-REP COACHING (CLEAN + CONSISTENT)
-    # -------------------------------------------------------
-    for rep in reps:
-
-        start = rep["start"]
-        bottom = rep["bottom"]
-        end = rep["end"]
-
-        segment = records[start:end + 1]
-
-    # ---------------------------------------------------
-    # 🧠 COMPUTE BIOMECHANICS HERE (THIS WAS MISSING)
-    # ---------------------------------------------------
-        knee = np.array([r["knee"] for r in segment])
-        hip = np.array([r["hip"] for r in segment])
-
-        depth = np.clip((180 - np.min(knee)) / 90, 0, 1)
-        stability = 1 - np.std(knee) / 30
-        valgus = np.mean([abs(r.get("knee", 0) - r.get("hip", 0)) for r in segment])
-
-    # ---------------------------------------------------
-    # COACHING
-    # ---------------------------------------------------
-        result = coach_rep(records, start, bottom, end)
-
-        results.append({
-            "start": start,
-            "bottom": bottom,
-            "end": end,
-            "score": result["score"],
-            "strengths": result["strengths"],
-            "issues": result["issues"],
-            "phase_feedback": result["phase_feedback"],
-            "priority_fix": result["priority_fix"],
-
-            # now this works
-            "debug": {
-                "depth": float(depth),
-                "stability": float(stability),
-                "valgus": float(valgus)
-            }
-        })
-
-    # -------------------------------------------------------
-    # 5. RETURN RESPONSE
-    # -------------------------------------------------------
-    return {
-        "num_reps": len(results),
-        "reps": results
-    }
-
-
-@app.post("/jobs/create")
-async def create_job(file: UploadFile = File(...)):
-
-    import uuid
-    import threading
-
-    job_id = str(uuid.uuid4())
-
-    video_path = f"/tmp/{job_id}.mp4"
-    with open(video_path, "wb") as f:
-        f.write(await file.read())
-
-    job_store[job_id] = {
-        "status": "processing",
-        "result": None
-    }
-
-    def process():
-
-        try:
-            # ---------------------------------------------------
-            # 1. EXTRACT POSE
-            # ---------------------------------------------------
-            records = extract_pose_records(video_path, 0, 600, 1)
-
-            if not records:
-                job_store[job_id] = {"status": "failed", "error": "no_pose_data"}
-                return
-
-            # ---------------------------------------------------
-            # 2. SEGMENT REPS
-            # ---------------------------------------------------
-            reps = segment_reps(records)
-
-            if not reps:
-                job_store[job_id] = {"status": "failed", "error": "no_reps_detected"}
-                return
-
-            # ---------------------------------------------------
-            # 3. FEATURE EXTRACTION (ONCE)
-            # ---------------------------------------------------
-            rep_features = [
-                extract_rep_features(records, rep)
-                for rep in reps
-            ]
-
-            # ---------------------------------------------------
-            # 4. FATIGUE CURVE
-            # ---------------------------------------------------
-            fatigue_curve = compute_fatigue_curve(rep_features)
-
-            # ---------------------------------------------------
-            # 5. COACHING
-            # ---------------------------------------------------
-            results = []
-
-            for i, rep in enumerate(reps):
-
-                start = rep["start"]
-                bottom = rep["bottom"]
-                end = rep["end"]
-
-                result = coach_rep(records, start, bottom, end)
-
-                fatigue_penalty = fatigue_curve[i] if i < len(fatigue_curve) else 0
-
-                adjusted_score = result["score"] - fatigue_penalty
-
-                results.append({
-                    "start": start,
-                    "bottom": bottom,
-                    "end": end,
-                    "score": result["score"],
-                    "adjusted_score": round(max(0, min(10, adjusted_score)), 2),
-                    "strengths": result["strengths"],
-                    "issues": result["issues"],
-                    "phase_feedback": result["phase_feedback"],
-                    "priority_fix": result["priority_fix"],
-                    "set_context": {
-                        "fatigue_index": float(fatigue_penalty)
-                    }
-                })
-
-            # ---------------------------------------------------
-            # 6. ATHLETE MEMORY SYSTEM
-            # ---------------------------------------------------
-            from profiles.athlete_profile import (
-                load_profile,
-                update_profile,
-                save_profile
-            )
-
-            user_id = "default_user"
-
-            profile = load_profile(user_id)
-            profile = update_profile(profile, results)
-            save_profile(user_id, profile)
-
-        # ---------------------------------------------------
-        # 7. STORE RESULT
-        # ---------------------------------------------------
-            job_store[job_id] = {
-                "status": "done",
-                "num_reps": len(results),
-                "result": results,
-                "athlete_profile": profile
-            }
-
-        except Exception as e:
-            job_store[job_id] = {
-                "status": "failed",
-                "error": str(e),
-                "trace": traceback.format_exc()
-            }
-            print(traceback.format_exc())
-            
-            return
-    # run async
-    threading.Thread(target=process).start()
-
-    return {"job_id": job_id}
-
-
-@app.get("/jobs/{job_id}")
-async def get_job(job_id: str):
-    return job_store.get(job_id, {"error": "not found"})
-
-
-@app.get("/overlay_status/{job_id}")
-def overlay_status(job_id: str):
-    if AsyncResult is None or celery is None:
-        return {"error": True, "message": "Overlay jobs require Redis/Celery, which is not running locally."}
-    task = AsyncResult(job_id, app=celery)
-
-    if task.state == "PENDING":
-        return {"status": "processing"}
-
-    if task.state == "STARTED":
-        return {"status": "processing"}
-
-    if task.state == "SUCCESS":
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return {
-            "status": "done",
-            "url": task.result
+            "exercise_label": "Unknown",
+            "confidence": 0.0,
+            "analysis_mode": "error",
+            "feedback": [str(e)],
+            "rep_feedback": [],
+            "set_summary": build_set_summary([]),
+            "coaching_zones": build_coaching_zones("unknown", []),
+            "overlay_video_url": None,
+            "phase_images": None,
+            "debug": {"error": str(e)},
         }
 
-    if task.state == "FAILURE":
-        return {
-            "status": "failed",
-            "error": str(task.info)
-        }
-
-    return {"status": task.state}
-    if AsyncResult is None or celery is None:
-        return {"error": True, "message": "Overlay jobs require Redis/Celery, which is not running locally."}
-    task = AsyncResult(job_id, app=celery)
-
-    if task.state == "PENDING":
-        return {"status": "processing"}
-
-    if task.state == "SUCCESS":
-        return task.result
-
-    if task.state == "FAILURE":
-        return {
-            "status": "failed",
-            "error": str(task.info),
-        }
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
