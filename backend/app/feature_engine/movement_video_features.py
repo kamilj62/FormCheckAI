@@ -36,7 +36,7 @@ def stats(arr):
         float(arr[-1] - arr[0]),
     ]
 
-def build_oly_video_features(biomechanics):
+def build_movement_video_features(biomechanics):
     if not biomechanics:
         return np.zeros(80, dtype=np.float32)
 
@@ -123,3 +123,7 @@ def build_oly_video_features(biomechanics):
         feats = feats[:80]
 
     return feats
+
+
+# Backward-compatible alias
+build_oly_video_features = build_movement_video_features
