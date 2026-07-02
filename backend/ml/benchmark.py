@@ -38,7 +38,7 @@ def main():
     rows = []
 
     for bench in BENCHMARKS:
-        files = sorted(Path(bench["folder"]).glob(bench["pattern"]))[:bench["limit"]]
+        files = list(zip(labels, files))
 
         for f in files:
             print("Testing", bench["name"], f.name)
