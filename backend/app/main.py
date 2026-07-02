@@ -3200,6 +3200,17 @@ def analyze_clean_and_jerk_reps(biomechanics):
         min_finish_gap = max(8, int(n * 0.06))
         end_idx = max(jerk_catch_idx + min_finish_gap, min(end_idx, n - 1))
 
+    # Prefer shared movement-engine events for C&J phase anchors.
+    events = detect_movement_events(biomechanics, "clean_and_jerk")
+
+    if events:
+        clean_catch_idx = int(events.get("clean_catch", clean_catch_idx))
+        recovery_idx = int(events.get("clean_recovery", recovery_idx))
+        jerk_dip_idx = int(events.get("jerk_dip", jerk_dip_idx))
+        jerk_drive_idx = int(events.get("jerk_drive", jerk_drive_idx))
+        jerk_catch_idx = int(events.get("jerk_catch", jerk_catch_idx))
+        end_idx = int(events.get("finish", end_idx))
+
     start_frame = int(frame_numbers[0])
     clean_catch_frame = int(frame_numbers[clean_catch_idx])
 
