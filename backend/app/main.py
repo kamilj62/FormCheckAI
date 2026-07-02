@@ -40,6 +40,7 @@ import numpy as np
 import tensorflow as tf
 
 import joblib
+from app.feature_engine.movement_video_features import build_movement_video_features
 
 try:
     from celery.result import AsyncResult
@@ -147,9 +148,17 @@ CLASS_NAMES = [
     "thruster",
 ]
 
+USE_OLY_ROUTER_V4 = True  # Experimental video-level Olympic router
+
 OLY_ROUTER_BUNDLE = joblib.load(MODEL_DIR / "oly_router_v2.joblib")
 OLY_ROUTER_MODEL = OLY_ROUTER_BUNDLE["model"]
 OLY_ROUTER_ENCODER = OLY_ROUTER_BUNDLE.get("label_encoder")
+
+OLY_ROUTER_V4_MODEL = None
+try:
+    OLY_ROUTER_V4_MODEL = joblib.load(MODEL_DIR / "oly_router_v4.joblib")
+except Exception as e:
+    print("OLY ROUTER V4 NOT LOADED:", e)
 
 OLY_ROUTER_LABELS = {
     0: "clean",
@@ -6612,16 +6621,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         if OLY_ROUTER_MODEL is not None and run_oly_router:
 
-            rf_features = build_oly_router_v2_features(biomechanics).reshape(1, -1)
+            if USE_OLY_ROUTER_V4 and OLY_ROUTER_V4_MODEL is not None:
+                rf_features = build_movement_video_features(biomechanics).reshape(1, -1)
+                active_oly_model = OLY_ROUTER_V4_MODEL
+                active_oly_encoder = None
+            else:
+                rf_features = build_oly_router_v2_features(biomechanics).reshape(1, -1)
+                active_oly_model = OLY_ROUTER_MODEL
+                active_oly_encoder = OLY_ROUTER_ENCODER
 
-            if hasattr(OLY_ROUTER_MODEL, "predict_proba"):
-                olympic_probs = OLY_ROUTER_MODEL.predict_proba(rf_features)[0]
+            if hasattr(active_oly_model, "predict_proba"):
+                olympic_probs = active_oly_model.predict_proba(rf_features)[0]
                 olympic_idx = int(np.argmax(olympic_probs))
 
-                if OLY_ROUTER_ENCODER is not None:
-                    olympic_pred = str(OLY_ROUTER_ENCODER.inverse_transform([olympic_idx])[0])
-                elif hasattr(OLY_ROUTER_MODEL, "classes_"):
-                    olympic_pred = str(OLY_ROUTER_MODEL.classes_[olympic_idx])
+                if active_oly_encoder is not None:
+                    olympic_pred = str(active_oly_encoder.inverse_transform([olympic_idx])[0])
+                elif hasattr(active_oly_model, "classes_"):
+                    olympic_pred = str(active_oly_model.classes_[olympic_idx])
                 else:
                     olympic_pred = OLY_ROUTER_LABELS.get(olympic_idx, "unknown")
 
