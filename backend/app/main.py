@@ -6420,7 +6420,111 @@ def extract_video_biomechanics(video_path, sample_every=1):
     biomechanics : list
     debug : dict
     """
-    raise NotImplementedError("Will be implemented in next step")
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        return [], [], {
+            "error": "video_not_opened",
+            "frames_processed": 0,
+            "pose_frames": 0,
+            "total_frames": 0,
+        }
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    sequence = []
+    biomechanics = []
+    frame_idx = 0
+    pose_frames = 0
+
+    subject_center = None
+    subject_area = None
+
+    yolo_tracker = (
+        YOLOTracker("models/yolov8n.pt", pad=220)
+        if USE_YOLO_TRACKING and YOLOTracker is not None
+        else None
+    )
+
+    with mp_pose.Pose(
+        static_image_mode=False,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5,
+    ) as pose:
+
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_idx += 1
+            if frame_idx % sample_every != 0:
+                continue
+
+            analysis_frame = frame
+
+            if USE_YOLO_TRACKING and yolo_tracker is not None:
+                crop_result = yolo_tracker.get_crop(frame)
+                if crop_result and crop_result.crop is not None:
+                    analysis_frame = crop_result.crop
+
+            rgb = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(rgb)
+
+            if not results.pose_landmarks:
+                continue
+
+            lm = results.pose_landmarks.landmark
+            pts = [
+                lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value],
+                lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value],
+                lm[mp_pose.PoseLandmark.LEFT_HIP.value],
+                lm[mp_pose.PoseLandmark.RIGHT_HIP.value],
+            ]
+
+            xs = [p.x for p in pts]
+            ys = [p.y for p in pts]
+            center = (sum(xs) / 4, sum(ys) / 4)
+            area = max(1e-6, (max(xs) - min(xs)) * (max(ys) - min(ys)))
+
+            if subject_center is None:
+                subject_center = center
+                subject_area = area
+            else:
+                dx = center[0] - subject_center[0]
+                dy = center[1] - subject_center[1]
+                jump = (dx * dx + dy * dy) ** 0.5
+                area_ratio = area / max(subject_area, 1e-6)
+
+                if jump > 0.22 or area_ratio < 0.45 or area_ratio > 2.2:
+                    continue
+
+                subject_center = (
+                    subject_center[0] * 0.85 + center[0] * 0.15,
+                    subject_center[1] * 0.85 + center[1] * 0.15,
+                )
+                subject_area = subject_area * 0.85 + area * 0.15
+
+            feats, bio = extract_features_and_biomechanics(results)
+
+            if feats is None or bio is None:
+                continue
+
+            sequence.append(feats)
+
+            bio["frame_number"] = frame_idx
+            bio["pose_index"] = pose_frames
+
+            biomechanics.append(bio)
+            pose_frames += 1
+
+    cap.release()
+
+    return sequence, biomechanics, {
+        "frames_processed": len(sequence),
+        "pose_frames": pose_frames,
+        "total_frames": total_frames,
+    }
 
 
 def analyze_video(video_path, make_visuals=True, make_overlay=True):
