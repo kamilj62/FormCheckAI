@@ -27,3 +27,12 @@ FEATURE_NAMES = [
     "bottom_to_overhead_time",
     "early_late_overhead_delta",
 ]
+
+FEATURE_NAMES += [
+    "wrist_path_length",
+    "hip_path_length",
+    "wrist_vertical_range",
+    "hip_vertical_range",
+    "overhead_jitter",
+    "late_wrist_y_std",
+]

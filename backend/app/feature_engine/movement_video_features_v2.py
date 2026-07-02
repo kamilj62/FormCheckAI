@@ -122,6 +122,20 @@ def build_movement_video_features(biomechanics):
         float(np.min(knee[max(1, int(n * 0.55)):])) if n > 2 else 180.0,
     ]
 
+    wrist_arr = np.array(wrist_y, dtype=np.float32)
+    hip_arr = np.array(hip_y, dtype=np.float32)
+
+    wrist_path_length = float(np.sum(np.abs(np.diff(wrist_arr)))) if len(wrist_arr) > 1 else 0.0
+    hip_path_length = float(np.sum(np.abs(np.diff(hip_arr)))) if len(hip_arr) > 1 else 0.0
+    wrist_vertical_range = float(np.max(wrist_arr) - np.min(wrist_arr)) if len(wrist_arr) else 0.0
+    hip_vertical_range = float(np.max(hip_arr) - np.min(hip_arr)) if len(hip_arr) else 0.0
+
+    overhead_indices = np.where(overhead > 0.5)[0]
+    overhead_jitter = float(np.std(wrist_arr[overhead_indices])) if len(overhead_indices) > 2 else 0.0
+
+    late_start = int(len(wrist_arr) * 0.65)
+    late_wrist_y_std = float(np.std(wrist_arr[late_start:])) if len(wrist_arr[late_start:]) > 2 else 0.0
+
     feats += [
         wrist_vel_mean,
         wrist_vel_peak,
@@ -133,6 +147,13 @@ def build_movement_video_features(biomechanics):
         elbow_vel_peak,
         bottom_to_overhead_time,
         early_late_overhead_delta,
+
+        wrist_path_length,
+        hip_path_length,
+        wrist_vertical_range,
+        hip_vertical_range,
+        overhead_jitter,
+        late_wrist_y_std,
     ]
 
     feats = np.array(feats, dtype=np.float32)
