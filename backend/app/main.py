@@ -2821,7 +2821,6 @@ def analyze_split_jerk_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
-
 def find_stable_overhead_window(
     overhead,
     elbow,
@@ -2916,7 +2915,6 @@ def find_stable_overhead_window(
             run = 0
 
     return None, None
-
 
 
 def analyze_clean_and_jerk_reps(biomechanics):
@@ -6410,6 +6408,19 @@ def normalize_sequence(sequence):
         raise ValueError(f"normalize_sequence expected 68 features, got {feats.shape[1]}")
 
     return pad_or_trim(feats, target_len=30)
+
+
+def extract_video_biomechanics(video_path, sample_every=1):
+    """
+    Extract pose sequence and biomechanics from a video.
+
+    Returns
+    -------
+    sequence : list
+    biomechanics : list
+    debug : dict
+    """
+    raise NotImplementedError("Will be implemented in next step")
 
 
 def analyze_video(video_path, make_visuals=True, make_overlay=True):
