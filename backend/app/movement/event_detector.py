@@ -109,11 +109,128 @@ def _detect_snatch_events(biomechanics):
     }
 
 
+
+def _detect_clean_and_jerk_events(biomechanics):
+    n = len(biomechanics)
+    if n < 10:
+        return {}
+
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics], dtype=float)
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics], dtype=float)
+    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics], dtype=float)
+    shoulder_y = np.array([b.get("shoulder_y", 0.5) for b in biomechanics], dtype=float)
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=float)
+
+    clean_search_start = max(1, int(n * 0.12))
+    clean_search_end = max(clean_search_start + 2, int(n * 0.65))
+
+    knee_norm = (knee - np.min(knee)) / (np.ptp(knee) + 1e-6)
+    hip_norm = (hip - np.min(hip)) / (np.ptp(hip) + 1e-6)
+    extension_signal = 0.60 * knee_norm + 0.40 * hip_norm
+
+    # Temporary extension estimate only for locating first overhead.
+    clean_extension_idx = clean_search_start + int(
+        np.argmax(extension_signal[clean_search_start:clean_search_end])
+    )
+
+    overhead = (wrist_y < shoulder_y) & (elbow > 145)
+    overhead_candidates = np.where(overhead & (np.arange(n) > clean_extension_idx))[0]
+    first_overhead_idx = int(overhead_candidates[0]) if len(overhead_candidates) else n - 1
+
+    catch_start = max(1, int(n * 0.20))
+    catch_end = max(catch_start + 2, min(int(n * 0.45), first_overhead_idx))
+
+    rack_like = np.abs(wrist_y - shoulder_y) < 0.24
+
+    candidates = [
+        i for i in range(catch_start, catch_end)
+        if rack_like[i] and knee[i] < 145
+    ]
+
+    if candidates:
+        clean_catch_idx = int(candidates[np.argmin(knee[candidates])])
+    else:
+        clean_catch_idx = catch_start + int(np.argmin(knee[catch_start:catch_end]))
+
+    # Final clean extension must occur before the clean catch.
+    pre_catch_start = max(1, int(clean_catch_idx * 0.35))
+    pre_catch_end = max(pre_catch_start + 2, clean_catch_idx)
+    clean_extension_idx = pre_catch_start + int(
+        np.argmax(extension_signal[pre_catch_start:pre_catch_end])
+    )
+    clean_extension_idx = max(1, min(clean_extension_idx, clean_catch_idx - 1))
+
+    recovery_search_start = min(n - 2, clean_catch_idx + max(6, int(n * 0.05)))
+    recovery_search_end = max(
+        recovery_search_start + 2,
+        min(first_overhead_idx - 2, clean_catch_idx + max(18, int(n * 0.30)), n - 1)
+    )
+
+    recovery_candidates = [
+        i for i in range(recovery_search_start, recovery_search_end)
+        if rack_like[i] and knee[i] > 130 and hip[i] > 125
+    ]
+
+    if recovery_candidates:
+        clean_recovery_idx = int(max(recovery_candidates, key=lambda i: extension_signal[i]))
+    else:
+        clean_recovery_idx = recovery_search_start + int(
+            np.argmax(extension_signal[recovery_search_start:recovery_search_end])
+        )
+
+    jerk_start = min(n - 2, max(clean_recovery_idx + 1, clean_catch_idx + max(4, int(n * 0.04))))
+    jerk_end = max(jerk_start + 2, min(first_overhead_idx, n - 1))
+
+    jerk_dip_idx = jerk_start + int(np.argmin(knee[jerk_start:jerk_end]))
+
+    drive_start = min(n - 2, jerk_dip_idx + 1)
+    drive_end = max(drive_start + 1, first_overhead_idx)
+    jerk_drive_idx = drive_start + int(np.argmax(extension_signal[drive_start:drive_end]))
+
+    jerk_catch_idx = max(first_overhead_idx, jerk_drive_idx + 1)
+    stable_needed = 3
+
+    for i in range(jerk_drive_idx + 1, n - stable_needed):
+        stable_overhead = all(overhead[i:i + stable_needed])
+        stable_lockout = np.mean(elbow[i:i + stable_needed]) > 150
+        if stable_overhead and stable_lockout:
+            jerk_catch_idx = i
+            break
+
+    jerk_catch_idx = max(jerk_catch_idx, jerk_drive_idx + 1)
+    jerk_catch_idx = min(jerk_catch_idx, n - 2)
+
+    min_finish_gap = max(12, int(n * 0.12))
+    finish_idx = min(n - 1, jerk_catch_idx + max(min_finish_gap, int(n * 0.35)))
+
+    for i in range(jerk_catch_idx + min_finish_gap, n - stable_needed):
+        stable_overhead = all(overhead[i:i + stable_needed])
+        stable_lockout = np.mean(elbow[i:i + stable_needed]) > 150
+        standing = knee[i] > 145 and hip[i] > 140
+        if stable_overhead and stable_lockout and standing:
+            finish_idx = i
+            break
+
+    return {
+        "setup": 0,
+        "clean_extension": clean_extension_idx,
+        "clean_catch": clean_catch_idx,
+        "clean_recovery": clean_recovery_idx,
+        "jerk_dip": jerk_dip_idx,
+        "jerk_drive": jerk_drive_idx,
+        "jerk_catch": jerk_catch_idx,
+        "lockout": finish_idx,
+        "finish": finish_idx,
+    }
+
 def detect_movement_events(biomechanics, exercise_label=None):
     if not biomechanics:
         return {}
 
     label = str(exercise_label or "").lower().replace(" ", "_")
+
+    if "clean_and_jerk" in label or "clean jerk" in label:
+        return _detect_clean_and_jerk_events(biomechanics)
 
     if "snatch" in label:
         return _detect_snatch_events(biomechanics)
