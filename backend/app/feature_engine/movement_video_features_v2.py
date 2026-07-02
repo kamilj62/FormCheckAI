@@ -1,19 +1,6 @@
 import numpy as np
 
-FEATURE_NAMES = [
-    "knee_mean", "knee_std", "knee_min", "knee_max", "knee_delta",
-    "hip_mean", "hip_std", "hip_min", "hip_max", "hip_delta",
-    "elbow_mean", "elbow_std", "elbow_min", "elbow_max", "elbow_delta",
-    "shoulder_mean", "shoulder_std", "shoulder_min", "shoulder_max", "shoulder_delta",
-    "wrist_y_mean", "wrist_y_std", "wrist_y_min", "wrist_y_max", "wrist_y_delta",
-    "hip_y_mean", "hip_y_std", "hip_y_min", "hip_y_max", "hip_y_delta",
-    "wrist_shoulder_distance_mean", "wrist_shoulder_distance_std", "wrist_shoulder_distance_min", "wrist_shoulder_distance_max", "wrist_shoulder_distance_delta",
-    "overhead_ratio", "has_overhead", "first_overhead_pct", "last_overhead_pct", "overhead_span_pct",
-    "min_knee_angle", "min_hip_angle", "max_elbow_angle", "max_shoulder_angle",
-    "min_knee_time_pct", "min_hip_time_pct",
-    "max_wrist_motion", "mean_wrist_motion", "max_hip_motion", "mean_hip_motion",
-    "overhead_near_bottom", "late_overhead_flag", "early_min_knee", "late_min_knee",
-] + [f"pad_{i}" for i in range(80 - 53)]
+from app.feature_engine.feature_names_v2 import FEATURE_NAMES
 
 
 def f(x, default=0.0):
@@ -23,6 +10,16 @@ def f(x, default=0.0):
         return float(x)
     except Exception:
         return default
+
+def velocity_stats(values):
+    """Return mean and peak absolute frame-to-frame velocity."""
+    arr = np.array(values, dtype=np.float32)
+    if len(arr) < 2:
+        return 0.0, 0.0
+
+    vel = np.abs(np.diff(arr))
+    return float(np.mean(vel)), float(np.max(vel))
+
 
 def stats(arr):
     arr = np.array(arr, dtype=np.float32)
@@ -73,8 +70,18 @@ def build_movement_video_features(biomechanics):
     min_knee_idx = int(np.argmin(knee)) if knee else 0
     min_hip_idx = int(np.argmin(hip)) if hip else 0
 
+    min_knee_time_pct = float(min_knee_idx / max(1, n))
+    min_hip_time_pct = float(min_hip_idx / max(1, n))
+    bottom_to_overhead_time = float(first_overhead - min_knee_time_pct)
+    early_late_overhead_delta = float(last_overhead - first_overhead)
+
     wrist_motion = np.diff(np.array(wrist_y, dtype=np.float32))
     hip_motion = np.diff(np.array(hip_y, dtype=np.float32))
+
+    wrist_vel_mean, wrist_vel_peak = velocity_stats(wrist_y)
+    hip_vel_mean, hip_vel_peak = velocity_stats(hip_y)
+    knee_vel_mean, knee_vel_peak = velocity_stats(knee)
+    elbow_vel_mean, elbow_vel_peak = velocity_stats(elbow)
 
     feats = []
 
@@ -98,8 +105,8 @@ def build_movement_video_features(biomechanics):
         float(np.max(elbow)),
         float(np.max(shoulder)),
 
-        float(min_knee_idx / max(1, n)),
-        float(min_hip_idx / max(1, n)),
+        min_knee_time_pct,
+        min_hip_time_pct,
 
         float(np.max(np.abs(wrist_motion))) if len(wrist_motion) else 0.0,
         float(np.mean(np.abs(wrist_motion))) if len(wrist_motion) else 0.0,
@@ -115,12 +122,24 @@ def build_movement_video_features(biomechanics):
         float(np.min(knee[max(1, int(n * 0.55)):])) if n > 2 else 180.0,
     ]
 
+    feats += [
+        wrist_vel_mean,
+        wrist_vel_peak,
+        hip_vel_mean,
+        hip_vel_peak,
+        knee_vel_mean,
+        knee_vel_peak,
+        elbow_vel_mean,
+        elbow_vel_peak,
+        bottom_to_overhead_time,
+        early_late_overhead_delta,
+    ]
+
     feats = np.array(feats, dtype=np.float32)
 
-    if len(feats) < 80:
-        feats = np.pad(feats, (0, 80 - len(feats)))
-    else:
-        feats = feats[:80]
+    # Keep feature vector aligned with FEATURE_NAMES.
+    if len(feats) != len(FEATURE_NAMES):
+        raise ValueError(f"Feature length mismatch: got {len(feats)}, expected {len(FEATURE_NAMES)}")
 
     return feats
 
