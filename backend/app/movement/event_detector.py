@@ -223,6 +223,110 @@ def _detect_clean_and_jerk_events(biomechanics):
         "finish": finish_idx,
     }
 
+
+def _detect_clean_events(biomechanics):
+    n = len(biomechanics)
+    if n < 10:
+        return {}
+
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics], dtype=np.float32)
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics], dtype=np.float32)
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics], dtype=np.float32)
+
+    rack_distance = np.abs(wrist_x - shoulder_x)
+
+    front_rack = (
+        (np.abs(wrist_y - shoulder_y) < 0.22)
+        & (rack_distance < 0.32)
+        & (knee < 155)
+    )
+
+    idxs = np.where(front_rack)[0]
+    if len(idxs) == 0:
+        return {}
+
+    clusters = []
+    current = [int(idxs[0])]
+    max_gap = max(8, n // 60)
+
+    for idx in idxs[1:]:
+        idx = int(idx)
+        if idx - current[-1] <= max_gap:
+            current.append(idx)
+        else:
+            if len(current) >= 3:
+                clusters.append(current)
+            current = [idx]
+
+    if len(current) >= 3:
+        clusters.append(current)
+
+    for cluster in clusters:
+        cluster_start = cluster[0]
+        cluster_end = cluster[-1]
+
+        if cluster_start < max(60, int(n * 0.18)):
+            continue
+
+        pre_ext_start = max(0, cluster_start - max(70, n // 5))
+        pre_ext_end = max(pre_ext_start + 1, cluster_start)
+
+        ext_score = hip[pre_ext_start:pre_ext_end] + knee[pre_ext_start:pre_ext_end]
+        if len(ext_score) == 0 or float(np.max(ext_score)) < 300:
+            continue
+
+        local_end = min(cluster_end, cluster_start + max(8, n // 20))
+        catch_window = np.arange(cluster_start, local_end + 1)
+        catch_idx = int(catch_window[np.argmax(hip_y[catch_window])])
+        catch_idx = max(3, min(catch_idx, n - 2))
+
+        setup_idx = max(0, catch_idx - max(45, n // 4))
+
+        pre_start = max(setup_idx + 1, int(setup_idx + (catch_idx - setup_idx) * 0.35))
+        pre_end = max(pre_start + 1, catch_idx)
+
+        extension_score = hip[pre_start:pre_end] + knee[pre_start:pre_end]
+        true_extension_idx = pre_start + int(np.argmax(extension_score))
+        true_extension_idx = max(setup_idx + 2, min(true_extension_idx, catch_idx - 1))
+
+        first_pull_idx = max(
+            setup_idx + 1,
+            int(setup_idx + (true_extension_idx - setup_idx) * 0.45)
+        )
+
+        pull_under_idx = first_pull_idx + int((catch_idx - first_pull_idx) * 0.40)
+        pull_under_idx = max(first_pull_idx + 1, min(pull_under_idx, catch_idx - 1))
+
+        search_end = min(n - 1, catch_idx + max(20, n // 8))
+        standing_candidates = [
+            i for i in range(catch_idx + 1, search_end + 1)
+            if hip_y[i] < hip_y[catch_idx] - 0.03
+        ]
+
+        if standing_candidates:
+            finish_idx = int(standing_candidates[min(5, len(standing_candidates) - 1)])
+        else:
+            finish_idx = min(n - 1, catch_idx + max(10, n // 25))
+
+        finish_idx = max(catch_idx + 1, min(finish_idx, n - 1))
+
+        return {
+            "setup": setup_idx,
+            "first_pull": first_pull_idx,
+            "extension": pull_under_idx,
+            "clean_extension": true_extension_idx,
+            "catch": catch_idx,
+            "clean_catch": catch_idx,
+            "finish": finish_idx,
+            "lockout": finish_idx,
+        }
+
+    return {}
+
 def detect_movement_events(biomechanics, exercise_label=None):
     if not biomechanics:
         return {}
@@ -231,6 +335,9 @@ def detect_movement_events(biomechanics, exercise_label=None):
 
     if "clean_and_jerk" in label or "clean jerk" in label:
         return _detect_clean_and_jerk_events(biomechanics)
+
+    if label == "clean" or "clean" in label:
+        return _detect_clean_events(biomechanics)
 
     if "snatch" in label:
         return _detect_snatch_events(biomechanics)

@@ -2512,7 +2512,23 @@ def analyze_clean_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    phase_reps = find_clean_phase_reps(biomechanics)
+    events = detect_movement_events(biomechanics, "clean")
+
+    if events:
+        frame_numbers = np.array([
+            b.get("frame_number", i)
+            for i, b in enumerate(biomechanics)
+        ])
+
+        phase_reps = [{
+            "start_frame": int(frame_numbers[events.get("setup", 0)]),
+            "first_pull_frame": int(frame_numbers[events.get("first_pull", events.get("setup", 0))]),
+            "extension_frame": int(frame_numbers[events.get("extension", events.get("first_pull", 0))]),
+            "catch_frame": int(frame_numbers[events.get("catch", events.get("extension", 0))]),
+            "end_frame": int(frame_numbers[events.get("finish", events.get("lockout", len(frame_numbers)-1))]),
+        }]
+    else:
+        phase_reps = find_clean_phase_reps(biomechanics)
 
     if not phase_reps:
         return [], build_set_summary([])
