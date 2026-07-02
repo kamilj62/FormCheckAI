@@ -40,6 +40,7 @@ import numpy as np
 import tensorflow as tf
 
 import joblib
+from app.movement.event_detector import detect_movement_events
 from app.feature_engine.movement_video_features import build_movement_video_features
 
 try:
@@ -3393,7 +3394,23 @@ def analyze_snatch_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
 
-    phase_reps = find_snatch_phase_reps(biomechanics)
+    events = detect_movement_events(biomechanics, "snatch")
+
+    if events:
+        frame_numbers = np.array([
+            b.get("frame_number", i)
+            for i, b in enumerate(biomechanics)
+        ])
+
+        phase_reps = [{
+            "start_frame": int(frame_numbers[events.get("setup", 0)]),
+            "first_pull_frame": int(frame_numbers[events.get("first_pull", events.get("setup", 0))]),
+            "extension_frame": int(frame_numbers[events.get("extension", events.get("setup", 0))]),
+            "catch_frame": int(frame_numbers[events.get("catch", events.get("extension", 0))]),
+            "end_frame": int(frame_numbers[events.get("finish", events.get("lockout", len(frame_numbers)-1))]),
+        }]
+    else:
+        phase_reps = find_snatch_phase_reps(biomechanics)
 
     if not phase_reps:
         return [], build_set_summary([])

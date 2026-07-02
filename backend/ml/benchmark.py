@@ -5,6 +5,7 @@ Run Olympic router benchmark against fixed audit folders.
 from pathlib import Path
 import subprocess
 import pandas as pd
+import json
 
 BENCHMARKS = [
     {
@@ -33,12 +34,10 @@ def analyze_video(path):
 
 
 def main():
-    import json
-
     rows = []
 
     for bench in BENCHMARKS:
-        files = list(zip(labels, files))
+        files = sorted(Path(bench["folder"]).glob(bench["pattern"]))[:bench["limit"]]
 
         for f in files:
             print("Testing", bench["name"], f.name)
