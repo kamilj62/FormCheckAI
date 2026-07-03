@@ -37,6 +37,45 @@ def route_olympic_lift(
         debug["events"] = events
         debug["features"] = features
 
+    # -------- Split Jerk diagnostics --------
+    split_events = detect_movement_events(biomechanics, "split_jerk")
+    split_features = build_oly_router_features(biomechanics, split_events)
+
+    debug["split_events"] = split_events
+    debug["split_features"] = split_features
+
+    # Stage 0: Clean rescue from weak Snatch.
+    # Clean clips can be weakly routed as snatch when wrists briefly appear overhead/noisy.
+    if (
+        olympic_label == "snatch"
+        and float(olympic_confidence or 0.0) < 0.65
+    ):
+        clean_events = detect_movement_events(biomechanics, "clean")
+        clean_features = build_oly_router_features(biomechanics, clean_events)
+
+        debug["clean_events"] = clean_events
+        debug["clean_features"] = clean_features
+
+        if (
+            clean_features.get("catch_depth", 0) > 100
+            and clean_features.get("extension_to_catch", 0) >= 8
+            and clean_features.get("catch_to_finish", 0) >= 8
+        ):
+            debug["decision"] = "clean_rescue_from_weak_snatch"
+            return "clean", 0.75, debug
+
+    # Stage 0b: Split Jerk rescue from C&J.
+    # Standalone split jerks can be misread as C&J because the rack/dip/drive
+    # looks like the second half of a clean and jerk.
+    if (
+        raw_label == "clean_and_jerk"
+        and olympic_label == "clean_and_jerk"
+        and features.get("catch_to_finish", 0) >= 400
+        and features.get("lockout_duration", 0) >= 300
+    ):
+        debug["decision"] = "split_jerk_rescue_from_cj"
+        return "split_jerk", max(0.80, float(olympic_confidence or 0.0)), debug
+
     # Stage 1: unanimous agreement.
     if (
         raw_label == olympic_label

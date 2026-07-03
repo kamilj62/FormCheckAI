@@ -1,0 +1,19 @@
+{
+  "video": "/Users/josephkamil/Desktop/Capstone/clean-correct.mov",
+
+  "expected_label": "clean",
+
+  "score_min": 8.5,
+  "score_max": 10.0,
+
+  "required_breakdown": {
+    "first_pull": "good",
+    "extension": "good",
+    "catch": "good"
+  },
+
+  "forbidden_issues": [
+    "early arm bend",
+    "slow elbows"
+  ]
+}
