@@ -70,6 +70,8 @@ except Exception:
     YOLOTracker = None
     remap_crop_landmarks_to_full_frame = None
 
+from app.ml.oly_router_v5 import route_olympic_lift
+
 app = FastAPI()
 
 UPLOAD_DIR = "uploads"
@@ -6886,6 +6888,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_label = raw_label
                 final_confidence = base_raw_confidence
 
+        # ---------------- Router V5 (Debug Only) ----------------
+        try:
+            router_v5_label, router_v5_confidence, router_v5_debug = route_olympic_lift(
+                biomechanics=biomechanics,
+                raw_label=final_label,
+                raw_confidence=final_confidence,
+                olympic_label=olympic_pred,
+                olympic_confidence=olympic_conf,
+            )
+        except Exception as e:
+            router_v5_label = final_label
+            router_v5_confidence = final_confidence
+            router_v5_debug = {"router_error": str(e)}
+
         analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
@@ -6933,6 +6949,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "olympic_prediction": olympic_pred,
                 "final_label": analysis_label,
                 "olympic_confidence": olympic_conf,
+                "router_v5": router_v5_debug,
                 "frames_processed": len(sequence),
                 "pose_frames": debug.get("pose_frames", len(sequence)),
                 "squat_router": squat_router_debug,
