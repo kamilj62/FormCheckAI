@@ -30,8 +30,6 @@ def route_olympic_lift(
         "router": "v5_scaffold",
     }
 
-    # Safe initial behavior:
-    # Do not override anything yet.
     if olympic_label in {"snatch", "clean", "clean_and_jerk", "split_jerk"}:
         events = detect_movement_events(biomechanics, olympic_label)
         features = build_oly_router_features(biomechanics, events)
@@ -39,4 +37,13 @@ def route_olympic_lift(
         debug["events"] = events
         debug["features"] = features
 
+    # Stage 1: unanimous agreement.
+    if (
+        raw_label == olympic_label
+        and olympic_label in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
+    ):
+        debug["decision"] = "agreement"
+        return olympic_label, max(float(raw_confidence or 0.0), float(olympic_confidence or 0.0)), debug
+
+    debug["decision"] = "fallback"
     return raw_label, float(raw_confidence or 0.0), debug
