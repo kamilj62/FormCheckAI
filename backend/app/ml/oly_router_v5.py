@@ -60,7 +60,11 @@ def route_olympic_lift(
 
         if (
             cj_features.get("extension_to_catch", 0) >= 8
-            and cj_features.get("catch_depth", 0) >= 40
+            and (
+                cj_features.get("catch_depth", 0) >= 40
+                or cj_features.get("catch_to_finish", 0) >= 40
+                or cj_features.get("lockout_duration", 0) >= 30
+            )
         ):
             debug["decision"] = "cj_rescue_from_push_press"
             return (
@@ -68,6 +72,25 @@ def route_olympic_lift(
                 max(float(raw_confidence or 0.0), float(olympic_confidence or 0.0)),
                 debug,
             )
+
+    # ------------------------------------------------------------------
+    # Stage 3: Snatch rescue from Squat
+    # ------------------------------------------------------------------
+    if (
+        raw_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
+        and olympic_label == "snatch"
+        and float(olympic_confidence or 0.0) >= 0.50
+    ):
+        features = debug.get("features", {})
+
+        if (
+            features.get("has_overhead", 0) >= 1
+            and features.get("catch_overhead", 0) >= 1
+            and features.get("extension_to_catch", 0) >= 8
+            and features.get("lockout_duration", 0) >= 8
+        ):
+            debug["decision"] = "snatch_rescue_from_squat"
+            return "snatch", max(0.70, float(olympic_confidence or 0.0)), debug
 
     debug["decision"] = "fallback"
     return raw_label, float(raw_confidence or 0.0), debug
