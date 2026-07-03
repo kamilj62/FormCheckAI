@@ -1,11 +1,17 @@
 """
-Run Olympic router benchmark against fixed audit folders.
+Olympic routing benchmark.
+
+Produces:
+- CSV of predictions
+- Confusion matrix
+- Per-class accuracy
+- Overall accuracy
 """
 
 from pathlib import Path
 import subprocess
-import pandas as pd
 import json
+import pandas as pd
 
 BENCHMARKS = [
     {
@@ -25,47 +31,75 @@ BENCHMARKS = [
 
 def analyze_video(path):
     cmd = [
-        "curl", "-s", "--max-time", "300",
-        "-X", "POST",
-        "-F", f"file=@{path}",
+        "curl",
+        "-s",
+        "--max-time",
+        "300",
+        "-X",
+        "POST",
+        "-F",
+        f"file=@{path}",
         "http://localhost:8000/analyze",
     ]
-    return subprocess.check_output(cmd, text=True)
+    return json.loads(subprocess.check_output(cmd, text=True))
 
 
-def main():
-    rows = []
+rows = []
 
-    for bench in BENCHMARKS:
-        files = sorted(Path(bench["folder"]).glob(bench["pattern"]))[:bench["limit"]]
+for bench in BENCHMARKS:
+    folder = Path(bench["folder"])
+    files = sorted(folder.glob(bench["pattern"]))[: bench["limit"]]
 
-        for f in files:
-            print("Testing", bench["name"], f.name)
-            data = json.loads(analyze_video(f))
+    for f in files:
+        print("Testing", bench["name"], f.name)
 
-            rows.append({
+        data = analyze_video(f)
+
+        rows.append(
+            {
                 "true_label": bench["name"],
-                "video": f.name,
                 "predicted_label": data.get("exercise_label"),
                 "confidence": data.get("confidence"),
-            })
+                "video": f.name,
+            }
+        )
 
-    df = pd.DataFrame(rows)
-    out = Path("ml/reports/olympic_benchmark_latest.csv")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(out, index=False)
+df = pd.DataFrame(rows)
 
-    print("\nSaved:", out)
-    print()
-    print(pd.crosstab(df["true_label"], df["predicted_label"]))
+Path("ml/reports").mkdir(parents=True, exist_ok=True)
 
-    correct = (df["true_label"] == df["predicted_label"]).sum()
-    total = len(df)
-    print(f"\nOverall: {correct}/{total} ({100*correct/total:.1f}%)")
+csv_path = Path("ml/reports/olympic_benchmark_latest.csv")
+df.to_csv(csv_path, index=False)
 
-    print("\nMistakes:")
-    print(df[df["true_label"] != df["predicted_label"]].to_string(index=False))
+print("\nSaved:", csv_path)
 
+print("\n==============================")
+print("CONFUSION MATRIX")
+print("==============================")
+print(pd.crosstab(df.true_label, df.predicted_label))
 
-if __name__ == "__main__":
-    main()
+print("\n==============================")
+print("PER-CLASS ACCURACY")
+print("==============================")
+
+for label in sorted(df.true_label.unique()):
+    subset = df[df.true_label == label]
+    acc = (subset.true_label == subset.predicted_label).mean()
+    print(f"{label:20s} {100*acc:5.1f}%")
+
+overall = (df.true_label == df.predicted_label).mean()
+
+print("\n==============================")
+print(f"OVERALL: {100*overall:.1f}%")
+print("==============================")
+
+mistakes = df[df.true_label != df.predicted_label]
+
+print("\n==============================")
+print("MISTAKES")
+print("==============================")
+
+if len(mistakes):
+    print(mistakes.to_string(index=False))
+else:
+    print("None 🎉")

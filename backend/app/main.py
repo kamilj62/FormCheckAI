@@ -6902,7 +6902,27 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             router_v5_confidence = final_confidence
             router_v5_debug = {"router_error": str(e)}
 
-        analysis_label = final_label
+        # ---------------- Router V5 Authority ----------------
+        # Router V5 owns Olympic routing. All other lifts continue to use
+        # the existing production routing.
+        if (
+            final_label in {
+                "snatch",
+                "clean",
+                "clean_and_jerk",
+                "split_jerk",
+            }
+            or router_v5_label in {
+                "snatch",
+                "clean",
+                "clean_and_jerk",
+                "split_jerk",
+            }
+        ):
+            analysis_label = router_v5_label
+            final_confidence = router_v5_confidence
+        else:
+            analysis_label = final_label
 
         # ---------------- REP ANALYSIS ----------------
         if analysis_label in ["squat", "squat_back", "squat_front"]:

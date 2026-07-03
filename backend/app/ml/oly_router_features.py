@@ -22,9 +22,9 @@ def build_oly_router_features(biomechanics, events):
         return max(0, min(int(events.get(name, default)), n - 1))
 
     setup = idx("setup")
-    extension = idx("extension")
-    catch = idx("catch")
-    finish = idx("finish", n - 1)
+    extension = idx("extension", events.get("clean_extension", 0))
+    catch = idx("catch", events.get("clean_catch", 0))
+    finish = idx("finish", events.get("lockout", n - 1))
 
     overhead = wrist_y < shoulder_y
 
