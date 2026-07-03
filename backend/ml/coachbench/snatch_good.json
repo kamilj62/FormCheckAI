@@ -1,0 +1,20 @@
+{
+  "video": "/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatch_mp4/1DX0IXizcHg_02062_02337.mp4",
+
+  "expected_label": "snatch",
+
+  "score_min": 8.5,
+  "score_max": 10.0,
+
+  "required_breakdown": {
+    "first_pull": "good",
+    "extension": "good",
+    "overhead_catch": "good"
+  },
+
+  "forbidden_issues": [
+    "early arm bend",
+    "bar drift",
+    "unstable overhead"
+  ]
+}
