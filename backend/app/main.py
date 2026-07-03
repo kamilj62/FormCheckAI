@@ -76,6 +76,8 @@ from app.coaching.clean import build_clean_coaching
 
 from app.coaching.snatch import build_snatch_coaching
 
+from app.coaching.split_jerk import build_split_jerk_coaching
+
 app = FastAPI()
 
 UPLOAD_DIR = "uploads"
@@ -2852,6 +2854,8 @@ def analyze_split_jerk_reps(biomechanics):
         "feedback": feedback,
     }]
 
+    reps[0]["coaching"] = build_split_jerk_coaching(reps[0])
+
     return reps, build_set_summary(reps)
 
 
@@ -3414,6 +3418,8 @@ def find_snatch_phase_reps(biomechanics):
         # Avoid duplicate reps that are too close together.
         if reps and rep["catch_frame"] - reps[-1]["catch_frame"] < 60:
             continue
+
+        rep["coaching"] = build_split_jerk_coaching(rep)
 
         reps.append(rep)
 
