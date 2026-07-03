@@ -60,6 +60,9 @@ for bench in BENCHMARKS:
                 "true_label": bench["name"],
                 "predicted_label": data.get("exercise_label"),
                 "confidence": data.get("confidence"),
+                "analysis_mode": data.get("analysis_mode"),
+                "frames_processed": data.get("debug", {}).get("frames_processed"),
+                "valid_extraction": data.get("analysis_mode") != "insufficient_data",
                 "video": f.name,
             }
         )
@@ -88,9 +91,12 @@ for label in sorted(df.true_label.unique()):
     print(f"{label:20s} {100*acc:5.1f}%")
 
 overall = (df.true_label == df.predicted_label).mean()
+valid = df[df.valid_extraction == True]
+valid_overall = (valid.true_label == valid.predicted_label).mean() if len(valid) else 0
 
 print("\n==============================")
 print(f"OVERALL: {100*overall:.1f}%")
+print(f"VALID ONLY: {100*valid_overall:.1f}% ({len(valid)}/{len(df)} valid)")
 print("==============================")
 
 mistakes = df[df.true_label != df.predicted_label]
