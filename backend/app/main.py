@@ -72,6 +72,8 @@ except Exception:
 
 from app.ml.oly_router_v5 import route_olympic_lift
 
+from app.coaching.clean import build_clean_coaching
+
 app = FastAPI()
 
 UPLOAD_DIR = "uploads"
@@ -2560,6 +2562,8 @@ def analyze_clean_reps(biomechanics):
             "breakdown": breakdown,
             "feedback": feedback,
         }
+
+        rep["coaching"] = build_clean_coaching(rep)
 
         reps.append(rep)
 
