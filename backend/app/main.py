@@ -74,6 +74,8 @@ from app.ml.oly_router_v5 import route_olympic_lift
 
 from app.coaching.clean import build_clean_coaching
 
+from app.coaching.snatch import build_snatch_coaching
+
 app = FastAPI()
 
 UPLOAD_DIR = "uploads"
@@ -3467,6 +3469,8 @@ def analyze_snatch_reps(biomechanics):
             },
             "feedback": ["Good snatch rep. Strong pull, catch, and overhead position."],
         }
+        rep["coaching"] = build_snatch_coaching(rep)
+
         reps.append(rep)
 
     return reps, build_set_summary(reps)
