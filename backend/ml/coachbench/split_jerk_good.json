@@ -1,0 +1,20 @@
+{
+  "video": "/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/jerk/splitjerk-correct.mov",
+
+  "expected_label": "split_jerk",
+
+  "score_min": 8.5,
+  "score_max": 10.0,
+
+  "required_breakdown": {
+    "drive": "good",
+    "lockout": "good",
+    "split_catch": "good"
+  },
+
+  "forbidden_issues": [
+    "press out",
+    "missed lockout",
+    "unstable overhead"
+  ]
+}
