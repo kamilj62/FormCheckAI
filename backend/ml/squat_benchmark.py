@@ -12,7 +12,16 @@ from pathlib import Path
 from datetime import datetime
 import subprocess
 import json
+import os
+import sys
+
+script_dir = str(Path(__file__).resolve().parent)
+if script_dir in sys.path:
+    sys.path.remove(script_dir)
+
 import pandas as pd
+
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 BENCHMARKS = [
     {
@@ -35,24 +44,49 @@ def analyze_video(path):
         "curl",
         "-s",
         "--max-time",
-        "300",
+        "180",
         "-X",
         "POST",
         "-F",
         f"file=@{path}",
-        "http://localhost:8000/analyze",
+        f"{API_URL.rstrip('/')}/analyze",
     ]
-    return json.loads(subprocess.check_output(cmd, text=True))
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=200,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return {"error": "request_timeout", "analysis_mode": "error"}
+
+    if result.returncode != 0:
+        return {
+            "error": f"curl_failed_{result.returncode}",
+            "stderr": result.stderr[-500:],
+            "analysis_mode": "error",
+        }
+
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {
+            "error": "invalid_json",
+            "response": result.stdout[-500:],
+            "analysis_mode": "error",
+        }
 
 
 rows = []
 
 for bench in BENCHMARKS:
     folder = Path(bench["folder"])
-    files = sorted(folder.glob(bench["pattern"]))[: bench["limit"]]
+    files = sorted(folder.glob(bench["pattern"]))
 
     for f in files:
-        print("Testing", bench["name"], f.name)
+        print("Testing", bench["name"], f.name, flush=True)
 
         data = analyze_video(f)
 
@@ -61,8 +95,13 @@ for bench in BENCHMARKS:
             "predicted_label": data.get("exercise_label"),
             "confidence": data.get("confidence"),
             "analysis_mode": data.get("analysis_mode"),
+            "error": data.get("error"),
             "frames_processed": data.get("debug", {}).get("frames_processed"),
-            "valid_extraction": data.get("analysis_mode") != "insufficient_data",
+            "valid_extraction": (
+                data.get("error") is None
+                and data.get("analysis_mode") not in {"insufficient_data", "error"}
+                and data.get("exercise_label") not in {None, "Unknown"}
+            ),
             "video": f.name,
         }
 
@@ -127,11 +166,26 @@ for label in sorted(df.true_label.unique()):
 overall = (df.true_label == df.predicted_label).mean()
 valid = df[df.valid_extraction == True]
 valid_overall = (valid.true_label == valid.predicted_label).mean() if len(valid) else 0
+invalid = df[df.valid_extraction != True]
 
 print("\n==============================")
-print(f"OVERALL: {100*overall:.1f}%")
+print(f"OVERALL RAW: {100*overall:.1f}%")
 print(f"VALID ONLY: {100*valid_overall:.1f}% ({len(valid)}/{len(df)} valid)")
+print(f"INVALID / INSUFFICIENT: {len(invalid)}")
 print("==============================")
+
+if len(invalid):
+    print("\n==============================")
+    print("INVALID / INSUFFICIENT VIDEOS")
+    print("==============================")
+    print(invalid[[
+        "true_label",
+        "predicted_label",
+        "analysis_mode",
+        "error",
+        "frames_processed",
+        "video"
+    ]].to_string(index=False))
 
 mistakes = df[df.true_label != df.predicted_label]
 

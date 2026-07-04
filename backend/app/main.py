@@ -6617,7 +6617,22 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         protected_conf = 0.0
         protected_reason = None
 
-        if _looks_strict and raw_label == "push_press" and not _looks_split:
+        if (
+            _looks_thruster
+            and raw_label in {"bench_press", "push_press"}
+            and explosive_score > 20
+            and float(bar_debug.get("front_rack_elbow_p25", 180.0)) <= 65.0
+            and float(olympic_conf or 0.0) < 0.65
+            and not _looks_split
+        ):
+            protected_label = "thruster"
+            protected_conf = max(base_conf, 0.76)
+            protected_reason = "thruster_pattern_detected"
+        elif raw_label == "bench_press":
+            protected_label = "bench_press"
+            protected_conf = max(base_conf, 0.80)
+            protected_reason = "trusted_base_bench_press"
+        elif _looks_strict and raw_label == "push_press" and not _looks_split:
             protected_label = "strict_press"
             protected_conf = max(base_conf, 0.78)
             protected_reason = "strict_press_pattern_detected"
@@ -6631,10 +6646,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "push_press"
             protected_conf = max(base_conf, bio_conf, 0.78)
             protected_reason = "push_press_pattern_detected"
-        elif bio_override and bio_label == "bench_press" and not _looks_strict:
-            protected_label = "bench_press"
-            protected_conf = bio_conf
-            protected_reason = bio_reason
+        elif _looks_thruster and raw_label == "push_press" and bio_label == "squat" and not _looks_split:
+            protected_label = "thruster"
+            protected_conf = max(base_conf, 0.76)
+            protected_reason = "thruster_pattern_detected"
+        elif bio_override and bio_label == "bench_press" and not _looks_strict and not _looks_thruster:
+            bench_blocked_by_oly = (
+                olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
+                and float(olympic_conf or 0.0) >= 0.50
+                and raw_label in {"squat", "deadlift", "push_press"}
+            )
+
+            if not bench_blocked_by_oly:
+                protected_label = "bench_press"
+                protected_conf = bio_conf
+                protected_reason = bio_reason
+            else:
+                protected_reason = "bench_blocked_by_olympic_router"
         elif (
             raw_label == "squat"
             and squat_label == "squat_front"
@@ -6643,34 +6671,136 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and not _looks_split
             and not _looks_strict
             and not _looks_thruster
+            and not (
+                olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
+                and float(olympic_conf or 0.0) >= 0.50
+            )
         ):
             protected_label = "bench_press"
             protected_conf = max(base_conf, 0.80)
             protected_reason = "bench_press_squat_front_false_positive"
         elif (
-            bio_override
-            and bio_label == "deadlift"
-            and not (raw_label in {"squat", "squat_front"} and _squat_confident)
+            bio_label == "deadlift"
+            and (
+                (
+                    bio_override
+                    and not (raw_label in {"squat", "squat_front"} and _squat_confident)
+                )
+                or (
+                    wrist_overhead_ratio < 0.08
+                    and float(bar_debug.get("front_rack_elbow_p25", 0.0)) >= 130.0
+                    and not _looks_clean_only
+                    and not _looks_cj
+                    and not _looks_split
+                    and not _looks_strict
+                    and not _looks_thruster
+                )
+            )
         ):
             protected_label = "deadlift"
             protected_conf = bio_conf
             protected_reason = bio_reason
-        elif _looks_thruster and raw_label == "push_press" and bio_label == "squat" and not _looks_split:
-            protected_label = "thruster"
-            protected_conf = max(base_conf, 0.76)
-            protected_reason = "thruster_pattern_detected"
+        push_press_should_hold = (
+            protected_label == "push_press"
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and olympic_pred == "clean_and_jerk"
+        )
 
         strong_oly_lock = (
-            run_oly_router
-            and olympic_pred in OLY_SET
-            and olympic_conf >= 0.85
-            and _truly_explosive
+            not push_press_should_hold
+            and (
+                (
+                    run_oly_router
+                    and olympic_pred in OLY_SET
+                    and olympic_conf >= 0.85
+                    and _truly_explosive
+                )
+                or (
+                    run_oly_router
+                    and olympic_pred == "clean_and_jerk"
+                    and float(olympic_conf or 0.0) >= 0.95
+                    and (explosive_score > 25 or wrist_overhead_ratio > 0.35)
+                    and not (raw_label == "push_press" and _looks_split)
+                )
+            )
         )
 
         if protected_label and not strong_oly_lock:
             final_label = protected_label
             final_conf = protected_conf
             analysis_mode = "biomechanics_override"
+
+        elif (
+            run_oly_router
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.75
+            and explosive_score > 20
+            and (
+                raw_label in {"squat", "squat_back", "squat_front", "bench_press"}
+                or (raw_label == "push_press" and not _looks_split)
+            )
+        ):
+            final_label = "clean_and_jerk"
+            final_conf = olympic_conf
+            analysis_mode = "olympic_locked"
+
+        elif (
+            _looks_split
+            and not _looks_cj
+            and explosive_score > 20
+            and olympic_pred != "snatch"
+            and (
+                raw_label == "push_press"
+                or olympic_pred != "clean_and_jerk"
+                or float(olympic_conf or 0.0) < 0.75
+            )
+        ):
+            final_label = "split_jerk"
+            final_conf = 0.80
+            analysis_mode = "shape_override"
+
+        elif (
+            _squat_confident
+            and raw_label == "squat"
+            and squat_label in {"squat_back", "squat_front"}
+            and not _truly_explosive
+            and not _strong_overhead
+            and float(olympic_conf or 0.0) < 0.85
+        ):
+            final_label = squat_label
+            final_conf = squat_conf
+            analysis_mode = "detailed_rep_analysis"
+
+        elif (
+            squat_label == "overhead_squat"
+            and squat_conf >= 0.75
+            and float(olympic_conf or 0.0) < 0.85
+        ):
+            final_label = "overhead_squat"
+            final_conf = max(bar_conf, squat_conf)
+            analysis_mode = "detailed_rep_analysis"
+
+        # Strong Olympic predictions are lower-calibrated than the neural squat
+        # router. Let them win before squat/overhead/split-shape fallbacks steal
+        # Olympic benchmark clips; Router V5 below can still rescue standalone
+        # split jerks from clean-and-jerk.
+        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.65 and not push_press_should_hold:
+            final_label = olympic_pred
+            final_conf = olympic_conf
+            analysis_mode = "olympic_locked"
+
+        elif (
+            run_oly_router
+            and olympic_pred == "snatch"
+            and olympic_conf >= 0.45
+            and wrist_overhead_ratio > 0.35
+            and _looks_split
+            and raw_label in {"squat", "squat_front", "squat_back"}
+        ):
+            final_label = "snatch"
+            final_conf = max(0.60, olympic_conf)
+            analysis_mode = "olympic_rescue"
 
         # Overhead squat: bar position is definitive — wrists locked out overhead
         # throughout the entire squat, not just briefly during a catch.
@@ -6686,13 +6816,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # Strong Olympic router: very high confidence AND truly explosive.
         # This must come before shape detectors — the Olympic router at 80%+
         # is more reliable than shape heuristics that fire on multiple lifts.
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.80 and _truly_explosive:
+        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.80 and _truly_explosive and not push_press_should_hold:
             final_label   = olympic_pred
             final_conf    = olympic_conf
             analysis_mode = "olympic_locked"
 
         # High Olympic confidence + explosive (lower threshold).
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.65 and _truly_explosive:
+        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.65 and _truly_explosive and not push_press_should_hold:
             final_label   = olympic_pred
             final_conf    = olympic_conf
             analysis_mode = "olympic_locked"
@@ -6738,7 +6868,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_conf    = squat_conf
             analysis_mode = "detailed_rep_analysis"
 
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.50:
+        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.50 and not push_press_should_hold:
             final_label   = olympic_pred
             final_conf    = olympic_conf
             analysis_mode = "olympic_locked"
@@ -6757,6 +6887,74 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_label   = "unknown"
             final_conf    = 0.5
             analysis_mode = "insufficient_signal"
+
+        router_v5_debug = None
+        if run_oly_router:
+            try:
+                router_v5_label, router_v5_conf, router_v5_debug = route_olympic_lift(
+                    biomechanics=biomech,
+                    raw_label=final_label,
+                    raw_confidence=final_conf,
+                    olympic_label=olympic_pred,
+                    olympic_confidence=olympic_conf,
+                )
+            except Exception as e:
+                router_v5_label = final_label
+                router_v5_conf = final_conf
+                router_v5_debug = {"router_error": str(e)}
+
+            split_features = (router_v5_debug or {}).get("split_features", {}) if isinstance(router_v5_debug, dict) else {}
+            likely_standalone_split = (
+                raw_label == "push_press"
+                and (
+                    float(split_features.get("lockout_duration", 0.0) or 0.0) >= 200.0
+                    or float(split_features.get("catch_to_finish", 0.0) or 0.0) >= 300.0
+                )
+            )
+
+            if (
+                router_v5_label == "split_jerk"
+                and olympic_pred == "clean_and_jerk"
+                and float(olympic_conf or 0.0) >= 0.90
+                and not likely_standalone_split
+            ):
+                router_v5_label = "clean_and_jerk"
+                router_v5_conf = max(float(olympic_conf or 0.0), float(router_v5_conf or 0.0))
+                if isinstance(router_v5_debug, dict):
+                    router_v5_debug["decision"] = "clean_and_jerk_high_conf_rescue"
+
+            protected_non_olympic = protected_label in {
+                "bench_press",
+                "deadlift",
+                "push_press",
+                "thruster",
+                "strict_press",
+            }
+            squat_should_hold = (
+                final_label in {"squat_back", "squat_front", "overhead_squat"}
+                and (float(olympic_conf or 0.0) < 0.65 or not _truly_explosive)
+            )
+
+            push_press_should_hold = (
+                protected_label == "push_press"
+                and raw_label == "push_press"
+                and bio_label == "push_press"
+                and router_v5_label == "clean_and_jerk"
+            )
+
+            if (
+                not push_press_should_hold
+                and (
+                    final_label in OLY_SET or (
+                        router_v5_label in OLY_SET
+                        and not protected_non_olympic
+                        and not squat_should_hold
+                    )
+                )
+            ):
+                final_label = router_v5_label
+                final_conf = router_v5_conf
+                analysis_mode = "router_v5"
 
         # =========================================================
         # 6. REP ANALYSIS
@@ -6813,6 +7011,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "bio_reason":      bio_reason,
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
+                "router_v5":       router_v5_debug,
                 "squat_label":     squat_label,
                 "squat_conf":      round(squat_conf, 3),
                 "bar_position":    bar_debug,
