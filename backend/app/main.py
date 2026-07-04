@@ -148,7 +148,7 @@ CLASS_NAMES = [
     "deadlift",
     "push_press",
     "squat",
-    "thruster",
+    "squat_front",
 ]
 
 USE_OLY_ROUTER_V4 = True  # Experimental video-level Olympic router
@@ -468,7 +468,13 @@ def summarize_biomechanics(biomechanics):
     torso = np.array([b["torso_angle"] for b in biomechanics])
     elbow = np.array([b["elbow_angle"] for b in biomechanics])
     valgus = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
-    wrist_above = np.array([b.get("wrist_above_shoulder", 0.0) for b in biomechanics])
+    wrist_above = np.array([
+        b.get(
+            "wrist_above_shoulder",
+            1.0 if b.get("wrist_y", 1.0) < b.get("shoulder_y", 0.0) else 0.0,
+        )
+        for b in biomechanics
+    ])
     
     return {
         "avg_knee_angle": float(np.mean(knee)),
@@ -2351,6 +2357,53 @@ def looks_like_split_jerk(biomechanics):
     return overhead_ratio >= 0.08 and dip_ratio >= 0.05
 
 
+def looks_like_strict_press(biomechanics):
+    if not biomechanics:
+        return False
+
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+
+    knee_range = float(np.max(knee) - np.min(knee))
+    hip_range = float(np.max(hip) - np.min(hip))
+    elbow_range = float(np.max(elbow) - np.min(elbow))
+    overhead_ratio = float(np.mean(wrist_y < shoulder_y))
+
+    return (
+        overhead_ratio >= 0.20
+        and elbow_range >= 18
+        and knee_range < 22
+        and hip_range < 30
+    )
+
+
+def looks_like_thruster(biomechanics):
+    if not biomechanics:
+        return False
+
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+
+    knee_range = float(np.max(knee) - np.min(knee))
+    hip_range = float(np.max(hip) - np.min(hip))
+    elbow_range = float(np.max(elbow) - np.min(elbow))
+    overhead_ratio = float(np.mean(wrist_y < shoulder_y))
+
+    return (
+        float(np.min(knee)) < 125
+        and knee_range >= 25
+        and hip_range >= 20
+        and elbow_range >= 18
+        and overhead_ratio >= 0.10
+    )
+
+
 def analyze_split_jerk_reps(biomechanics):
     knee = np.array([b["knee_angle"] for b in biomechanics])
     hip = np.array([b["hip_angle"] for b in biomechanics])
@@ -3352,6 +3405,78 @@ def analyze_bench_press_reps(biomechanics):
         })
 
         last_end = end
+
+    if not reps and len(elbow) >= 10:
+        bottom = int(np.argmin(smooth))
+        start = max(0, bottom - max(6, len(elbow) // 4))
+        end = min(len(elbow) - 1, bottom + max(8, len(elbow) // 3))
+
+        rep_elbow = elbow[start:end + 1]
+        rep_wrist_y = wrist_y[start:end + 1]
+        rep_shoulder_y = shoulder_y[start:end + 1]
+        rep_hip_y = hip_y[start:end + 1]
+        rep_knee = knee[start:end + 1]
+
+        elbow_range = float(np.max(rep_elbow) - np.min(rep_elbow))
+        wrist_range = float(np.max(rep_wrist_y) - np.min(rep_wrist_y))
+        shoulder_range = float(np.max(rep_shoulder_y) - np.min(rep_shoulder_y))
+        hip_range = float(np.max(rep_hip_y) - np.min(rep_hip_y))
+        max_elbow = float(np.percentile(np.clip(rep_elbow, 45, 180), 92))
+        elbow_p75 = float(np.percentile(np.clip(rep_elbow, 45, 180), 75))
+        shoulder_level = float(np.percentile(np.clip(rep_shoulder_y, 0.0, 1.0), 50))
+        lowest_wrist = float(np.percentile(np.clip(rep_wrist_y, 0.0, 1.0), 85))
+        bar_depth = lowest_wrist - shoulder_level
+        avg_knee = float(np.percentile(np.clip(rep_knee, 45, 180), 50))
+
+        if len(rep_elbow) > 0:
+            issues = []
+            feedback = []
+
+            if elbow_range < 25:
+                issues.append("Range of motion may be limited.")
+                feedback.append("Use a full, controlled press from chest to lockout.")
+
+            if max_elbow < 125:
+                issues.append("Incomplete lockout.")
+                feedback.append("Fully extend your arms at the top.")
+
+            if elbow_p75 > 165:
+                issues.append("Elbows may be flaring excessively.")
+                feedback.append("Tuck elbows slightly and keep the bar path controlled.")
+
+            if avg_knee < 95:
+                issues.append("Leg drive may be weak.")
+                feedback.append("Keep feet planted and drive through your legs.")
+
+            score = compute_rep_score(issues, base_score=8.5)
+            if not issues:
+                score = 8.5
+                feedback = ["Bench press rep detected. Keep the bar path controlled and finish strong."]
+
+            reps.append({
+                "rep": 1,
+                "start_frame": int(max(0, frame_numbers[start] - 20)),
+                "end_frame": int(frame_numbers[end] + 20),
+                "score": score,
+                "grade": grade_score(score),
+                "issues": issues,
+                "breakdown": {
+                    "depth": "review",
+                    "lockout": "review" if max_elbow < 140 else "good",
+                    "elbows": "review" if elbow_p75 > 155 else "good",
+                    "arch": "review" if shoulder_range > 0.20 or hip_range > 0.20 else "controlled",
+                    "legs": "review" if avg_knee < 95 else "good",
+                    "fallback": True,
+                    "wrist_range": round(wrist_range, 3),
+                    "elbow_range": round(elbow_range, 1),
+                    "bar_depth": round(bar_depth, 3),
+                    "max_elbow": round(max_elbow, 1),
+                },
+                "feedback": feedback,
+                "visibility_notes": [
+                    "Bench rep was detected with the fallback tracker because the camera angle made the full press cycle hard to separate."
+                ],
+            })
 
     return reps, build_set_summary(reps)
 
@@ -6377,6 +6502,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         final_conf = 0.0
         rep_feedback = []
 
+        try:
+            base_probs = MODEL.predict_proba(seq)
+            base_idx = int(np.argmax(base_probs))
+            if base_idx < len(CLASS_NAMES):
+                raw_label = CLASS_NAMES[base_idx]
+                base_conf = float(base_probs[base_idx])
+        except Exception as e:
+            print("BASE MODEL FAILED:", e)
+
+        summary = summarize_biomechanics(biomech)
+        bio_label, bio_conf, bio_override, bio_reason = classify_with_biomechanics(
+            raw_label,
+            base_conf,
+            summary,
+            len(biomech),
+        )
+
         # =========================================================
         # 3. SQUAT ROUTER (always runs — bar position via elbow geometry)
         # =========================================================
@@ -6468,13 +6610,77 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         _looks_clean_only = looks_like_clean_only(biomech)
         _looks_cj         = looks_like_clean_and_jerk(biomech)
         _looks_split      = looks_like_split_jerk(biomech)
+        _looks_strict     = looks_like_strict_press(biomech)
+        _looks_thruster   = looks_like_thruster(biomech)
+
+        protected_label = None
+        protected_conf = 0.0
+        protected_reason = None
+
+        if _looks_strict and raw_label == "push_press" and not _looks_split:
+            protected_label = "strict_press"
+            protected_conf = max(base_conf, 0.78)
+            protected_reason = "strict_press_pattern_detected"
+        elif (
+            raw_label == "push_press"
+            and bio_label == "push_press"
+            and not _looks_clean_only
+            and not _looks_cj
+            and not _looks_split
+        ):
+            protected_label = "push_press"
+            protected_conf = max(base_conf, bio_conf, 0.78)
+            protected_reason = "push_press_pattern_detected"
+        elif bio_override and bio_label == "bench_press" and not _looks_strict:
+            protected_label = "bench_press"
+            protected_conf = bio_conf
+            protected_reason = bio_reason
+        elif (
+            raw_label == "squat"
+            and squat_label == "squat_front"
+            and not _looks_clean_only
+            and not _looks_cj
+            and not _looks_split
+            and not _looks_strict
+            and not _looks_thruster
+        ):
+            protected_label = "bench_press"
+            protected_conf = max(base_conf, 0.80)
+            protected_reason = "bench_press_squat_front_false_positive"
+        elif (
+            bio_override
+            and bio_label == "deadlift"
+            and not (raw_label in {"squat", "squat_front"} and _squat_confident)
+        ):
+            protected_label = "deadlift"
+            protected_conf = bio_conf
+            protected_reason = bio_reason
+        elif _looks_thruster and raw_label == "push_press" and bio_label == "squat" and not _looks_split:
+            protected_label = "thruster"
+            protected_conf = max(base_conf, 0.76)
+            protected_reason = "thruster_pattern_detected"
+
+        strong_oly_lock = (
+            run_oly_router
+            and olympic_pred in OLY_SET
+            and olympic_conf >= 0.85
+            and _truly_explosive
+        )
+
+        if protected_label and not strong_oly_lock:
+            final_label = protected_label
+            final_conf = protected_conf
+            analysis_mode = "biomechanics_override"
 
         # Overhead squat: bar position is definitive — wrists locked out overhead
         # throughout the entire squat, not just briefly during a catch.
         # Must check this first before any Olympic path.
-        if _bar_says_ohs and not _truly_explosive:
+        elif (
+            (_bar_says_ohs and not _truly_explosive)
+            or (squat_label == "overhead_squat" and squat_conf >= 0.90 and olympic_conf < 0.85)
+        ):
             final_label   = "overhead_squat"
-            final_conf    = bar_conf
+            final_conf    = max(bar_conf, squat_conf)
             analysis_mode = "detailed_rep_analysis"
 
         # Strong Olympic router: very high confidence AND truly explosive.
@@ -6537,6 +6743,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_conf    = olympic_conf
             analysis_mode = "olympic_locked"
 
+        elif bio_override and bio_label == "push_press":
+            final_label = "push_press"
+            final_conf = bio_conf
+            analysis_mode = "biomechanics_override"
+
+        elif raw_label == "push_press" and base_conf >= 0.65 and not _looks_split:
+            final_label = "push_press"
+            final_conf = base_conf
+            analysis_mode = "base_model_locked"
+
         else:
             final_label   = "unknown"
             final_conf    = 0.5
@@ -6560,6 +6776,21 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         elif final_label == "split_jerk":
             rep_feedback, _ = analyze_split_jerk_reps(biomech)
 
+        elif final_label == "deadlift":
+            rep_feedback, _ = analyze_deadlift_reps(biomech)
+
+        elif final_label == "bench_press":
+            rep_feedback, _ = analyze_bench_press_reps(biomech)
+
+        elif final_label == "push_press":
+            rep_feedback, _ = analyze_push_press_reps(biomech, "push_press")
+
+        elif final_label == "thruster":
+            rep_feedback, _ = analyze_push_press_reps(biomech, "thruster")
+
+        elif final_label == "strict_press":
+            rep_feedback, _ = analyze_strict_press_reps(biomech)
+
         # =========================================================
         # 7. FINAL OUTPUT
         # =========================================================
@@ -6574,6 +6805,14 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "debug": {
                 "olympic_pred":    olympic_pred,
                 "olympic_conf":    round(olympic_conf, 3) if olympic_conf else None,
+                "raw_label":       raw_label,
+                "base_conf":       round(base_conf, 3),
+                "bio_label":       bio_label,
+                "bio_conf":        round(bio_conf, 3) if bio_conf else None,
+                "bio_override":    bio_override,
+                "bio_reason":      bio_reason,
+                "protected_label": protected_label,
+                "protected_reason": protected_reason,
                 "squat_label":     squat_label,
                 "squat_conf":      round(squat_conf, 3),
                 "bar_position":    bar_debug,
@@ -6583,6 +6822,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "looks_split":     _looks_split,
                 "looks_clean":     _looks_clean_only,
                 "looks_cj":        _looks_cj,
+                "looks_strict":    _looks_strict,
+                "looks_thruster":  _looks_thruster,
                 "squat_confident": _squat_confident,
                 "truly_explosive": _truly_explosive,
                 "bar_pos_valid":   _bar_pos_valid,
@@ -6617,6 +6858,43 @@ def overlay_worker(job_id, video_path, rep_feedback, exercise_label):
     except Exception as e:
         overlay_jobs[job_id]["status"] = "failed"
         overlay_jobs[job_id]["error"] = str(e)
+
+
+def transcode_video_for_analysis(input_path):
+    base, _ = os.path.splitext(input_path)
+    output_path = f"{base}_analysis.mp4"
+
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                input_path,
+                "-vf",
+                "fps=30,scale=960:-2",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "ultrafast",
+                "-crf",
+                "23",
+                "-an",
+                output_path,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=90,
+            check=True,
+        )
+    except Exception as e:
+        print("Analysis transcode failed:", e)
+        return None
+
+    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+        return output_path
+
+    return None
 
 
 @app.get("/overlay_status/{job_id}")
@@ -6955,16 +7233,32 @@ async def generate_overlay(
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
     temp_path = f"/tmp/{uuid.uuid4().hex}_{file.filename}"
+    transcoded_path = None
 
     try:
         with open(temp_path, "wb") as f:
             f.write(await file.read())
 
-        return analyze_video(
+        result = analyze_video(
             temp_path,
             make_visuals=True,
             make_overlay=True,
         )
+
+        if result.get("analysis_mode") == "insufficient_data":
+            transcoded_path = transcode_video_for_analysis(temp_path)
+            if transcoded_path:
+                retry_result = analyze_video(
+                    transcoded_path,
+                    make_visuals=True,
+                    make_overlay=True,
+                )
+                retry_result.setdefault("debug", {})
+                retry_result["debug"]["transcoded_retry"] = True
+                retry_result["debug"]["original_frames_processed"] = result.get("debug", {}).get("frames_processed")
+                return retry_result
+
+        return result
 
     except Exception as e:
         import traceback
@@ -6985,6 +7279,8 @@ async def analyze(file: UploadFile = File(...)):
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+        if transcoded_path and os.path.exists(transcoded_path):
+            os.remove(transcoded_path)
 
 
 def _safe_clean_fallback(*args, **kwargs):
