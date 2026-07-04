@@ -1,124 +1,23 @@
 {
-  "exercise_label": "strict_press",
-  "confidence": 0.86,
+  "exercise_label": "push_press",
+  "confidence": 1.0,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "start_frame": 3,
-      "press_frame": 44,
-      "lockout_frame": 108,
-      "end_frame": 130,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "leg_drive": "good",
-        "torso_stack": "good",
-        "lockout": "good",
-        "bar_path": "good",
-        "knee_range": 8.7,
-        "hip_range": 5.8
-      },
-      "feedback": [
-        "Strong strict press. Stable torso and full overhead lockout."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 136,
-      "press_frame": 156,
-      "lockout_frame": 174,
-      "end_frame": 209,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "leg_drive": "good",
-        "torso_stack": "good",
-        "lockout": "good",
-        "bar_path": "good",
-        "knee_range": 8.9,
-        "hip_range": 5.5
-      },
-      "feedback": [
-        "Strong strict press. Stable torso and full overhead lockout."
-      ]
-    }
-  ],
+  "rep_feedback": [],
   "set_summary": {
-    "detected_reps": 2,
-    "avg_rep_score": 9.2,
-    "best_rep": 1,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected."
   },
-  "coaching_zones": {
-    "leg_drive": {
-      "label": "leg_drive",
-      "status": "good",
-      "score": 1.0,
-      "message": "Leg Drive is good overall.",
-      "issue_count": 0
-    },
-    "torso_stack": {
-      "label": "torso_stack",
-      "status": "good",
-      "score": 1.0,
-      "message": "Torso Stack is good overall.",
-      "issue_count": 0
-    },
-    "lockout": {
-      "label": "lockout",
-      "status": "good",
-      "score": 1.0,
-      "message": "Lockout is good overall.",
-      "issue_count": 0
-    },
-    "bar_path": {
-      "label": "bar_path",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Path is good overall.",
-      "issue_count": 0
-    },
-    "knee_range": {
-      "label": "knee_range",
-      "status": "good",
-      "score": 1.0,
-      "message": "Knee Range is good overall.",
-      "issue_count": 0
-    },
-    "hip_range": {
-      "label": "hip_range",
-      "status": "good",
-      "score": 1.0,
-      "message": "Hip Range is good overall.",
-      "issue_count": 0
-    }
-  },
-  "phase_images": {
-    "setup": 3,
-    "dip": null,
-    "drive": null,
-    "lockout": 108
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "push_press",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "strict_press",
-    "original_confidence": 0.9967418313026428,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.908,
-    "frames_seen": 226,
-    "frames_processed": 196,
-    "pose_frames": 196,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "push_press",
+    "squat": "squat_front",
+    "squat_conf": 0.637082576751709,
+    "olympic": "0",
+    "olympic_conf": 0.354,
+    "final": "push_press"
   }
 }

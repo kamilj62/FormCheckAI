@@ -1,147 +1,240 @@
 {
-  "exercise_label": "snatch",
-  "confidence": 0.97,
+  "exercise_label": "squat_back",
+  "confidence": 0.96,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
-      "start_frame": 250,
-      "first_pull_frame": 300,
-      "extension_frame": 350,
-      "catch_frame": 400,
-      "end_frame": 450,
-      "score": 9.0,
-      "grade": "Excellent",
-      "issues": [],
+      "rep": 1,
+      "start_frame": 99,
+      "descent_frame": 100,
+      "bottom_frame": 101,
+      "ascent_frame": 102,
+      "end_frame": 104,
+      "score": 4.3,
+      "grade": "Poor",
+      "issues": [
+        "Shoulders/chest are collapsing forward.",
+        "Knees cave inward noticeably."
+      ],
       "breakdown": {
-        "first_pull": "good",
-        "extension": "good",
-        "turnover": "good",
-        "overhead_catch": "good",
-        "stability": "good",
-        "bar_path": "good"
+        "depth": "good",
+        "torso": "poor",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
       },
       "feedback": [
-        "Good snatch rep. Strong pull, catch, and overhead position."
-      ],
-      "rep": 1
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
+        "Drive knees out over your toes."
+      ]
     },
     {
-      "start_frame": 360,
-      "first_pull_frame": 360,
-      "extension_frame": 360,
-      "catch_frame": 360,
-      "end_frame": 360,
-      "score": 9.0,
+      "rep": 2,
+      "start_frame": 107,
+      "descent_frame": 108,
+      "bottom_frame": 109,
+      "ascent_frame": 110,
+      "end_frame": 112,
+      "score": 4.3,
+      "grade": "Poor",
+      "issues": [
+        "Shoulders/chest are collapsing forward.",
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "poor",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 3,
+      "start_frame": 278,
+      "descent_frame": 284,
+      "bottom_frame": 290,
+      "ascent_frame": 293,
+      "end_frame": 298,
+      "score": 10.0,
       "grade": "Excellent",
       "issues": [],
       "breakdown": {
-        "first_pull": "good",
-        "extension": "good",
-        "turnover": "good",
-        "overhead_catch": "good",
-        "stability": "good",
-        "bar_path": "good"
+        "depth": "good",
+        "torso": "good",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
       },
       "feedback": [
-        "Good snatch rep. Strong pull, catch, and overhead position."
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ]
+    },
+    {
+      "rep": 4,
+      "start_frame": 306,
+      "descent_frame": 314,
+      "bottom_frame": 322,
+      "ascent_frame": 325,
+      "end_frame": 329,
+      "score": 10.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ]
+    },
+    {
+      "rep": 5,
+      "start_frame": 374,
+      "descent_frame": 380,
+      "bottom_frame": 385,
+      "ascent_frame": 397,
+      "end_frame": 412,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
       ],
-      "rep": 2
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 6,
+      "start_frame": 507,
+      "descent_frame": 509,
+      "bottom_frame": 512,
+      "ascent_frame": 516,
+      "end_frame": 522,
+      "score": 7.8,
+      "grade": "Solid",
+      "issues": [
+        "Shoulders/chest are collapsing forward."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "poor",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar."
+      ]
+    },
+    {
+      "rep": 7,
+      "start_frame": 534,
+      "descent_frame": 536,
+      "bottom_frame": 538,
+      "ascent_frame": 544,
+      "end_frame": 556,
+      "score": 7.8,
+      "grade": "Solid",
+      "issues": [
+        "Shoulders/chest are collapsing forward."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "poor",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar."
+      ]
+    },
+    {
+      "rep": 8,
+      "start_frame": 572,
+      "descent_frame": 584,
+      "bottom_frame": 595,
+      "ascent_frame": 606,
+      "end_frame": 621,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 9,
+      "start_frame": 655,
+      "descent_frame": 661,
+      "bottom_frame": 667,
+      "ascent_frame": 680,
+      "end_frame": 696,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
     }
   ],
   "set_summary": {
-    "detected_reps": 2,
-    "avg_rep_score": 9.0,
-    "best_rep": 1,
+    "detected_reps": 9,
+    "avg_rep_score": 7.1,
+    "best_rep": 3,
     "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "trend": "Form appears to improve as the set goes on."
   },
-  "coaching_zones": {
-    "first_pull": {
-      "label": "first_pull",
-      "status": "good",
-      "score": 1.0,
-      "message": "First Pull is good overall.",
-      "issue_count": 0
-    },
-    "extension": {
-      "label": "extension",
-      "status": "good",
-      "score": 1.0,
-      "message": "Extension is good overall.",
-      "issue_count": 0
-    },
-    "turnover": {
-      "label": "turnover",
-      "status": "good",
-      "score": 1.0,
-      "message": "Turnover is good overall.",
-      "issue_count": 0
-    },
-    "overhead_catch": {
-      "label": "overhead_catch",
-      "status": "good",
-      "score": 1.0,
-      "message": "Overhead Catch is good overall.",
-      "issue_count": 0
-    },
-    "stability": {
-      "label": "stability",
-      "status": "good",
-      "score": 1.0,
-      "message": "Stability is good overall.",
-      "issue_count": 0
-    },
-    "bar_path": {
-      "label": "bar_path",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Path is good overall.",
-      "issue_count": 0
-    },
-    "overhead_stability": {
-      "label": "Overhead Stability",
-      "status": "unknown",
-      "message": "Maintain stable overhead position without drift."
-    }
-  },
-  "phase_images": {
-    "setup": 250,
-    "first_pull": 300,
-    "extension": 350,
-    "catch": 400,
-    "finish": 450
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "squat",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "snatch",
-    "original_confidence": 0.9549692273139954,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.646,
-    "frames_seen": 360,
-    "frames_processed": 297,
-    "pose_frames": 297,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": {
-      "squat_label": "squat_back",
-      "squat_confidence": 0.9685702919960022,
-      "squat_probs": [
-        0.006165549624711275,
-        0.9685702919960022,
-        0.025264110416173935
-      ]
-    },
-    "front_squat_rescue": {
-      "wrist_ratio": 0.24579124579124578,
-      "elbow_range": 133.48381160936754,
-      "final_label_before": "squat_back",
-      "base_raw_label": "squat",
-      "rescued": false,
-      "looks_like_snatch": true
-    }
+    "base": "squat",
+    "squat": "squat_back",
+    "squat_conf": 0.9596432447433472,
+    "olympic": "0",
+    "olympic_conf": 0.382,
+    "final": "squat_back"
   }
 }

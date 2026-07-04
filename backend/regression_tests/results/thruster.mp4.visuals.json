@@ -1,10 +1,6 @@
 {
-  "exercise_label": "thruster",
-  "phase_images": {
-    "setup": "/outputs/push_press_setup_b00f6320.jpg",
-    "dip": "/outputs/push_press_dip_f8371b6d.jpg",
-    "lockout": "/outputs/push_press_lockout_10a91223.jpg",
-    "debug_sheet": "/outputs/push_press_phase_debug_20c53c81.jpg"
-  },
-  "visuals_error": null
+  "exercise_label": "bench_press",
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "No usable rep found."
 }

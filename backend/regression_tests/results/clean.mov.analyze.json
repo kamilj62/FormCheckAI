@@ -1,141 +1,23 @@
 {
-  "exercise_label": "clean",
-  "confidence": 0.74,
+  "exercise_label": "deadlift",
+  "confidence": 0.55,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "start_frame": 86,
-      "first_pull_frame": 118,
-      "extension_frame": 159,
-      "catch_frame": 178,
-      "end_frame": 248,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [
-        "Arms may be bending early during the pull."
-      ],
-      "breakdown": {
-        "first_pull": "good",
-        "extension": "good",
-        "turnover": "early_arm_bend",
-        "catch": "good",
-        "front_rack": "good",
-        "bar_path": "good"
-      },
-      "feedback": [
-        "Keep arms long until you finish extending."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 190,
-      "first_pull_frame": 257,
-      "extension_frame": 294,
-      "catch_frame": 315,
-      "end_frame": 348,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [
-        "Arms may be bending early during the pull."
-      ],
-      "breakdown": {
-        "first_pull": "good",
-        "extension": "good",
-        "turnover": "early_arm_bend",
-        "catch": "good",
-        "front_rack": "good",
-        "bar_path": "good"
-      },
-      "feedback": [
-        "Keep arms long until you finish extending."
-      ]
-    }
-  ],
+  "rep_feedback": [],
   "set_summary": {
-    "detected_reps": 2,
-    "avg_rep_score": 9.2,
-    "best_rep": 1,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected."
   },
-  "coaching_zones": {
-    "first_pull": {
-      "label": "first_pull",
-      "status": "good",
-      "score": 1.0,
-      "message": "First Pull is good overall.",
-      "issue_count": 2
-    },
-    "extension": {
-      "label": "extension",
-      "status": "good",
-      "score": 1.0,
-      "message": "Extension is good overall.",
-      "issue_count": 2
-    },
-    "turnover": {
-      "label": "turnover",
-      "status": "good",
-      "score": 1.0,
-      "message": "Turnover is good overall.",
-      "issue_count": 2
-    },
-    "catch": {
-      "label": "catch",
-      "status": "good",
-      "score": 1.0,
-      "message": "Catch is good overall.",
-      "issue_count": 2
-    },
-    "front_rack": {
-      "label": "front_rack",
-      "status": "good",
-      "score": 1.0,
-      "message": "Front Rack is good overall.",
-      "issue_count": 2
-    },
-    "bar_path": {
-      "label": "bar_path",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Path is good overall.",
-      "issue_count": 2
-    },
-    "clean_first_pull": {
-      "label": "Clean First Pull",
-      "status": "good",
-      "message": "Focus on keeping bar close during first pull."
-    },
-    "clean_catch": {
-      "label": "Clean Catch",
-      "status": "good",
-      "message": "Improve rack position and stability on catch."
-    }
-  },
-  "phase_images": {
-    "setup": 1,
-    "clean_catch": 181,
-    "jerk_dip": 128,
-    "jerk_catch": 176,
-    "finish": 360
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "thruster",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "clean",
-    "original_confidence": 0.7881633043289185,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.644,
-    "frames_seen": 360,
-    "frames_processed": 308,
-    "pose_frames": 308,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "deadlift",
+    "squat": "squat_back",
+    "squat_conf": 0.9344305396080017,
+    "olympic": "0",
+    "olympic_conf": 0.384,
+    "final": "deadlift"
   }
 }

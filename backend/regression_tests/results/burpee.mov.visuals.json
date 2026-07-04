@@ -1,13 +1,12 @@
 {
-  "exercise_label": "burpee",
+  "exercise_label": "overhead_squat",
+  "overlay_video_url": null,
   "phase_images": {
-    "start": "/outputs/burpee_start_3cbce821.jpg",
-    "hands_down": "/outputs/burpee_hands_down_142b3fad.jpg",
-    "plank": "/outputs/burpee_plank_81e475c3.jpg",
-    "jump_in": "/outputs/burpee_jump_in_d11bf57f.jpg",
-    "stand": "/outputs/burpee_stand_8cdd77d1.jpg",
-    "debug_sheet": "/outputs/burpee_phase_debug_ac7bfed0.jpg",
-    "finish": "/outputs/burpee_stand_8cdd77d1.jpg"
+    "setup": "/outputs/overhead_squat_setup_58185342.jpg",
+    "descent": "/outputs/overhead_squat_descent_7b0e9d80.jpg",
+    "bottom": "/outputs/overhead_squat_bottom_d3872d15.jpg",
+    "ascent": "/outputs/overhead_squat_ascent_2e5a8195.jpg",
+    "debug_sheet": "/outputs/overhead_squat_phase_debug_9ca28469.jpg"
   },
   "visuals_error": null
 }

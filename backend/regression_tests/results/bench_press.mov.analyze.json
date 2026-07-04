@@ -2,157 +2,22 @@
   "exercise_label": "bench_press",
   "confidence": 1.0,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "start_frame": 75,
-      "end_frame": 140,
-      "score": 10.0,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "depth": "good",
-        "lockout": "good",
-        "elbows": "good",
-        "arch": "controlled",
-        "legs": "unknown",
-        "wrist_range": 0.127,
-        "elbow_range": 64.7,
-        "bar_depth": 0.175,
-        "max_elbow": 144.3
-      },
-      "feedback": [
-        "Strong bench press rep. Maintain control and consistency."
-      ],
-      "visibility_notes": [
-        "Foot position could not be evaluated because feet were not visible."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 100,
-      "end_frame": 158,
-      "score": 7.8,
-      "grade": "Solid",
-      "issues": [
-        "Range of motion may be limited.",
-        "Incomplete lockout."
-      ],
-      "breakdown": {
-        "depth": "limited_range",
-        "lockout": "incomplete",
-        "elbows": "good",
-        "arch": "controlled",
-        "legs": "unknown",
-        "wrist_range": 0.043,
-        "elbow_range": 41.0,
-        "bar_depth": 0.028,
-        "max_elbow": 115.2
-      },
-      "feedback": [
-        "Use a full, controlled press from chest to lockout.",
-        "Fully extend your arms at the top."
-      ],
-      "visibility_notes": [
-        "Foot position could not be evaluated because feet were not visible."
-      ]
-    }
-  ],
+  "rep_feedback": [],
   "set_summary": {
-    "detected_reps": 2,
-    "avg_rep_score": 8.9,
-    "best_rep": 1,
-    "worst_rep": 2,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected."
   },
-  "coaching_zones": {
-    "depth": {
-      "label": "depth",
-      "status": "good",
-      "score": 1.0,
-      "message": "Depth is good overall.",
-      "issue_count": 2
-    },
-    "lockout": {
-      "label": "lockout",
-      "status": "poor",
-      "score": 0.5,
-      "message": "Lockout is poor overall.",
-      "issue_count": 2
-    },
-    "elbows": {
-      "label": "elbows",
-      "status": "good",
-      "score": 1.0,
-      "message": "Elbows is good overall.",
-      "issue_count": 2
-    },
-    "arch": {
-      "label": "arch",
-      "status": "good",
-      "score": 1.0,
-      "message": "Arch is good overall.",
-      "issue_count": 2
-    },
-    "legs": {
-      "label": "legs",
-      "status": "good",
-      "score": 1.0,
-      "message": "Legs is good overall.",
-      "issue_count": 2
-    },
-    "wrist_range": {
-      "label": "wrist_range",
-      "status": "good",
-      "score": 1.0,
-      "message": "Wrist Range is good overall.",
-      "issue_count": 2
-    },
-    "elbow_range": {
-      "label": "elbow_range",
-      "status": "good",
-      "score": 1.0,
-      "message": "Elbow Range is good overall.",
-      "issue_count": 2
-    },
-    "bar_depth": {
-      "label": "bar_depth",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Depth is good overall.",
-      "issue_count": 2
-    },
-    "max_elbow": {
-      "label": "max_elbow",
-      "status": "good",
-      "score": 1.0,
-      "message": "Max Elbow is good overall.",
-      "issue_count": 2
-    }
-  },
-  "phase_images": {
-    "setup": 30,
-    "clean_catch": 65,
-    "jerk_dip": 110,
-    "jerk_catch": 135,
-    "finish": 193
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "bench_press",
-    "olympic_prediction": "snatch",
-    "final_label_debug": "bench_press",
-    "original_confidence": 0.9998524188995361,
-    "olympic_pred": "snatch",
-    "olympic_confidence": 0.616,
-    "frames_seen": 193,
-    "frames_processed": 142,
-    "pose_frames": 142,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "bench_press",
+    "squat": "squat_back",
+    "squat_conf": 0.8122288584709167,
+    "olympic": "0",
+    "olympic_conf": 0.364,
+    "final": "bench_press"
   }
 }

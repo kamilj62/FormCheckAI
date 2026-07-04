@@ -1,0 +1,13 @@
+video,reason,frames_processed,pose_frames,total_frames
+v_CleanAndJerk_g01_c05.avi,insufficient_data,1,1,121
+v_CleanAndJerk_g20_c05.avi,insufficient_data,1,1,274
+v_CleanAndJerk_g23_c01.avi,insufficient_data,1,1,67
+v_CleanAndJerk_g23_c02.avi,insufficient_data,9,9,77
+v_CleanAndJerk_g23_c03.avi,insufficient_data,6,6,77
+v_CleanAndJerk_g23_c04.avi,insufficient_data,0,0,87
+v_CleanAndJerk_g01_c05.avi,insufficient_data,1,1,121
+v_CleanAndJerk_g20_c05.avi,insufficient_data,1,1,274
+v_CleanAndJerk_g23_c01.avi,insufficient_data,1,1,67
+v_CleanAndJerk_g23_c02.avi,insufficient_data,9,9,77
+v_CleanAndJerk_g23_c03.avi,insufficient_data,6,6,77
+v_CleanAndJerk_g23_c04.avi,insufficient_data,0,0,87

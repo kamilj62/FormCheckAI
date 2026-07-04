@@ -1,12 +1,6 @@
 {
-  "exercise_label": "clean",
-  "phase_images": {
-    "setup": "/outputs/clean_setup_16a55636.jpg",
-    "first_pull": "/outputs/clean_first_pull_4eb38f37.jpg",
-    "extension": "/outputs/clean_extension_dca3a889.jpg",
-    "catch": "/outputs/clean_catch_28ccd16d.jpg",
-    "finish": "/outputs/clean_finish_76d95f89.jpg",
-    "debug_sheet": "/outputs/clean_phase_debug_29a9a3eb.jpg"
-  },
-  "visuals_error": null
+  "exercise_label": "deadlift",
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "No usable rep found."
 }

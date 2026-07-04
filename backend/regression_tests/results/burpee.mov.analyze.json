@@ -1,47 +1,150 @@
 {
-  "exercise_label": "burpee",
-  "confidence": 1.0,
+  "exercise_label": "overhead_squat",
+  "confidence": 0.97,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
-  "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected.",
-    "biggest_fix": "Record a clearer set for analysis."
-  },
-  "coaching_zones": {},
-  "phase_images": {
-    "setup": 1,
-    "clean_catch": 48,
-    "jerk_dip": 205,
-    "jerk_catch": 287,
-    "finish": 313
-  },
-  "overlay_job_id": null,
-  "overlay_video_url": null,
-  "debug": {
-    "original_prediction": "squat",
-    "olympic_prediction": "snatch",
-    "final_label_debug": "burpee",
-    "original_confidence": 0.9998409748077393,
-    "olympic_pred": "snatch",
-    "olympic_confidence": 0.528,
-    "frames_seen": 316,
-    "frames_processed": 260,
-    "pose_frames": 260,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": {
-      "squat_label": "overhead_squat",
-      "squat_confidence": 0.9913602471351624,
-      "squat_probs": [
-        0.9913602471351624,
-        0.004908063914626837,
-        0.003731684759259224
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 81,
+      "descent_frame": 83,
+      "bottom_frame": 86,
+      "ascent_frame": 88,
+      "end_frame": 91,
+      "score": 5.7,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably.",
+        "Slight neck position issue detected."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "borderline",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes.",
+        "Keep your head aligned with your torso."
       ]
     },
-    "front_squat_rescue": null
+    {
+      "rep": 2,
+      "start_frame": 190,
+      "descent_frame": 192,
+      "bottom_frame": 195,
+      "ascent_frame": 195,
+      "end_frame": 197,
+      "score": 3.5,
+      "grade": "Poor",
+      "issues": [
+        "Shoulders/chest are collapsing forward.",
+        "Knees cave inward noticeably.",
+        "Slight neck position issue detected."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "poor",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "borderline",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
+        "Drive knees out over your toes.",
+        "Keep your head aligned with your torso."
+      ]
+    },
+    {
+      "rep": 3,
+      "start_frame": 199,
+      "descent_frame": 200,
+      "bottom_frame": 201,
+      "ascent_frame": 202,
+      "end_frame": 204,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 4,
+      "start_frame": 303,
+      "descent_frame": 303,
+      "bottom_frame": 304,
+      "ascent_frame": 305,
+      "end_frame": 308,
+      "score": 5.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Chest/shoulders are starting to fall forward.",
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "borderline",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Stay braced and keep your chest proud.",
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 5,
+      "start_frame": 403,
+      "descent_frame": 403,
+      "bottom_frame": 404,
+      "ascent_frame": 404,
+      "end_frame": 406,
+      "score": 10.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 5,
+    "avg_rep_score": 6.2,
+    "best_rep": 5,
+    "worst_rep": 2,
+    "trend": "Form appears to improve as the set goes on."
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "debug": {
+    "base": "squat",
+    "squat": "overhead_squat",
+    "squat_conf": 0.9743358492851257,
+    "olympic": "0",
+    "olympic_conf": 0.388,
+    "final": "overhead_squat"
   }
 }

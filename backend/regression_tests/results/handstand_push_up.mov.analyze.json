@@ -1,5 +1,5 @@
 {
-  "exercise_label": "handstand_push_up",
+  "exercise_label": "bench_press",
   "confidence": 0.84,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [],
@@ -8,32 +8,16 @@
     "avg_rep_score": 0,
     "best_rep": null,
     "worst_rep": null,
-    "trend": "No clear reps detected.",
-    "biggest_fix": "Record a clearer set for analysis."
+    "trend": "No clear reps detected."
   },
-  "coaching_zones": {},
-  "phase_images": {
-    "setup": 1,
-    "clean_catch": 107,
-    "jerk_dip": 331,
-    "jerk_catch": 343,
-    "finish": 360
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "bench_press",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "handstand_push_up",
-    "original_confidence": 0.8589558005332947,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.606,
-    "frames_seen": 360,
-    "frames_processed": 348,
-    "pose_frames": 348,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "bench_press",
+    "squat": "squat_back",
+    "squat_conf": 0.8077811002731323,
+    "olympic": "0",
+    "olympic_conf": 0.334,
+    "final": "bench_press"
   }
 }

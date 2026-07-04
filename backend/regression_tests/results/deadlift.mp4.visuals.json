@@ -1,12 +1,6 @@
 {
-  "exercise_label": "deadlift",
-  "phase_images": {
-    "setup": "/outputs/deadlift_setup_c933b29e.jpg",
-    "pull": "/outputs/deadlift_pull_743fe648.jpg",
-    "mid": "/outputs/deadlift_mid_a89856b4.jpg",
-    "finish": "/outputs/deadlift_finish_142b6808.jpg",
-    "lockout": "/outputs/deadlift_lockout_28a202b7.jpg",
-    "debug_sheet": "/outputs/deadlift_phase_debug_11d9b520.jpg"
-  },
-  "visuals_error": null
+  "exercise_label": "squat_back",
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "create_squat_phase_images() got an unexpected keyword argument 'sample_every'"
 }

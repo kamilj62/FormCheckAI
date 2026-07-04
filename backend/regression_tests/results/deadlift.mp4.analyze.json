@@ -1,126 +1,50 @@
 {
-  "exercise_label": "deadlift",
-  "confidence": 1.0,
+  "exercise_label": "squat_back",
+  "confidence": 0.98,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 6,
-      "pull_frame": 22,
-      "mid_frame": 35,
-      "finish_frame": 45,
-      "bottom_frame": 1,
-      "end_frame": 51,
-      "score": 3.7,
-      "grade": "Poor",
+      "start_frame": 1,
+      "descent_frame": 4,
+      "bottom_frame": 7,
+      "ascent_frame": 20,
+      "end_frame": 38,
+      "score": 5.9,
+      "grade": "Needs Work",
       "issues": [
-        "Back may be rounding during the pull.",
-        "Incomplete lockout at the top."
+        "Depth is close, but could be slightly lower.",
+        "Knees cave inward noticeably."
       ],
       "breakdown": {
-        "setup": "good",
-        "back": "poor",
+        "depth": "borderline",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
         "neck": "good",
-        "hinge": "good",
-        "lockout": "incomplete",
-        "knees": "good",
-        "bar_path": "good",
-        "control": "good"
+        "butt_wink": "not_detected"
       },
       "feedback": [
-        "Brace your core and keep a neutral spine.",
-        "Finish tall by squeezing glutes and standing fully upright."
+        "Sink a little deeper while keeping your chest up.",
+        "Drive knees out over your toes."
       ]
     }
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 3.7,
+    "avg_rep_score": 5.9,
     "best_rep": 1,
     "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "trend": "Form appears consistent across the set."
   },
-  "coaching_zones": {
-    "setup": {
-      "label": "setup",
-      "status": "good",
-      "score": 1.0,
-      "message": "Setup is good overall.",
-      "issue_count": 2
-    },
-    "back": {
-      "label": "back",
-      "status": "poor",
-      "score": 0.0,
-      "message": "Back is poor overall.",
-      "issue_count": 2
-    },
-    "neck": {
-      "label": "neck",
-      "status": "good",
-      "score": 1.0,
-      "message": "Neck is good overall.",
-      "issue_count": 2
-    },
-    "hinge": {
-      "label": "hinge",
-      "status": "good",
-      "score": 1.0,
-      "message": "Hinge is good overall.",
-      "issue_count": 2
-    },
-    "lockout": {
-      "label": "lockout",
-      "status": "poor",
-      "score": 0.0,
-      "message": "Lockout is poor overall.",
-      "issue_count": 2
-    },
-    "knees": {
-      "label": "knees",
-      "status": "good",
-      "score": 1.0,
-      "message": "Knees is good overall.",
-      "issue_count": 2
-    },
-    "bar_path": {
-      "label": "bar_path",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Path is good overall.",
-      "issue_count": 2
-    },
-    "control": {
-      "label": "control",
-      "status": "good",
-      "score": 1.0,
-      "message": "Control is good overall.",
-      "issue_count": 2
-    }
-  },
-  "phase_images": {
-    "setup": 1,
-    "pull": 26,
-    "mid": 51,
-    "finish": 76,
-    "lockout": 100
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "deadlift",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "deadlift",
-    "original_confidence": 0.9994280934333801,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.842,
-    "frames_seen": 101,
-    "frames_processed": 101,
-    "pose_frames": 101,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "deadlift",
+    "squat": "squat_back",
+    "squat_conf": 0.9845713376998901,
+    "olympic": "0",
+    "olympic_conf": 0.338,
+    "final": "squat_back"
   }
 }

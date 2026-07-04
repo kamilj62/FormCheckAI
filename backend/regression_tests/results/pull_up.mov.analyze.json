@@ -1,54 +1,23 @@
 {
-  "exercise_label": "pull_up",
-  "confidence": 0.98,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "Unknown",
+  "confidence": 0.0,
+  "analysis_mode": "insufficient_data",
   "rep_feedback": [],
   "set_summary": {
     "detected_reps": 0,
     "avg_rep_score": 0,
     "best_rep": null,
     "worst_rep": null,
-    "trend": "No clear reps detected.",
-    "biggest_fix": "Record a clearer set for analysis."
+    "trend": "No clear reps detected."
   },
-  "coaching_zones": {},
-  "phase_images": {
-    "setup": 11,
-    "clean_catch": 159,
-    "jerk_dip": 115,
-    "jerk_catch": 246,
-    "finish": 292
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "unknown",
+    "issues": []
   },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "squat",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "pull_up",
-    "original_confidence": 0.9997453093528748,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.816,
-    "frames_seen": 292,
-    "frames_processed": 239,
-    "pose_frames": 239,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": {
-      "squat_label": "squat_back",
-      "squat_confidence": 0.9839620590209961,
-      "squat_probs": [
-        0.004092140588909388,
-        0.9839620590209961,
-        0.011945804581046104
-      ]
-    },
-    "front_squat_rescue": {
-      "wrist_ratio": 0.7573221757322176,
-      "elbow_range": 103.82380582820149,
-      "final_label_before": "squat_back",
-      "base_raw_label": "squat",
-      "rescued": false,
-      "looks_like_snatch": false
-    }
+    "frames_processed": 3
   }
 }

@@ -1,39 +1,116 @@
 {
-  "exercise_label": "push_up",
-  "confidence": 1.0,
+  "exercise_label": "squat_back",
+  "confidence": 0.97,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 8,
+      "descent_frame": 11,
+      "bottom_frame": 15,
+      "ascent_frame": 19,
+      "end_frame": 24,
+      "score": 6.1,
+      "grade": "Needs Work",
+      "issues": [
+        "Depth may be shallow.",
+        "Chest/shoulders are starting to fall forward.",
+        "Slight knee cave detected."
+      ],
+      "breakdown": {
+        "depth": "poor",
+        "torso": "borderline",
+        "knees": "borderline",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Try to reach better squat depth.",
+        "Stay braced and keep your chest proud.",
+        "Keep knees tracking over your toes."
+      ]
+    },
+    {
+      "rep": 2,
+      "start_frame": 82,
+      "descent_frame": 86,
+      "bottom_frame": 90,
+      "ascent_frame": 94,
+      "end_frame": 99,
+      "score": 2.7,
+      "grade": "Poor",
+      "issues": [
+        "Depth may be shallow.",
+        "Shoulders/chest are collapsing forward.",
+        "Slight knee cave detected.",
+        "Slight heel lift detected.",
+        "Head/neck position is off."
+      ],
+      "breakdown": {
+        "depth": "poor",
+        "torso": "poor",
+        "knees": "borderline",
+        "heels": "borderline",
+        "neck": "poor",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Try to reach better squat depth.",
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
+        "Keep knees tracking over your toes.",
+        "Keep pressure through your heels and midfoot.",
+        "Keep your head neutral and avoid looking up or craning your neck."
+      ]
+    },
+    {
+      "rep": 3,
+      "start_frame": 134,
+      "descent_frame": 136,
+      "bottom_frame": 139,
+      "ascent_frame": 142,
+      "end_frame": 147,
+      "score": 2.7,
+      "grade": "Poor",
+      "issues": [
+        "Depth may be shallow.",
+        "Shoulders/chest are collapsing forward.",
+        "Slight knee cave detected.",
+        "Slight heel lift detected.",
+        "Head/neck position is off."
+      ],
+      "breakdown": {
+        "depth": "poor",
+        "torso": "poor",
+        "knees": "borderline",
+        "heels": "borderline",
+        "neck": "poor",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Try to reach better squat depth.",
+        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
+        "Keep knees tracking over your toes.",
+        "Keep pressure through your heels and midfoot.",
+        "Keep your head neutral and avoid looking up or craning your neck."
+      ]
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected.",
-    "biggest_fix": "Record a clearer set for analysis."
+    "detected_reps": 3,
+    "avg_rep_score": 3.8,
+    "best_rep": 1,
+    "worst_rep": 2,
+    "trend": "Form appears to deteriorate as the set goes on."
   },
-  "coaching_zones": {},
-  "phase_images": {
-    "setup": 1,
-    "clean_catch": 47,
-    "jerk_dip": 42,
-    "jerk_catch": 98,
-    "finish": 120
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "deadlift",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "push_up",
-    "original_confidence": 0.9999094009399414,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.602,
-    "frames_seen": 120,
-    "frames_processed": 120,
-    "pose_frames": 120,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "deadlift",
+    "squat": "squat_back",
+    "squat_conf": 0.9666573405265808,
+    "olympic": "0",
+    "olympic_conf": 0.392,
+    "final": "squat_back"
   }
 }

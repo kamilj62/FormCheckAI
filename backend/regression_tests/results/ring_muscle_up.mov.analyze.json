@@ -1,47 +1,196 @@
 {
-  "exercise_label": "muscle_up",
+  "exercise_label": "overhead_squat",
   "confidence": 1.0,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
-  "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected.",
-    "biggest_fix": "Record a clearer set for analysis."
-  },
-  "coaching_zones": {},
-  "phase_images": {
-    "setup": 1,
-    "clean_catch": 129,
-    "jerk_dip": 85,
-    "jerk_catch": 168,
-    "finish": 360
-  },
-  "overlay_job_id": null,
-  "overlay_video_url": null,
-  "debug": {
-    "original_prediction": "squat",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "muscle_up",
-    "original_confidence": 0.9776849150657654,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.704,
-    "frames_seen": 360,
-    "frames_processed": 222,
-    "pose_frames": 222,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": {
-      "squat_label": "overhead_squat",
-      "squat_confidence": 0.9968405961990356,
-      "squat_probs": [
-        0.9968405961990356,
-        0.0012644317466765642,
-        0.0018949850928038359
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 131,
+      "descent_frame": 132,
+      "bottom_frame": 133,
+      "ascent_frame": 133,
+      "end_frame": 134,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
       ]
     },
-    "front_squat_rescue": null
+    {
+      "rep": 2,
+      "start_frame": 212,
+      "descent_frame": 213,
+      "bottom_frame": 215,
+      "ascent_frame": 218,
+      "end_frame": 223,
+      "score": 5.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Chest/shoulders are starting to fall forward.",
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "borderline",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Stay braced and keep your chest proud.",
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 3,
+      "start_frame": 240,
+      "descent_frame": 241,
+      "bottom_frame": 242,
+      "ascent_frame": 244,
+      "end_frame": 248,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 4,
+      "start_frame": 363,
+      "descent_frame": 364,
+      "bottom_frame": 366,
+      "ascent_frame": 367,
+      "end_frame": 370,
+      "score": 7.5,
+      "grade": "Solid",
+      "issues": [
+        "Chest/shoulders are starting to fall forward.",
+        "Slight knee cave detected."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "borderline",
+        "knees": "borderline",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Stay braced and keep your chest proud.",
+        "Keep knees tracking over your toes."
+      ]
+    },
+    {
+      "rep": 5,
+      "start_frame": 387,
+      "descent_frame": 388,
+      "bottom_frame": 389,
+      "ascent_frame": 391,
+      "end_frame": 395,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 6,
+      "start_frame": 508,
+      "descent_frame": 509,
+      "bottom_frame": 510,
+      "ascent_frame": 512,
+      "end_frame": 515,
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [
+        "Chest/shoulders are starting to fall forward."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "borderline",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Stay braced and keep your chest proud."
+      ]
+    },
+    {
+      "rep": 7,
+      "start_frame": 532,
+      "descent_frame": 533,
+      "bottom_frame": 534,
+      "ascent_frame": 536,
+      "end_frame": 540,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 7,
+    "avg_rep_score": 6.9,
+    "best_rep": 6,
+    "worst_rep": 2,
+    "trend": "Form appears consistent across the set."
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "debug": {
+    "base": "squat",
+    "squat": "overhead_squat",
+    "squat_conf": 0.9969006776809692,
+    "olympic": "0",
+    "olympic_conf": 0.326,
+    "final": "overhead_squat"
   }
 }

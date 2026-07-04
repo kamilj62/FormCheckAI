@@ -1,12 +1,6 @@
 {
-  "exercise_label": "pull_up",
-  "phase_images": {
-    "hang": "/outputs/pull_up_hang_21785a42.jpg",
-    "pull": "/outputs/pull_up_pull_fac061bd.jpg",
-    "top": "/outputs/pull_up_top_ae653843.jpg",
-    "descent": "/outputs/pull_up_descent_1ec7c8fe.jpg",
-    "debug_sheet": "/outputs/pull_up_phase_debug_c3c8217b.jpg",
-    "finish": "/outputs/pull_up_descent_1ec7c8fe.jpg"
-  },
-  "visuals_error": null
+  "exercise_label": "Unknown",
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "No usable rep found."
 }

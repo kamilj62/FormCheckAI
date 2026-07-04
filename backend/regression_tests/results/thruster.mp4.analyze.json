@@ -1,138 +1,23 @@
 {
-  "exercise_label": "thruster",
-  "confidence": 1.0,
+  "exercise_label": "bench_press",
+  "confidence": 0.99,
   "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [
-    {
-      "rep": 1,
-      "start_frame": 85,
-      "end_frame": 188,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "lockout": "good",
-        "bar_path": "good",
-        "bar_severity": "minor",
-        "squat_depth": "good",
-        "torso_stack": "good",
-        "active_finish": "soft",
-        "knee_range": 81.9
-      },
-      "feedback": [
-        "Fully extend arms overhead."
-      ],
-      "dip_frame": 103,
-      "drive_frame": 122,
-      "catch_frame": 163,
-      "lockout_frame": 188
-    },
-    {
-      "rep": 2,
-      "start_frame": 221,
-      "end_frame": 283,
-      "score": 9.2,
-      "grade": "Excellent",
-      "issues": [
-        "Finish stronger overhead."
-      ],
-      "breakdown": {
-        "lockout": "good",
-        "bar_path": "good",
-        "bar_severity": "minor",
-        "squat_depth": "good",
-        "torso_stack": "good",
-        "active_finish": "soft",
-        "knee_range": 79.3
-      },
-      "feedback": [
-        "Fully lock out the bar overhead at the top."
-      ],
-      "dip_frame": 255,
-      "drive_frame": 273,
-      "catch_frame": 283,
-      "lockout_frame": 283
-    }
-  ],
+  "rep_feedback": [],
   "set_summary": {
-    "detected_reps": 2,
-    "avg_rep_score": 9.2,
-    "best_rep": 1,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected."
   },
-  "coaching_zones": {
-    "lockout": {
-      "label": "lockout",
-      "status": "good",
-      "score": 1.0,
-      "message": "Lockout is good overall.",
-      "issue_count": 1
-    },
-    "bar_path": {
-      "label": "bar_path",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Path is good overall.",
-      "issue_count": 1
-    },
-    "bar_severity": {
-      "label": "bar_severity",
-      "status": "good",
-      "score": 1.0,
-      "message": "Bar Severity is good overall.",
-      "issue_count": 1
-    },
-    "squat_depth": {
-      "label": "squat_depth",
-      "status": "good",
-      "score": 1.0,
-      "message": "Squat Depth is good overall.",
-      "issue_count": 1
-    },
-    "torso_stack": {
-      "label": "torso_stack",
-      "status": "good",
-      "score": 1.0,
-      "message": "Torso Stack is good overall.",
-      "issue_count": 1
-    },
-    "active_finish": {
-      "label": "active_finish",
-      "status": "good",
-      "score": 1.0,
-      "message": "Active Finish is good overall.",
-      "issue_count": 1
-    },
-    "knee_range": {
-      "label": "knee_range",
-      "status": "good",
-      "score": 1.0,
-      "message": "Knee Range is good overall.",
-      "issue_count": 1
-    }
-  },
-  "phase_images": {
-    "squat_dip": 103,
-    "drive": 122,
-    "lockout": 188
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "bench_press",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "thruster",
-    "original_confidence": 0.999944806098938,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.584,
-    "frames_seen": 288,
-    "frames_processed": 222,
-    "pose_frames": 222,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": null,
-    "front_squat_rescue": null
+    "base": "bench_press",
+    "squat": "squat_front",
+    "squat_conf": 0.8743898868560791,
+    "olympic": "0",
+    "olympic_conf": 0.368,
+    "final": "bench_press"
   }
 }

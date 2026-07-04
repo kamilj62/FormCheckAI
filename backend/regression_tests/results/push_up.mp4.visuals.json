@@ -1,12 +1,6 @@
 {
-  "exercise_label": "push_up",
-  "phase_images": {
-    "setup": "/outputs/push_up_setup_678b7210.jpg",
-    "descent": "/outputs/push_up_descent_aef153a5.jpg",
-    "bottom": "/outputs/push_up_bottom_be76b343.jpg",
-    "ascent": "/outputs/push_up_ascent_fefb2a32.jpg",
-    "lockout": "/outputs/push_up_lockout_076f4973.jpg",
-    "debug_sheet": "/outputs/push_up_phase_debug_99f6c64a.jpg"
-  },
-  "visuals_error": null
+  "exercise_label": "squat_back",
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "create_squat_phase_images() got an unexpected keyword argument 'sample_every'"
 }

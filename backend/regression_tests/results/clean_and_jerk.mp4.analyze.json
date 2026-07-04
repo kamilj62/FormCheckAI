@@ -1,128 +1,120 @@
 {
-  "exercise_label": "clean_and_jerk",
+  "exercise_label": "squat_back",
   "confidence": 0.97,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 1,
-      "clean_catch_frame": 105,
-      "jerk_dip_frame": 262,
-      "jerk_drive_frame": 263,
-      "jerk_catch_frame": 330,
-      "end_frame": 360,
-      "score": 8.2,
-      "grade": "Good",
-      "issues": [
-        "Clean: Arms may be bending early during the pull.",
-        "Clean: Elbows may be slow coming through in the catch.",
-        "Jerk: Overhead position is not held long enough.",
-        "Jerk: Torso is leaning during the catch.",
-        "Jerk: Knees may cave during the dip or catch."
-      ],
+      "start_frame": 54,
+      "descent_frame": 61,
+      "bottom_frame": 67,
+      "ascent_frame": 79,
+      "end_frame": 95,
+      "score": 10.0,
+      "grade": "Excellent",
+      "issues": [],
       "breakdown": {
-        "clean": {
-          "first_pull": "good",
-          "extension": "good",
-          "turnover": "early_arm_bend",
-          "catch": "good",
-          "front_rack": "poor",
-          "bar_path": "good"
-        },
-        "jerk": {
-          "dip": "knee_cave",
-          "drive": "good",
-          "lockout": "incomplete",
-          "split_catch": "good",
-          "torso_stack": "leaning",
-          "bar_path": "good"
-        }
+        "depth": "good",
+        "torso": "good",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
       },
       "feedback": [
-        "Keep arms long until you finish extending.",
-        "Whip elbows through fast and catch in a strong front rack.",
-        "Catch and stabilize the bar overhead.",
-        "Keep ribs stacked and torso vertical under the bar.",
-        "Drive knees out and keep a stable receiving position."
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ]
+    },
+    {
+      "rep": 2,
+      "start_frame": 96,
+      "descent_frame": 108,
+      "bottom_frame": 119,
+      "ascent_frame": 119,
+      "end_frame": 122,
+      "score": 9.4,
+      "grade": "Excellent",
+      "issues": [
+        "Depth is close, but could be slightly lower."
+      ],
+      "breakdown": {
+        "depth": "borderline",
+        "torso": "good",
+        "knees": "good",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Sink a little deeper while keeping your chest up."
+      ]
+    },
+    {
+      "rep": 3,
+      "start_frame": 257,
+      "descent_frame": 280,
+      "bottom_frame": 299,
+      "ascent_frame": 302,
+      "end_frame": 307,
+      "score": 6.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Drive knees out over your toes."
+      ]
+    },
+    {
+      "rep": 4,
+      "start_frame": 333,
+      "descent_frame": 333,
+      "bottom_frame": 334,
+      "ascent_frame": 335,
+      "end_frame": 338,
+      "score": 5.1,
+      "grade": "Needs Work",
+      "issues": [
+        "Depth may be shallow.",
+        "Knees cave inward noticeably."
+      ],
+      "breakdown": {
+        "depth": "poor",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected"
+      },
+      "feedback": [
+        "Try to reach better squat depth.",
+        "Drive knees out over your toes."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 1,
-    "avg_rep_score": 8.2,
+    "detected_reps": 4,
+    "avg_rep_score": 7.8,
     "best_rep": 1,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set.",
-    "biggest_fix": "Keep building consistent reps."
+    "worst_rep": 4,
+    "trend": "Form appears to deteriorate as the set goes on."
   },
-  "coaching_zones": {
-    "clean": {
-      "label": "clean",
-      "status": "good",
-      "score": 1.0,
-      "message": "Clean is good overall.",
-      "issue_count": 5
-    },
-    "jerk": {
-      "label": "jerk",
-      "status": "good",
-      "score": 1.0,
-      "message": "Jerk is good overall.",
-      "issue_count": 5
-    },
-    "clean_first_pull": {
-      "label": "Clean First Pull",
-      "status": "unknown",
-      "message": "Focus on keeping bar close during first pull."
-    },
-    "clean_catch": {
-      "label": "Clean Catch",
-      "status": "unknown",
-      "message": "Improve rack position and stability on catch."
-    },
-    "jerk_dip": {
-      "label": "Jerk Dip",
-      "status": "unknown",
-      "message": "Keep vertical dip without knee collapse."
-    }
-  },
-  "phase_images": {
-    "setup": 1,
-    "clean_catch": 105,
-    "jerk_dip": 262,
-    "jerk_catch": 330,
-    "finish": 360
-  },
-  "overlay_job_id": null,
   "overlay_video_url": null,
+  "phase_images": null,
   "debug": {
-    "original_prediction": "squat",
-    "olympic_prediction": "clean_and_jerk",
-    "final_label_debug": "clean_and_jerk",
-    "original_confidence": 0.9717406034469604,
-    "olympic_pred": "clean_and_jerk",
-    "olympic_confidence": 0.768,
-    "frames_seen": 360,
-    "frames_processed": 291,
-    "pose_frames": 291,
-    "sample_every": 1,
-    "input_shape": "(30, 136)",
-    "squat_router": {
-      "squat_label": "squat_back",
-      "squat_confidence": 0.9706860780715942,
-      "squat_probs": [
-        0.0033156895078718662,
-        0.9706860780715942,
-        0.025998268276453018
-      ]
-    },
-    "front_squat_rescue": {
-      "wrist_ratio": 0.21993127147766323,
-      "elbow_range": 161.1847666993374,
-      "final_label_before": "squat_back",
-      "base_raw_label": "squat",
-      "rescued": false,
-      "looks_like_snatch": false
-    }
+    "base": "squat",
+    "squat": "squat_back",
+    "squat_conf": 0.9730087518692017,
+    "olympic": "0",
+    "olympic_conf": 0.356,
+    "final": "squat_back"
   }
 }

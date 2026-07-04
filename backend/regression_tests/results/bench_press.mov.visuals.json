@@ -1,12 +1,6 @@
 {
   "exercise_label": "bench_press",
-  "phase_images": {
-    "setup": "/outputs/bench_press_setup_aaa60dc7.jpg",
-    "descent": "/outputs/bench_press_descent_780fab6e.jpg",
-    "bottom": "/outputs/bench_press_bottom_ba2a055c.jpg",
-    "press": "/outputs/bench_press_press_5e5316a3.jpg",
-    "lockout": "/outputs/bench_press_lockout_277a9953.jpg",
-    "debug_sheet": "/outputs/bench_press_phase_debug_38d1db6e.jpg"
-  },
-  "visuals_error": null
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "No usable rep found."
 }

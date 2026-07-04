@@ -1,11 +1,6 @@
 {
   "exercise_label": "push_press",
-  "phase_images": {
-    "setup": "/outputs/push_press_setup_9dcb5eb0.jpg",
-    "dip": "/outputs/push_press_dip_e35abe6d.jpg",
-    "drive": "/outputs/push_press_drive_52fd84ac.jpg",
-    "lockout": "/outputs/push_press_lockout_ddee4305.jpg",
-    "debug_sheet": "/outputs/push_press_phase_debug_eb769c54.jpg"
-  },
-  "visuals_error": null
+  "overlay_video_url": null,
+  "phase_images": null,
+  "visuals_error": "No usable rep found."
 }
