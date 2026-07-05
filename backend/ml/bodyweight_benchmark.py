@@ -29,6 +29,14 @@ BENCHMARKS = [
         ],
         "patterns": ["*.mp4", "*.mov", "*.avi"],
     },
+    {
+        "name": "push_up",
+        "folders": [
+            "/Users/josephkamil/Desktop/Capstone/push-up",
+            "/Users/josephkamil/Desktop/Capstone/PushUps",
+        ],
+        "patterns": ["*.mp4", "*.mov", "*.avi"],
+    },
 ]
 
 

@@ -3574,6 +3574,207 @@ def analyze_pull_up_reps(biomechanics):
     return reps, build_set_summary(reps)
 
 
+def analyze_handstand_push_up_reps(biomechanics):
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    bottom_idx = int(np.argmin(elbow))
+    start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.35))
+    end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.35))
+
+    rep_elbow = elbow[start_idx:end_idx + 1]
+    rep_wrist_y = wrist_y[start_idx:end_idx + 1]
+    rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
+
+    min_elbow = float(np.min(rep_elbow))
+    max_elbow = float(np.max(rep_elbow))
+    elbow_range = max_elbow - min_elbow
+    hands_below_shoulder_ratio = float(np.mean(rep_wrist_y > rep_shoulder_y))
+
+    issues = []
+    feedback = []
+    breakdown = {
+        "range": "good",
+        "bottom": "good",
+        "lockout": "good",
+        "control": "good",
+    }
+
+    if elbow_range < 35:
+        breakdown["range"] = "short"
+        issues.append("Handstand push-up range of motion may be short.")
+        feedback.append("Lower under control and press through a full range.")
+
+    if min_elbow > 115:
+        breakdown["bottom"] = "high"
+        issues.append("Bottom position may be shallow.")
+        feedback.append("Lower until your head gets closer to the floor or target.")
+
+    if max_elbow < 145:
+        breakdown["lockout"] = "short"
+        issues.append("Lockout may be incomplete.")
+        feedback.append("Finish each rep with strong elbow extension.")
+
+    if hands_below_shoulder_ratio < 0.65:
+        breakdown["control"] = "review"
+        issues.append("Inverted position was hard to track.")
+        feedback.append("Record from the side with your hands, head, and hips visible.")
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good handstand push-up rep. Keep the body stacked and press to a strong lockout."]
+
+    descent_idx = start_idx + int(max(1, bottom_idx - start_idx) * 0.65)
+    ascent_idx = bottom_idx + int(max(1, end_idx - bottom_idx) * 0.35)
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "descent_frame": int(frame_numbers[min(descent_idx, bottom_idx)]),
+        "bottom_frame": int(frame_numbers[bottom_idx]),
+        "ascent_frame": int(frame_numbers[min(max(ascent_idx, bottom_idx), end_idx)]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
+def analyze_push_up_reps(biomechanics):
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics], dtype=np.float32)
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    bottom_idx = int(np.argmin(elbow))
+    start_idx = max(0, bottom_idx - int(len(biomechanics) * 0.35))
+    end_idx = min(len(biomechanics) - 1, bottom_idx + int(len(biomechanics) * 0.35))
+
+    rep_elbow = elbow[start_idx:end_idx + 1]
+    rep_wrist_y = wrist_y[start_idx:end_idx + 1]
+    rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
+    rep_hip_y = hip_y[start_idx:end_idx + 1]
+
+    min_elbow = float(np.min(rep_elbow))
+    max_elbow = float(np.max(rep_elbow))
+    elbow_range = max_elbow - min_elbow
+    hands_below_shoulder_ratio = float(np.mean(rep_wrist_y > rep_shoulder_y))
+    shoulder_hip_drift = float(np.max(np.abs(rep_shoulder_y - rep_hip_y)))
+
+    issues = []
+    feedback = []
+    breakdown = {
+        "range": "good",
+        "bottom": "good",
+        "lockout": "good",
+        "body_line": "good",
+    }
+
+    if elbow_range < 35:
+        breakdown["range"] = "short"
+        issues.append("Push-up range of motion may be short.")
+        feedback.append("Lower under control and press through a full range.")
+
+    if min_elbow > 115:
+        breakdown["bottom"] = "high"
+        issues.append("Bottom position may be shallow.")
+        feedback.append("Lower your chest closer to the floor.")
+
+    if max_elbow < 145:
+        breakdown["lockout"] = "short"
+        issues.append("Lockout may be incomplete.")
+        feedback.append("Finish each rep with strong elbow extension.")
+
+    if hands_below_shoulder_ratio < 0.65 or shoulder_hip_drift > 0.45:
+        breakdown["body_line"] = "review"
+        issues.append("Body line was hard to track.")
+        feedback.append("Record from the side with hands, shoulders, hips, and feet visible.")
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good push-up rep. Keep a strong body line and press to full lockout."]
+
+    descent_idx = start_idx + int(max(1, bottom_idx - start_idx) * 0.65)
+    ascent_idx = bottom_idx + int(max(1, end_idx - bottom_idx) * 0.35)
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "descent_frame": int(frame_numbers[min(descent_idx, bottom_idx)]),
+        "bottom_frame": int(frame_numbers[bottom_idx]),
+        "ascent_frame": int(frame_numbers[min(max(ascent_idx, bottom_idx), end_idx)]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
+def build_bodyweight_features(biomechanics):
+    if not biomechanics:
+        return {}
+
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics], dtype=np.float32)
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics], dtype=np.float32)
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics], dtype=np.float32)
+    knee_y = np.array([b.get("knee_y", 0.0) for b in biomechanics], dtype=np.float32)
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    head_drop = np.array([b.get("head_drop", 0.0) for b in biomechanics], dtype=np.float32)
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics], dtype=np.float32)
+
+    return {
+        "total_frames": int(len(biomechanics)),
+        "wrist_above_shoulder_ratio": float(np.mean(wrist_y < shoulder_y)),
+        "wrist_below_shoulder_ratio": float(np.mean(wrist_y > shoulder_y)),
+        "mean_wrist_minus_shoulder_y": float(np.mean(wrist_y - shoulder_y)),
+        "mean_hip_minus_shoulder_y": float(np.mean(hip_y - shoulder_y)),
+        "mean_knee_minus_hip_y": float(np.mean(knee_y - hip_y)),
+        "median_head_drop": float(np.median(head_drop)),
+        "avg_wrist_forward": float(np.mean(np.abs(wrist_x - shoulder_x))),
+        "wrist_y_range": float(np.max(wrist_y) - np.min(wrist_y)),
+        "shoulder_y_range": float(np.max(shoulder_y) - np.min(shoulder_y)),
+        "hip_y_range": float(np.max(hip_y) - np.min(hip_y)),
+        "elbow_range": float(np.max(elbow) - np.min(elbow)),
+        "min_elbow": float(np.min(elbow)),
+        "max_elbow": float(np.max(elbow)),
+        "avg_elbow": float(np.mean(elbow)),
+        "avg_torso_angle": float(np.mean(torso)),
+    }
+
+
 def analyze_burpee_reps(biomechanics):
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -6612,6 +6813,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         _looks_split      = looks_like_split_jerk(biomech)
         _looks_strict     = looks_like_strict_press(biomech)
         _looks_thruster   = looks_like_thruster(biomech)
+        bodyweight_debug = build_bodyweight_features(biomech)
         _deadlift_setup_geometry = (
             squat_label == "squat_back"
             and wrist_overhead_ratio < 0.12
@@ -6661,12 +6863,70 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and not _looks_clean_only
             and not _looks_cj
         )
+        _looks_push_up = (
+            float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.75
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.08
+            and -0.16 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.12
+            and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.035
+            and 45.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 180.0
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 35.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+        )
+        _looks_handstand_push_up = (
+            float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.85
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.08
+            and float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 1.0)) <= -0.015
+            and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.05
+            and float(bodyweight_debug.get("avg_torso_angle", 0.0)) >= 125.0
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 25.0
+        )
+        _pull_up_overhead_squat_guard = (
+            squat_label == "overhead_squat"
+            and int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
+            and float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) >= 0.30
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", -1.0)) > -0.17
+        )
+        _short_cropped_pull_up = (
+            int(bodyweight_debug.get("total_frames", 0) or 0) <= 25
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.90
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.15
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 70.0
+        )
+        _looks_pull_up = (
+            (
+                (
+                    float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.50
+                    and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.045
+                    and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
+                    and float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) >= 0.045
+                    and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 85.0
+                    and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+                    and float(bodyweight_debug.get("elbow_range", 0.0)) >= 45.0
+                    and float(bodyweight_debug.get("min_elbow", 180.0)) <= 95.0
+                )
+                or _short_cropped_pull_up
+            )
+            and not _pull_up_overhead_squat_guard
+        )
 
         protected_label = None
         protected_conf = 0.0
         protected_reason = None
 
-        if _short_overhead_bench_setup:
+        if _looks_push_up:
+            protected_label = "push_up"
+            protected_conf = 0.86
+            protected_reason = "push_up_bodyweight_pattern"
+        elif _looks_handstand_push_up:
+            protected_label = "handstand_push_up"
+            protected_conf = 0.86
+            protected_reason = "handstand_push_up_bodyweight_pattern"
+        elif _looks_pull_up:
+            protected_label = "pull_up"
+            protected_conf = 0.86
+            protected_reason = "pull_up_bodyweight_pattern"
+        elif _short_overhead_bench_setup:
             protected_label = "bench_press"
             protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
             protected_reason = "bench_press_short_overhead_rescue"
@@ -7056,6 +7316,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_non_olympic = protected_label in {
                 "bench_press",
                 "deadlift",
+                "handstand_push_up",
+                "push_up",
+                "pull_up",
                 "push_press",
                 "thruster",
                 "strict_press",
@@ -7119,6 +7382,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         elif final_label == "strict_press":
             rep_feedback, _ = analyze_strict_press_reps(biomech)
 
+        elif final_label == "pull_up":
+            rep_feedback, _ = analyze_pull_up_reps(biomech)
+
+        elif final_label == "handstand_push_up":
+            rep_feedback, _ = analyze_handstand_push_up_reps(biomech)
+
+        elif final_label == "push_up":
+            rep_feedback, _ = analyze_push_up_reps(biomech)
+
         # =========================================================
         # 7. FINAL OUTPUT
         # =========================================================
@@ -7128,6 +7400,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "analysis_mode": analysis_mode,
             "rep_feedback": rep_feedback,
             "set_summary": build_set_summary(rep_feedback),
+            "coaching_zones": build_coaching_zones(final_label or "unknown", rep_feedback),
             "overlay_video_url": None,
             "phase_images": None,
             "debug": {
@@ -7141,6 +7414,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "bio_reason":      bio_reason,
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
+                "bodyweight":      bodyweight_debug,
                 "router_v5":       router_v5_debug,
                 "squat_label":     squat_label,
                 "squat_conf":      round(squat_conf, 3),

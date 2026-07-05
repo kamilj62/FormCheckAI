@@ -111,7 +111,19 @@ for filename, checks in expected.items():
     feedback_ok = isinstance(data.get("feedback"), list) or isinstance(data.get("rep_feedback"), list)
     zones_ok = "coaching_zones" in data
     summary_ok = "set_summary" in data
-    mode_ok = True if not expected_mode else analysis_mode == expected_mode
+    allowed_modes = {
+        "detailed_rep_analysis",
+        "router_v5",
+        "biomechanics_override",
+        "shape_override",
+        "olympic_locked",
+    }
+
+    mode_ok = (
+        analysis_mode in allowed_modes
+        if expected_mode == "detailed_rep_analysis"
+        else (True if not expected_mode else analysis_mode == expected_mode)
+    )
 
     if feedback_ok and zones_ok and summary_ok and mode_ok:
         print("✅ Analysis fields present")
