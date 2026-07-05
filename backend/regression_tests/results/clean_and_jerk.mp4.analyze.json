@@ -1,120 +1,224 @@
 {
-  "exercise_label": "squat_back",
-  "confidence": 0.97,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "clean_and_jerk",
+  "confidence": 0.83,
+  "analysis_mode": "router_v5",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 54,
-      "descent_frame": 61,
-      "bottom_frame": 67,
-      "ascent_frame": 79,
-      "end_frame": 95,
-      "score": 10.0,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+      "start_frame": 1,
+      "clean_catch_frame": 119,
+      "clean_recovery_frame": 184,
+      "jerk_dip_frame": 299,
+      "jerk_drive_frame": 318,
+      "jerk_catch_frame": 356,
+      "end_frame": 377,
+      "debug_frames": {
+        "clean_catch_idx": 115,
+        "recovery_idx": 175,
+        "jerk_start": 176,
+        "jerk_dip_idx": 255,
+        "jerk_drive_idx": 272,
+        "first_overhead_idx": 275,
+        "jerk_catch_idx": 303,
+        "end_idx": 320
       },
-      "feedback": [
-        "Strong squat rep. Keep bracing and driving through the floor."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 96,
-      "descent_frame": 108,
-      "bottom_frame": 119,
-      "ascent_frame": 119,
-      "end_frame": 122,
-      "score": 9.4,
-      "grade": "Excellent",
+      "score": 8.2,
+      "grade": "Good",
       "issues": [
-        "Depth is close, but could be slightly lower."
+        "Jerk: Overhead position is not held long enough.",
+        "Jerk: Torso is leaning during the catch.",
+        "Jerk: Knees may cave during the dip or catch."
       ],
       "breakdown": {
-        "depth": "borderline",
-        "torso": "good",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "clean": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "catch": "good",
+          "front_rack": "good",
+          "bar_path": "good"
+        },
+        "jerk": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "incomplete",
+          "split_catch": "good",
+          "torso_stack": "leaning",
+          "bar_path": "good"
+        }
       },
       "feedback": [
-        "Sink a little deeper while keeping your chest up."
-      ]
-    },
-    {
-      "rep": 3,
-      "start_frame": 257,
-      "descent_frame": 280,
-      "bottom_frame": 299,
-      "ascent_frame": 302,
-      "end_frame": 307,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 4,
-      "start_frame": 333,
-      "descent_frame": 333,
-      "bottom_frame": 334,
-      "ascent_frame": 335,
-      "end_frame": 338,
-      "score": 5.1,
-      "grade": "Needs Work",
-      "issues": [
-        "Depth may be shallow.",
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "poor",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Try to reach better squat depth.",
-        "Drive knees out over your toes."
+        "Good clean rep. Strong pull and catch position.",
+        "Catch and stabilize the bar overhead.",
+        "Keep ribs stacked and torso vertical under the bar.",
+        "Drive knees out and keep a stable receiving position."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 4,
-    "avg_rep_score": 7.8,
+    "detected_reps": 1,
+    "avg_rep_score": 8.2,
     "best_rep": 1,
-    "worst_rep": 4,
-    "trend": "Form appears to deteriorate as the set goes on."
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "clean_and_jerk",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 1,
+        "clean_catch_frame": 119,
+        "clean_recovery_frame": 184,
+        "jerk_dip_frame": 299,
+        "jerk_drive_frame": 318,
+        "jerk_catch_frame": 356,
+        "end_frame": 377,
+        "debug_frames": {
+          "clean_catch_idx": 115,
+          "recovery_idx": 175,
+          "jerk_start": 176,
+          "jerk_dip_idx": 255,
+          "jerk_drive_idx": 272,
+          "first_overhead_idx": 275,
+          "jerk_catch_idx": 303,
+          "end_idx": 320
+        },
+        "score": 8.2,
+        "grade": "Good",
+        "issues": [
+          "Jerk: Overhead position is not held long enough.",
+          "Jerk: Torso is leaning during the catch.",
+          "Jerk: Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "clean": {
+            "first_pull": "good",
+            "extension": "good",
+            "turnover": "good",
+            "catch": "good",
+            "front_rack": "good",
+            "bar_path": "good"
+          },
+          "jerk": {
+            "dip": "knee_cave",
+            "drive": "good",
+            "lockout": "incomplete",
+            "split_catch": "good",
+            "torso_stack": "leaning",
+            "bar_path": "good"
+          }
+        },
+        "feedback": [
+          "Good clean rep. Strong pull and catch position.",
+          "Catch and stabilize the bar overhead.",
+          "Keep ribs stacked and torso vertical under the bar.",
+          "Drive knees out and keep a stable receiving position."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "squat",
-    "squat": "squat_back",
-    "squat_conf": 0.9730087518692017,
-    "olympic": "0",
-    "olympic_conf": 0.356,
-    "final": "squat_back"
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.83,
+    "raw_label": "squat",
+    "base_conf": 0.953,
+    "bio_label": "squat",
+    "bio_conf": 0.953,
+    "bio_override": true,
+    "bio_reason": "squat_pattern_detected",
+    "protected_label": null,
+    "protected_reason": null,
+    "bodyweight": {
+      "total_frames": 358,
+      "wrist_above_shoulder_ratio": 0.2430167597765363,
+      "wrist_below_shoulder_ratio": 0.7569832402234636,
+      "mean_wrist_minus_shoulder_y": 0.10290277749300003,
+      "mean_hip_minus_shoulder_y": 0.13840904831886292,
+      "mean_knee_minus_hip_y": 0.09137535095214844,
+      "median_head_drop": -0.06265623867511749,
+      "avg_wrist_forward": 0.015580495819449425,
+      "wrist_y_range": 0.5706947445869446,
+      "shoulder_y_range": 0.28728312253952026,
+      "hip_y_range": 0.20788457989692688,
+      "elbow_range": 175.18594360351562,
+      "min_elbow": 4.045066833496094,
+      "max_elbow": 179.2310028076172,
+      "avg_elbow": 148.8857421875,
+      "avg_torso_angle": 26.956933975219727
+    },
+    "router_v5": {
+      "raw_label": "snatch",
+      "raw_confidence": 0.83,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.83,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 51,
+        "first_pull": 83,
+        "extension": 124,
+        "catch": 140,
+        "lockout": 161,
+        "finish": 161
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 143.5293485695128,
+        "extension_to_catch": 16.0,
+        "catch_to_finish": 21.0,
+        "extension_height_change": 0.13838639855384827,
+        "lockout_duration": 18.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 224,
+        "extension": 338,
+        "lockout": 357
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 160.1350564507227,
+        "extension_to_catch": -338.0,
+        "catch_to_finish": 357.0,
+        "extension_height_change": -0.009018242359161377,
+        "lockout_duration": 87.0
+      },
+      "decision": "clean_and_jerk_shape_rescue"
+    },
+    "squat_label": "squat_back",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.15,
+        "squat_back": 1.0
+      },
+      "margin": 0.8,
+      "overhead_ratio": 0.07,
+      "elbow_elevated_ratio": 0.0,
+      "wrist_height_above_shoulder": 0.059,
+      "avg_wrist_forward": 0.013,
+      "front_rack_elbow_p25": 168.0,
+      "avg_elbow_angle_sq": 177.3,
+      "squat_frames_used": 143,
+      "total_frames": 358
+    },
+    "wrist_overhead": 0.243,
+    "explosive_score": 148.45,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": false,
+    "looks_cj": true,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": true,
+    "bar_pos_valid": true,
+    "analysis_path": "router_v5"
   }
 }

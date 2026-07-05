@@ -1,23 +1,373 @@
 {
   "exercise_label": "push_press",
-  "confidence": 0.7,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "confidence": 0.78,
+  "analysis_mode": "biomechanics_override",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 70,
+      "end_frame": 228,
+      "score": 8.0,
+      "grade": "Good",
+      "issues": [
+        "Arms are pressing too early.",
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 15.5,
+        "drive_timing_frames": -60
+      },
+      "feedback": [
+        "Drive with your legs first, then press overhead.",
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 130,
+      "drive_frame": 136,
+      "lockout_frame": 228
+    },
+    {
+      "rep": 2,
+      "start_frame": 322,
+      "end_frame": 430,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 6.7,
+        "drive_timing_frames": -8
+      },
+      "feedback": [
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 330,
+      "drive_frame": 358,
+      "lockout_frame": 430
+    },
+    {
+      "rep": 3,
+      "start_frame": 474,
+      "end_frame": 567,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 7.9,
+        "drive_timing_frames": -4
+      },
+      "feedback": [
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 478,
+      "drive_frame": 484,
+      "lockout_frame": 567
+    },
+    {
+      "rep": 4,
+      "start_frame": 548,
+      "end_frame": 621,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Finish stronger overhead."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "dip": "good",
+        "dip_verticality": "good",
+        "timing": "early_press",
+        "valgus": "good",
+        "active_finish": "soft",
+        "knee_range": 7.9,
+        "drive_timing_frames": -6
+      },
+      "feedback": [
+        "Punch to a strong, stacked lockout."
+      ],
+      "dip_frame": 554,
+      "drive_frame": 560,
+      "lockout_frame": 621
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 4,
+    "avg_rep_score": 8.9,
+    "best_rep": 2,
+    "worst_rep": 1,
+    "trend": "Form appears to improve as the set goes on."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "push_press",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 70,
+        "end_frame": 228,
+        "score": 8.0,
+        "grade": "Good",
+        "issues": [
+          "Arms are pressing too early.",
+          "Finish stronger overhead."
+        ],
+        "breakdown": {
+          "lockout": "good",
+          "bar_path": "good",
+          "bar_severity": "minor",
+          "dip": "good",
+          "dip_verticality": "good",
+          "timing": "early_press",
+          "valgus": "good",
+          "active_finish": "soft",
+          "knee_range": 15.5,
+          "drive_timing_frames": -60
+        },
+        "feedback": [
+          "Drive with your legs first, then press overhead.",
+          "Punch to a strong, stacked lockout."
+        ],
+        "dip_frame": 130,
+        "drive_frame": 136,
+        "lockout_frame": 228
+      },
+      {
+        "rep": 2,
+        "start_frame": 322,
+        "end_frame": 430,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Finish stronger overhead."
+        ],
+        "breakdown": {
+          "lockout": "good",
+          "bar_path": "good",
+          "bar_severity": "minor",
+          "dip": "good",
+          "dip_verticality": "good",
+          "timing": "early_press",
+          "valgus": "good",
+          "active_finish": "soft",
+          "knee_range": 6.7,
+          "drive_timing_frames": -8
+        },
+        "feedback": [
+          "Punch to a strong, stacked lockout."
+        ],
+        "dip_frame": 330,
+        "drive_frame": 358,
+        "lockout_frame": 430
+      },
+      {
+        "rep": 3,
+        "start_frame": 474,
+        "end_frame": 567,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Finish stronger overhead."
+        ],
+        "breakdown": {
+          "lockout": "good",
+          "bar_path": "good",
+          "bar_severity": "minor",
+          "dip": "good",
+          "dip_verticality": "good",
+          "timing": "early_press",
+          "valgus": "good",
+          "active_finish": "soft",
+          "knee_range": 7.9,
+          "drive_timing_frames": -4
+        },
+        "feedback": [
+          "Punch to a strong, stacked lockout."
+        ],
+        "dip_frame": 478,
+        "drive_frame": 484,
+        "lockout_frame": 567
+      },
+      {
+        "rep": 4,
+        "start_frame": 548,
+        "end_frame": 621,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Finish stronger overhead."
+        ],
+        "breakdown": {
+          "lockout": "good",
+          "bar_path": "good",
+          "bar_severity": "minor",
+          "dip": "good",
+          "dip_verticality": "good",
+          "timing": "early_press",
+          "valgus": "good",
+          "active_finish": "soft",
+          "knee_range": 7.9,
+          "drive_timing_frames": -6
+        },
+        "feedback": [
+          "Punch to a strong, stacked lockout."
+        ],
+        "dip_frame": 554,
+        "drive_frame": 560,
+        "lockout_frame": 621
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "push_press",
-    "squat": "squat_back",
-    "squat_conf": 0.9396342039108276,
-    "olympic": "3",
-    "olympic_conf": 0.324,
-    "final": "push_press"
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.878,
+    "raw_label": "push_press",
+    "base_conf": 0.705,
+    "bio_label": "push_press",
+    "bio_conf": 0.78,
+    "bio_override": true,
+    "bio_reason": "overhead_press_detected",
+    "protected_label": "push_press",
+    "protected_reason": "push_press_pattern_detected",
+    "bodyweight": {
+      "total_frames": 617,
+      "wrist_above_shoulder_ratio": 1.0,
+      "wrist_below_shoulder_ratio": 0.0,
+      "mean_wrist_minus_shoulder_y": -0.043660636991262436,
+      "mean_hip_minus_shoulder_y": 0.14932945370674133,
+      "mean_knee_minus_hip_y": 0.09453209489583969,
+      "median_head_drop": -0.05641639232635498,
+      "avg_wrist_forward": 0.00962523277848959,
+      "wrist_y_range": 0.20671728253364563,
+      "shoulder_y_range": 0.08539077639579773,
+      "hip_y_range": 0.06201040744781494,
+      "elbow_range": 176.85658264160156,
+      "min_elbow": 2.0001447200775146,
+      "max_elbow": 178.85671997070312,
+      "avg_elbow": 62.04199981689453,
+      "avg_torso_angle": 3.0111052989959717
+    },
+    "router_v5": {
+      "raw_label": "push_press",
+      "raw_confidence": 0.78,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.878,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 45,
+        "clean_catch": 129,
+        "clean_recovery": 268,
+        "jerk_dip": 269,
+        "jerk_drive": 270,
+        "jerk_catch": 271,
+        "lockout": 373,
+        "finish": 373
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 155.17108811964184,
+        "extension_to_catch": 84.0,
+        "catch_to_finish": 244.0,
+        "extension_height_change": 0.042312443256378174,
+        "lockout_duration": 245.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 183,
+        "extension": 552,
+        "lockout": 616
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 163.29429894937795,
+        "extension_to_catch": -552.0,
+        "catch_to_finish": 616.0,
+        "extension_height_change": -0.026171326637268066,
+        "lockout_duration": 617.0
+      },
+      "cj_events": {
+        "setup": 0,
+        "clean_extension": 45,
+        "clean_catch": 129,
+        "clean_recovery": 268,
+        "jerk_dip": 269,
+        "jerk_drive": 270,
+        "jerk_catch": 271,
+        "lockout": 373,
+        "finish": 373
+      },
+      "cj_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 155.17108811964184,
+        "extension_to_catch": 84.0,
+        "catch_to_finish": 244.0,
+        "extension_height_change": 0.042312443256378174,
+        "lockout_duration": 245.0
+      },
+      "decision": "cj_rescue_from_push_press"
+    },
+    "squat_label": "squat_back",
+    "squat_conf": 0.94,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.5,
+        "squat_front": 0.6,
+        "squat_back": 0.15
+      },
+      "margin": 0.1,
+      "overhead_ratio": 1.0,
+      "elbow_elevated_ratio": 0.0,
+      "wrist_height_above_shoulder": 0.034,
+      "avg_wrist_forward": 0.011,
+      "front_rack_elbow_p25": 8.9,
+      "avg_elbow_angle_sq": 13.1,
+      "squat_frames_used": 247,
+      "total_frames": 617
+    },
+    "wrist_overhead": 1.0,
+    "explosive_score": 13.58,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": false,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": false,
+    "analysis_path": "biomechanics_override"
   }
 }

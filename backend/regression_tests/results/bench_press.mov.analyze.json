@@ -1,23 +1,177 @@
 {
   "exercise_label": "bench_press",
   "confidence": 1.0,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "analysis_mode": "biomechanics_override",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 163,
+      "end_frame": 233,
+      "score": 8.5,
+      "grade": "Good",
+      "issues": [],
+      "breakdown": {
+        "depth": "review",
+        "lockout": "review",
+        "elbows": "good",
+        "arch": "controlled",
+        "legs": "good",
+        "fallback": true,
+        "wrist_range": 0.083,
+        "elbow_range": 41.4,
+        "bar_depth": -0.086,
+        "max_elbow": 126.2
+      },
+      "feedback": [
+        "Bench press rep detected. Keep the bar path controlled and finish strong."
+      ],
+      "visibility_notes": [
+        "Bench rep was detected with the fallback tracker because the camera angle made the full press cycle hard to separate."
+      ]
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 1,
+    "avg_rep_score": 8.5,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "bench_press",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 163,
+        "end_frame": 233,
+        "score": 8.5,
+        "grade": "Good",
+        "issues": [],
+        "breakdown": {
+          "depth": "review",
+          "lockout": "review",
+          "elbows": "good",
+          "arch": "controlled",
+          "legs": "good",
+          "fallback": true,
+          "wrist_range": 0.083,
+          "elbow_range": 41.4,
+          "bar_depth": -0.086,
+          "max_elbow": 126.2
+        },
+        "feedback": [
+          "Bench press rep detected. Keep the bar path controlled and finish strong."
+        ],
+        "visibility_notes": [
+          "Bench rep was detected with the fallback tracker because the camera angle made the full press cycle hard to separate."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "bench_press",
-    "squat": "squat_back",
-    "squat_conf": 0.8122288584709167,
-    "olympic": "0",
-    "olympic_conf": 0.364,
-    "final": "bench_press"
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.67,
+    "raw_label": "bench_press",
+    "base_conf": 1.0,
+    "bio_label": "bench_press",
+    "bio_conf": 1.0,
+    "bio_override": true,
+    "bio_reason": "trusted_model_bench_press",
+    "protected_label": "bench_press",
+    "protected_reason": "trusted_base_bench_press",
+    "bodyweight": {
+      "total_frames": 183,
+      "wrist_above_shoulder_ratio": 0.43169398907103823,
+      "wrist_below_shoulder_ratio": 0.5683060109289617,
+      "mean_wrist_minus_shoulder_y": 0.051566239446401596,
+      "mean_hip_minus_shoulder_y": 0.054871104657649994,
+      "mean_knee_minus_hip_y": 0.028523502871394157,
+      "median_head_drop": -0.04916605353355408,
+      "avg_wrist_forward": 0.04315962269902229,
+      "wrist_y_range": 0.5620366334915161,
+      "shoulder_y_range": 0.5742039084434509,
+      "hip_y_range": 0.44198673963546753,
+      "elbow_range": 163.20916748046875,
+      "min_elbow": 14.80124568939209,
+      "max_elbow": 178.01040649414062,
+      "avg_elbow": 123.46636199951172,
+      "avg_torso_angle": 63.32245635986328
+    },
+    "router_v5": {
+      "raw_label": "bench_press",
+      "raw_confidence": 0.9997323155403137,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.67,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 28,
+        "clean_catch": 80,
+        "clean_recovery": 124,
+        "jerk_dip": 171,
+        "jerk_drive": 181,
+        "jerk_catch": 181,
+        "lockout": 182,
+        "finish": 182
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 104.00017046365711,
+        "extension_to_catch": 52.0,
+        "catch_to_finish": 102.0,
+        "extension_height_change": 0.1665479838848114,
+        "lockout_duration": 78.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 23,
+        "extension": 24,
+        "lockout": 182
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 179.47441471471296,
+        "extension_to_catch": -24.0,
+        "catch_to_finish": 182.0,
+        "extension_height_change": -0.12973879277706146,
+        "lockout_duration": 79.0
+      },
+      "decision": "fallback"
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.0,
+        "squat_front": 0.6,
+        "squat_back": 0.15
+      },
+      "margin": 0.45,
+      "overhead_ratio": 0.356,
+      "elbow_elevated_ratio": 0.288,
+      "wrist_height_above_shoulder": 0.09,
+      "avg_wrist_forward": 0.045,
+      "front_rack_elbow_p25": 88.2,
+      "avg_elbow_angle_sq": 124.6,
+      "squat_frames_used": 73,
+      "total_frames": 183
+    },
+    "wrist_overhead": 0.432,
+    "explosive_score": 145.03,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": true,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

@@ -1,50 +1,137 @@
 {
-  "exercise_label": "squat_back",
-  "confidence": 0.98,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "deadlift",
+  "confidence": 1.0,
+  "analysis_mode": "biomechanics_override",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 1,
-      "descent_frame": 4,
-      "bottom_frame": 7,
-      "ascent_frame": 20,
-      "end_frame": 38,
-      "score": 5.9,
+      "start_frame": 6,
+      "pull_frame": 22,
+      "mid_frame": 36,
+      "finish_frame": 46,
+      "bottom_frame": 1,
+      "end_frame": 53,
+      "score": 6.0,
       "grade": "Needs Work",
       "issues": [
-        "Depth is close, but could be slightly lower.",
-        "Knees cave inward noticeably."
+        "Back may be rounding during the pull."
       ],
       "breakdown": {
-        "depth": "borderline",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
+        "setup": "good",
+        "back": "poor",
         "neck": "good",
-        "butt_wink": "not_detected"
+        "hinge": "good",
+        "lockout": "good",
+        "knees": "good",
+        "bar_path": "good",
+        "control": "good"
       },
       "feedback": [
-        "Sink a little deeper while keeping your chest up.",
-        "Drive knees out over your toes."
+        "Brace your core and keep a neutral spine."
       ]
     }
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 5.9,
+    "avg_rep_score": 6.0,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set."
   },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "deadlift",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 6,
+        "pull_frame": 22,
+        "mid_frame": 36,
+        "finish_frame": 46,
+        "bottom_frame": 1,
+        "end_frame": 53,
+        "score": 6.0,
+        "grade": "Needs Work",
+        "issues": [
+          "Back may be rounding during the pull."
+        ],
+        "breakdown": {
+          "setup": "good",
+          "back": "poor",
+          "neck": "good",
+          "hinge": "good",
+          "lockout": "good",
+          "knees": "good",
+          "bar_path": "good",
+          "control": "good"
+        },
+        "feedback": [
+          "Brace your core and keep a neutral spine."
+        ]
+      }
+    ]
+  },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "deadlift",
-    "squat": "squat_back",
-    "squat_conf": 0.9845713376998901,
-    "olympic": "0",
-    "olympic_conf": 0.338,
-    "final": "squat_back"
+    "olympic_pred": null,
+    "olympic_conf": null,
+    "raw_label": "deadlift",
+    "base_conf": 0.999,
+    "bio_label": "deadlift",
+    "bio_conf": 0.999,
+    "bio_override": true,
+    "bio_reason": "deadlift_hinge_pattern_detected",
+    "protected_label": "deadlift",
+    "protected_reason": "deadlift_setup_rescue",
+    "bodyweight": {
+      "total_frames": 105,
+      "wrist_above_shoulder_ratio": 0.0,
+      "wrist_below_shoulder_ratio": 1.0,
+      "mean_wrist_minus_shoulder_y": 0.29529792070388794,
+      "mean_hip_minus_shoulder_y": 0.16947348415851593,
+      "mean_knee_minus_hip_y": 0.14831514656543732,
+      "median_head_drop": -0.08000162243843079,
+      "avg_wrist_forward": 0.019867781549692154,
+      "wrist_y_range": 0.3145420253276825,
+      "shoulder_y_range": 0.29810333251953125,
+      "hip_y_range": 0.1211848258972168,
+      "elbow_range": 14.50164794921875,
+      "min_elbow": 163.2412567138672,
+      "max_elbow": 177.74290466308594,
+      "avg_elbow": 172.16810607910156,
+      "avg_torso_angle": 26.214738845825195
+    },
+    "router_v5": null,
+    "squat_label": "squat_back",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.15,
+        "squat_back": 1.0
+      },
+      "margin": 0.8,
+      "overhead_ratio": 0.0,
+      "elbow_elevated_ratio": 0.0,
+      "wrist_height_above_shoulder": -0.261,
+      "avg_wrist_forward": 0.027,
+      "front_rack_elbow_p25": 172.3,
+      "avg_elbow_angle_sq": 173.6,
+      "squat_frames_used": 42,
+      "total_frames": 105
+    },
+    "wrist_overhead": 0.0,
+    "explosive_score": 8.67,
+    "run_oly_router": false,
+    "looks_split": false,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": false,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

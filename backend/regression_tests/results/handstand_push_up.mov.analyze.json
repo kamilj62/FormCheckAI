@@ -1,23 +1,123 @@
 {
-  "exercise_label": "bench_press",
-  "confidence": 0.84,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "exercise_label": "handstand_push_up",
+  "confidence": 0.86,
+  "analysis_mode": "biomechanics_override",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 246,
+      "descent_frame": 355,
+      "bottom_frame": 412,
+      "ascent_frame": 430,
+      "end_frame": 480,
+      "score": 10.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "range": "good",
+        "bottom": "good",
+        "lockout": "good",
+        "control": "good"
+      },
+      "feedback": [
+        "Good handstand push-up rep. Keep the body stacked and press to a strong lockout."
+      ]
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 1,
+    "avg_rep_score": 10.0,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "handstand_push_up",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 246,
+        "descent_frame": 355,
+        "bottom_frame": 412,
+        "ascent_frame": 430,
+        "end_frame": 480,
+        "score": 10.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "range": "good",
+          "bottom": "good",
+          "lockout": "good",
+          "control": "good"
+        },
+        "feedback": [
+          "Good handstand push-up rep. Keep the body stacked and press to a strong lockout."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "bench_press",
-    "squat": "squat_back",
-    "squat_conf": 0.8077811002731323,
-    "olympic": "0",
-    "olympic_conf": 0.334,
-    "final": "bench_press"
+    "olympic_pred": null,
+    "olympic_conf": null,
+    "raw_label": "bench_press",
+    "base_conf": 0.843,
+    "bio_label": "bench_press",
+    "bio_conf": 0.843,
+    "bio_override": true,
+    "bio_reason": "trusted_model_bench_press",
+    "protected_label": "handstand_push_up",
+    "protected_reason": "handstand_push_up_bodyweight_pattern",
+    "bodyweight": {
+      "total_frames": 460,
+      "wrist_above_shoulder_ratio": 0.0,
+      "wrist_below_shoulder_ratio": 1.0,
+      "mean_wrist_minus_shoulder_y": 0.11437395960092545,
+      "mean_hip_minus_shoulder_y": -0.14951476454734802,
+      "mean_knee_minus_hip_y": -0.10030385106801987,
+      "median_head_drop": 0.04195946455001831,
+      "avg_wrist_forward": 0.00937749445438385,
+      "wrist_y_range": 0.127765953540802,
+      "shoulder_y_range": 0.16437703371047974,
+      "hip_y_range": 0.09069305658340454,
+      "elbow_range": 75.50525665283203,
+      "min_elbow": 103.05635833740234,
+      "max_elbow": 178.56161499023438,
+      "avg_elbow": 162.1441650390625,
+      "avg_torso_angle": 173.441650390625
+    },
+    "router_v5": null,
+    "squat_label": "squat_back",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.15,
+        "squat_back": 1.0
+      },
+      "margin": 0.8,
+      "overhead_ratio": 0.0,
+      "elbow_elevated_ratio": 0.0,
+      "wrist_height_above_shoulder": -0.112,
+      "avg_wrist_forward": 0.007,
+      "front_rack_elbow_p25": 168.3,
+      "avg_elbow_angle_sq": 171.9,
+      "squat_frames_used": 184,
+      "total_frames": 460
+    },
+    "wrist_overhead": 0.0,
+    "explosive_score": 11.65,
+    "run_oly_router": false,
+    "looks_split": false,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": false,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

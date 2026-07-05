@@ -1,6 +1,13 @@
 {
-  "exercise_label": "bench_press",
+  "exercise_label": "handstand_push_up",
   "overlay_video_url": null,
-  "phase_images": null,
-  "visuals_error": "No usable rep found."
+  "phase_images": {
+    "setup": "/outputs/push_up_setup_bc8a5844.jpg",
+    "descent": "/outputs/push_up_descent_e98ff032.jpg",
+    "bottom": "/outputs/push_up_bottom_627b113f.jpg",
+    "ascent": "/outputs/push_up_ascent_7a0bc088.jpg",
+    "lockout": "/outputs/push_up_lockout_f20faded.jpg",
+    "debug_sheet": "/outputs/push_up_phase_debug_100bcccd.jpg"
+  },
+  "visuals_error": null
 }

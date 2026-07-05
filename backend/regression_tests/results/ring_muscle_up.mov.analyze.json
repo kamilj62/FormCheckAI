@@ -1,196 +1,183 @@
 {
-  "exercise_label": "overhead_squat",
-  "confidence": 1.0,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "muscle_up",
+  "confidence": 0.86,
+  "analysis_mode": "biomechanics_override",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 131,
-      "descent_frame": 132,
-      "bottom_frame": 133,
-      "ascent_frame": 133,
-      "end_frame": 134,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 212,
-      "descent_frame": 213,
-      "bottom_frame": 215,
-      "ascent_frame": 218,
-      "end_frame": 223,
-      "score": 5.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Chest/shoulders are starting to fall forward.",
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "borderline",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Stay braced and keep your chest proud.",
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 3,
-      "start_frame": 240,
-      "descent_frame": 241,
-      "bottom_frame": 242,
-      "ascent_frame": 244,
-      "end_frame": 248,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 4,
-      "start_frame": 363,
-      "descent_frame": 364,
-      "bottom_frame": 366,
-      "ascent_frame": 367,
-      "end_frame": 370,
-      "score": 7.5,
-      "grade": "Solid",
-      "issues": [
-        "Chest/shoulders are starting to fall forward.",
-        "Slight knee cave detected."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "borderline",
-        "knees": "borderline",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Stay braced and keep your chest proud.",
-        "Keep knees tracking over your toes."
-      ]
-    },
-    {
-      "rep": 5,
-      "start_frame": 387,
-      "descent_frame": 388,
-      "bottom_frame": 389,
-      "ascent_frame": 391,
-      "end_frame": 395,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 6,
-      "start_frame": 508,
-      "descent_frame": 509,
-      "bottom_frame": 510,
-      "ascent_frame": 512,
-      "end_frame": 515,
+      "start_frame": 142,
+      "pull_frame": 276,
+      "top_frame": 371,
+      "descent_frame": 420,
+      "end_frame": 540,
       "score": 9.0,
       "grade": "Excellent",
       "issues": [
-        "Chest/shoulders are starting to fall forward."
+        "Upper-body position was hard to track."
       ],
       "breakdown": {
-        "depth": "good",
-        "torso": "borderline",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "range": "good",
+        "top": "good",
+        "control": "review"
       },
       "feedback": [
-        "Stay braced and keep your chest proud."
-      ]
-    },
-    {
-      "rep": 7,
-      "start_frame": 532,
-      "descent_frame": 533,
-      "bottom_frame": 534,
-      "ascent_frame": 536,
-      "end_frame": 540,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
+        "Record from the side with the full body and bar visible."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 7,
-    "avg_rep_score": 6.9,
-    "best_rep": 6,
-    "worst_rep": 2,
+    "detected_reps": 1,
+    "avg_rep_score": 9.0,
+    "best_rep": 1,
+    "worst_rep": 1,
     "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "muscle_up",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 142,
+        "pull_frame": 276,
+        "top_frame": 371,
+        "descent_frame": 420,
+        "end_frame": 540,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [
+          "Upper-body position was hard to track."
+        ],
+        "breakdown": {
+          "range": "good",
+          "top": "good",
+          "control": "review"
+        },
+        "feedback": [
+          "Record from the side with the full body and bar visible."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "squat",
-    "squat": "overhead_squat",
-    "squat_conf": 0.9969006776809692,
-    "olympic": "0",
-    "olympic_conf": 0.326,
-    "final": "overhead_squat"
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.588,
+    "raw_label": "squat",
+    "base_conf": 0.909,
+    "bio_label": "push_press",
+    "bio_conf": 0.909,
+    "bio_override": true,
+    "bio_reason": "overhead_press_detected",
+    "protected_label": "muscle_up",
+    "protected_reason": "muscle_up_bodyweight_pattern",
+    "bodyweight": {
+      "total_frames": 392,
+      "wrist_above_shoulder_ratio": 0.5586734693877551,
+      "wrist_below_shoulder_ratio": 0.4413265306122449,
+      "mean_wrist_minus_shoulder_y": -0.0396232008934021,
+      "mean_hip_minus_shoulder_y": 0.13805659115314484,
+      "mean_knee_minus_hip_y": 0.060599882155656815,
+      "median_head_drop": -0.041038691997528076,
+      "avg_wrist_forward": 0.05629737675189972,
+      "wrist_y_range": 0.24573174118995667,
+      "shoulder_y_range": 0.37264484167099,
+      "hip_y_range": 0.3860560655593872,
+      "elbow_range": 174.25860595703125,
+      "min_elbow": 4.553346633911133,
+      "max_elbow": 178.81195068359375,
+      "avg_elbow": 143.64927673339844,
+      "avg_torso_angle": 27.8725528717041
+    },
+    "router_v5": {
+      "raw_label": "muscle_up",
+      "raw_confidence": 0.86,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.588,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "first_pull": 1,
+        "extension": 2,
+        "catch": 3,
+        "lockout": 12,
+        "finish": 12
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 173.30985103822306,
+        "extension_to_catch": 1.0,
+        "catch_to_finish": 9.0,
+        "extension_height_change": -0.0007627606391906738,
+        "lockout_duration": 10.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 294,
+        "extension": 341,
+        "lockout": 390
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 171.65339360462562,
+        "extension_to_catch": -341.0,
+        "catch_to_finish": 390.0,
+        "extension_height_change": 0.2755562663078308,
+        "lockout_duration": 219.0
+      },
+      "clean_events": {
+        "setup": 29,
+        "first_pull": 64,
+        "extension": 89,
+        "clean_extension": 107,
+        "catch": 127,
+        "clean_catch": 127,
+        "finish": 164,
+        "lockout": 164
+      },
+      "clean_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 151.6393770110812,
+        "extension_to_catch": 38.0,
+        "catch_to_finish": 37.0,
+        "extension_height_change": -0.01340264081954956,
+        "lockout_duration": 38.0
+      },
+      "decision": "clean_rescue_from_weak_snatch"
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.75,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.7,
+        "squat_back": 0.5
+      },
+      "margin": 0.2,
+      "overhead_ratio": 0.146,
+      "elbow_elevated_ratio": 0.331,
+      "wrist_height_above_shoulder": -0.033,
+      "avg_wrist_forward": 0.058,
+      "front_rack_elbow_p25": 102.6,
+      "avg_elbow_angle_sq": 156.7,
+      "squat_frames_used": 157,
+      "total_frames": 392
+    },
+    "wrist_overhead": 0.559,
+    "explosive_score": 107.53,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": true,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

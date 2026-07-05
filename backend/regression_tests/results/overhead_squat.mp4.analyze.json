@@ -1,6 +1,6 @@
 {
   "exercise_label": "overhead_squat",
-  "confidence": 0.99,
+  "confidence": 0.81,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
@@ -35,14 +35,139 @@
     "worst_rep": 1,
     "trend": "Form appears consistent across the set."
   },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "overhead_squat",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 60,
+        "descent_frame": 75,
+        "bottom_frame": 89,
+        "ascent_frame": 93,
+        "end_frame": 100,
+        "score": 6.5,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected"
+        },
+        "feedback": [
+          "Drive knees out over your toes."
+        ]
+      }
+    ]
+  },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "push_press",
-    "squat": "overhead_squat",
-    "squat_conf": 0.9946802258491516,
-    "olympic": "0",
-    "olympic_conf": 0.312,
-    "final": "overhead_squat"
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.672,
+    "raw_label": "push_press",
+    "base_conf": 0.996,
+    "bio_label": "push_press",
+    "bio_conf": 0.996,
+    "bio_override": true,
+    "bio_reason": "overhead_press_detected",
+    "protected_label": null,
+    "protected_reason": null,
+    "bodyweight": {
+      "total_frames": 144,
+      "wrist_above_shoulder_ratio": 0.9375,
+      "wrist_below_shoulder_ratio": 0.0625,
+      "mean_wrist_minus_shoulder_y": -0.14169707894325256,
+      "mean_hip_minus_shoulder_y": 0.306584894657135,
+      "mean_knee_minus_hip_y": 0.15337079763412476,
+      "median_head_drop": -0.06554603576660156,
+      "avg_wrist_forward": 0.009083051234483719,
+      "wrist_y_range": 0.3020056486129761,
+      "shoulder_y_range": 0.3515453338623047,
+      "hip_y_range": 0.34586650133132935,
+      "elbow_range": 171.78550720214844,
+      "min_elbow": 5.184886455535889,
+      "max_elbow": 176.97039794921875,
+      "avg_elbow": 136.5916290283203,
+      "avg_torso_angle": 6.105321884155273
+    },
+    "router_v5": {
+      "raw_label": "overhead_squat",
+      "raw_confidence": 0.811,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.672,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 32,
+        "clean_catch": 34,
+        "clean_recovery": 41,
+        "jerk_dip": 43,
+        "jerk_drive": 44,
+        "jerk_catch": 47,
+        "lockout": 106,
+        "finish": 106
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 174.81100632041475,
+        "extension_to_catch": 2.0,
+        "catch_to_finish": 72.0,
+        "extension_height_change": -0.00254744291305542,
+        "lockout_duration": 73.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 80,
+        "extension": 99,
+        "lockout": 143
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 177.59057566060895,
+        "extension_to_catch": -99.0,
+        "catch_to_finish": 143.0,
+        "extension_height_change": -0.2438497543334961,
+        "lockout_duration": 135.0
+      },
+      "decision": "fallback"
+    },
+    "squat_label": "overhead_squat",
+    "squat_conf": 0.811,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 1.0,
+        "squat_front": 0.0,
+        "squat_back": 0.85
+      },
+      "margin": 0.15,
+      "overhead_ratio": 1.0,
+      "elbow_elevated_ratio": 1.0,
+      "wrist_height_above_shoulder": 0.361,
+      "avg_wrist_forward": 0.01,
+      "front_rack_elbow_p25": 167.7,
+      "avg_elbow_angle_sq": 175.0,
+      "squat_frames_used": 58,
+      "total_frames": 144
+    },
+    "wrist_overhead": 0.938,
+    "explosive_score": 19.1,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": false,
+    "looks_cj": true,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "detailed_rep_analysis"
   }
 }

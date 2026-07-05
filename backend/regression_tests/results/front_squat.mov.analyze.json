@@ -1,6 +1,6 @@
 {
-  "exercise_label": "squat_back",
-  "confidence": 0.98,
+  "exercise_label": "squat_front",
+  "confidence": 0.77,
   "analysis_mode": "detailed_rep_analysis",
   "rep_feedback": [
     {
@@ -19,10 +19,15 @@
         "knees": "good",
         "heels": "good",
         "neck": "good",
-        "butt_wink": "not_detected"
+        "butt_wink": "not_detected",
+        "front_rack": "good",
+        "bar_position": "good",
+        "elbow_height_delta": 0.044,
+        "wrist_drop_delta": 0.028,
+        "rack_forward_shift": 0.13
       },
       "feedback": [
-        "Strong squat rep. Keep bracing and driving through the floor."
+        "Strong front squat rep. Keep elbows high and stay tall."
       ]
     },
     {
@@ -32,10 +37,11 @@
       "bottom_frame": 162,
       "ascent_frame": 164,
       "end_frame": 167,
-      "score": 6.5,
+      "score": 5.7,
       "grade": "Needs Work",
       "issues": [
-        "Knees cave inward noticeably."
+        "Knees cave inward noticeably.",
+        "Elbows are dropping slightly in the front rack."
       ],
       "breakdown": {
         "depth": "good",
@@ -43,28 +49,209 @@
         "knees": "poor",
         "heels": "good",
         "neck": "good",
-        "butt_wink": "not_detected"
+        "butt_wink": "not_detected",
+        "front_rack": "borderline",
+        "bar_position": "good",
+        "elbow_height_delta": 0.094,
+        "wrist_drop_delta": 0.106,
+        "rack_forward_shift": 0.121
       },
       "feedback": [
-        "Drive knees out over your toes."
+        "Drive knees out over your toes.",
+        "Drive elbows higher to keep the bar secure."
       ]
     }
   ],
   "set_summary": {
     "detected_reps": 2,
-    "avg_rep_score": 8.2,
+    "avg_rep_score": 7.8,
     "best_rep": 1,
     "worst_rep": 2,
     "trend": "Form appears to deteriorate as the set goes on."
   },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "squat_front",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 63,
+        "descent_frame": 63,
+        "bottom_frame": 64,
+        "ascent_frame": 70,
+        "end_frame": 78,
+        "score": 10.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "good",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "good",
+          "bar_position": "good",
+          "elbow_height_delta": 0.044,
+          "wrist_drop_delta": 0.028,
+          "rack_forward_shift": 0.13
+        },
+        "feedback": [
+          "Strong front squat rep. Keep elbows high and stay tall."
+        ]
+      },
+      {
+        "rep": 2,
+        "start_frame": 150,
+        "descent_frame": 156,
+        "bottom_frame": 162,
+        "ascent_frame": 164,
+        "end_frame": 167,
+        "score": 5.7,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably.",
+          "Elbows are dropping slightly in the front rack."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "borderline",
+          "bar_position": "good",
+          "elbow_height_delta": 0.094,
+          "wrist_drop_delta": 0.106,
+          "rack_forward_shift": 0.121
+        },
+        "feedback": [
+          "Drive knees out over your toes.",
+          "Drive elbows higher to keep the bar secure."
+        ]
+      }
+    ]
+  },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "squat",
-    "squat": "squat_back",
-    "squat_conf": 0.9835197329521179,
-    "olympic": "0",
-    "olympic_conf": 0.364,
-    "final": "squat_back"
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.506,
+    "raw_label": "squat",
+    "base_conf": 0.976,
+    "bio_label": "squat",
+    "bio_conf": 0.976,
+    "bio_override": false,
+    "bio_reason": "model_prediction",
+    "protected_label": null,
+    "protected_reason": null,
+    "bodyweight": {
+      "total_frames": 168,
+      "wrist_above_shoulder_ratio": 0.31547619047619047,
+      "wrist_below_shoulder_ratio": 0.6845238095238095,
+      "mean_wrist_minus_shoulder_y": 0.062378138303756714,
+      "mean_hip_minus_shoulder_y": 0.22266170382499695,
+      "mean_knee_minus_hip_y": 0.14750126004219055,
+      "median_head_drop": -0.049516111612319946,
+      "avg_wrist_forward": 0.08082607388496399,
+      "wrist_y_range": 0.6676217913627625,
+      "shoulder_y_range": 0.36821234226226807,
+      "hip_y_range": 0.21686333417892456,
+      "elbow_range": 163.81234741210938,
+      "min_elbow": 9.74991226196289,
+      "max_elbow": 173.562255859375,
+      "avg_elbow": 101.69784545898438,
+      "avg_torso_angle": 23.604190826416016
+    },
+    "router_v5": {
+      "raw_label": "squat_front",
+      "raw_confidence": 0.771,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.506,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "first_pull": 2,
+        "extension": 5,
+        "catch": 6,
+        "lockout": 24,
+        "finish": 24
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 87.62573928116247,
+        "extension_to_catch": 1.0,
+        "catch_to_finish": 18.0,
+        "extension_height_change": -0.0023419857025146484,
+        "lockout_duration": 16.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 150,
+        "extension": 156,
+        "lockout": 166
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 81.18127119053484,
+        "extension_to_catch": -156.0,
+        "catch_to_finish": 166.0,
+        "extension_height_change": 0.05391806364059448,
+        "lockout_duration": 53.0
+      },
+      "clean_events": {
+        "setup": 42,
+        "first_pull": 52,
+        "extension": 66,
+        "clean_extension": 65,
+        "catch": 87,
+        "clean_catch": 87,
+        "finish": 108,
+        "lockout": 108
+      },
+      "clean_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 100.73470752767884,
+        "extension_to_catch": 21.0,
+        "catch_to_finish": 21.0,
+        "extension_height_change": 0.12205851078033447,
+        "lockout_duration": 1.0
+      },
+      "decision": "clean_rescue_from_weak_snatch"
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.771,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.5,
+        "squat_front": 0.9,
+        "squat_back": 0.35
+      },
+      "margin": 0.4,
+      "overhead_ratio": 0.149,
+      "elbow_elevated_ratio": 0.09,
+      "wrist_height_above_shoulder": 0.119,
+      "avg_wrist_forward": 0.07,
+      "front_rack_elbow_p25": 74.2,
+      "avg_elbow_angle_sq": 168.7,
+      "squat_frames_used": 67,
+      "total_frames": 168
+    },
+    "wrist_overhead": 0.315,
+    "explosive_score": 39.75,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "detailed_rep_analysis"
   }
 }

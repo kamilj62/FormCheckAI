@@ -1,23 +1,177 @@
 {
-  "exercise_label": "bench_press",
+  "exercise_label": "thruster",
   "confidence": 0.99,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "analysis_mode": "biomechanics_override",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 41,
+      "end_frame": 150,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Squat depth may be shallow for a thruster."
+      ],
+      "breakdown": {
+        "lockout": "good",
+        "bar_path": "good",
+        "bar_severity": "minor",
+        "squat_depth": "shallow",
+        "torso_stack": "good",
+        "active_finish": "good",
+        "knee_range": 29.4
+      },
+      "feedback": [
+        "Use a full front squat before driving overhead."
+      ],
+      "dip_frame": 47,
+      "drive_frame": 92,
+      "catch_frame": 127,
+      "lockout_frame": 150
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 1,
+    "avg_rep_score": 9.2,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "thruster",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 41,
+        "end_frame": 150,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Squat depth may be shallow for a thruster."
+        ],
+        "breakdown": {
+          "lockout": "good",
+          "bar_path": "good",
+          "bar_severity": "minor",
+          "squat_depth": "shallow",
+          "torso_stack": "good",
+          "active_finish": "good",
+          "knee_range": 29.4
+        },
+        "feedback": [
+          "Use a full front squat before driving overhead."
+        ],
+        "dip_frame": 47,
+        "drive_frame": 92,
+        "catch_frame": 127,
+        "lockout_frame": 150
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "bench_press",
-    "squat": "squat_front",
-    "squat_conf": 0.8743898868560791,
-    "olympic": "0",
-    "olympic_conf": 0.368,
-    "final": "bench_press"
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.56,
+    "raw_label": "bench_press",
+    "base_conf": 0.994,
+    "bio_label": "bench_press",
+    "bio_conf": 0.994,
+    "bio_override": true,
+    "bio_reason": "trusted_model_bench_press",
+    "protected_label": "thruster",
+    "protected_reason": "thruster_pattern_detected",
+    "bodyweight": {
+      "total_frames": 115,
+      "wrist_above_shoulder_ratio": 0.1391304347826087,
+      "wrist_below_shoulder_ratio": 0.8608695652173913,
+      "mean_wrist_minus_shoulder_y": 0.051119595766067505,
+      "mean_hip_minus_shoulder_y": 0.12503185868263245,
+      "mean_knee_minus_hip_y": 0.08625463396310806,
+      "median_head_drop": -0.0293104350566864,
+      "avg_wrist_forward": 0.03135330602526665,
+      "wrist_y_range": 0.47738245129585266,
+      "shoulder_y_range": 0.29727572202682495,
+      "hip_y_range": 0.3160361647605896,
+      "elbow_range": 176.24530029296875,
+      "min_elbow": 2.1261091232299805,
+      "max_elbow": 178.3714141845703,
+      "avg_elbow": 98.37125396728516,
+      "avg_torso_angle": 20.145118713378906
+    },
+    "router_v5": {
+      "raw_label": "thruster",
+      "raw_confidence": 0.9938724040985107,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.56,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 13,
+        "clean_catch": 34,
+        "clean_recovery": 56,
+        "jerk_dip": 91,
+        "jerk_drive": 111,
+        "jerk_catch": 113,
+        "lockout": 114,
+        "finish": 114
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 71.55278079319311,
+        "extension_to_catch": 21.0,
+        "catch_to_finish": 80.0,
+        "extension_height_change": -0.16697973012924194,
+        "lockout_duration": 15.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 86,
+        "extension": 104,
+        "lockout": 114
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 164.4988983848958,
+        "extension_to_catch": -104.0,
+        "catch_to_finish": 114.0,
+        "extension_height_change": -0.14014005661010742,
+        "lockout_duration": 16.0
+      },
+      "decision": "fallback"
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.0,
+        "squat_front": 0.65,
+        "squat_back": 0.15
+      },
+      "margin": 0.5,
+      "overhead_ratio": 0.239,
+      "elbow_elevated_ratio": 0.217,
+      "wrist_height_above_shoulder": 0.042,
+      "avg_wrist_forward": 0.029,
+      "front_rack_elbow_p25": 43.3,
+      "avg_elbow_angle_sq": 140.9,
+      "squat_frames_used": 46,
+      "total_frames": 115
+    },
+    "wrist_overhead": 0.139,
+    "explosive_score": 65.81,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

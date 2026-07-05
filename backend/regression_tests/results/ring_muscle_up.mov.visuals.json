@@ -1,12 +1,14 @@
 {
-  "exercise_label": "overhead_squat",
+  "exercise_label": "muscle_up",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/overhead_squat_setup_c2ad2a6e.jpg",
-    "descent": "/outputs/overhead_squat_descent_9127afdb.jpg",
-    "bottom": "/outputs/overhead_squat_bottom_e10c55fa.jpg",
-    "ascent": "/outputs/overhead_squat_ascent_fdc06995.jpg",
-    "debug_sheet": "/outputs/overhead_squat_phase_debug_696f6eb1.jpg"
+    "hang": "/outputs/bar_muscle_up_hang_d5e46d17.jpg",
+    "pull": "/outputs/bar_muscle_up_pull_f5c7b727.jpg",
+    "transition": "/outputs/bar_muscle_up_transition_d0f444a8.jpg",
+    "dip": "/outputs/bar_muscle_up_dip_d80aa935.jpg",
+    "lockout": "/outputs/bar_muscle_up_lockout_d9ac83e5.jpg",
+    "finish": "/outputs/bar_muscle_up_finish_c545350d.jpg",
+    "debug_sheet": "/outputs/bar_muscle_up_phase_debug_d851be06.jpg"
   },
   "visuals_error": null
 }

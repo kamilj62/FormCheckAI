@@ -1,240 +1,464 @@
 {
-  "exercise_label": "squat_back",
-  "confidence": 0.96,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "snatch",
+  "confidence": 0.89,
+  "analysis_mode": "router_v5",
   "rep_feedback": [
     {
+      "start_frame": 326,
+      "first_pull_frame": 336,
+      "extension_frame": 357,
+      "catch_frame": 364,
+      "end_frame": 382,
       "rep": 1,
-      "start_frame": 99,
-      "descent_frame": 100,
-      "bottom_frame": 101,
-      "ascent_frame": 102,
-      "end_frame": 104,
-      "score": 4.3,
-      "grade": "Poor",
-      "issues": [
-        "Shoulders/chest are collapsing forward.",
-        "Knees cave inward noticeably."
-      ],
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
       "breakdown": {
-        "depth": "good",
-        "torso": "poor",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good"
       },
       "feedback": [
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
-        "Drive knees out over your toes."
-      ]
+        "Good snatch rep. Strong pull, catch, and overhead position."
+      ],
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "title": "First Pull",
+            "status": "good",
+            "message": "Strong first pull from the floor."
+          },
+          {
+            "title": "Extension",
+            "status": "good",
+            "message": "Excellent full extension."
+          },
+          {
+            "title": "Turnover",
+            "status": "good",
+            "message": "Fast pull under the bar."
+          },
+          {
+            "title": "Overhead Catch",
+            "status": "good",
+            "message": "Stable receiving position."
+          },
+          {
+            "title": "Stability",
+            "status": "good",
+            "message": "Excellent overhead stability."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed close throughout the lift."
+          }
+        ]
+      }
     },
     {
+      "start_frame": 375,
+      "first_pull_frame": 385,
+      "extension_frame": 412,
+      "catch_frame": 413,
+      "end_frame": 449,
       "rep": 2,
-      "start_frame": 107,
-      "descent_frame": 108,
-      "bottom_frame": 109,
-      "ascent_frame": 110,
-      "end_frame": 112,
-      "score": 4.3,
-      "grade": "Poor",
-      "issues": [
-        "Shoulders/chest are collapsing forward.",
-        "Knees cave inward noticeably."
-      ],
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
       "breakdown": {
-        "depth": "good",
-        "torso": "poor",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good"
       },
       "feedback": [
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
-        "Drive knees out over your toes."
-      ]
+        "Good snatch rep. Strong pull, catch, and overhead position."
+      ],
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "title": "First Pull",
+            "status": "good",
+            "message": "Strong first pull from the floor."
+          },
+          {
+            "title": "Extension",
+            "status": "good",
+            "message": "Excellent full extension."
+          },
+          {
+            "title": "Turnover",
+            "status": "good",
+            "message": "Fast pull under the bar."
+          },
+          {
+            "title": "Overhead Catch",
+            "status": "good",
+            "message": "Stable receiving position."
+          },
+          {
+            "title": "Stability",
+            "status": "good",
+            "message": "Excellent overhead stability."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed close throughout the lift."
+          }
+        ]
+      }
     },
     {
+      "start_frame": 657,
+      "first_pull_frame": 667,
+      "extension_frame": 691,
+      "catch_frame": 692,
+      "end_frame": 697,
       "rep": 3,
-      "start_frame": 278,
-      "descent_frame": 284,
-      "bottom_frame": 290,
-      "ascent_frame": 293,
-      "end_frame": 298,
-      "score": 10.0,
+      "score": 9.0,
       "grade": "Excellent",
       "issues": [],
       "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good"
       },
       "feedback": [
-        "Strong squat rep. Keep bracing and driving through the floor."
-      ]
-    },
-    {
-      "rep": 4,
-      "start_frame": 306,
-      "descent_frame": 314,
-      "bottom_frame": 322,
-      "ascent_frame": 325,
-      "end_frame": 329,
-      "score": 10.0,
-      "grade": "Excellent",
-      "issues": [],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Strong squat rep. Keep bracing and driving through the floor."
-      ]
-    },
-    {
-      "rep": 5,
-      "start_frame": 374,
-      "descent_frame": 380,
-      "bottom_frame": 385,
-      "ascent_frame": 397,
-      "end_frame": 412,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
+        "Good snatch rep. Strong pull, catch, and overhead position."
       ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 6,
-      "start_frame": 507,
-      "descent_frame": 509,
-      "bottom_frame": 512,
-      "ascent_frame": 516,
-      "end_frame": 522,
-      "score": 7.8,
-      "grade": "Solid",
-      "issues": [
-        "Shoulders/chest are collapsing forward."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "poor",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar."
-      ]
-    },
-    {
-      "rep": 7,
-      "start_frame": 534,
-      "descent_frame": 536,
-      "bottom_frame": 538,
-      "ascent_frame": 544,
-      "end_frame": 556,
-      "score": 7.8,
-      "grade": "Solid",
-      "issues": [
-        "Shoulders/chest are collapsing forward."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "poor",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar."
-      ]
-    },
-    {
-      "rep": 8,
-      "start_frame": 572,
-      "descent_frame": 584,
-      "bottom_frame": 595,
-      "ascent_frame": 606,
-      "end_frame": 621,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 9,
-      "start_frame": 655,
-      "descent_frame": 661,
-      "bottom_frame": 667,
-      "ascent_frame": 680,
-      "end_frame": 696,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "title": "First Pull",
+            "status": "good",
+            "message": "Strong first pull from the floor."
+          },
+          {
+            "title": "Extension",
+            "status": "good",
+            "message": "Excellent full extension."
+          },
+          {
+            "title": "Turnover",
+            "status": "good",
+            "message": "Fast pull under the bar."
+          },
+          {
+            "title": "Overhead Catch",
+            "status": "good",
+            "message": "Stable receiving position."
+          },
+          {
+            "title": "Stability",
+            "status": "good",
+            "message": "Excellent overhead stability."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed close throughout the lift."
+          }
+        ]
+      }
     }
   ],
   "set_summary": {
-    "detected_reps": 9,
-    "avg_rep_score": 7.1,
-    "best_rep": 3,
+    "detected_reps": 3,
+    "avg_rep_score": 9.0,
+    "best_rep": 1,
     "worst_rep": 1,
-    "trend": "Form appears to improve as the set goes on."
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "snatch",
+    "issues": [
+      {
+        "start_frame": 326,
+        "first_pull_frame": 336,
+        "extension_frame": 357,
+        "catch_frame": 364,
+        "end_frame": 382,
+        "rep": 1,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "overhead_catch": "good",
+          "stability": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Good snatch rep. Strong pull, catch, and overhead position."
+        ],
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "title": "First Pull",
+              "status": "good",
+              "message": "Strong first pull from the floor."
+            },
+            {
+              "title": "Extension",
+              "status": "good",
+              "message": "Excellent full extension."
+            },
+            {
+              "title": "Turnover",
+              "status": "good",
+              "message": "Fast pull under the bar."
+            },
+            {
+              "title": "Overhead Catch",
+              "status": "good",
+              "message": "Stable receiving position."
+            },
+            {
+              "title": "Stability",
+              "status": "good",
+              "message": "Excellent overhead stability."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed close throughout the lift."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 375,
+        "first_pull_frame": 385,
+        "extension_frame": 412,
+        "catch_frame": 413,
+        "end_frame": 449,
+        "rep": 2,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "overhead_catch": "good",
+          "stability": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Good snatch rep. Strong pull, catch, and overhead position."
+        ],
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "title": "First Pull",
+              "status": "good",
+              "message": "Strong first pull from the floor."
+            },
+            {
+              "title": "Extension",
+              "status": "good",
+              "message": "Excellent full extension."
+            },
+            {
+              "title": "Turnover",
+              "status": "good",
+              "message": "Fast pull under the bar."
+            },
+            {
+              "title": "Overhead Catch",
+              "status": "good",
+              "message": "Stable receiving position."
+            },
+            {
+              "title": "Stability",
+              "status": "good",
+              "message": "Excellent overhead stability."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed close throughout the lift."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 657,
+        "first_pull_frame": 667,
+        "extension_frame": 691,
+        "catch_frame": 692,
+        "end_frame": 697,
+        "rep": 3,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "overhead_catch": "good",
+          "stability": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Good snatch rep. Strong pull, catch, and overhead position."
+        ],
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "title": "First Pull",
+              "status": "good",
+              "message": "Strong first pull from the floor."
+            },
+            {
+              "title": "Extension",
+              "status": "good",
+              "message": "Excellent full extension."
+            },
+            {
+              "title": "Turnover",
+              "status": "good",
+              "message": "Fast pull under the bar."
+            },
+            {
+              "title": "Overhead Catch",
+              "status": "good",
+              "message": "Stable receiving position."
+            },
+            {
+              "title": "Stability",
+              "status": "good",
+              "message": "Excellent overhead stability."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed close throughout the lift."
+            }
+          ]
+        }
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "squat",
-    "squat": "squat_back",
-    "squat_conf": 0.9596432447433472,
-    "olympic": "0",
-    "olympic_conf": 0.382,
-    "final": "squat_back"
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.886,
+    "raw_label": "squat",
+    "base_conf": 0.603,
+    "bio_label": "squat",
+    "bio_conf": 0.603,
+    "bio_override": false,
+    "bio_reason": "model_prediction",
+    "protected_label": null,
+    "protected_reason": null,
+    "bodyweight": {
+      "total_frames": 671,
+      "wrist_above_shoulder_ratio": 0.2533532041728763,
+      "wrist_below_shoulder_ratio": 0.7466467958271237,
+      "mean_wrist_minus_shoulder_y": 0.12095694243907928,
+      "mean_hip_minus_shoulder_y": 0.09214673936367035,
+      "mean_knee_minus_hip_y": 0.0855104848742485,
+      "median_head_drop": -0.03466928005218506,
+      "avg_wrist_forward": 0.020267890766263008,
+      "wrist_y_range": 0.6503112316131592,
+      "shoulder_y_range": 0.34823817014694214,
+      "hip_y_range": 0.26888537406921387,
+      "elbow_range": 177.5506134033203,
+      "min_elbow": 1.6966755390167236,
+      "max_elbow": 179.24728393554688,
+      "avg_elbow": 150.5050506591797,
+      "avg_torso_angle": 54.697227478027344
+    },
+    "router_v5": {
+      "raw_label": "snatch",
+      "raw_confidence": 0.886,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.886,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 131,
+        "first_pull": 194,
+        "extension": 271,
+        "catch": 298,
+        "lockout": 347,
+        "finish": 347
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 56.17072040894083,
+        "extension_to_catch": 27.0,
+        "catch_to_finish": 49.0,
+        "extension_height_change": 0.26888537406921387,
+        "lockout_duration": 50.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 439,
+        "extension": 443,
+        "lockout": 670
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 52.026275558551625,
+        "extension_to_catch": -443.0,
+        "catch_to_finish": 670.0,
+        "extension_height_change": -0.00829768180847168,
+        "lockout_duration": 170.0
+      },
+      "decision": "agreement"
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.714,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.5,
+        "squat_back": 0.35
+      },
+      "margin": 0.15,
+      "overhead_ratio": 0.294,
+      "elbow_elevated_ratio": 0.19,
+      "wrist_height_above_shoulder": 0.088,
+      "avg_wrist_forward": 0.014,
+      "front_rack_elbow_p25": 51.7,
+      "avg_elbow_angle_sq": 176.0,
+      "squat_frames_used": 269,
+      "total_frames": 671
+    },
+    "wrist_overhead": 0.253,
+    "explosive_score": 134.71,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": false,
+    "truly_explosive": true,
+    "bar_pos_valid": true,
+    "analysis_path": "router_v5"
   }
 }

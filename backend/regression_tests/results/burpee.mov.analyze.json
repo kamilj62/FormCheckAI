@@ -1,150 +1,166 @@
 {
-  "exercise_label": "overhead_squat",
-  "confidence": 0.97,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "burpee",
+  "confidence": 0.84,
+  "analysis_mode": "biomechanics_override",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 81,
-      "descent_frame": 83,
-      "bottom_frame": 86,
-      "ascent_frame": 88,
-      "end_frame": 91,
-      "score": 5.7,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably.",
-        "Slight neck position issue detected."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "borderline",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes.",
-        "Keep your head aligned with your torso."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 190,
-      "descent_frame": 192,
-      "bottom_frame": 195,
-      "ascent_frame": 195,
-      "end_frame": 197,
-      "score": 3.5,
-      "grade": "Poor",
-      "issues": [
-        "Shoulders/chest are collapsing forward.",
-        "Knees cave inward noticeably.",
-        "Slight neck position issue detected."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "poor",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "borderline",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
-        "Drive knees out over your toes.",
-        "Keep your head aligned with your torso."
-      ]
-    },
-    {
-      "rep": 3,
-      "start_frame": 199,
-      "descent_frame": 200,
-      "bottom_frame": 201,
-      "ascent_frame": 202,
-      "end_frame": 204,
-      "score": 6.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 4,
-      "start_frame": 303,
-      "descent_frame": 303,
-      "bottom_frame": 304,
-      "ascent_frame": 305,
-      "end_frame": 308,
-      "score": 5.5,
-      "grade": "Needs Work",
-      "issues": [
-        "Chest/shoulders are starting to fall forward.",
-        "Knees cave inward noticeably."
-      ],
-      "breakdown": {
-        "depth": "good",
-        "torso": "borderline",
-        "knees": "poor",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Stay braced and keep your chest proud.",
-        "Drive knees out over your toes."
-      ]
-    },
-    {
-      "rep": 5,
-      "start_frame": 403,
-      "descent_frame": 403,
-      "bottom_frame": 404,
-      "ascent_frame": 404,
-      "end_frame": 406,
-      "score": 10.0,
+      "start_frame": 1,
+      "hands_down_frame": 2,
+      "plank_frame": 71,
+      "jump_in_frame": 110,
+      "stand_frame": 142,
+      "end_frame": 142,
+      "score": 9.0,
       "grade": "Excellent",
       "issues": [],
       "breakdown": {
-        "depth": "good",
-        "torso": "good",
-        "knees": "good",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "hands_down": "good",
+        "plank": "good",
+        "jump_in": "good",
+        "stand": "good",
+        "finish": "good"
       },
       "feedback": [
-        "Strong squat rep. Keep bracing and driving through the floor."
+        "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 5,
-    "avg_rep_score": 6.2,
-    "best_rep": 5,
-    "worst_rep": 2,
-    "trend": "Form appears to improve as the set goes on."
+    "detected_reps": 1,
+    "avg_rep_score": 9.0,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "burpee",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 1,
+        "hands_down_frame": 2,
+        "plank_frame": 71,
+        "jump_in_frame": 110,
+        "stand_frame": 142,
+        "end_frame": 142,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "hands_down": "good",
+          "plank": "good",
+          "jump_in": "good",
+          "stand": "good",
+          "finish": "good"
+        },
+        "feedback": [
+          "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "squat",
-    "squat": "overhead_squat",
-    "squat_conf": 0.9743358492851257,
-    "olympic": "0",
-    "olympic_conf": 0.388,
-    "final": "overhead_squat"
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.692,
+    "raw_label": "squat",
+    "base_conf": 1.0,
+    "bio_label": "squat",
+    "bio_conf": 1.0,
+    "bio_override": true,
+    "bio_reason": "squat_pattern_detected",
+    "protected_label": "burpee",
+    "protected_reason": "burpee_bodyweight_pattern",
+    "bodyweight": {
+      "total_frames": 352,
+      "wrist_above_shoulder_ratio": 0.11079545454545454,
+      "wrist_below_shoulder_ratio": 0.8892045454545454,
+      "mean_wrist_minus_shoulder_y": 0.13139209151268005,
+      "mean_hip_minus_shoulder_y": 0.07579589635133743,
+      "mean_knee_minus_hip_y": 0.09865552932024002,
+      "median_head_drop": 0.025915980339050293,
+      "avg_wrist_forward": 0.06533681601285934,
+      "wrist_y_range": 0.6867526173591614,
+      "shoulder_y_range": 0.5324422121047974,
+      "hip_y_range": 0.3996126055717468,
+      "elbow_range": 152.1074676513672,
+      "min_elbow": 26.998050689697266,
+      "max_elbow": 179.1055145263672,
+      "avg_elbow": 131.93824768066406,
+      "avg_torso_angle": 62.5522346496582
+    },
+    "router_v5": {
+      "raw_label": "burpee",
+      "raw_confidence": 0.84,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.692,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "first_pull": 24,
+        "extension": 55,
+        "catch": 84,
+        "lockout": 90,
+        "finish": 90
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 97.1052268514459,
+        "extension_to_catch": 29.0,
+        "catch_to_finish": 6.0,
+        "extension_height_change": -0.04029572010040283,
+        "lockout_duration": 6.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 192,
+        "extension": 350,
+        "lockout": 351
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 160.411063366659,
+        "extension_to_catch": -350.0,
+        "catch_to_finish": 351.0,
+        "extension_height_change": -0.003072381019592285,
+        "lockout_duration": 39.0
+      },
+      "decision": "fallback"
+    },
+    "squat_label": "squat_back",
+    "squat_conf": 0.879,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.4,
+        "squat_back": 0.85
+      },
+      "margin": 0.45,
+      "overhead_ratio": 0.014,
+      "elbow_elevated_ratio": 0.0,
+      "wrist_height_above_shoulder": -0.004,
+      "avg_wrist_forward": 0.068,
+      "front_rack_elbow_p25": 144.9,
+      "avg_elbow_angle_sq": 171.7,
+      "squat_frames_used": 141,
+      "total_frames": 352
+    },
+    "wrist_overhead": 0.111,
+    "explosive_score": 73.4,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

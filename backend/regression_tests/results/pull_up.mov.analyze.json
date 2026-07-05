@@ -1,23 +1,165 @@
 {
-  "exercise_label": "Unknown",
-  "confidence": 0.0,
-  "analysis_mode": "insufficient_data",
-  "rep_feedback": [],
+  "exercise_label": "pull_up",
+  "confidence": 0.86,
+  "analysis_mode": "biomechanics_override",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 5,
+      "pull_frame": 69,
+      "top_frame": 80,
+      "descent_frame": 123,
+      "end_frame": 173,
+      "score": 10.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "range": "good",
+        "top": "good",
+        "control": "good"
+      },
+      "feedback": [
+        "Good pull-up rep. Keep the body tight and finish high."
+      ]
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 1,
+    "avg_rep_score": 10.0,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
   },
   "coaching_zones": {
     "zones": [],
-    "exercise_label": "unknown",
-    "issues": []
+    "exercise_label": "pull_up",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 5,
+        "pull_frame": 69,
+        "top_frame": 80,
+        "descent_frame": 123,
+        "end_frame": 173,
+        "score": 10.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "range": "good",
+          "top": "good",
+          "control": "good"
+        },
+        "feedback": [
+          "Good pull-up rep. Keep the body tight and finish high."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "frames_processed": 3
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.766,
+    "raw_label": "squat",
+    "base_conf": 0.999,
+    "bio_label": "push_press",
+    "bio_conf": 0.999,
+    "bio_override": true,
+    "bio_reason": "overhead_press_detected",
+    "protected_label": "pull_up",
+    "protected_reason": "pull_up_bodyweight_pattern",
+    "bodyweight": {
+      "total_frames": 357,
+      "wrist_above_shoulder_ratio": 0.7899159663865546,
+      "wrist_below_shoulder_ratio": 0.21008403361344538,
+      "mean_wrist_minus_shoulder_y": -0.11678806692361832,
+      "mean_hip_minus_shoulder_y": 0.25023773312568665,
+      "mean_knee_minus_hip_y": 0.15702947974205017,
+      "median_head_drop": -0.059391170740127563,
+      "avg_wrist_forward": 0.10693050920963287,
+      "wrist_y_range": 0.2962099611759186,
+      "shoulder_y_range": 0.2872069478034973,
+      "hip_y_range": 0.30609917640686035,
+      "elbow_range": 141.39317321777344,
+      "min_elbow": 28.929920196533203,
+      "max_elbow": 170.32308959960938,
+      "avg_elbow": 122.52839660644531,
+      "avg_torso_angle": 17.58724021911621
+    },
+    "router_v5": {
+      "raw_label": "pull_up",
+      "raw_confidence": 0.86,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.766,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 32,
+        "clean_catch": 94,
+        "clean_recovery": 114,
+        "jerk_dip": 115,
+        "jerk_drive": 116,
+        "jerk_catch": 117,
+        "lockout": 214,
+        "finish": 214
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 154.94716021028995,
+        "extension_to_catch": 62.0,
+        "catch_to_finish": 120.0,
+        "extension_height_change": -0.17222607135772705,
+        "lockout_duration": 101.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 172,
+        "extension": 291,
+        "lockout": 343
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 163.16237250939412,
+        "extension_to_catch": -291.0,
+        "catch_to_finish": 343.0,
+        "extension_height_change": 0.16961437463760376,
+        "lockout_duration": 269.0
+      },
+      "decision": "fallback"
+    },
+    "squat_label": "overhead_squat",
+    "squat_conf": 0.889,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.8,
+        "squat_front": 0.55,
+        "squat_back": 0.0
+      },
+      "margin": 0.25,
+      "overhead_ratio": 0.797,
+      "elbow_elevated_ratio": 0.455,
+      "wrist_height_above_shoulder": 0.181,
+      "avg_wrist_forward": 0.123,
+      "front_rack_elbow_p25": 92.8,
+      "avg_elbow_angle_sq": 141.4,
+      "squat_frames_used": 143,
+      "total_frames": 357
+    },
+    "wrist_overhead": 0.79,
+    "explosive_score": 25.41,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override",
+    "transcoded_retry": true,
+    "original_frames_processed": 3
   }
 }

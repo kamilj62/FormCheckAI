@@ -1,6 +1,14 @@
 {
-  "exercise_label": "thruster",
+  "exercise_label": "muscle_up",
   "overlay_video_url": null,
-  "phase_images": null,
-  "visuals_error": "No usable rep found."
+  "phase_images": {
+    "hang": "/outputs/bar_muscle_up_hang_202b2df7.jpg",
+    "pull": "/outputs/bar_muscle_up_pull_9a374a2f.jpg",
+    "transition": "/outputs/bar_muscle_up_transition_ad728ea1.jpg",
+    "dip": "/outputs/bar_muscle_up_dip_c26bbeb2.jpg",
+    "debug_sheet": "/outputs/bar_muscle_up_phase_debug_c79d4e54.jpg",
+    "lockout": "/outputs/bar_muscle_up_dip_c26bbeb2.jpg",
+    "finish": "/outputs/bar_muscle_up_dip_c26bbeb2.jpg"
+  },
+  "visuals_error": null
 }

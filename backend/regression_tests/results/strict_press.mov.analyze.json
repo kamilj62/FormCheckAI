@@ -1,23 +1,217 @@
 {
-  "exercise_label": "push_press",
+  "exercise_label": "strict_press",
   "confidence": 1.0,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "analysis_mode": "biomechanics_override",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 2,
+      "press_frame": 79,
+      "lockout_frame": 142,
+      "end_frame": 237,
+      "score": 8.5,
+      "grade": "Good",
+      "issues": [
+        "Slight knee bend detected."
+      ],
+      "breakdown": {
+        "leg_drive": "minor_knee_bend",
+        "torso_stack": "good",
+        "lockout": "good",
+        "bar_path": "good",
+        "knee_range": 11.7,
+        "hip_range": 5.7
+      },
+      "feedback": [
+        "Stay strict through the legs."
+      ]
+    },
+    {
+      "rep": 2,
+      "start_frame": 240,
+      "press_frame": 276,
+      "lockout_frame": 306,
+      "end_frame": 372,
+      "score": 8.5,
+      "grade": "Good",
+      "issues": [
+        "Slight knee bend detected."
+      ],
+      "breakdown": {
+        "leg_drive": "minor_knee_bend",
+        "torso_stack": "good",
+        "lockout": "good",
+        "bar_path": "good",
+        "knee_range": 12.1,
+        "hip_range": 3.2
+      },
+      "feedback": [
+        "Stay strict through the legs."
+      ]
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 2,
+    "avg_rep_score": 8.5,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "strict_press",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 2,
+        "press_frame": 79,
+        "lockout_frame": 142,
+        "end_frame": 237,
+        "score": 8.5,
+        "grade": "Good",
+        "issues": [
+          "Slight knee bend detected."
+        ],
+        "breakdown": {
+          "leg_drive": "minor_knee_bend",
+          "torso_stack": "good",
+          "lockout": "good",
+          "bar_path": "good",
+          "knee_range": 11.7,
+          "hip_range": 5.7
+        },
+        "feedback": [
+          "Stay strict through the legs."
+        ]
+      },
+      {
+        "rep": 2,
+        "start_frame": 240,
+        "press_frame": 276,
+        "lockout_frame": 306,
+        "end_frame": 372,
+        "score": 8.5,
+        "grade": "Good",
+        "issues": [
+          "Slight knee bend detected."
+        ],
+        "breakdown": {
+          "leg_drive": "minor_knee_bend",
+          "torso_stack": "good",
+          "lockout": "good",
+          "bar_path": "good",
+          "knee_range": 12.1,
+          "hip_range": 3.2
+        },
+        "feedback": [
+          "Stay strict through the legs."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "push_press",
-    "squat": "squat_front",
-    "squat_conf": 0.637082576751709,
-    "olympic": "0",
-    "olympic_conf": 0.354,
-    "final": "push_press"
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.938,
+    "raw_label": "push_press",
+    "base_conf": 0.995,
+    "bio_label": "bench_press",
+    "bio_conf": 0.995,
+    "bio_override": true,
+    "bio_reason": "bench_pattern_detected",
+    "protected_label": "strict_press",
+    "protected_reason": "strict_press_pattern_detected",
+    "bodyweight": {
+      "total_frames": 395,
+      "wrist_above_shoulder_ratio": 0.5037974683544304,
+      "wrist_below_shoulder_ratio": 0.4962025316455696,
+      "mean_wrist_minus_shoulder_y": -0.020977802574634552,
+      "mean_hip_minus_shoulder_y": 0.21787607669830322,
+      "mean_knee_minus_hip_y": 0.15922582149505615,
+      "median_head_drop": -0.08218926191329956,
+      "avg_wrist_forward": 0.031045276671648026,
+      "wrist_y_range": 0.3261893391609192,
+      "shoulder_y_range": 0.024495869874954224,
+      "hip_y_range": 0.040393948554992676,
+      "elbow_range": 144.96759033203125,
+      "min_elbow": 27.882347106933594,
+      "max_elbow": 172.84994506835938,
+      "avg_elbow": 89.03105163574219,
+      "avg_torso_angle": 1.5504010915756226
+    },
+    "router_v5": {
+      "raw_label": "strict_press",
+      "raw_confidence": 0.9954853057861328,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.938,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 36,
+        "clean_catch": 100,
+        "clean_recovery": 185,
+        "jerk_dip": 187,
+        "jerk_drive": 188,
+        "jerk_catch": 189,
+        "lockout": 297,
+        "finish": 297
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 173.465349170679,
+        "extension_to_catch": 64.0,
+        "catch_to_finish": 197.0,
+        "extension_height_change": 0.007646083831787109,
+        "lockout_duration": 123.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 70,
+        "extension": 356,
+        "lockout": 392
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 172.44250383680398,
+        "extension_to_catch": -356.0,
+        "catch_to_finish": 392.0,
+        "extension_height_change": -0.03452032804489136,
+        "lockout_duration": 199.0
+      },
+      "decision": "fallback"
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.637,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.5,
+        "squat_front": 0.5,
+        "squat_back": 0.35
+      },
+      "margin": 0.0,
+      "overhead_ratio": 0.494,
+      "elbow_elevated_ratio": 0.475,
+      "wrist_height_above_shoulder": 0.176,
+      "avg_wrist_forward": 0.029,
+      "front_rack_elbow_p25": 35.3,
+      "avg_elbow_angle_sq": 164.5,
+      "squat_frames_used": 158,
+      "total_frames": 395
+    },
+    "wrist_overhead": 0.504,
+    "explosive_score": 4.22,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": true,
+    "looks_thruster": false,
+    "squat_confident": false,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

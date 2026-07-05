@@ -1,116 +1,123 @@
 {
-  "exercise_label": "squat_back",
-  "confidence": 0.97,
-  "analysis_mode": "detailed_rep_analysis",
+  "exercise_label": "push_up",
+  "confidence": 0.86,
+  "analysis_mode": "biomechanics_override",
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 8,
-      "descent_frame": 11,
-      "bottom_frame": 15,
-      "ascent_frame": 19,
-      "end_frame": 24,
-      "score": 6.1,
-      "grade": "Needs Work",
-      "issues": [
-        "Depth may be shallow.",
-        "Chest/shoulders are starting to fall forward.",
-        "Slight knee cave detected."
-      ],
+      "start_frame": 22,
+      "descent_frame": 55,
+      "bottom_frame": 74,
+      "ascent_frame": 92,
+      "end_frame": 126,
+      "score": 10.0,
+      "grade": "Excellent",
+      "issues": [],
       "breakdown": {
-        "depth": "poor",
-        "torso": "borderline",
-        "knees": "borderline",
-        "heels": "good",
-        "neck": "good",
-        "butt_wink": "not_detected"
+        "range": "good",
+        "bottom": "good",
+        "lockout": "good",
+        "body_line": "good"
       },
       "feedback": [
-        "Try to reach better squat depth.",
-        "Stay braced and keep your chest proud.",
-        "Keep knees tracking over your toes."
-      ]
-    },
-    {
-      "rep": 2,
-      "start_frame": 82,
-      "descent_frame": 86,
-      "bottom_frame": 90,
-      "ascent_frame": 94,
-      "end_frame": 99,
-      "score": 2.7,
-      "grade": "Poor",
-      "issues": [
-        "Depth may be shallow.",
-        "Shoulders/chest are collapsing forward.",
-        "Slight knee cave detected.",
-        "Slight heel lift detected.",
-        "Head/neck position is off."
-      ],
-      "breakdown": {
-        "depth": "poor",
-        "torso": "poor",
-        "knees": "borderline",
-        "heels": "borderline",
-        "neck": "poor",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Try to reach better squat depth.",
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
-        "Keep knees tracking over your toes.",
-        "Keep pressure through your heels and midfoot.",
-        "Keep your head neutral and avoid looking up or craning your neck."
-      ]
-    },
-    {
-      "rep": 3,
-      "start_frame": 134,
-      "descent_frame": 136,
-      "bottom_frame": 139,
-      "ascent_frame": 142,
-      "end_frame": 147,
-      "score": 2.7,
-      "grade": "Poor",
-      "issues": [
-        "Depth may be shallow.",
-        "Shoulders/chest are collapsing forward.",
-        "Slight knee cave detected.",
-        "Slight heel lift detected.",
-        "Head/neck position is off."
-      ],
-      "breakdown": {
-        "depth": "poor",
-        "torso": "poor",
-        "knees": "borderline",
-        "heels": "borderline",
-        "neck": "poor",
-        "butt_wink": "not_detected"
-      },
-      "feedback": [
-        "Try to reach better squat depth.",
-        "Keep your chest up, upper back tight, and shoulders stacked over the bar.",
-        "Keep knees tracking over your toes.",
-        "Keep pressure through your heels and midfoot.",
-        "Keep your head neutral and avoid looking up or craning your neck."
+        "Good push-up rep. Keep a strong body line and press to full lockout."
       ]
     }
   ],
   "set_summary": {
-    "detected_reps": 3,
-    "avg_rep_score": 3.8,
+    "detected_reps": 1,
+    "avg_rep_score": 10.0,
     "best_rep": 1,
-    "worst_rep": 2,
-    "trend": "Form appears to deteriorate as the set goes on."
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "push_up",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 22,
+        "descent_frame": 55,
+        "bottom_frame": 74,
+        "ascent_frame": 92,
+        "end_frame": 126,
+        "score": 10.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "range": "good",
+          "bottom": "good",
+          "lockout": "good",
+          "body_line": "good"
+        },
+        "feedback": [
+          "Good push-up rep. Keep a strong body line and press to full lockout."
+        ]
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "deadlift",
-    "squat": "squat_back",
-    "squat_conf": 0.9666573405265808,
-    "olympic": "0",
-    "olympic_conf": 0.392,
-    "final": "squat_back"
+    "olympic_pred": null,
+    "olympic_conf": null,
+    "raw_label": "deadlift",
+    "base_conf": 1.0,
+    "bio_label": "deadlift",
+    "bio_conf": 1.0,
+    "bio_override": false,
+    "bio_reason": "model_prediction",
+    "protected_label": "push_up",
+    "protected_reason": "push_up_bodyweight_pattern",
+    "bodyweight": {
+      "total_frames": 150,
+      "wrist_above_shoulder_ratio": 0.0,
+      "wrist_below_shoulder_ratio": 1.0,
+      "mean_wrist_minus_shoulder_y": 0.3082430958747864,
+      "mean_hip_minus_shoulder_y": 0.08027913421392441,
+      "mean_knee_minus_hip_y": 0.06266619265079498,
+      "median_head_drop": 0.11374601721763611,
+      "avg_wrist_forward": 0.04521305114030838,
+      "wrist_y_range": 0.010847151279449463,
+      "shoulder_y_range": 0.2723538875579834,
+      "hip_y_range": 0.1638185977935791,
+      "elbow_range": 110.18041229248047,
+      "min_elbow": 66.24468231201172,
+      "max_elbow": 176.4250946044922,
+      "avg_elbow": 136.12864685058594,
+      "avg_torso_angle": 68.79032897949219
+    },
+    "router_v5": null,
+    "squat_label": "squat_back",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.15,
+        "squat_back": 1.0
+      },
+      "margin": 0.8,
+      "overhead_ratio": 0.0,
+      "elbow_elevated_ratio": 0.017,
+      "wrist_height_above_shoulder": -0.348,
+      "avg_wrist_forward": 0.038,
+      "front_rack_elbow_p25": 135.0,
+      "avg_elbow_angle_sq": 175.4,
+      "squat_frames_used": 60,
+      "total_frames": 150
+    },
+    "wrist_overhead": 0.0,
+    "explosive_score": 3.82,
+    "run_oly_router": false,
+    "looks_split": false,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": false,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "biomechanics_override"
   }
 }

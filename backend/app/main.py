@@ -6864,19 +6864,46 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and not _looks_cj
         )
         _looks_push_up = (
-            float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.75
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.08
-            and -0.16 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.12
-            and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.035
-            and 45.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 180.0
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 35.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+            (
+                float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.75
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.08
+                and -0.18 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.20
+                and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.035
+                and 20.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 180.0
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 35.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
+            )
+            or (
+                float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.50
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.015
+                and -0.22 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.23
+                and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.035
+                and 45.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 175.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.26
+                and (
+                    float(bodyweight_debug.get("elbow_range", 0.0)) >= 40.0
+                    or (
+                        int(bodyweight_debug.get("total_frames", 0) or 0) <= 60
+                        and float(bodyweight_debug.get("min_elbow", 180.0)) <= 155.0
+                    )
+                )
+            )
         )
         _looks_handstand_push_up = (
             float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.85
             and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.08
             and float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 1.0)) <= -0.015
-            and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.05
+            and (
+                (
+                    float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 1.0)) <= -0.20
+                    and float(bodyweight_debug.get("mean_knee_minus_hip_y", 1.0)) <= -0.05
+                )
+                or (
+                    float(bodyweight_debug.get("mean_knee_minus_hip_y", 1.0)) <= 0.02
+                    and float(bodyweight_debug.get("avg_torso_angle", 0.0)) >= 170.0
+                )
+            )
+            and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.035
             and float(bodyweight_debug.get("avg_torso_angle", 0.0)) >= 125.0
             and float(bodyweight_debug.get("elbow_range", 0.0)) >= 25.0
         )
@@ -6893,39 +6920,123 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
             and float(bodyweight_debug.get("elbow_range", 0.0)) >= 70.0
         )
+        _very_short_pull_up = (
+            int(bodyweight_debug.get("total_frames", 0) or 0) <= 15
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.60
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+            and 0.18 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.35
+            and float(bodyweight_debug.get("median_head_drop", 1.0)) <= -0.05
+            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 20.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.12
+        )
+        _tight_vertical_pull_up = (
+            float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.40
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.01
+            and -0.02 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.32
+            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 95.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+            and float(bodyweight_debug.get("median_head_drop", 1.0)) <= 0.02
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
+        )
+        _static_cropped_pull_up = (
+            float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.70
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.25
+            and 0.25 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.36
+            and float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) >= 0.18
+            and float(bodyweight_debug.get("median_head_drop", 1.0)) <= -0.03
+            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 15.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.09
+            and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.06
+            and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.07
+            and float(bodyweight_debug.get("min_elbow", 0.0)) >= 140.0
+        )
+        _long_bar_pull_up = (
+            int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.80
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.18
+            and 0.25 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.45
+            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 25.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 70.0
+            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 95.0
+        )
+        _pull_up_press_guard = (
+            raw_label == "push_press"
+            and (
+                bio_label == "push_press"
+                or _looks_strict
+                or _looks_split
+            )
+        )
         _looks_pull_up = (
             (
                 (
                     float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.50
-                    and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.045
+                    and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
                     and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
                     and float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) >= 0.045
                     and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 85.0
-                    and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+                    and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
                     and float(bodyweight_debug.get("elbow_range", 0.0)) >= 45.0
                     and float(bodyweight_debug.get("min_elbow", 180.0)) <= 95.0
                 )
                 or _short_cropped_pull_up
+                or _very_short_pull_up
+                or _tight_vertical_pull_up
+                or _static_cropped_pull_up
+                or _long_bar_pull_up
             )
             and not _pull_up_overhead_squat_guard
+            and not _pull_up_press_guard
+        )
+        _looks_muscle_up = (
+            int(bodyweight_debug.get("total_frames", 0) or 0) >= 250
+            and 0.45 <= float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) <= 0.70
+            and -0.08 <= float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= 0.03
+            and 0.10 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.20
+            and 0.04 <= float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) <= 0.10
+            and 20.0 <= float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 40.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+        )
+        _looks_burpee = (
+            int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
+            and float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.70
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.05
+            and -0.02 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.22
+            and 40.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 90.0
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.50
+            and float(bodyweight_debug.get("shoulder_y_range", 0.0)) >= 0.35
+            and float(bodyweight_debug.get("hip_y_range", 0.0)) >= 0.30
+            and float(bodyweight_debug.get("median_head_drop", 0.0)) <= 0.04
         )
 
         protected_label = None
         protected_conf = 0.0
         protected_reason = None
 
-        if _looks_push_up:
-            protected_label = "push_up"
+        if _looks_muscle_up:
+            protected_label = "muscle_up"
             protected_conf = 0.86
-            protected_reason = "push_up_bodyweight_pattern"
+            protected_reason = "muscle_up_bodyweight_pattern"
+        elif _looks_burpee:
+            protected_label = "burpee"
+            protected_conf = 0.84
+            protected_reason = "burpee_bodyweight_pattern"
         elif _looks_handstand_push_up:
             protected_label = "handstand_push_up"
             protected_conf = 0.86
             protected_reason = "handstand_push_up_bodyweight_pattern"
-        elif _looks_pull_up and not _looks_split:
+        elif _looks_pull_up:
             protected_label = "pull_up"
             protected_conf = 0.86
             protected_reason = "pull_up_bodyweight_pattern"
+        elif _looks_push_up:
+            protected_label = "push_up"
+            protected_conf = 0.86
+            protected_reason = "push_up_bodyweight_pattern"
         elif _short_overhead_bench_setup:
             protected_label = "bench_press"
             protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
@@ -6967,7 +7078,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "thruster"
             protected_conf = max(base_conf, 0.76)
             protected_reason = "thruster_pattern_detected"
-        elif bio_label == "bench_press" and not _looks_strict and not _looks_thruster:
+        elif bio_label == "bench_press" and not _looks_strict and not _looks_thruster and not (_looks_push_up or _looks_pull_up or _looks_handstand_push_up):
             bench_blocked_by_oly = (
                 olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
                 and float(olympic_conf or 0.0) >= 0.90
@@ -7313,10 +7424,26 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 if isinstance(router_v5_debug, dict):
                     router_v5_debug["decision"] = "bench_press_short_cj_rescue"
 
+            if (
+                router_v5_label == "snatch"
+                and _looks_cj
+                and not _looks_clean_only
+                and raw_label in {"squat", "squat_front", "squat_back"}
+                and float(olympic_conf or 0.0) < 0.90
+                and wrist_overhead_ratio < 0.45
+                and explosive_score > 80.0
+            ):
+                router_v5_label = "clean_and_jerk"
+                router_v5_conf = max(float(router_v5_conf or 0.0), 0.76)
+                if isinstance(router_v5_debug, dict):
+                    router_v5_debug["decision"] = "clean_and_jerk_shape_rescue"
+
             protected_non_olympic = protected_label in {
                 "bench_press",
+                "burpee",
                 "deadlift",
                 "handstand_push_up",
+                "muscle_up",
                 "push_up",
                 "pull_up",
                 "push_press",
@@ -7390,6 +7517,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         elif final_label == "push_up":
             rep_feedback, _ = analyze_push_up_reps(biomech)
+
+        elif final_label == "burpee":
+            rep_feedback, _ = analyze_burpee_reps(biomech)
+
+        elif final_label == "muscle_up":
+            rep_feedback, _ = analyze_pull_up_reps(biomech)
 
         # =========================================================
         # 7. FINAL OUTPUT

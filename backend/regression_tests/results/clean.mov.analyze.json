@@ -1,23 +1,329 @@
 {
-  "exercise_label": "deadlift",
-  "confidence": 0.55,
-  "analysis_mode": "detailed_rep_analysis",
-  "rep_feedback": [],
+  "exercise_label": "clean",
+  "confidence": 0.75,
+  "analysis_mode": "router_v5",
+  "rep_feedback": [
+    {
+      "start_frame": 106,
+      "first_pull_frame": 145,
+      "extension_frame": 172,
+      "catch_frame": 232,
+      "end_frame": 237,
+      "rep": 1,
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Good clean rep. Strong pull and catch position."
+      ],
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "title": "First Pull",
+            "status": "good",
+            "message": "Strong first pull off the floor."
+          },
+          {
+            "title": "Extension",
+            "status": "good",
+            "message": "Excellent extension."
+          },
+          {
+            "title": "Turnover",
+            "status": "good",
+            "message": "Fast elbows into the rack."
+          },
+          {
+            "title": "Catch",
+            "status": "good",
+            "message": "Stable receiving position."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 285,
+      "first_pull_frame": 366,
+      "extension_frame": 394,
+      "catch_frame": 444,
+      "end_frame": 458,
+      "rep": 2,
+      "score": 9.0,
+      "grade": "Excellent",
+      "issues": [],
+      "breakdown": {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Good clean rep. Strong pull and catch position."
+      ],
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "title": "First Pull",
+            "status": "good",
+            "message": "Strong first pull off the floor."
+          },
+          {
+            "title": "Extension",
+            "status": "good",
+            "message": "Excellent extension."
+          },
+          {
+            "title": "Turnover",
+            "status": "good",
+            "message": "Fast elbows into the rack."
+          },
+          {
+            "title": "Catch",
+            "status": "good",
+            "message": "Stable receiving position."
+          }
+        ]
+      }
+    }
+  ],
   "set_summary": {
-    "detected_reps": 0,
-    "avg_rep_score": 0,
-    "best_rep": null,
-    "worst_rep": null,
-    "trend": "No clear reps detected."
+    "detected_reps": 2,
+    "avg_rep_score": 9.0,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "clean",
+    "issues": [
+      {
+        "start_frame": 106,
+        "first_pull_frame": 145,
+        "extension_frame": 172,
+        "catch_frame": 232,
+        "end_frame": 237,
+        "rep": 1,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "catch": "good",
+          "front_rack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Good clean rep. Strong pull and catch position."
+        ],
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "title": "First Pull",
+              "status": "good",
+              "message": "Strong first pull off the floor."
+            },
+            {
+              "title": "Extension",
+              "status": "good",
+              "message": "Excellent extension."
+            },
+            {
+              "title": "Turnover",
+              "status": "good",
+              "message": "Fast elbows into the rack."
+            },
+            {
+              "title": "Catch",
+              "status": "good",
+              "message": "Stable receiving position."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 285,
+        "first_pull_frame": 366,
+        "extension_frame": 394,
+        "catch_frame": 444,
+        "end_frame": 458,
+        "rep": 2,
+        "score": 9.0,
+        "grade": "Excellent",
+        "issues": [],
+        "breakdown": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "catch": "good",
+          "front_rack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Good clean rep. Strong pull and catch position."
+        ],
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "title": "First Pull",
+              "status": "good",
+              "message": "Strong first pull off the floor."
+            },
+            {
+              "title": "Extension",
+              "status": "good",
+              "message": "Excellent extension."
+            },
+            {
+              "title": "Turnover",
+              "status": "good",
+              "message": "Fast elbows into the rack."
+            },
+            {
+              "title": "Catch",
+              "status": "good",
+              "message": "Stable receiving position."
+            }
+          ]
+        }
+      }
+    ]
   },
   "overlay_video_url": null,
   "phase_images": null,
   "debug": {
-    "base": "deadlift",
-    "squat": "squat_back",
-    "squat_conf": 0.9344305396080017,
-    "olympic": "0",
-    "olympic_conf": 0.384,
-    "final": "deadlift"
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.576,
+    "raw_label": "deadlift",
+    "base_conf": 0.554,
+    "bio_label": "squat",
+    "bio_conf": 0.75,
+    "bio_override": true,
+    "bio_reason": "squat_pattern_detected",
+    "protected_label": null,
+    "protected_reason": null,
+    "bodyweight": {
+      "total_frames": 435,
+      "wrist_above_shoulder_ratio": 0.22528735632183908,
+      "wrist_below_shoulder_ratio": 0.774712643678161,
+      "mean_wrist_minus_shoulder_y": 0.1427507847547531,
+      "mean_hip_minus_shoulder_y": 0.14080213010311127,
+      "mean_knee_minus_hip_y": 0.07724881172180176,
+      "median_head_drop": -0.0606609582901001,
+      "avg_wrist_forward": 0.011415798217058182,
+      "wrist_y_range": 0.5459462404251099,
+      "shoulder_y_range": 0.4655223488807678,
+      "hip_y_range": 0.20460182428359985,
+      "elbow_range": 177.41830444335938,
+      "min_elbow": 1.8807655572891235,
+      "max_elbow": 179.299072265625,
+      "avg_elbow": 128.7352752685547,
+      "avg_torso_angle": 29.694610595703125
+    },
+    "router_v5": {
+      "raw_label": "clean",
+      "raw_confidence": 0.75,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.576,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "first_pull": 1,
+        "extension": 2,
+        "catch": 3,
+        "lockout": 8,
+        "finish": 8
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 18.52420518523715,
+        "extension_to_catch": 1.0,
+        "catch_to_finish": 5.0,
+        "extension_height_change": 0.004983186721801758,
+        "lockout_duration": 2.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 274,
+        "extension": 315,
+        "lockout": 434
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 75.84928101596205,
+        "extension_to_catch": -315.0,
+        "catch_to_finish": 434.0,
+        "extension_height_change": 0.08846908807754517,
+        "lockout_duration": 98.0
+      },
+      "clean_events": {
+        "setup": 72,
+        "first_pull": 111,
+        "extension": 138,
+        "clean_extension": 160,
+        "catch": 180,
+        "clean_catch": 180,
+        "finish": 200,
+        "lockout": 200
+      },
+      "clean_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 137.6759059024346,
+        "extension_to_catch": 42.0,
+        "catch_to_finish": 20.0,
+        "extension_height_change": -0.05308854579925537,
+        "lockout_duration": 21.0
+      },
+      "decision": "clean_rescue_from_weak_snatch"
+    },
+    "squat_label": "squat_back",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.15,
+        "squat_back": 1.0
+      },
+      "margin": 0.8,
+      "overhead_ratio": 0.023,
+      "elbow_elevated_ratio": 0.08,
+      "wrist_height_above_shoulder": -0.169,
+      "avg_wrist_forward": 0.005,
+      "front_rack_elbow_p25": 174.5,
+      "avg_elbow_angle_sq": 176.3,
+      "squat_frames_used": 174,
+      "total_frames": 435
+    },
+    "wrist_overhead": 0.225,
+    "explosive_score": 133.79,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": true,
+    "bar_pos_valid": true,
+    "analysis_path": "router_v5"
   }
 }

@@ -1,6 +1,14 @@
 {
-  "exercise_label": "squat_back",
+  "exercise_label": "clean_and_jerk",
   "overlay_video_url": null,
-  "phase_images": null,
-  "visuals_error": "create_squat_phase_images() got an unexpected keyword argument 'sample_every'"
+  "phase_images": {
+    "setup": "/outputs/clean_and_jerk_setup_b39fda73.jpg",
+    "clean_catch": "/outputs/clean_and_jerk_clean_catch_19b6205b.jpg",
+    "clean_recovery": "/outputs/clean_and_jerk_clean_recovery_c5b06e52.jpg",
+    "jerk_dip": "/outputs/clean_and_jerk_jerk_dip_7fb00b19.jpg",
+    "jerk_catch": "/outputs/clean_and_jerk_jerk_catch_36948d71.jpg",
+    "finish": "/outputs/clean_and_jerk_finish_edb7384b.jpg",
+    "debug_sheet": "/outputs/clean_and_jerk_phase_debug_3b8a9eed.jpg"
+  },
+  "visuals_error": null
 }

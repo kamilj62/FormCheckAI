@@ -1,6 +1,12 @@
 {
-  "exercise_label": "squat_back",
+  "exercise_label": "squat_front",
   "overlay_video_url": null,
-  "phase_images": null,
-  "visuals_error": "create_squat_phase_images() got an unexpected keyword argument 'sample_every'"
+  "phase_images": {
+    "setup": "/outputs/squat_setup_83c7fd48.jpg",
+    "descent": "/outputs/squat_descent_fa37d93b.jpg",
+    "bottom": "/outputs/squat_bottom_272d88d3.jpg",
+    "ascent": "/outputs/squat_ascent_e5a7094c.jpg",
+    "lockout": "/outputs/squat_lockout_cfb3b1b8.jpg"
+  },
+  "visuals_error": null
 }

@@ -1,6 +1,13 @@
 {
-  "exercise_label": "push_press",
+  "exercise_label": "split_jerk",
   "overlay_video_url": null,
-  "phase_images": null,
-  "visuals_error": "No usable rep found."
+  "phase_images": {
+    "setup": "/outputs/split_jerk_setup_a1b75514.jpg",
+    "dip": "/outputs/split_jerk_dip_8af4bff3.jpg",
+    "drive": "/outputs/split_jerk_drive_674c6273.jpg",
+    "catch": "/outputs/split_jerk_catch_208c533b.jpg",
+    "finish": "/outputs/split_jerk_finish_7f06bcb4.jpg",
+    "debug_sheet": "/outputs/split_jerk_phase_debug_f4bfd088.jpg"
+  },
+  "visuals_error": null
 }
