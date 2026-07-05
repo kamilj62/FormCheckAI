@@ -6612,12 +6612,65 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         _looks_split      = looks_like_split_jerk(biomech)
         _looks_strict     = looks_like_strict_press(biomech)
         _looks_thruster   = looks_like_thruster(biomech)
+        _deadlift_setup_geometry = (
+            squat_label == "squat_back"
+            and wrist_overhead_ratio < 0.12
+            and float(bar_debug.get("avg_elbow_angle_sq", 0.0)) > 150.0
+            and float(bar_debug.get("front_rack_elbow_p25", 0.0)) > 145.0
+            and float(bar_debug.get("overhead_ratio", 0.0)) < 0.05
+            and float(bar_debug.get("avg_wrist_forward", 1.0)) < 0.03
+            and not _looks_clean_only
+            and not _looks_cj
+            and not _looks_split
+            and not _looks_strict
+            and not _looks_thruster
+        )
+        _deadlift_low_speed_setup = (
+            _deadlift_setup_geometry
+            and raw_label in {"squat", "bench_press"}
+            and explosive_score <= 30.0
+            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.08
+        )
+        _deadlift_upright_setup = (
+            _deadlift_setup_geometry
+            and raw_label in {"bench_press", "deadlift", "squat", "squat_front"}
+            and explosive_score <= 70.0
+            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) > -0.09
+        )
+        _deadlift_raw_pull_setup = (
+            _deadlift_setup_geometry
+            and raw_label == "deadlift"
+            and wrist_overhead_ratio < 0.02
+            and explosive_score <= 75.0
+        )
+        _short_low_camera_bench_setup = (
+            raw_label == "squat"
+            and squat_label == "squat_back"
+            and int(bar_debug.get("squat_frames_used", 999) or 999) <= 35
+            and explosive_score > 45.0
+            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.18
+            and float(olympic_conf or 0.0) < 0.80
+        )
+        _short_overhead_bench_setup = (
+            squat_label == "overhead_squat"
+            and raw_label in {"deadlift", "push_press", "squat"}
+            and bio_label in {"push_press", "squat", "deadlift"}
+            and int(bar_debug.get("squat_frames_used", 999) or 999) <= 45
+            and int(bar_debug.get("total_frames", 999) or 999) <= 110
+            and float(olympic_conf or 0.0) < 0.80
+            and not _looks_clean_only
+            and not _looks_cj
+        )
 
         protected_label = None
         protected_conf = 0.0
         protected_reason = None
 
-        if (
+        if _short_overhead_bench_setup:
+            protected_label = "bench_press"
+            protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
+            protected_reason = "bench_press_short_overhead_rescue"
+        elif (
             _looks_thruster
             and raw_label in {"bench_press", "push_press"}
             and explosive_score > 20
@@ -6628,6 +6681,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "thruster"
             protected_conf = max(base_conf, 0.76)
             protected_reason = "thruster_pattern_detected"
+        elif _deadlift_low_speed_setup or _deadlift_upright_setup or _deadlift_raw_pull_setup:
+            protected_label = "deadlift"
+            protected_conf = max(float(bio_conf or 0.0), float(base_conf or 0.0), 0.82)
+            protected_reason = "deadlift_setup_rescue"
         elif raw_label == "bench_press":
             protected_label = "bench_press"
             protected_conf = max(base_conf, 0.80)
@@ -6694,21 +6751,26 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
             protected_reason = "bench_press_fast_press_rescue"
         elif (
-            raw_label == "squat"
-            and squat_label == "squat_back"
+            raw_label in {"squat", "squat_front", "squat_back", "push_press"}
+            and squat_label in {"squat_back", "squat_front", "overhead_squat"}
+            and bio_label in {"squat", "push_press", "deadlift"}
             and not _looks_clean_only
             and not _looks_cj
             and not _looks_split
-            and not _looks_strict
-            and not _looks_thruster
-            and wrist_overhead_ratio < 0.05
-            and explosive_score <= 30.0
-            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.12
-            and float(bar_debug.get("avg_elbow_angle_sq", 0.0)) > 150.0
+            and (not _deadlift_setup_geometry or _short_low_camera_bench_setup)
+            and (
+                int(bar_debug.get("squat_frames_used", 999) or 999) <= 35
+                or (
+                    run_oly_router
+                    and float(olympic_conf or 0.0) < 0.80
+                    and wrist_overhead_ratio > 0.25
+                    and explosive_score > 20
+                )
+            )
         ):
-            protected_label = "deadlift"
-            protected_conf = max(float(bio_conf or 0.0), 0.82)
-            protected_reason = "deadlift_setup_rescue"
+            protected_label = "bench_press"
+            protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
+            protected_reason = "bench_press_short_squat_rescue"
         elif (
             bio_label == "deadlift"
             and (

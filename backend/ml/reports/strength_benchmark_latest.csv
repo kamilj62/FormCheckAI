@@ -25,17 +25,17 @@ bench_press,bench_press,0.9,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c04.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c05.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c06.avi,1
-bench_press,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c07.avi,1
-bench_press,squat_back,0.99,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c01.avi,0
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c07.avi,2
+bench_press,bench_press,0.9,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c01.avi,0
 bench_press,bench_press,0.92,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c02.avi,1
-bench_press,bench_press,0.81,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c03.avi,1
+bench_press,bench_press,0.81,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c03.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c04.avi,4
 bench_press,bench_press,0.85,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c05.avi,1
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c06.avi,2
-bench_press,overhead_squat,0.77,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c07.avi,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c07.avi,1
 bench_press,bench_press,0.92,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c01.avi,1
 bench_press,bench_press,0.87,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c02.avi,1
-bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c03.avi,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c03.avi,1
 bench_press,bench_press,0.9,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c04.avi,2
 bench_press,bench_press,0.96,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c05.avi,1
 bench_press,bench_press,0.92,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c06.avi,1
@@ -58,9 +58,9 @@ bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c02.avi,1
 bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c03.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c04.avi,1
-bench_press,bench_press,0.83,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c05.avi,1
+bench_press,bench_press,0.83,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c05.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c06.avi,4
-bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c07.avi,2
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c07.avi,2
 bench_press,bench_press,0.94,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c01.avi,1
 bench_press,bench_press,0.94,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c02.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c03.avi,0
@@ -70,18 +70,18 @@ bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c03.avi,2
 bench_press,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c04.avi,6
 bench_press,bench_press,0.97,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c05.avi,1
-bench_press,bench_press,0.85,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c01.avi,1
+bench_press,bench_press,0.85,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c01.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c02.avi,2
-bench_press,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c03.avi,1
+bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c03.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c04.avi,1
 bench_press,deadlift,0.85,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c05.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c06.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c07.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c01.avi,0
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c02.avi,0
-bench_press,bench_press,0.99,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c03.avi,0
+bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c03.avi,0
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c04.avi,0
-bench_press,squat_front,0.72,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c05.avi,0
+bench_press,bench_press,0.91,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c05.avi,0
 bench_press,,,,zero-size array to reduction operation maximum which has no identity,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c06.avi,0
 bench_press,,,,zero-size array to reduction operation maximum which has no identity,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c07.avi,0
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c01.avi,3
@@ -100,7 +100,7 @@ bench_press,bench_press,0.95,biomechanics_override,,True,/Users/josephkamil/Desk
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c01.avi,0
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c02.avi,0
 bench_press,,,,zero-size array to reduction operation maximum which has no identity,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c03.avi,0
-bench_press,bench_press,0.84,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c04.avi,1
+bench_press,bench_press,0.84,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c04.avi,1
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c05.avi,0
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c01.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c02.avi,1
@@ -112,7 +112,7 @@ bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,bench_press,0.87,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c01.avi,0
 bench_press,,,,zero-size array to reduction operation maximum which has no identity,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c02.avi,0
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c03.avi,0
-bench_press,snatch,0.71,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c04.avi,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c04.avi,1
 bench_press,bench_press,0.83,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c05.avi,1
 bench_press,bench_press,0.91,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c06.avi,1
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c07.avi,0
@@ -140,13 +140,13 @@ bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c05.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c06.avi,4
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c07.avi,1
-bench_press,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c01.avi,1
-bench_press,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c02.avi,1
+bench_press,bench_press,0.85,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c01.avi,1
+bench_press,bench_press,0.85,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c02.avi,1
 bench_press,bench_press,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c03.avi,1
-bench_press,overhead_squat,0.85,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c04.avi,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c04.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c05.avi,1
 bench_press,bench_press,0.97,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c01.avi,1
-bench_press,squat_front,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c02.avi,0
+bench_press,bench_press,0.96,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c02.avi,1
 bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c03.avi,1
 bench_press,clean,0.75,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c04.avi,1
 bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c05.avi,1
@@ -154,29 +154,29 @@ bench_press,bench_press,0.96,biomechanics_override,,True,/Users/josephkamil/Desk
 bench_press,snatch,0.6,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c07.avi,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c01.avi,1
 bench_press,bench_press,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c02.avi,1
-bench_press,overhead_squat,0.89,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c03.avi,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c03.avi,1
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c04.avi,0
 bench_press,bench_press,0.91,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c05.avi,1
-bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c06.avi,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c06.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c07.avi,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_1.mp4,1
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_10.mp4,1
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_11.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_12.mp4,1
-bench_press,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_13.mp4,2
+bench_press,bench_press,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_13.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_14.mp4,1
-bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_15.mp4,1
+bench_press,deadlift,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_15.mp4,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_16.mp4,1
-bench_press,overhead_squat,0.92,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_17.mp4,2
-bench_press,overhead_squat,0.83,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_18.mp4,3
-bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_19.mp4,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_17.mp4,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_18.mp4,1
+bench_press,deadlift,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_19.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_2.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_20.mp4,1
-bench_press,bench_press,0.98,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_21.mp4,1
+bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_21.mp4,1
 bench_press,bench_press,0.99,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_22.mp4,1
-bench_press,bench_press,0.99,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_23.mp4,1
-bench_press,bench_press,0.99,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_24.mp4,1
-bench_press,bench_press,0.97,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_25.mp4,1
+bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_23.mp4,1
+bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_24.mp4,1
+bench_press,bench_press,0.97,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_25.mp4,1
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_26.mp4,1
 bench_press,bench_press,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_27.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_28.mp4,3
@@ -192,9 +192,9 @@ bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_37.mp4,3
 bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_38.mp4,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_39.mp4,10
-bench_press,overhead_squat,0.81,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_4.mp4,2
-bench_press,,,error,curl_failed_28,False,/Users/josephkamil/Desktop/Capstone/bench press/bench press_40.mp4,0
-bench_press,overhead_squat,0.81,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_41.mp4,3
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_4.mp4,1
+bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_40.mp4,3
+bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_41.mp4,1
 bench_press,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_42.mp4,1
 bench_press,bench_press,0.99,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_43.mp4,2
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_44.mp4,1
@@ -203,45 +203,45 @@ bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Deskt
 bench_press,bench_press,0.81,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_47.mp4,1
 bench_press,bench_press,0.95,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_48.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_49.mp4,1
-bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_5.mp4,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_5.mp4,1
 bench_press,push_press,0.78,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_50.mp4,1
 bench_press,bench_press,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_51.mp4,0
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_52.mp4,1
 bench_press,snatch,0.63,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_53.mp4,1
 bench_press,bench_press,0.82,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_54.mp4,1
 bench_press,Unknown,0.0,insufficient_data,,False,/Users/josephkamil/Desktop/Capstone/bench press/bench press_55.mp4,0
-bench_press,overhead_squat,0.81,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_56.mp4,0
+bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_56.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_57.mp4,1
 bench_press,bench_press,0.98,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_58.mp4,1
 bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_59.mp4,2
 bench_press,bench_press,0.94,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_6.mp4,1
-bench_press,bench_press,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_60.mp4,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_60.mp4,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_61.mp4,1
-bench_press,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_7.mp4,1
-bench_press,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_8.mp4,2
+bench_press,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_7.mp4,1
+bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_8.mp4,1
 bench_press,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/bench press/bench press_9.mp4,1
 deadlift,deadlift,0.89,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_1.mp4,2
 deadlift,deadlift,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_10.mp4,1
 deadlift,deadlift,0.85,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_11.mp4,1
-deadlift,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_12.mp4,1
+deadlift,deadlift,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_12.mp4,1
 deadlift,deadlift,0.89,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_13.mp4,1
 deadlift,deadlift,0.97,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_14.mp4,1
-deadlift,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_15.mp4,1
+deadlift,deadlift,0.82,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_15.mp4,1
 deadlift,deadlift,0.84,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_16.mp4,2
 deadlift,deadlift,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_17.mp4,1
 deadlift,deadlift,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_18.mp4,1
 deadlift,deadlift,0.96,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_19.mp4,1
 deadlift,deadlift,0.89,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_2.mp4,1
-deadlift,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_20.mp4,1
+deadlift,deadlift,0.82,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_20.mp4,1
 deadlift,deadlift,0.93,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_21.mp4,2
-deadlift,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_22.mp4,2
-deadlift,bench_press,0.8,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_23.mp4,1
+deadlift,deadlift,0.82,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_22.mp4,1
+deadlift,deadlift,0.82,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_23.mp4,1
 deadlift,snatch,0.7,router_v5,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_24.mp4,1
 deadlift,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_25.mp4,11
-deadlift,squat_back,0.97,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_26.mp4,2
+deadlift,deadlift,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_26.mp4,2
 deadlift,deadlift,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_27.mp4,2
-deadlift,bench_press,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_28.mp4,1
-deadlift,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_29.mp4,1
+deadlift,deadlift,0.95,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_28.mp4,3
+deadlift,deadlift,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_29.mp4,1
 deadlift,deadlift,0.87,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_3.mp4,1
 deadlift,deadlift,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_30.mp4,2
 deadlift,deadlift,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_31.mp4,2
