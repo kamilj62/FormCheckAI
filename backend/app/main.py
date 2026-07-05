@@ -6650,16 +6650,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "thruster"
             protected_conf = max(base_conf, 0.76)
             protected_reason = "thruster_pattern_detected"
-        elif bio_override and bio_label == "bench_press" and not _looks_strict and not _looks_thruster:
+        elif bio_label == "bench_press" and not _looks_strict and not _looks_thruster:
             bench_blocked_by_oly = (
                 olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
-                and float(olympic_conf or 0.0) >= 0.50
+                and float(olympic_conf or 0.0) >= 0.90
                 and raw_label in {"squat", "deadlift", "push_press"}
             )
 
             if not bench_blocked_by_oly:
                 protected_label = "bench_press"
-                protected_conf = bio_conf
+                protected_conf = max(float(bio_conf or 0.0), 0.80)
                 protected_reason = bio_reason
             else:
                 protected_reason = "bench_blocked_by_olympic_router"
@@ -6680,6 +6680,36 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_conf = max(base_conf, 0.80)
             protected_reason = "bench_press_squat_front_false_positive"
         elif (
+            raw_label in {"squat", "deadlift"}
+            and squat_label in {"squat_back", "squat_front", "overhead_squat"}
+            and bio_label in {"squat", "deadlift"}
+            and explosive_score >= 60.0
+            and float(olympic_conf or 0.0) < 0.70
+            and not _looks_clean_only
+            and not _looks_cj
+            and not _looks_split
+            and not _looks_strict
+        ):
+            protected_label = "bench_press"
+            protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
+            protected_reason = "bench_press_fast_press_rescue"
+        elif (
+            raw_label == "squat"
+            and squat_label == "squat_back"
+            and not _looks_clean_only
+            and not _looks_cj
+            and not _looks_split
+            and not _looks_strict
+            and not _looks_thruster
+            and wrist_overhead_ratio < 0.05
+            and explosive_score <= 30.0
+            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.12
+            and float(bar_debug.get("avg_elbow_angle_sq", 0.0)) > 150.0
+        ):
+            protected_label = "deadlift"
+            protected_conf = max(float(bio_conf or 0.0), 0.82)
+            protected_reason = "deadlift_setup_rescue"
+        elif (
             bio_label == "deadlift"
             and (
                 (
@@ -6688,6 +6718,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 )
                 or (
                     wrist_overhead_ratio < 0.08
+                    and explosive_score <= 30.0
                     and float(bar_debug.get("front_rack_elbow_p25", 0.0)) >= 130.0
                     and not _looks_clean_only
                     and not _looks_cj
@@ -6922,6 +6953,43 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 router_v5_conf = max(float(olympic_conf or 0.0), float(router_v5_conf or 0.0))
                 if isinstance(router_v5_debug, dict):
                     router_v5_debug["decision"] = "clean_and_jerk_high_conf_rescue"
+
+            short_split_press = (
+                float(split_features.get("lockout_duration", 0.0) or 0.0) <= 90.0
+                and float(split_features.get("catch_to_finish", 0.0) or 0.0) <= 120.0
+            )
+            if (
+                router_v5_label == "split_jerk"
+                and raw_label in {"squat", "deadlift"}
+                and bio_label in {"push_press", "squat", "deadlift"}
+                and short_split_press
+                and float(olympic_conf or 0.0) < 0.70
+                and not _looks_clean_only
+                and not _looks_cj
+            ):
+                router_v5_label = "bench_press"
+                router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
+                if isinstance(router_v5_debug, dict):
+                    router_v5_debug["decision"] = "bench_press_short_split_rescue"
+
+            cj_features = (router_v5_debug or {}).get("features", {}) if isinstance(router_v5_debug, dict) else {}
+            short_cj_press = (
+                float(cj_features.get("lockout_duration", 0.0) or 0.0) <= 65.0
+                and float(cj_features.get("catch_to_finish", 0.0) or 0.0) <= 65.0
+            )
+            if (
+                router_v5_label == "clean_and_jerk"
+                and raw_label in {"squat", "squat_front", "squat_back", "deadlift"}
+                and bio_label in {"push_press", "squat", "deadlift"}
+                and short_cj_press
+                and float(olympic_conf or 0.0) < 0.90
+                and not _looks_clean_only
+                and not _looks_cj
+            ):
+                router_v5_label = "bench_press"
+                router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
+                if isinstance(router_v5_debug, dict):
+                    router_v5_debug["decision"] = "bench_press_short_cj_rescue"
 
             protected_non_olympic = protected_label in {
                 "bench_press",
