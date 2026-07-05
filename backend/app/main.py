@@ -6922,7 +6922,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "handstand_push_up"
             protected_conf = 0.86
             protected_reason = "handstand_push_up_bodyweight_pattern"
-        elif _looks_pull_up:
+        elif _looks_pull_up and not _looks_split:
             protected_label = "pull_up"
             protected_conf = 0.86
             protected_reason = "pull_up_bodyweight_pattern"
