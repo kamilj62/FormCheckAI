@@ -7582,6 +7582,33 @@ async def debug_oly_phases(file: UploadFile = File(...)):
             os.remove(temp_path)
 
 
+
+def normalize_rep_keys(rep):
+    if not rep:
+        return {}
+
+    rep = dict(rep)
+
+    mapping = {
+        "start_frame": "start",
+        "descent_frame": "descent",
+        "bottom_frame": "bottom",
+        "ascent_frame": "ascent",
+        "end_frame": "end",
+        "lockout_frame": "lockout",
+        "dip_frame": "dip",
+        "drive_frame": "drive",
+        "catch_frame": "catch",
+        "first_pull_frame": "first_pull",
+        "extension_frame": "extension",
+    }
+
+    for old_key, new_key in mapping.items():
+        if old_key in rep and new_key not in rep:
+            rep[new_key] = rep[old_key]
+
+    return rep
+
 @app.post("/generate_visuals")
 async def generate_visuals(
     file: UploadFile = File(...),
@@ -7611,7 +7638,7 @@ async def generate_visuals(
                     "visuals_error": "Missing rep data. Analyze the video first.",
                 }
 
-        rep = json.loads(rep_json)
+        rep = normalize_rep_keys(json.loads(rep_json))
         if isinstance(rep, list):
             rep = rep[0] if rep else None
 
@@ -7632,7 +7659,7 @@ async def generate_visuals(
             )
         elif "squat" in label:
             phase_images = create_squat_phase_images(
-                temp_path, OVERLAY_DIR, rep, sample_every=1
+                temp_path, OVERLAY_DIR, rep, mp_pose, uuid, os, cv2
             )
         elif "deadlift" in label:
             phase_images = create_deadlift_phase_images(
