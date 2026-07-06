@@ -6889,6 +6889,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 )
             )
         )
+        _strong_floor_push_up = (
+            float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.95
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.12
+            and -0.16 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.08
+            and float(bodyweight_debug.get("median_head_drop", -1.0)) >= 0.06
+            and 75.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 135.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.07
+        )
+        _push_up_bench_guard = (
+            raw_label == "bench_press"
+            and float(base_conf or 0.0) >= 0.80
+            and not _strong_floor_push_up
+        )
+        _looks_push_up = _looks_push_up and not _push_up_bench_guard
         _looks_handstand_push_up = (
             float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.85
             and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.08
@@ -6961,13 +6975,29 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and float(bodyweight_debug.get("elbow_range", 0.0)) >= 70.0
             and float(bodyweight_debug.get("min_elbow", 180.0)) <= 95.0
         )
+        _pull_up_posture_signature = (
+            float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.65
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
+            and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
+            and not _looks_split
+        )
+
         _pull_up_press_guard = (
             raw_label == "push_press"
+            and not _pull_up_posture_signature
             and (
                 bio_label == "push_press"
                 or _looks_strict
                 or _looks_split
             )
+        )
+        _pull_up_bench_guard = (
+            raw_label == "bench_press"
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) < 0.35
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) > 0.02
+            and float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) < 0.18
+            and float(bodyweight_debug.get("median_head_drop", 0.0)) >= 0.03
         )
         _looks_pull_up = (
             (
@@ -6989,6 +7019,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             )
             and not _pull_up_overhead_squat_guard
             and not _pull_up_press_guard
+            and not _pull_up_bench_guard
         )
         _looks_muscle_up = (
             int(bodyweight_debug.get("total_frames", 0) or 0) >= 250
@@ -7200,6 +7231,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and olympic_pred == "clean_and_jerk"
             and float(olympic_conf or 0.0) >= 0.75
             and explosive_score > 20
+            and not (
+                _pull_up_posture_signature
+                and float(olympic_conf or 0.0) < 0.95
+            )
             and (
                 raw_label in {"squat", "squat_back", "squat_front", "bench_press"}
                 or (raw_label == "push_press" and not _looks_split)

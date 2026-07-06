@@ -2,11 +2,11 @@
   "exercise_label": "squat_back",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/squat_setup_f1eab324.jpg",
-    "descent": "/outputs/squat_descent_81fc1bc5.jpg",
-    "bottom": "/outputs/squat_bottom_266b80c0.jpg",
-    "ascent": "/outputs/squat_ascent_e68b2fc2.jpg",
-    "lockout": "/outputs/squat_lockout_5f3936f4.jpg"
+    "setup": "/outputs/squat_setup_8fb70e5f.jpg",
+    "descent": "/outputs/squat_descent_e9b3d839.jpg",
+    "bottom": "/outputs/squat_bottom_9118e169.jpg",
+    "ascent": "/outputs/squat_ascent_28232005.jpg",
+    "lockout": "/outputs/squat_lockout_cdc64b10.jpg"
   },
   "visuals_error": null
 }
