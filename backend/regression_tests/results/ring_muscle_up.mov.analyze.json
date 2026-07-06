@@ -5,29 +5,35 @@
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 142,
-      "pull_frame": 276,
-      "top_frame": 371,
-      "descent_frame": 420,
-      "end_frame": 540,
-      "score": 9.0,
-      "grade": "Excellent",
+      "start_frame": 187,
+      "pull_frame": 371,
+      "transition_frame": 502,
+      "dip_frame": 574,
+      "lockout_frame": 574,
+      "end_frame": 574,
+      "score": 5.5,
+      "grade": "Needs Work",
       "issues": [
-        "Upper-body position was hard to track."
+        "Transition over the bar may be slow.",
+        "Support position above the bar looks unstable.",
+        "Lockout may be incomplete."
       ],
       "breakdown": {
-        "range": "good",
-        "top": "good",
-        "control": "review"
+        "pull": "good",
+        "transition": "slow",
+        "support": "weak",
+        "lockout": "soft"
       },
       "feedback": [
-        "Record from the side with the full body and bar visible."
+        "Turn over aggressively and keep the bar or rings close.",
+        "Press down through the hands and stabilize before the dip.",
+        "Finish each rep with strong elbow extension."
       ]
     }
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 9.0,
+    "avg_rep_score": 5.5,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set."
@@ -38,23 +44,29 @@
     "issues": [
       {
         "rep": 1,
-        "start_frame": 142,
-        "pull_frame": 276,
-        "top_frame": 371,
-        "descent_frame": 420,
-        "end_frame": 540,
-        "score": 9.0,
-        "grade": "Excellent",
+        "start_frame": 187,
+        "pull_frame": 371,
+        "transition_frame": 502,
+        "dip_frame": 574,
+        "lockout_frame": 574,
+        "end_frame": 574,
+        "score": 5.5,
+        "grade": "Needs Work",
         "issues": [
-          "Upper-body position was hard to track."
+          "Transition over the bar may be slow.",
+          "Support position above the bar looks unstable.",
+          "Lockout may be incomplete."
         ],
         "breakdown": {
-          "range": "good",
-          "top": "good",
-          "control": "review"
+          "pull": "good",
+          "transition": "slow",
+          "support": "weak",
+          "lockout": "soft"
         },
         "feedback": [
-          "Record from the side with the full body and bar visible."
+          "Turn over aggressively and keep the bar or rings close.",
+          "Press down through the hands and stabilize before the dip.",
+          "Finish each rep with strong elbow extension."
         ]
       }
     ]

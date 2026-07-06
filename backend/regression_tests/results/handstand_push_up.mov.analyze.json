@@ -10,23 +10,27 @@
       "bottom_frame": 412,
       "ascent_frame": 430,
       "end_frame": 480,
-      "score": 10.0,
+      "score": 9.0,
       "grade": "Excellent",
-      "issues": [],
+      "issues": [
+        "Body line may be breaking during the rep."
+      ],
       "breakdown": {
         "range": "good",
         "bottom": "good",
+        "depth": "good",
+        "body_line": "sagging",
         "lockout": "good",
         "control": "good"
       },
       "feedback": [
-        "Good handstand push-up rep. Keep the body stacked and press to a strong lockout."
+        "Keep your body stacked and avoid arching or sagging."
       ]
     }
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 10.0,
+    "avg_rep_score": 9.0,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set."
@@ -42,17 +46,21 @@
         "bottom_frame": 412,
         "ascent_frame": 430,
         "end_frame": 480,
-        "score": 10.0,
+        "score": 9.0,
         "grade": "Excellent",
-        "issues": [],
+        "issues": [
+          "Body line may be breaking during the rep."
+        ],
         "breakdown": {
           "range": "good",
           "bottom": "good",
+          "depth": "good",
+          "body_line": "sagging",
           "lockout": "good",
           "control": "good"
         },
         "feedback": [
-          "Good handstand push-up rep. Keep the body stacked and press to a strong lockout."
+          "Keep your body stacked and avoid arching or sagging."
         ]
       }
     ]

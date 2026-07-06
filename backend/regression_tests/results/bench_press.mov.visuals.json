@@ -2,12 +2,12 @@
   "exercise_label": "bench_press",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/bench_press_setup_11ef78e7.jpg",
-    "descent": "/outputs/bench_press_descent_326b8292.jpg",
-    "bottom": "/outputs/bench_press_bottom_ec9befe8.jpg",
-    "press": "/outputs/bench_press_press_a458c80e.jpg",
-    "lockout": "/outputs/bench_press_lockout_9e4c24f7.jpg",
-    "debug_sheet": "/outputs/bench_press_phase_debug_1c4d46e6.jpg"
+    "setup": "/outputs/bench_press_setup_11cbd18b.jpg",
+    "descent": "/outputs/bench_press_descent_13f3721e.jpg",
+    "bottom": "/outputs/bench_press_bottom_94086477.jpg",
+    "press": "/outputs/bench_press_press_e1dc372c.jpg",
+    "lockout": "/outputs/bench_press_lockout_d4bcab84.jpg",
+    "debug_sheet": "/outputs/bench_press_phase_debug_ff54b37f.jpg"
   },
   "visuals_error": null
 }

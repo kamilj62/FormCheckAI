@@ -10,22 +10,25 @@
       "catch_frame": 364,
       "end_frame": 382,
       "rep": 1,
-      "score": 9.0,
+      "score": 9.3,
       "grade": "Excellent",
-      "issues": [],
+      "issues": [
+        "Overhead catch could be more secure."
+      ],
       "breakdown": {
         "first_pull": "good",
         "extension": "good",
         "turnover": "good",
-        "overhead_catch": "good",
+        "overhead_catch": "borderline",
         "stability": "good",
-        "bar_path": "good"
+        "bar_path": "good",
+        "catch": "borderline"
       },
       "feedback": [
-        "Good snatch rep. Strong pull, catch, and overhead position."
+        "Lock the bar overhead with arms extended and hips under the bar."
       ],
       "coaching": {
-        "priority": "Excellent technique. Keep building consistency.",
+        "priority": "Receive the bar in a stronger overhead position.",
         "sections": [
           {
             "title": "First Pull",
@@ -44,8 +47,8 @@
           },
           {
             "title": "Overhead Catch",
-            "status": "good",
-            "message": "Stable receiving position."
+            "status": "warning",
+            "message": "Receive the bar in a stronger overhead position."
           },
           {
             "title": "Stability",
@@ -67,22 +70,25 @@
       "catch_frame": 413,
       "end_frame": 449,
       "rep": 2,
-      "score": 9.0,
-      "grade": "Excellent",
-      "issues": [],
+      "score": 8.6,
+      "grade": "Good",
+      "issues": [
+        "Extension looks incomplete before pulling under."
+      ],
       "breakdown": {
         "first_pull": "good",
-        "extension": "good",
+        "extension": "poor",
         "turnover": "good",
         "overhead_catch": "good",
         "stability": "good",
-        "bar_path": "good"
+        "bar_path": "good",
+        "catch": "good"
       },
       "feedback": [
-        "Good snatch rep. Strong pull, catch, and overhead position."
+        "Finish extending before pulling under the bar."
       ],
       "coaching": {
-        "priority": "Excellent technique. Keep building consistency.",
+        "priority": "Finish extending before pulling under the bar.",
         "sections": [
           {
             "title": "First Pull",
@@ -91,8 +97,8 @@
           },
           {
             "title": "Extension",
-            "status": "good",
-            "message": "Excellent full extension."
+            "status": "poor",
+            "message": "Finish extending before pulling under the bar."
           },
           {
             "title": "Turnover",
@@ -124,22 +130,25 @@
       "catch_frame": 692,
       "end_frame": 697,
       "rep": 3,
-      "score": 9.0,
-      "grade": "Excellent",
-      "issues": [],
+      "score": 8.6,
+      "grade": "Good",
+      "issues": [
+        "Extension looks incomplete before pulling under."
+      ],
       "breakdown": {
         "first_pull": "good",
-        "extension": "good",
+        "extension": "poor",
         "turnover": "good",
         "overhead_catch": "good",
         "stability": "good",
-        "bar_path": "good"
+        "bar_path": "good",
+        "catch": "good"
       },
       "feedback": [
-        "Good snatch rep. Strong pull, catch, and overhead position."
+        "Finish extending before pulling under the bar."
       ],
       "coaching": {
-        "priority": "Excellent technique. Keep building consistency.",
+        "priority": "Finish extending before pulling under the bar.",
         "sections": [
           {
             "title": "First Pull",
@@ -148,8 +157,8 @@
           },
           {
             "title": "Extension",
-            "status": "good",
-            "message": "Excellent full extension."
+            "status": "poor",
+            "message": "Finish extending before pulling under the bar."
           },
           {
             "title": "Turnover",
@@ -177,10 +186,10 @@
   ],
   "set_summary": {
     "detected_reps": 3,
-    "avg_rep_score": 9.0,
+    "avg_rep_score": 8.8,
     "best_rep": 1,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set."
+    "worst_rep": 2,
+    "trend": "Form appears to deteriorate as the set goes on."
   },
   "coaching_zones": {
     "zones": [],
@@ -193,22 +202,25 @@
         "catch_frame": 364,
         "end_frame": 382,
         "rep": 1,
-        "score": 9.0,
+        "score": 9.3,
         "grade": "Excellent",
-        "issues": [],
+        "issues": [
+          "Overhead catch could be more secure."
+        ],
         "breakdown": {
           "first_pull": "good",
           "extension": "good",
           "turnover": "good",
-          "overhead_catch": "good",
+          "overhead_catch": "borderline",
           "stability": "good",
-          "bar_path": "good"
+          "bar_path": "good",
+          "catch": "borderline"
         },
         "feedback": [
-          "Good snatch rep. Strong pull, catch, and overhead position."
+          "Lock the bar overhead with arms extended and hips under the bar."
         ],
         "coaching": {
-          "priority": "Excellent technique. Keep building consistency.",
+          "priority": "Receive the bar in a stronger overhead position.",
           "sections": [
             {
               "title": "First Pull",
@@ -227,8 +239,8 @@
             },
             {
               "title": "Overhead Catch",
-              "status": "good",
-              "message": "Stable receiving position."
+              "status": "warning",
+              "message": "Receive the bar in a stronger overhead position."
             },
             {
               "title": "Stability",
@@ -250,22 +262,25 @@
         "catch_frame": 413,
         "end_frame": 449,
         "rep": 2,
-        "score": 9.0,
-        "grade": "Excellent",
-        "issues": [],
+        "score": 8.6,
+        "grade": "Good",
+        "issues": [
+          "Extension looks incomplete before pulling under."
+        ],
         "breakdown": {
           "first_pull": "good",
-          "extension": "good",
+          "extension": "poor",
           "turnover": "good",
           "overhead_catch": "good",
           "stability": "good",
-          "bar_path": "good"
+          "bar_path": "good",
+          "catch": "good"
         },
         "feedback": [
-          "Good snatch rep. Strong pull, catch, and overhead position."
+          "Finish extending before pulling under the bar."
         ],
         "coaching": {
-          "priority": "Excellent technique. Keep building consistency.",
+          "priority": "Finish extending before pulling under the bar.",
           "sections": [
             {
               "title": "First Pull",
@@ -274,8 +289,8 @@
             },
             {
               "title": "Extension",
-              "status": "good",
-              "message": "Excellent full extension."
+              "status": "poor",
+              "message": "Finish extending before pulling under the bar."
             },
             {
               "title": "Turnover",
@@ -307,22 +322,25 @@
         "catch_frame": 692,
         "end_frame": 697,
         "rep": 3,
-        "score": 9.0,
-        "grade": "Excellent",
-        "issues": [],
+        "score": 8.6,
+        "grade": "Good",
+        "issues": [
+          "Extension looks incomplete before pulling under."
+        ],
         "breakdown": {
           "first_pull": "good",
-          "extension": "good",
+          "extension": "poor",
           "turnover": "good",
           "overhead_catch": "good",
           "stability": "good",
-          "bar_path": "good"
+          "bar_path": "good",
+          "catch": "good"
         },
         "feedback": [
-          "Good snatch rep. Strong pull, catch, and overhead position."
+          "Finish extending before pulling under the bar."
         ],
         "coaching": {
-          "priority": "Excellent technique. Keep building consistency.",
+          "priority": "Finish extending before pulling under the bar.",
           "sections": [
             {
               "title": "First Pull",
@@ -331,8 +349,8 @@
             },
             {
               "title": "Extension",
-              "status": "good",
-              "message": "Excellent full extension."
+              "status": "poor",
+              "message": "Finish extending before pulling under the bar."
             },
             {
               "title": "Turnover",

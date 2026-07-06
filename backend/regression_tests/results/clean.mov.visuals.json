@@ -2,12 +2,12 @@
   "exercise_label": "clean",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/clean_setup_24813d54.jpg",
-    "first_pull": "/outputs/clean_first_pull_046352e4.jpg",
-    "extension": "/outputs/clean_extension_13663922.jpg",
-    "catch": "/outputs/clean_catch_3440de5f.jpg",
-    "finish": "/outputs/clean_finish_da4114e0.jpg",
-    "debug_sheet": "/outputs/clean_phase_debug_4dbd6cc6.jpg"
+    "setup": "/outputs/clean_setup_7fcd905f.jpg",
+    "first_pull": "/outputs/clean_first_pull_2700c024.jpg",
+    "extension": "/outputs/clean_extension_44762a08.jpg",
+    "catch": "/outputs/clean_catch_3c9b8061.jpg",
+    "finish": "/outputs/clean_finish_1e2025ab.jpg",
+    "debug_sheet": "/outputs/clean_phase_debug_744ebb18.jpg"
   },
   "visuals_error": null
 }

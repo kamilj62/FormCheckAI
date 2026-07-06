@@ -21,11 +21,38 @@
         "knees": "poor",
         "heels": "good",
         "neck": "good",
-        "butt_wink": "not_detected"
+        "butt_wink": "not_detected",
+        "overhead": "good",
+        "bar_path": "good"
       },
       "feedback": [
         "Drive knees out over your toes."
-      ]
+      ],
+      "coaching": {
+        "priority": "Drive knees out and stay stable under overhead load.",
+        "sections": [
+          {
+            "title": "Overhead Stability",
+            "status": "good",
+            "message": "Bar is stable overhead."
+          },
+          {
+            "title": "Depth",
+            "status": "good",
+            "message": "Strong squat depth."
+          },
+          {
+            "title": "Bar Stack",
+            "status": "good",
+            "message": "Bar remains stacked over midfoot."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out and stay stable under overhead load."
+          }
+        ]
+      }
     }
   ],
   "set_summary": {
@@ -57,11 +84,38 @@
           "knees": "poor",
           "heels": "good",
           "neck": "good",
-          "butt_wink": "not_detected"
+          "butt_wink": "not_detected",
+          "overhead": "good",
+          "bar_path": "good"
         },
         "feedback": [
           "Drive knees out over your toes."
-        ]
+        ],
+        "coaching": {
+          "priority": "Drive knees out and stay stable under overhead load.",
+          "sections": [
+            {
+              "title": "Overhead Stability",
+              "status": "good",
+              "message": "Bar is stable overhead."
+            },
+            {
+              "title": "Depth",
+              "status": "good",
+              "message": "Strong squat depth."
+            },
+            {
+              "title": "Bar Stack",
+              "status": "good",
+              "message": "Bar remains stacked over midfoot."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out and stay stable under overhead load."
+            }
+          ]
+        }
       }
     ]
   },

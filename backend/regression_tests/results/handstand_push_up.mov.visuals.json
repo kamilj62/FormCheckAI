@@ -2,12 +2,12 @@
   "exercise_label": "handstand_push_up",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/push_up_setup_3ab84d16.jpg",
-    "descent": "/outputs/push_up_descent_c1c36fec.jpg",
-    "bottom": "/outputs/push_up_bottom_4a2b6063.jpg",
-    "ascent": "/outputs/push_up_ascent_21a440d9.jpg",
-    "lockout": "/outputs/push_up_lockout_4c77e16b.jpg",
-    "debug_sheet": "/outputs/push_up_phase_debug_0225e299.jpg"
+    "setup": "/outputs/push_up_setup_419760ec.jpg",
+    "descent": "/outputs/push_up_descent_446595df.jpg",
+    "bottom": "/outputs/push_up_bottom_7ef30862.jpg",
+    "ascent": "/outputs/push_up_ascent_1059f818.jpg",
+    "lockout": "/outputs/push_up_lockout_dc506c26.jpg",
+    "debug_sheet": "/outputs/push_up_phase_debug_649af4a6.jpg"
   },
   "visuals_error": null
 }

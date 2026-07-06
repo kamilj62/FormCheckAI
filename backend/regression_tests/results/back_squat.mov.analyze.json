@@ -27,7 +27,37 @@
       "feedback": [
         "Sink a little deeper while keeping your chest up.",
         "Drive knees out over your toes."
-      ]
+      ],
+      "coaching": {
+        "priority": "Drive knees out over your toes.",
+        "sections": [
+          {
+            "title": "Depth",
+            "status": "warning",
+            "message": "Sink a little deeper while keeping your chest up."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Strong torso position."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out over your toes."
+          },
+          {
+            "title": "Heels",
+            "status": "good",
+            "message": "Good foot pressure."
+          },
+          {
+            "title": "Neck",
+            "status": "good",
+            "message": "Good neutral head position."
+          }
+        ]
+      }
     }
   ],
   "set_summary": {
@@ -65,7 +95,37 @@
         "feedback": [
           "Sink a little deeper while keeping your chest up.",
           "Drive knees out over your toes."
-        ]
+        ],
+        "coaching": {
+          "priority": "Drive knees out over your toes.",
+          "sections": [
+            {
+              "title": "Depth",
+              "status": "warning",
+              "message": "Sink a little deeper while keeping your chest up."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Strong torso position."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out over your toes."
+            },
+            {
+              "title": "Heels",
+              "status": "good",
+              "message": "Good foot pressure."
+            },
+            {
+              "title": "Neck",
+              "status": "good",
+              "message": "Good neutral head position."
+            }
+          ]
+        }
       }
     ]
   },

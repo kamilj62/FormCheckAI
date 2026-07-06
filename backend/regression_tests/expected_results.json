@@ -3,108 +3,200 @@
     "label": "squat_back",
     "min_confidence": 0.75,
     "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "bench_press.mov": {
-    "label": "Bench Press",
-    "min_confidence": 0.75,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "deadlift.mp4": {
-    "label": "Deadlift",
-    "min_confidence": 0.75,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "overhead_squat.mp4": {
-    "label": "overhead_squat",
-    "min_confidence": 0.75,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "push_press.mov": {
-    "label": "Push Press",
-    "min_confidence": 0.75,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "snatch.mp4": {
-    "label": "Snatch",
-    "min_confidence": 0.7,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "split_jerk.mp4": {
-    "label": "Split Jerk",
-    "min_confidence": 0.7,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "thruster.mp4": {
-    "label": "Thruster",
-    "min_confidence": 0.7,
-    "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": [
+      "depth",
+      "knees",
+      "torso"
+    ]
   },
   "front_squat.mov": {
     "label": "squat_front",
     "min_confidence": 0.6,
     "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": [
+      "depth",
+      "knees",
+      "torso",
+      "front_rack"
+    ]
+  },
+  "overhead_squat.mp4": {
+    "label": "overhead_squat",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": [
+      "depth",
+      "knees",
+      "torso"
+    ]
+  },
+  "bench_press.mov": {
+    "label": "bench_press",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
+  },
+  "deadlift.mp4": {
+    "label": "deadlift",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": [
+      "back",
+      "hinge",
+      "lockout"
+    ]
+  },
+  "push_press.mov": {
+    "label": "push_press",
+    "min_confidence": 0.75,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": [
+      "dip",
+      "lockout"
+    ]
   },
   "strict_press.mov": {
     "label": "strict_press",
     "min_confidence": 0.6,
     "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
+  },
+  "thruster.mp4": {
+    "label": "thruster",
+    "min_confidence": 0.7,
+    "min_reps": 1,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
   },
   "clean.mov": {
     "label": "clean",
     "min_confidence": 0.6,
     "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "any",
+    "expect_coaching": true,
+    "expect_coaching_sections": [
+      "First Pull",
+      "Extension",
+      "Catch"
+    ],
+    "expect_breakdown_keys": [
+      "first_pull",
+      "extension",
+      "catch"
+    ]
   },
-  "pull_up.mov": {
-    "label": "pull_up",
-    "min_confidence": 0.6,
-    "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "burpee.mov": {
-    "label": "burpee",
-    "min_confidence": 0.6,
-    "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis"
+  "snatch.mp4": {
+    "label": "snatch",
+    "min_confidence": 0.7,
+    "min_reps": 1,
+    "analysis_mode": "any",
+    "expect_coaching": true,
+    "expect_coaching_sections": [
+      "First Pull",
+      "Extension",
+      "Catch"
+    ],
+    "expect_breakdown_keys": [
+      "first_pull",
+      "extension",
+      "catch"
+    ]
   },
   "clean_and_jerk.mp4": {
     "label": "clean_and_jerk",
     "min_confidence": 0.6,
     "min_reps": 1,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "any",
+    "expect_coaching": false,
+    "expect_coaching_sections": [
+      "Catch",
+      "Dip",
+      "Lockout"
+    ],
+    "expect_breakdown_keys": [
+      "clean",
+      "jerk"
+    ]
   },
-  "bar_muscle_up.mov": {
-    "label": "muscle_up",
+  "split_jerk.mp4": {
+    "label": "split_jerk",
+    "min_confidence": 0.7,
+    "min_reps": 1,
+    "analysis_mode": "any",
+    "expect_coaching": true,
+    "expect_coaching_sections": [
+      "Dip",
+      "Drive",
+      "Split Catch",
+      "Lockout"
+    ],
+    "expect_breakdown_keys": [
+      "dip",
+      "drive",
+      "lockout"
+    ]
+  },
+  "pull_up.mov": {
+    "label": "pull_up",
     "min_confidence": 0.6,
     "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis"
-  },
-  "ring_muscle_up.mov": {
-    "label": "muscle_up",
-    "min_confidence": 0.6,
-    "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
   },
   "push_up.mp4": {
     "label": "push_up",
     "min_confidence": 0.6,
     "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
   },
   "handstand_push_up.mov": {
     "label": "handstand_push_up",
     "min_confidence": 0.6,
     "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis"
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
+  },
+  "burpee.mov": {
+    "label": "burpee",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
+  },
+  "bar_muscle_up.mov": {
+    "label": "muscle_up",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
+  },
+  "ring_muscle_up.mov": {
+    "label": "muscle_up",
+    "min_confidence": 0.6,
+    "min_reps": 0,
+    "analysis_mode": "detailed_rep_analysis",
+    "expect_coaching": false,
+    "expect_breakdown_keys": []
   }
 }

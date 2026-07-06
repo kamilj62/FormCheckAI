@@ -22,9 +22,11 @@
         "jerk_catch_idx": 303,
         "end_idx": 320
       },
-      "score": 8.2,
-      "grade": "Good",
+      "score": 7.4,
+      "grade": "Solid",
       "issues": [
+        "Clean: Extension looks incomplete before the turnover.",
+        "Clean: Catch position may be too shallow.",
         "Jerk: Overhead position is not held long enough.",
         "Jerk: Torso is leaning during the catch.",
         "Jerk: Knees may cave during the dip or catch."
@@ -32,9 +34,9 @@
       "breakdown": {
         "clean": {
           "first_pull": "good",
-          "extension": "good",
+          "extension": "poor",
           "turnover": "good",
-          "catch": "good",
+          "catch": "shallow",
           "front_rack": "good",
           "bar_path": "good"
         },
@@ -48,7 +50,8 @@
         }
       },
       "feedback": [
-        "Good clean rep. Strong pull and catch position.",
+        "Finish extending the hips and knees before pulling under.",
+        "Drop under the bar into a stronger receiving position.",
         "Catch and stabilize the bar overhead.",
         "Keep ribs stacked and torso vertical under the bar.",
         "Drive knees out and keep a stable receiving position."
@@ -57,7 +60,7 @@
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 8.2,
+    "avg_rep_score": 7.4,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set."
@@ -85,9 +88,11 @@
           "jerk_catch_idx": 303,
           "end_idx": 320
         },
-        "score": 8.2,
-        "grade": "Good",
+        "score": 7.4,
+        "grade": "Solid",
         "issues": [
+          "Clean: Extension looks incomplete before the turnover.",
+          "Clean: Catch position may be too shallow.",
           "Jerk: Overhead position is not held long enough.",
           "Jerk: Torso is leaning during the catch.",
           "Jerk: Knees may cave during the dip or catch."
@@ -95,9 +100,9 @@
         "breakdown": {
           "clean": {
             "first_pull": "good",
-            "extension": "good",
+            "extension": "poor",
             "turnover": "good",
-            "catch": "good",
+            "catch": "shallow",
             "front_rack": "good",
             "bar_path": "good"
           },
@@ -111,7 +116,8 @@
           }
         },
         "feedback": [
-          "Good clean rep. Strong pull and catch position.",
+          "Finish extending the hips and knees before pulling under.",
+          "Drop under the bar into a stronger receiving position.",
           "Catch and stabilize the bar overhead.",
           "Keep ribs stacked and torso vertical under the bar.",
           "Drive knees out and keep a stable receiving position."

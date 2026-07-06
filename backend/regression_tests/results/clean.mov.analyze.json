@@ -10,22 +10,26 @@
       "catch_frame": 232,
       "end_frame": 237,
       "rep": 1,
-      "score": 9.0,
-      "grade": "Excellent",
-      "issues": [],
+      "score": 7.6,
+      "grade": "Solid",
+      "issues": [
+        "Extension looks incomplete before the turnover.",
+        "Catch position may be too shallow."
+      ],
       "breakdown": {
         "first_pull": "good",
-        "extension": "good",
+        "extension": "poor",
         "turnover": "good",
-        "catch": "good",
+        "catch": "shallow",
         "front_rack": "good",
         "bar_path": "good"
       },
       "feedback": [
-        "Good clean rep. Strong pull and catch position."
+        "Finish extending the hips and knees before pulling under.",
+        "Drop under the bar into a stronger receiving position."
       ],
       "coaching": {
-        "priority": "Excellent technique. Keep building consistency.",
+        "priority": "Finish extending the hips before bending the arms.",
         "sections": [
           {
             "title": "First Pull",
@@ -34,8 +38,8 @@
           },
           {
             "title": "Extension",
-            "status": "good",
-            "message": "Excellent extension."
+            "status": "poor",
+            "message": "Finish extending the hips before bending the arms."
           },
           {
             "title": "Turnover",
@@ -44,8 +48,8 @@
           },
           {
             "title": "Catch",
-            "status": "good",
-            "message": "Stable receiving position."
+            "status": "poor",
+            "message": "Receive the bar with a stronger front rack."
           }
         ]
       }
@@ -57,32 +61,38 @@
       "catch_frame": 444,
       "end_frame": 458,
       "rep": 2,
-      "score": 9.0,
-      "grade": "Excellent",
-      "issues": [],
+      "score": 7.4,
+      "grade": "Solid",
+      "issues": [
+        "First pull could stay more balanced.",
+        "Extension looks incomplete before the turnover.",
+        "Catch depth could be lower."
+      ],
       "breakdown": {
-        "first_pull": "good",
-        "extension": "good",
+        "first_pull": "borderline",
+        "extension": "poor",
         "turnover": "good",
-        "catch": "good",
+        "catch": "borderline",
         "front_rack": "good",
         "bar_path": "good"
       },
       "feedback": [
-        "Good clean rep. Strong pull and catch position."
+        "Patience off the floor \u2014 keep shoulders over the bar longer.",
+        "Finish extending the hips and knees before pulling under.",
+        "Receive the clean in a slightly deeper squat."
       ],
       "coaching": {
-        "priority": "Excellent technique. Keep building consistency.",
+        "priority": "Finish extending the hips before bending the arms.",
         "sections": [
           {
             "title": "First Pull",
-            "status": "good",
-            "message": "Strong first pull off the floor."
+            "status": "warning",
+            "message": "Stay balanced over the mid-foot during the first pull."
           },
           {
             "title": "Extension",
-            "status": "good",
-            "message": "Excellent extension."
+            "status": "poor",
+            "message": "Finish extending the hips before bending the arms."
           },
           {
             "title": "Turnover",
@@ -91,8 +101,8 @@
           },
           {
             "title": "Catch",
-            "status": "good",
-            "message": "Stable receiving position."
+            "status": "warning",
+            "message": "Receive the bar with a stronger front rack."
           }
         ]
       }
@@ -100,10 +110,10 @@
   ],
   "set_summary": {
     "detected_reps": 2,
-    "avg_rep_score": 9.0,
+    "avg_rep_score": 7.5,
     "best_rep": 1,
-    "worst_rep": 1,
-    "trend": "Form appears consistent across the set."
+    "worst_rep": 2,
+    "trend": "Form appears to deteriorate as the set goes on."
   },
   "coaching_zones": {
     "zones": [],
@@ -116,22 +126,26 @@
         "catch_frame": 232,
         "end_frame": 237,
         "rep": 1,
-        "score": 9.0,
-        "grade": "Excellent",
-        "issues": [],
+        "score": 7.6,
+        "grade": "Solid",
+        "issues": [
+          "Extension looks incomplete before the turnover.",
+          "Catch position may be too shallow."
+        ],
         "breakdown": {
           "first_pull": "good",
-          "extension": "good",
+          "extension": "poor",
           "turnover": "good",
-          "catch": "good",
+          "catch": "shallow",
           "front_rack": "good",
           "bar_path": "good"
         },
         "feedback": [
-          "Good clean rep. Strong pull and catch position."
+          "Finish extending the hips and knees before pulling under.",
+          "Drop under the bar into a stronger receiving position."
         ],
         "coaching": {
-          "priority": "Excellent technique. Keep building consistency.",
+          "priority": "Finish extending the hips before bending the arms.",
           "sections": [
             {
               "title": "First Pull",
@@ -140,8 +154,8 @@
             },
             {
               "title": "Extension",
-              "status": "good",
-              "message": "Excellent extension."
+              "status": "poor",
+              "message": "Finish extending the hips before bending the arms."
             },
             {
               "title": "Turnover",
@@ -150,8 +164,8 @@
             },
             {
               "title": "Catch",
-              "status": "good",
-              "message": "Stable receiving position."
+              "status": "poor",
+              "message": "Receive the bar with a stronger front rack."
             }
           ]
         }
@@ -163,32 +177,38 @@
         "catch_frame": 444,
         "end_frame": 458,
         "rep": 2,
-        "score": 9.0,
-        "grade": "Excellent",
-        "issues": [],
+        "score": 7.4,
+        "grade": "Solid",
+        "issues": [
+          "First pull could stay more balanced.",
+          "Extension looks incomplete before the turnover.",
+          "Catch depth could be lower."
+        ],
         "breakdown": {
-          "first_pull": "good",
-          "extension": "good",
+          "first_pull": "borderline",
+          "extension": "poor",
           "turnover": "good",
-          "catch": "good",
+          "catch": "borderline",
           "front_rack": "good",
           "bar_path": "good"
         },
         "feedback": [
-          "Good clean rep. Strong pull and catch position."
+          "Patience off the floor \u2014 keep shoulders over the bar longer.",
+          "Finish extending the hips and knees before pulling under.",
+          "Receive the clean in a slightly deeper squat."
         ],
         "coaching": {
-          "priority": "Excellent technique. Keep building consistency.",
+          "priority": "Finish extending the hips before bending the arms.",
           "sections": [
             {
               "title": "First Pull",
-              "status": "good",
-              "message": "Strong first pull off the floor."
+              "status": "warning",
+              "message": "Stay balanced over the mid-foot during the first pull."
             },
             {
               "title": "Extension",
-              "status": "good",
-              "message": "Excellent extension."
+              "status": "poor",
+              "message": "Finish extending the hips before bending the arms."
             },
             {
               "title": "Turnover",
@@ -197,8 +217,8 @@
             },
             {
               "title": "Catch",
-              "status": "good",
-              "message": "Stable receiving position."
+              "status": "warning",
+              "message": "Receive the bar with a stronger front rack."
             }
           ]
         }

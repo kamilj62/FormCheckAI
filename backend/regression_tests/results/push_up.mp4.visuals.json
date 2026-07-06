@@ -2,12 +2,12 @@
   "exercise_label": "push_up",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/push_up_setup_6d694354.jpg",
-    "descent": "/outputs/push_up_descent_e1336c85.jpg",
-    "bottom": "/outputs/push_up_bottom_a5e38c7c.jpg",
-    "ascent": "/outputs/push_up_ascent_48976c56.jpg",
-    "lockout": "/outputs/push_up_lockout_2349cd26.jpg",
-    "debug_sheet": "/outputs/push_up_phase_debug_4c548177.jpg"
+    "setup": "/outputs/push_up_setup_d07589c4.jpg",
+    "descent": "/outputs/push_up_descent_4d010434.jpg",
+    "bottom": "/outputs/push_up_bottom_be144b17.jpg",
+    "ascent": "/outputs/push_up_ascent_56c13776.jpg",
+    "lockout": "/outputs/push_up_lockout_b334f317.jpg",
+    "debug_sheet": "/outputs/push_up_phase_debug_c059c5c5.jpg"
   },
   "visuals_error": null
 }

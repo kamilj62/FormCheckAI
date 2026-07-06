@@ -2,11 +2,11 @@
   "exercise_label": "push_press",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/push_press_setup_15cb33b2.jpg",
-    "dip": "/outputs/push_press_dip_288d109f.jpg",
-    "drive": "/outputs/push_press_drive_039c1439.jpg",
-    "lockout": "/outputs/push_press_lockout_2722638d.jpg",
-    "debug_sheet": "/outputs/push_press_phase_debug_a407fbd2.jpg"
+    "setup": "/outputs/push_press_setup_873a0bbc.jpg",
+    "dip": "/outputs/push_press_dip_faea6271.jpg",
+    "drive": "/outputs/push_press_drive_a0055159.jpg",
+    "lockout": "/outputs/push_press_lockout_65681703.jpg",
+    "debug_sheet": "/outputs/push_press_phase_debug_f40eb5dc.jpg"
   },
   "visuals_error": null
 }

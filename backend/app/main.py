@@ -78,6 +78,10 @@ from app.coaching.snatch import build_snatch_coaching
 
 from app.coaching.split_jerk import build_split_jerk_coaching
 
+from app.coaching.squat import build_squat_coaching
+
+from app.coaching.overhead_squat import build_overhead_squat_coaching
+
 app = FastAPI()
 
 UPLOAD_DIR = "uploads"
@@ -493,7 +497,6 @@ def summarize_biomechanics(biomechanics):
         "min_valgus_ratio": float(np.min(valgus)),
         "wrist_above_shoulder_ratio": float(np.mean(wrist_above)),
     }
-
 
 
 def grade_score(score):
@@ -1058,6 +1061,8 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
         "neck": {"good": 0.0, "borderline": 0.8, "poor": 1.8},
         "front_rack": {"good": 0.0, "borderline": 0.8, "poor": 1.6},
         "bar_position": {"good": 0.0, "borderline": 0.7, "poor": 1.4},
+        "overhead": {"good": 0.0, "borderline": 0.8, "poor": 1.6},
+        "bar_path": {"good": 0.0, "borderline": 0.7, "poor": 1.4},
     }
 
     def safe_phase_frame(name, fallback):
@@ -1244,6 +1249,37 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 breakdown["wrist_drop_delta"] = round(wrist_drop_score, 3)
                 breakdown["rack_forward_shift"] = round(rack_forward_shift, 3)
 
+            if is_overhead_squat:
+                overhead_ratio = float(np.mean(rep_wrist_y < rep_shoulder_y))
+                bar_drift = float(
+                    np.percentile(rep_wrist_x, 90) - np.percentile(rep_wrist_x, 10)
+                )
+
+                if overhead_ratio >= 0.75:
+                    overhead_grade = "good"
+                elif overhead_ratio >= 0.55:
+                    overhead_grade = "borderline"
+                    issues.append("Overhead bar stability could be stronger.")
+                    feedback.append("Lock the bar directly over midfoot and stay stacked.")
+                else:
+                    overhead_grade = "poor"
+                    issues.append("Bar is not staying stable overhead.")
+                    feedback.append("Keep arms locked and bar stacked over midfoot.")
+
+                if bar_drift <= 0.10:
+                    bar_path_grade = "good"
+                elif bar_drift <= 0.16:
+                    bar_path_grade = "borderline"
+                    issues.append("Bar may be drifting forward during the squat.")
+                    feedback.append("Prevent forward drift — keep the bar over midfoot.")
+                else:
+                    bar_path_grade = "poor"
+                    issues.append("Bar path is drifting away from midfoot.")
+                    feedback.append("Stay stacked and keep the bar over your base of support.")
+
+                breakdown["overhead"] = overhead_grade
+                breakdown["bar_path"] = bar_path_grade
+
             score = 10.0
 
             for category, status in breakdown.items():
@@ -1262,7 +1298,7 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                         "Strong squat rep. Keep bracing and driving through the floor."
                     ]
 
-            reps.append({
+            rep = {
                 "rep": len(reps) + 1,
                 "start_frame": safe_phase_frame("setup", start),
                 "descent_frame": safe_phase_frame("descent", start),
@@ -1274,7 +1310,14 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 "issues": issues,
                 "breakdown": breakdown,
                 "feedback": feedback,
-            })
+            }
+
+            if is_overhead_squat:
+                rep["coaching"] = build_overhead_squat_coaching(rep)
+            else:
+                rep["coaching"] = build_squat_coaching(rep, exercise_label)
+
+            reps.append(rep)
 
             in_rep = False
 
@@ -2037,6 +2080,238 @@ def refine_catch_bottom_frame(biomechanics, approx_frame, radius=18):
     return int(bottom.get("frame", approx_frame))
 
 
+def _frame_to_idx(biomechanics, frame_number):
+    frame_numbers = np.array([
+        b.get("frame_number", i) for i, b in enumerate(biomechanics)
+    ])
+    target = int(frame_number)
+    return int(np.argmin(np.abs(frame_numbers - target)))
+
+
+def _score_from_breakdown(breakdown, penalties, base=10.0):
+    score = base
+    for key, value in breakdown.items():
+        score -= penalties.get(key, {}).get(value, 0.0)
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+CLEAN_PENALTIES = {
+    "first_pull": {"good": 0.0, "borderline": 0.6, "poor": 1.2},
+    "extension": {"good": 0.0, "borderline": 0.6, "poor": 1.4},
+    "turnover": {"good": 0.0, "slow": 0.8},
+    "catch": {"good": 0.0, "borderline": 0.6, "shallow": 1.0},
+    "front_rack": {"good": 0.0, "borderline": 0.7, "poor": 1.2},
+    "bar_path": {"good": 0.0, "drifting": 0.8},
+}
+
+
+SNATCH_PENALTIES = {
+    "first_pull": {"good": 0.0, "borderline": 0.6, "poor": 1.2},
+    "extension": {"good": 0.0, "borderline": 0.6, "poor": 1.4},
+    "turnover": {"good": 0.0, "slow": 0.8},
+    "overhead_catch": {"good": 0.0, "borderline": 0.7, "poor": 1.4},
+    "stability": {"good": 0.0, "borderline": 0.6, "poor": 1.2},
+    "bar_path": {"good": 0.0, "drifting": 0.8},
+}
+
+
+def _grade_clean_rep(biomechanics, frames):
+    start_i = _frame_to_idx(biomechanics, frames.get("start_frame", 0))
+    first_pull_i = _frame_to_idx(biomechanics, frames.get("first_pull_frame", start_i))
+    extension_i = _frame_to_idx(biomechanics, frames.get("extension_frame", first_pull_i))
+    catch_i = _frame_to_idx(biomechanics, frames.get("catch_frame", extension_i))
+
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+
+    issues = []
+    feedback = []
+    breakdown = {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "catch": "good",
+        "front_rack": "good",
+        "bar_path": "good",
+    }
+
+    pull_end = max(start_i + 1, first_pull_i)
+    pull_slice = slice(start_i, pull_end + 1)
+    torso_pull = float(np.percentile(torso[pull_slice], 80))
+    bar_offset = float(
+        np.percentile(np.abs(wrist_x[pull_slice] - shoulder_x[pull_slice]), 90)
+    )
+
+    if torso_pull > 70 or bar_offset > 0.30:
+        breakdown["first_pull"] = "poor"
+        issues.append("First pull may be too forward or unstable.")
+        feedback.append("Stay balanced over mid-foot and keep the chest over the bar.")
+    elif torso_pull > 55 or bar_offset > 0.22:
+        breakdown["first_pull"] = "borderline"
+        issues.append("First pull could stay more balanced.")
+        feedback.append("Patience off the floor — keep shoulders over the bar longer.")
+
+    ext_knee = float(knee[extension_i])
+    ext_hip = float(hip[extension_i])
+    if ext_knee < 145 or ext_hip < 145:
+        breakdown["extension"] = "poor"
+        issues.append("Extension looks incomplete before the turnover.")
+        feedback.append("Finish extending the hips and knees before pulling under.")
+    elif ext_knee < 155 or ext_hip < 155:
+        breakdown["extension"] = "borderline"
+        issues.append("Extension could be more complete.")
+        feedback.append("Drive through the legs fully before the pull under.")
+
+    turnover_frames = max(1, catch_i - extension_i)
+    if turnover_frames > max(25, len(biomechanics) * 0.15):
+        breakdown["turnover"] = "slow"
+        issues.append("Turnover into the catch may be slow.")
+        feedback.append("Rotate the elbows faster into the front rack.")
+
+    catch_knee = float(knee[catch_i])
+    if catch_knee > 140:
+        breakdown["catch"] = "shallow"
+        issues.append("Catch position may be too shallow.")
+        feedback.append("Drop under the bar into a stronger receiving position.")
+    elif catch_knee > 125:
+        breakdown["catch"] = "borderline"
+        issues.append("Catch depth could be lower.")
+        feedback.append("Receive the clean in a slightly deeper squat.")
+
+    rack_elbow = float(elbow[catch_i])
+    rack_wrist_drop = float(wrist_y[catch_i] - shoulder_y[catch_i])
+    if rack_elbow > 120 or rack_wrist_drop > 0.18:
+        breakdown["front_rack"] = "poor"
+        issues.append("Front rack position is weak at the catch.")
+        feedback.append("Drive elbows high and keep the bar on your shoulders.")
+    elif rack_elbow > 100 or rack_wrist_drop > 0.12:
+        breakdown["front_rack"] = "borderline"
+        issues.append("Elbows could be higher in the front rack.")
+        feedback.append("Rotate elbows faster and keep the bar close.")
+
+    path_slice = wrist_x[max(start_i, first_pull_i):catch_i + 1]
+    if len(path_slice) >= 2:
+        bar_drift = float(np.percentile(path_slice, 90) - np.percentile(path_slice, 10))
+        if bar_drift > 0.10:
+            breakdown["bar_path"] = "drifting"
+            issues.append("Bar path may be looping away from the body.")
+            feedback.append("Keep the bar close through the pull and turnover.")
+
+    score = _score_from_breakdown(breakdown, CLEAN_PENALTIES)
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good clean rep. Strong pull and catch position."]
+
+    return breakdown, issues, feedback, score
+
+
+def _grade_snatch_rep(biomechanics, frames):
+    start_i = _frame_to_idx(biomechanics, frames.get("start_frame", 0))
+    first_pull_i = _frame_to_idx(biomechanics, frames.get("first_pull_frame", start_i))
+    extension_i = _frame_to_idx(biomechanics, frames.get("extension_frame", first_pull_i))
+    catch_i = _frame_to_idx(biomechanics, frames.get("catch_frame", extension_i))
+    end_i = _frame_to_idx(biomechanics, frames.get("end_frame", catch_i))
+
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
+    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics])
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics])
+    shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+
+    issues = []
+    feedback = []
+    breakdown = {
+        "first_pull": "good",
+        "extension": "good",
+        "turnover": "good",
+        "overhead_catch": "good",
+        "stability": "good",
+        "bar_path": "good",
+    }
+
+    pull_end = max(start_i + 1, first_pull_i)
+    pull_slice = slice(start_i, pull_end + 1)
+    torso_pull = float(np.percentile(torso[pull_slice], 80))
+    bar_offset = float(
+        np.percentile(np.abs(wrist_x[pull_slice] - shoulder_x[pull_slice]), 90)
+    )
+
+    if torso_pull > 70 or bar_offset > 0.30:
+        breakdown["first_pull"] = "poor"
+        issues.append("First pull may be too forward or unstable.")
+        feedback.append("Stay balanced and keep the chest over the bar longer.")
+    elif torso_pull > 55 or bar_offset > 0.22:
+        breakdown["first_pull"] = "borderline"
+        issues.append("First pull could stay more balanced.")
+        feedback.append("Patience off the floor — keep shoulders over the bar longer.")
+
+    ext_knee = float(knee[extension_i])
+    ext_hip = float(hip[extension_i])
+    if ext_knee < 145 or ext_hip < 145:
+        breakdown["extension"] = "poor"
+        issues.append("Extension looks incomplete before pulling under.")
+        feedback.append("Finish extending before pulling under the bar.")
+    elif ext_knee < 155 or ext_hip < 155:
+        breakdown["extension"] = "borderline"
+        issues.append("Extension could be more complete.")
+        feedback.append("Drive through the legs fully before the pull under.")
+
+    turnover_frames = max(1, catch_i - extension_i)
+    if turnover_frames > max(25, len(biomechanics) * 0.15):
+        breakdown["turnover"] = "slow"
+        issues.append("Pull under the bar may be slow.")
+        feedback.append("Pull yourself under the bar more aggressively.")
+
+    overhead_at_catch = float(wrist_y[catch_i] < shoulder_y[catch_i])
+    catch_knee = float(knee[catch_i])
+    if not overhead_at_catch or catch_knee > 150:
+        breakdown["overhead_catch"] = "poor"
+        issues.append("Overhead catch position looks unstable.")
+        feedback.append("Receive the bar in a stronger overhead position.")
+    elif catch_knee > 135:
+        breakdown["overhead_catch"] = "borderline"
+        issues.append("Overhead catch could be more secure.")
+        feedback.append("Lock the bar overhead with arms extended and hips under the bar.")
+
+    stability_slice = slice(catch_i, min(end_i + 1, len(biomechanics)))
+    overhead_ratio = float(np.mean(wrist_y[stability_slice] < shoulder_y[stability_slice]))
+    max_elbow = float(np.max(elbow[stability_slice])) if stability_slice.stop > stability_slice.start else 0.0
+    if overhead_ratio < 0.50 or max_elbow < 150:
+        breakdown["stability"] = "poor"
+        issues.append("Overhead stability after the catch needs work.")
+        feedback.append("Stabilize the bar overhead before standing up.")
+    elif overhead_ratio < 0.70 or max_elbow < 160:
+        breakdown["stability"] = "borderline"
+        issues.append("Overhead position could be held more securely.")
+        feedback.append("Punch through and hold the bar locked out overhead.")
+
+    path_slice = wrist_x[max(start_i, first_pull_i):catch_i + 1]
+    if len(path_slice) >= 2:
+        bar_drift = float(np.percentile(path_slice, 90) - np.percentile(path_slice, 10))
+        if bar_drift > 0.12:
+            breakdown["bar_path"] = "drifting"
+            issues.append("Bar path may be looping away from the body.")
+            feedback.append("Keep the bar closer to your body during the pull.")
+
+    score = _score_from_breakdown(breakdown, SNATCH_PENALTIES)
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good snatch rep. Strong pull, catch, and overhead position."]
+
+    breakdown["catch"] = breakdown["overhead_catch"]
+
+    return breakdown, issues, feedback, score
+
+
 def analyze_clean_reps(biomechanics):
     if len(biomechanics) < 10:
         return [], build_set_summary([])
@@ -2065,18 +2340,7 @@ def analyze_clean_reps(biomechanics):
     reps = []
 
     for i, frames in enumerate(phase_reps):
-        score = 9.0
-        issues = []
-        feedback = ["Good clean rep. Strong pull and catch position."]
-
-        breakdown = {
-            "first_pull": "good",
-            "extension": "good",
-            "turnover": "good",
-            "catch": "good",
-            "front_rack": "good",
-            "bar_path": "good",
-        }
+        breakdown, issues, feedback, score = _grade_clean_rep(biomechanics, frames)
 
         rep = {
             **frames,
@@ -3178,21 +3442,16 @@ def analyze_snatch_reps(biomechanics):
     reps = []
 
     for i, frames in enumerate(phase_reps):
+        breakdown, issues, feedback, score = _grade_snatch_rep(biomechanics, frames)
+
         rep = {
             **frames,
             "rep": i + 1,
-            "score": 9.0,
-            "grade": grade_score(9.0),
-            "issues": [],
-            "breakdown": {
-                "first_pull": "good",
-                "extension": "good",
-                "turnover": "good",
-                "overhead_catch": "good",
-                "stability": "good",
-                "bar_path": "good",
-            },
-            "feedback": ["Good snatch rep. Strong pull, catch, and overhead position."],
+            "score": score,
+            "grade": grade_score(score),
+            "issues": issues,
+            "breakdown": breakdown,
+            "feedback": feedback,
         }
         rep["coaching"] = build_snatch_coaching(rep)
 
@@ -3578,6 +3837,7 @@ def analyze_handstand_push_up_reps(biomechanics):
     elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
     wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics], dtype=np.float32)
     shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics], dtype=np.float32)
 
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -3594,17 +3854,21 @@ def analyze_handstand_push_up_reps(biomechanics):
     rep_elbow = elbow[start_idx:end_idx + 1]
     rep_wrist_y = wrist_y[start_idx:end_idx + 1]
     rep_shoulder_y = shoulder_y[start_idx:end_idx + 1]
+    rep_hip_y = hip_y[start_idx:end_idx + 1]
 
     min_elbow = float(np.min(rep_elbow))
     max_elbow = float(np.max(rep_elbow))
     elbow_range = max_elbow - min_elbow
     hands_below_shoulder_ratio = float(np.mean(rep_wrist_y > rep_shoulder_y))
+    body_line_score = float(np.percentile(np.abs(rep_hip_y - rep_shoulder_y), 80))
 
     issues = []
     feedback = []
     breakdown = {
         "range": "good",
         "bottom": "good",
+        "depth": "good",
+        "body_line": "good",
         "lockout": "good",
         "control": "good",
     }
@@ -3616,6 +3880,7 @@ def analyze_handstand_push_up_reps(biomechanics):
 
     if min_elbow > 115:
         breakdown["bottom"] = "high"
+        breakdown["depth"] = "high"
         issues.append("Bottom position may be shallow.")
         feedback.append("Lower until your head gets closer to the floor or target.")
 
@@ -3623,6 +3888,15 @@ def analyze_handstand_push_up_reps(biomechanics):
         breakdown["lockout"] = "short"
         issues.append("Lockout may be incomplete.")
         feedback.append("Finish each rep with strong elbow extension.")
+
+    if body_line_score > 0.16:
+        breakdown["body_line"] = "sagging"
+        issues.append("Body line may be breaking during the rep.")
+        feedback.append("Keep your body stacked and avoid arching or sagging.")
+    elif body_line_score > 0.10:
+        breakdown["body_line"] = "borderline"
+        issues.append("Body line could stay tighter.")
+        feedback.append("Brace your core and keep hips stacked over shoulders.")
 
     if hands_below_shoulder_ratio < 0.65:
         breakdown["control"] = "review"
@@ -3775,6 +4049,121 @@ def build_bodyweight_features(biomechanics):
     }
 
 
+def analyze_muscle_up_reps(biomechanics):
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
+    wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics], dtype=np.float32)
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
+
+    frame_numbers = np.array([
+        b.get("frame_number", i)
+        for i, b in enumerate(biomechanics)
+    ])
+
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
+    n = len(biomechanics)
+    pull_idx = int(np.argmin(elbow))
+
+    transition_idx = pull_idx
+    for i in range(pull_idx, min(n, pull_idx + max(15, int(n * 0.35)))):
+        if wrist_y[i] < shoulder_y[i]:
+            transition_idx = i
+            break
+
+    search_start = max(transition_idx + 1, pull_idx + 3)
+    search_end = min(n, search_start + max(20, int(n * 0.30)))
+    if search_end > search_start:
+        dip_idx = search_start + int(np.argmin(elbow[search_start:search_end]))
+    else:
+        dip_idx = min(n - 1, transition_idx + max(5, int(n * 0.10)))
+
+    lockout_start = min(n - 1, dip_idx + 1)
+    lockout_end = min(n, lockout_start + max(15, int(n * 0.25)))
+    if lockout_end > lockout_start:
+        lockout_idx = lockout_start + int(np.argmax(elbow[lockout_start:lockout_end]))
+    else:
+        lockout_idx = min(n - 1, dip_idx + 5)
+
+    start_idx = max(0, pull_idx - int(n * 0.25))
+    end_idx = min(n - 1, lockout_idx + int(n * 0.10))
+
+    pull_idx = max(start_idx + 1, min(pull_idx, transition_idx))
+    transition_idx = max(pull_idx + 1, min(transition_idx, dip_idx))
+    dip_idx = max(transition_idx + 1, min(dip_idx, lockout_idx))
+    lockout_idx = max(dip_idx + 1, min(lockout_idx, end_idx))
+
+    issues = []
+    feedback = []
+    breakdown = {
+        "pull": "good",
+        "transition": "good",
+        "support": "good",
+        "lockout": "good",
+    }
+
+    # Clamp indices after phase ordering so edge-case reps cannot index past arrays.
+    last_idx = len(elbow) - 1
+    start_idx = max(0, min(int(start_idx), last_idx))
+    end_idx = max(start_idx, min(int(end_idx), last_idx))
+    pull_idx = max(start_idx, min(int(pull_idx), end_idx))
+    transition_idx = max(start_idx, min(int(transition_idx), end_idx))
+    dip_idx = max(start_idx, min(int(dip_idx), end_idx))
+    lockout_idx = max(start_idx, min(int(lockout_idx), end_idx))
+
+    min_elbow = float(np.min(elbow[start_idx:end_idx + 1]))
+    max_elbow = float(np.max(elbow[start_idx:end_idx + 1]))
+    elbow_range = max_elbow - min_elbow
+    transition_speed = max(1, transition_idx - pull_idx)
+    dip_elbow = float(elbow[dip_idx])
+    lockout_elbow = float(elbow[lockout_idx])
+    support_ratio = float(np.mean(wrist_y[dip_idx:lockout_idx + 1] < shoulder_y[dip_idx:lockout_idx + 1]))
+
+    if elbow_range < 50 or min_elbow > 95:
+        breakdown["pull"] = "short"
+        issues.append("Pull may not be high enough before the transition.")
+        feedback.append("Pull higher — get chest closer to the bar before turning over.")
+
+    if transition_speed > max(18, int(n * 0.12)):
+        breakdown["transition"] = "slow"
+        issues.append("Transition over the bar may be slow.")
+        feedback.append("Turn over aggressively and keep the bar or rings close.")
+
+    if dip_elbow > 130 or support_ratio < 0.40:
+        breakdown["support"] = "weak"
+        issues.append("Support position above the bar looks unstable.")
+        feedback.append("Press down through the hands and stabilize before the dip.")
+
+    if lockout_elbow < 155:
+        breakdown["lockout"] = "soft"
+        issues.append("Lockout may be incomplete.")
+        feedback.append("Finish each rep with strong elbow extension.")
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = ["Good muscle-up rep. Strong pull, transition, and lockout."]
+
+    reps = [{
+        "rep": 1,
+        "start_frame": int(frame_numbers[start_idx]),
+        "pull_frame": int(frame_numbers[pull_idx]),
+        "transition_frame": int(frame_numbers[transition_idx]),
+        "dip_frame": int(frame_numbers[dip_idx]),
+        "lockout_frame": int(frame_numbers[lockout_idx]),
+        "end_frame": int(frame_numbers[end_idx]),
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
+    }]
+
+    return reps, build_set_summary(reps)
+
+
 def analyze_burpee_reps(biomechanics):
     frame_numbers = np.array([
         b.get("frame_number", i)
@@ -3828,6 +4217,66 @@ def analyze_burpee_reps(biomechanics):
     stand_idx = min(stand_idx, n - 1)
     finish_idx = min(finish_idx, n - 1)
 
+    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
+    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
+    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
+    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
+    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+
+    issues = []
+    feedback = []
+    breakdown = {
+        "hands_down": "good",
+        "plank": "good",
+        "jump_in": "good",
+        "stand": "good",
+        "finish": "good",
+    }
+
+    hands_drop = float(wrist_y[hands_down_idx] - wrist_y[start_idx])
+    if hands_drop < 0.08:
+        breakdown["hands_down"] = "high"
+        issues.append("Hands may not reach the floor fully.")
+        feedback.append("Place hands flat on the floor before kicking back.")
+
+    plank_flatness = float(abs(hip_y[plank_idx] - shoulder_y[plank_idx]))
+    plank_elbow = float(elbow[plank_idx])
+    if plank_flatness > 0.18 or plank_elbow < 150:
+        breakdown["plank"] = "sagging"
+        issues.append("Plank position may be sagging or soft.")
+        feedback.append("Keep your body tight in a straight line through the plank.")
+    elif plank_flatness > 0.12:
+        breakdown["plank"] = "borderline"
+        issues.append("Core could stay tighter in the plank.")
+        feedback.append("Brace your core and avoid letting hips sag.")
+
+    jump_knee = float(knee[jump_in_idx])
+    if jump_knee > 155:
+        breakdown["jump_in"] = "stiff"
+        issues.append("Feet may not come under efficiently.")
+        feedback.append("Jump feet closer to your hands before standing.")
+
+    stand_torso = float(torso[stand_idx])
+    stand_knee = float(knee[stand_idx])
+    if stand_torso > 25 or stand_knee < 155:
+        breakdown["stand"] = "incomplete"
+        issues.append("Stand-up finish may be incomplete.")
+        feedback.append("Stand tall with hips and knees fully extended.")
+    else:
+        breakdown["finish"] = "good"
+
+    if breakdown["stand"] == "incomplete":
+        breakdown["finish"] = "incomplete"
+
+    score = compute_rep_score(issues)
+    score = apply_coach_reward(score, issues, breakdown)
+
+    if not issues:
+        score = max(score, 9.0)
+        feedback = [
+            "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
+        ]
+
     reps = [{
         "rep": 1,
         "start_frame": int(frame_numbers[start_idx]),
@@ -3836,19 +4285,11 @@ def analyze_burpee_reps(biomechanics):
         "jump_in_frame": int(frame_numbers[jump_in_idx]),
         "stand_frame": int(frame_numbers[stand_idx]),
         "end_frame": int(frame_numbers[finish_idx]),
-        "score": 9.0,
-        "grade": grade_score(9.0),
-        "issues": [],
-        "breakdown": {
-            "hands_down": "good",
-            "plank": "good",
-            "jump_in": "good",
-            "stand": "good",
-            "finish": "good",
-        },
-        "feedback": [
-            "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
-        ],
+        "score": round(score, 1),
+        "grade": grade_score(score),
+        "issues": issues,
+        "breakdown": breakdown,
+        "feedback": feedback,
     }]
 
     return reps, build_set_summary(reps)
@@ -6983,6 +7424,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and not _looks_split
         )
 
+        _pull_up_router_guard = (
+            raw_label == "push_press"
+            and bio_label == "push_press"
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.65
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
+            and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
+            and float(olympic_conf or 0.0) < 0.85
+        )
+
         _pull_up_press_guard = (
             raw_label == "push_press"
             and not _pull_up_posture_signature
@@ -7232,7 +7683,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and float(olympic_conf or 0.0) >= 0.75
             and explosive_score > 20
             and not (
-                _pull_up_posture_signature
+                _pull_up_router_guard
                 and float(olympic_conf or 0.0) < 0.95
             )
             and (
@@ -7511,6 +7962,24 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 final_conf = router_v5_conf
                 analysis_mode = "router_v5"
 
+        # Pull-up safety: if an obvious pull-up posture was routed into a
+        # low-confidence Olympic label, recover pull_up before rep analysis.
+        if (
+            _pull_up_router_guard
+            and (
+                final_label in OLY_SET
+                or (
+                    final_label == "overhead_squat"
+                    and float(bodyweight_debug.get("wrist_y_range", 1.0)) < 0.12
+                    and float(explosive_score or 0.0) > 25.0
+                )
+            )
+            and float(final_conf or 0.0) < 0.95
+        ):
+            final_label = "pull_up"
+            final_conf = 0.86
+            analysis_mode = "biomechanics_override"
+
         # =========================================================
         # 6. REP ANALYSIS
         # =========================================================
@@ -7557,7 +8026,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             rep_feedback, _ = analyze_burpee_reps(biomech)
 
         elif final_label == "muscle_up":
-            rep_feedback, _ = analyze_pull_up_reps(biomech)
+            rep_feedback, _ = analyze_muscle_up_reps(biomech)
 
         # =========================================================
         # 7. FINAL OUTPUT
@@ -7750,7 +8219,6 @@ async def debug_oly_phases(file: UploadFile = File(...)):
             os.remove(temp_path)
 
 
-
 def normalize_rep_keys(rep):
     if not rep:
         return {}
@@ -7776,6 +8244,7 @@ def normalize_rep_keys(rep):
             rep[new_key] = rep[old_key]
 
     return rep
+
 
 @app.post("/generate_visuals")
 async def generate_visuals(

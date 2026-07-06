@@ -132,13 +132,13 @@ pull_up,,,,zero-size array to reduction operation maximum which has no identity,
 pull_up,,,,zero-size array to reduction operation maximum which has no identity,False,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g01_c03.avi,0
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g01_c04.avi,1
 pull_up,overhead_squat,0.81,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g02_c01.avi,0
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g02_c02.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g02_c02.avi,3
 pull_up,overhead_squat,0.94,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g02_c03.avi,0
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g02_c04.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g02_c04.avi,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g03_c01.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g03_c02.avi,1
 pull_up,overhead_squat,0.94,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g03_c03.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g03_c04.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g03_c04.avi,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g04_c01.avi,1
 pull_up,strict_press,0.78,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g04_c02.avi,1
 pull_up,clean_and_jerk,0.91,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g04_c03.avi,1
@@ -146,33 +146,33 @@ pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Caps
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g05_c01.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g05_c02.avi,1
 pull_up,overhead_squat,0.77,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g05_c03.avi,0
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g05_c04.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g05_c04.avi,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g06_c01.avi,1
 pull_up,bench_press,0.9,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g06_c02.avi,1
 pull_up,bench_press,0.97,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g06_c03.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g06_c04.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g06_c04.avi,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g07_c01.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g07_c02.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g07_c03.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g07_c04.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c01.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c02.avi,1
+pull_up,clean_and_jerk,0.7,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c01.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c02.avi,2
 pull_up,overhead_squat,0.83,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c03.avi,0
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c04.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g08_c04.avi,2
 pull_up,overhead_squat,0.86,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g09_c01.avi,1
 pull_up,overhead_squat,0.88,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g09_c02.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g09_c03.avi,1
 pull_up,overhead_squat,0.77,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g09_c04.avi,1
 pull_up,overhead_squat,0.77,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g10_c01.avi,2
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g10_c02.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g10_c03.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g10_c02.avi,3
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g10_c03.avi,3
 pull_up,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g10_c04.avi,1
 pull_up,bench_press,0.94,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g11_c01.avi,1
 pull_up,overhead_squat,0.91,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g11_c02.avi,2
 pull_up,clean_and_jerk,0.89,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g11_c03.avi,1
 pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g11_c04.avi,2
 pull_up,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g12_c01.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g12_c02.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g12_c02.avi,2
 pull_up,bench_press,0.99,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g12_c03.avi,1
 pull_up,overhead_squat,0.94,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g12_c04.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g13_c01.avi,1
@@ -195,9 +195,9 @@ pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Caps
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g17_c02.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g17_c03.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g17_c04.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c01.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c02.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c03.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c01.avi,3
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c02.avi,3
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c03.avi,3
 pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g18_c04.avi,3
 pull_up,overhead_squat,0.81,detailed_rep_analysis,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g19_c01.avi,0
 pull_up,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g19_c02.avi,1
@@ -214,9 +214,9 @@ pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Caps
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g22_c01.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g22_c02.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g22_c03.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g22_c04.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g22_c04.avi,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g23_c01.avi,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g23_c02.avi,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g23_c02.avi,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g23_c03.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g23_c04.avi,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g24_c01.avi,1
@@ -228,10 +228,10 @@ pull_up,overhead_squat,0.89,detailed_rep_analysis,,True,/Users/josephkamil/Deskt
 pull_up,bench_press,0.91,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g25_c03.avi,0
 pull_up,push_press,0.78,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g25_c04.avi,2
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_1.mp4,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_10.mp4,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_10.mp4,3
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_11.mp4,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_12.mp4,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_13.mp4,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_13.mp4,4
 pull_up,push_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_14.mp4,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_15.mp4,1
 pull_up,bench_press,0.81,router_v5,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_16.mp4,1
@@ -240,7 +240,7 @@ pull_up,bench_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/C
 pull_up,thruster,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_19.mp4,1
 pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_2.mp4,1
 pull_up,bench_press,0.81,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_20.mp4,1
-pull_up,pull_up,0.86,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_21.mp4,1
+pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_21.mp4,5
 pull_up,push_press,1.0,biomechanics_override,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_22.mp4,2
 pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_23.mp4,2
 pull_up,split_jerk,0.8,router_v5,,True,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_24.mp4,1

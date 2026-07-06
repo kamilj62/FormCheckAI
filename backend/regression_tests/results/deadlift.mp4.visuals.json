@@ -2,12 +2,12 @@
   "exercise_label": "deadlift",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/deadlift_setup_3bcd387a.jpg",
-    "pull": "/outputs/deadlift_pull_a7384c32.jpg",
-    "mid": "/outputs/deadlift_mid_68576078.jpg",
-    "finish": "/outputs/deadlift_finish_8fd42c0b.jpg",
-    "lockout": "/outputs/deadlift_lockout_c9369090.jpg",
-    "debug_sheet": "/outputs/deadlift_phase_debug_f6f36c0c.jpg"
+    "setup": "/outputs/deadlift_setup_5681a91e.jpg",
+    "pull": "/outputs/deadlift_pull_159f5b9c.jpg",
+    "mid": "/outputs/deadlift_mid_9e604fea.jpg",
+    "finish": "/outputs/deadlift_finish_cdc34386.jpg",
+    "lockout": "/outputs/deadlift_lockout_5d7df8c7.jpg",
+    "debug_sheet": "/outputs/deadlift_phase_debug_b1c2f042.jpg"
   },
   "visuals_error": null
 }

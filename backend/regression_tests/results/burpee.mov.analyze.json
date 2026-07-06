@@ -11,24 +11,30 @@
       "jump_in_frame": 110,
       "stand_frame": 142,
       "end_frame": 142,
-      "score": 9.0,
-      "grade": "Excellent",
-      "issues": [],
+      "score": 5.5,
+      "grade": "Needs Work",
+      "issues": [
+        "Hands may not reach the floor fully.",
+        "Plank position may be sagging or soft.",
+        "Stand-up finish may be incomplete."
+      ],
       "breakdown": {
-        "hands_down": "good",
-        "plank": "good",
+        "hands_down": "high",
+        "plank": "sagging",
         "jump_in": "good",
-        "stand": "good",
-        "finish": "good"
+        "stand": "incomplete",
+        "finish": "incomplete"
       },
       "feedback": [
-        "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
+        "Place hands flat on the floor before kicking back.",
+        "Keep your body tight in a straight line through the plank.",
+        "Stand tall with hips and knees fully extended."
       ]
     }
   ],
   "set_summary": {
     "detected_reps": 1,
-    "avg_rep_score": 9.0,
+    "avg_rep_score": 5.5,
     "best_rep": 1,
     "worst_rep": 1,
     "trend": "Form appears consistent across the set."
@@ -45,18 +51,24 @@
         "jump_in_frame": 110,
         "stand_frame": 142,
         "end_frame": 142,
-        "score": 9.0,
-        "grade": "Excellent",
-        "issues": [],
+        "score": 5.5,
+        "grade": "Needs Work",
+        "issues": [
+          "Hands may not reach the floor fully.",
+          "Plank position may be sagging or soft.",
+          "Stand-up finish may be incomplete."
+        ],
         "breakdown": {
-          "hands_down": "good",
-          "plank": "good",
+          "hands_down": "high",
+          "plank": "sagging",
           "jump_in": "good",
-          "stand": "good",
-          "finish": "good"
+          "stand": "incomplete",
+          "finish": "incomplete"
         },
         "feedback": [
-          "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
+          "Place hands flat on the floor before kicking back.",
+          "Keep your body tight in a straight line through the plank.",
+          "Stand tall with hips and knees fully extended."
         ]
       }
     ]

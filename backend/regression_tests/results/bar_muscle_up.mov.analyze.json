@@ -5,23 +5,25 @@
   "rep_feedback": [
     {
       "rep": 1,
-      "start_frame": 81,
-      "pull_frame": 186,
-      "top_frame": 210,
-      "descent_frame": 253,
-      "end_frame": 303,
+      "start_frame": 116,
+      "pull_frame": 210,
+      "transition_frame": 211,
+      "dip_frame": 223,
+      "lockout_frame": 303,
+      "end_frame": 338,
       "score": 9.0,
       "grade": "Excellent",
       "issues": [
-        "Upper-body position was hard to track."
+        "Support position above the bar looks unstable."
       ],
       "breakdown": {
-        "range": "good",
-        "top": "good",
-        "control": "review"
+        "pull": "good",
+        "transition": "good",
+        "support": "weak",
+        "lockout": "good"
       },
       "feedback": [
-        "Record from the side with the full body and bar visible."
+        "Press down through the hands and stabilize before the dip."
       ]
     }
   ],
@@ -38,23 +40,25 @@
     "issues": [
       {
         "rep": 1,
-        "start_frame": 81,
-        "pull_frame": 186,
-        "top_frame": 210,
-        "descent_frame": 253,
-        "end_frame": 303,
+        "start_frame": 116,
+        "pull_frame": 210,
+        "transition_frame": 211,
+        "dip_frame": 223,
+        "lockout_frame": 303,
+        "end_frame": 338,
         "score": 9.0,
         "grade": "Excellent",
         "issues": [
-          "Upper-body position was hard to track."
+          "Support position above the bar looks unstable."
         ],
         "breakdown": {
-          "range": "good",
-          "top": "good",
-          "control": "review"
+          "pull": "good",
+          "transition": "good",
+          "support": "weak",
+          "lockout": "good"
         },
         "feedback": [
-          "Record from the side with the full body and bar visible."
+          "Press down through the hands and stabilize before the dip."
         ]
       }
     ]

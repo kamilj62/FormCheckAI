@@ -2,12 +2,12 @@
   "exercise_label": "split_jerk",
   "overlay_video_url": null,
   "phase_images": {
-    "setup": "/outputs/split_jerk_setup_6dbf1700.jpg",
-    "dip": "/outputs/split_jerk_dip_bfc46f1b.jpg",
-    "drive": "/outputs/split_jerk_drive_bcdc0faf.jpg",
-    "catch": "/outputs/split_jerk_catch_2e09e539.jpg",
-    "finish": "/outputs/split_jerk_finish_a7886d7b.jpg",
-    "debug_sheet": "/outputs/split_jerk_phase_debug_d824c0b4.jpg"
+    "setup": "/outputs/split_jerk_setup_ba5706f5.jpg",
+    "dip": "/outputs/split_jerk_dip_b95e86e0.jpg",
+    "drive": "/outputs/split_jerk_drive_5e4d9ed7.jpg",
+    "catch": "/outputs/split_jerk_catch_9110cc36.jpg",
+    "finish": "/outputs/split_jerk_finish_06d9a7e5.jpg",
+    "debug_sheet": "/outputs/split_jerk_phase_debug_aee5fdab.jpg"
   },
   "visuals_error": null
 }

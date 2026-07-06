@@ -2,12 +2,12 @@
   "exercise_label": "pull_up",
   "overlay_video_url": null,
   "phase_images": {
-    "hang": "/outputs/pull_up_hang_eba41315.jpg",
-    "pull": "/outputs/pull_up_pull_56782e28.jpg",
-    "top": "/outputs/pull_up_top_3c447b62.jpg",
-    "descent": "/outputs/pull_up_descent_13574f38.jpg",
-    "finish": "/outputs/pull_up_finish_812c5fa5.jpg",
-    "debug_sheet": "/outputs/pull_up_phase_debug_0aa25b24.jpg"
+    "hang": "/outputs/pull_up_hang_335a641c.jpg",
+    "pull": "/outputs/pull_up_pull_ae0e8760.jpg",
+    "top": "/outputs/pull_up_top_06648f7e.jpg",
+    "descent": "/outputs/pull_up_descent_30c6f4e5.jpg",
+    "finish": "/outputs/pull_up_finish_54fcf93f.jpg",
+    "debug_sheet": "/outputs/pull_up_phase_debug_7eaa2e8e.jpg"
   },
   "visuals_error": null
 }
