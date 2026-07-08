@@ -21,6 +21,9 @@ CHECKS = [
     ("Regression Suite",
      ["python3", "../agents/regression_agent.py"]),
 
+    ("Event Benchmark",
+     ["bash", "-lc", "cd /Users/josephkamil/Downloads/formcheck_real_inference_updated/backend && source .venv/bin/activate && PYTHONPATH=/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend python3 ml/event_benchmark.py"]),
+
     ("Python Compile",
      ["python3", "-m", "py_compile", "app/main.py"]),
 ]
