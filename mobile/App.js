@@ -62,6 +62,8 @@ const formatLabel = (v) =>
     : "N/A";
 
 const getStatusColor = (status) => {
+  const value = String(status || "good").toLowerCase();
+
   if (
     [
       "poor",
@@ -69,7 +71,24 @@ const getStatusColor = (status) => {
       "drifting",
       "severe_flare",
       "limited_range",
-    ].includes(status)
+      "shallow",
+      "high",
+      "soft",
+      "weak",
+      "slow",
+      "sagging",
+      "knee_cave",
+      "leaning",
+      "leg_drive",
+      "excessive",
+      "stiff",
+      "short",
+      "severe",
+      "off",
+      "disconnected",
+      "early_press",
+      "bent",
+    ].includes(value)
   ) {
     return "#ef4444";
   }
@@ -79,10 +98,14 @@ const getStatusColor = (status) => {
       "borderline",
       "needs_work",
       "possible",
-      "shallow",
       "fair",
       "possibly_shallow",
-    ].includes(status)
+      "review",
+      "minor_knee_bend",
+      "leaning_back",
+      "leaning_forward",
+      "unknown",
+    ].includes(value)
   ) {
     return "#f59e0b";
   }
@@ -103,6 +126,132 @@ const getBestRep = (reps) => {
   return reps.reduce((best, rep) => {
     return Number(rep.score || 0) > Number(best.score || 0) ? rep : best;
   }, reps[0]);
+};
+
+const pickBreakdown = (breakdown, ...keys) => {
+  for (const key of keys) {
+    const value = breakdown?.[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return "good";
+};
+
+const findCoachingSection = (coaching, ...titles) => {
+  const sections = coaching?.sections || [];
+  for (const title of titles) {
+    const match = sections.find(
+      (s) =>
+        String(s.title || "").toLowerCase() === String(title).toLowerCase()
+    );
+    if (match) return match;
+  }
+  return null;
+};
+
+const coachingSectionStatus = (section) => {
+  if (!section) return null;
+  if (section.status === "poor") return "poor";
+  if (section.status === "warning") return "borderline";
+  return "good";
+};
+
+const resolveZoneStatus = ({
+  breakdown = {},
+  coaching,
+  breakdownKeys = [],
+  coachingTitles = [],
+}) => {
+  const fromCoaching = coachingSectionStatus(
+    findCoachingSection(coaching, ...coachingTitles)
+  );
+  if (fromCoaching) return fromCoaching;
+  return pickBreakdown(breakdown, ...breakdownKeys);
+};
+
+const resolveZoneNote = ({
+  coaching,
+  coachingTitles = [],
+  fallback = "",
+  bestRep,
+}) => {
+  const section = findCoachingSection(coaching, ...coachingTitles);
+  if (section?.message) return section.message;
+  if (bestRep?.feedback?.length) return bestRep.feedback[0];
+  return fallback;
+};
+
+const makeZone = (id, title, imageKey, status, note) => ({
+  id,
+  title,
+  imageKey,
+  status: status || "good",
+  note: note || "",
+});
+
+const COACHING_TITLE_TO_BREAKDOWN = {
+  Depth: ["depth", "bottom", "squat_depth"],
+  Torso: ["torso", "torso_stack"],
+  Knees: ["knees", "valgus"],
+  Heels: ["heels"],
+  Neck: ["neck", "head_position"],
+  "Front Rack": ["front_rack"],
+  "Bar Position": ["bar_position"],
+  "Overhead Stability": ["overhead"],
+  "Bar Stack": ["bar_path"],
+  "First Pull": ["first_pull"],
+  Extension: ["extension"],
+  Turnover: ["turnover"],
+  Catch: ["catch", "overhead_catch", "split_catch"],
+  "Overhead Catch": ["overhead_catch", "catch"],
+  Stability: ["stability"],
+  "Bar Path": ["bar_path"],
+  Dip: ["dip"],
+  Drive: ["drive"],
+  "Split Catch": ["split_catch"],
+  Lockout: ["lockout", "active_finish"],
+  "Leg Drive": ["leg_drive", "legs"],
+  "Back Position": ["back"],
+  "Hip Hinge": ["hinge"],
+  Control: ["control"],
+  Pull: ["pull", "range"],
+  Transition: ["transition"],
+  Support: ["support"],
+  "Body Line": ["body_line"],
+  Arch: ["arch"],
+  Elbows: ["elbows"],
+  Timing: ["timing"],
+};
+
+const zonesFromCoaching = (
+  coaching,
+  imageKeyByTitle = {},
+  defaultImageKey = "setup",
+  breakdown = {}
+) => {
+  if (!coaching?.sections?.length) return null;
+
+  return coaching.sections.map((section) => {
+    const breakdownKeys = COACHING_TITLE_TO_BREAKDOWN[section.title] || [];
+    const breakdownStatus =
+      breakdownKeys.length > 0
+        ? pickBreakdown(breakdown, ...breakdownKeys)
+        : "good";
+    const coachingStatus = coachingSectionStatus(section) || "good";
+    const status =
+      breakdownStatus !== "good" ? breakdownStatus : coachingStatus;
+
+    return {
+      id: String(section.title || "zone")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_"),
+      title: section.title,
+      imageKey: imageKeyByTitle[section.title] || defaultImageKey,
+      status,
+      note: section.message || "",
+    };
+  });
 };
 
 const getPhaseConfig = (exerciseLabel) => {
@@ -135,7 +284,7 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
   
-  if (label.includes("split jerk")) {
+  if (label.includes("split_jerk") || label.includes("split jerk")) {
   return {
     title: "Split Jerk Phase Review",
     text: "Setup → Dip → Drive → Catch → Finish",
@@ -204,6 +353,19 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
+  if (label.includes("deadlift")) {
+    return {
+      title: "Deadlift Phase Review",
+      text: "Setup → Pull → Mid → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["pull", "Pull"],
+        ["mid", "Mid Pull"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
   if (label.includes("pull")) {
   return {
     title: "Pull-Up Phase Review",
@@ -265,11 +427,12 @@ const getPhaseConfig = (exerciseLabel) => {
   if (label.includes("burpee")) {
     return {
       title: "Burpee Phase Review",
-      text: "Hands Down → Plank → Jump In → Stand → Finish",
+      text: "Start → Hands Down → Plank → Jump In → Stand → Finish",
       items: [
-        ["start", "Hands Down"],
-        ["hands_down", "Plank"],
-        ["plank", "Jump In"],
+        ["start", "Start"],
+        ["hands_down", "Hands Down"],
+        ["plank", "Plank"],
+        ["jump_in", "Jump In"],
         ["stand", "Stand"],
         ["finish", "Finish"],
       ],
@@ -303,443 +466,204 @@ const getPhaseConfig = (exerciseLabel) => {
 };
 
 const getInteractiveZones = (result) => {
-  const label = String(result?.exercise_label || "").toLowerCase();
-  const bestRep = getBestRep(result?.rep_feedback || []);
-  const breakdown = bestRep?.breakdown || {};
+  if (!result?.rep_feedback?.length) return [];
 
-    if (label.includes("thruster")) {
+  const label = String(result?.exercise_label || "").toLowerCase();
+  const bestRep = getBestRep(result.rep_feedback);
+  if (!bestRep) return [];
+
+  const breakdown = bestRep.breakdown || {};
+  const coaching = bestRep.coaching;
+
+  const status = (breakdownKeys, coachingTitles = []) =>
+    resolveZoneStatus({ breakdown, coaching, breakdownKeys, coachingTitles });
+
+  const note = (fallback, coachingTitles = []) =>
+    resolveZoneNote({ coaching, coachingTitles, fallback, bestRep });
+
+  if (label.includes("thruster")) {
     return [
-      {
-        id: "start",
-        title: "Start",
-        imageKey: "setup",
-        status: "good",
-        note: "Start tall and braced with the bar in the front rack.",
-      },
-      {
-        id: "squat",
-        title: "Squat",
-        imageKey: "dip",
-        status: "good",
-        note: "Use a full squat before driving the bar overhead.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: "good",
-        note: "Finish fully locked out overhead.",
-      },
+      makeZone("squat_depth", "Squat Depth", "dip", status(["squat_depth"]), note("Use a full squat before driving the bar overhead.")),
+      makeZone("torso", "Torso", "dip", status(["torso_stack"]), note("Stay tall through the squat and drive straight overhead.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout", "active_finish"]), note("Finish fully locked out overhead.")),
+      makeZone("bar_path", "Bar Path", "drive", status(["bar_path"]), note("Keep the bar close and drive straight overhead.")),
     ];
   }
 
   if (label.includes("burpee")) {
     return [
-      {
-        id: "hands_down",
-        title: "Hands Down",
-        imageKey: "start",
-        status: breakdown.start || "good",
-        note: "Move quickly to the floor while staying balanced.",
-      },
-      {
-        id: "plank",
-        title: "Plank",
-        imageKey: "hands_down",
-        status: breakdown.hands_down || "good",
-        note: "Keep your body tight and avoid sagging through the core.",
-      },
-      {
-        id: "jump_in",
-        title: "Jump In",
-        imageKey: "plank",
-        status: breakdown.plank || "good",
-        note: "Bring your feet underneath you efficiently.",
-      },
-      {
-        id: "stand",
-        title: "Stand",
-        imageKey: "stand",
-        status: breakdown.stand || "good",
-        note: "Stand tall with control before finishing the rep.",
-      },
-      {
-        id: "finish",
-        title: "Finish",
-        imageKey: "finish",
-        status: breakdown.finish || "good",
-        note: "Complete the rep fully before starting the next one.",
-      },
+      makeZone("hands_down", "Hands Down", "hands_down", status(["hands_down"]), note("Move quickly to the floor while staying balanced.")),
+      makeZone("plank", "Plank", "plank", status(["plank"]), note("Keep your body tight and avoid sagging through the core.")),
+      makeZone("jump_in", "Jump In", "jump_in", status(["jump_in"]), note("Bring your feet underneath you efficiently.")),
+      makeZone("stand", "Stand", "stand", status(["stand"]), note("Stand tall with control before finishing the rep.")),
+      makeZone("finish", "Finish", "finish", status(["finish", "stand"]), note("Complete the rep fully before starting the next one.")),
     ];
   }
 
-  if (label.includes("pull")) {
-      return [
-        {
-          id: "hang",
-          title: "Hang",
-          imageKey: "hang",
-          status: "good",
-          note: "Start from a controlled dead hang.",
-        },
-        {
-          id: "pull",
-          title: "Pull",
-          imageKey: "pull",
-          status: "good",
-          note: "Pull strongly with control.",
-        },
-        {
-          id: "top",
-          title: "Top",
-          imageKey: "top",
-          status: "good",
-          note: "Finish high with chin near or above the bar.",
-        },
-        {
-          id: "finish",
-          title: "Finish",
-          imageKey: "finish",
-          status: "good",
-          note: "Return to a controlled hang before the next rep.",
-        },
-      ];
-    }
-
   if (label.includes("muscle")) {
     return [
-      {
-        id: "pull",
-        title: "Pull",
-        imageKey: "pull",
-        status: breakdown.pull || "good",
-        note: "Pull high before starting the transition.",
-      },
-      {
-        id: "transition",
-        title: "Transition",
-        imageKey: "transition",
-        status: breakdown.transition || "good",
-        note: "Turn over aggressively and keep the rings or bar close.",
-      },
-      {
-        id: "support",
-        title: "Support",
-        imageKey: "dip",
-        status: breakdown.support || "good",
-        note: "Stabilize above the bar or rings before finishing.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish tall with strong locked-out arms.",
-      },
+      makeZone("pull", "Pull", "pull", status(["pull"]), note("Pull high before starting the transition.")),
+      makeZone("transition", "Transition", "transition", status(["transition"]), note("Turn over aggressively and keep the rings or bar close.")),
+      makeZone("support", "Support", "dip", status(["support"]), note("Stabilize above the bar or rings before finishing.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish tall with strong locked-out arms.")),
     ];
   }
 
   if (label.includes("handstand push")) {
     return [
-      {
-        id: "depth",
-        title: "Depth",
-        imageKey: "bottom",
-        status: breakdown.depth || "good",
-        note: "Lower your head toward the floor under control.",
-      },
-      {
-        id: "body_line",
-        title: "Body Line",
-        imageKey: "descent",
-        status: breakdown.body_line || "good",
-        note: "Keep your body stacked and avoid arching or sagging.",
-      },
-      {
-        id: "press",
-        title: "Press",
-        imageKey: "ascent",
-        status: breakdown.control || "good",
-        note: "Press smoothly away from the floor.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with arms fully locked out overhead.",
-      },
+      makeZone("depth", "Depth", "bottom", status(["depth", "bottom"]), note("Lower your head toward the floor under control.")),
+      makeZone("body_line", "Body Line", "descent", status(["body_line"]), note("Keep your body stacked and avoid arching or sagging.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish with arms fully locked out overhead.")),
+      makeZone("control", "Control", "ascent", status(["control", "range"]), note("Press smoothly away from the floor.")),
     ];
   }
 
-  if (label.includes("push up")) {
+  if (label.includes("push_up") || label.includes("push-up") || label.includes("push up")) {
     return [
-      {
-        id: "depth",
-        title: "Depth",
-        imageKey: "bottom",
-        status: breakdown.depth || "good",
-        note: "Lower your chest closer to the floor.",
-      },
-      {
-        id: "body_line",
-        title: "Body Line",
-        imageKey: "descent",
-        status: breakdown.body_line || "good",
-        note: "Keep shoulders, hips, and ankles aligned.",
-      },
-      {
-        id: "press",
-        title: "Press",
-        imageKey: "ascent",
-        status: breakdown.control || "good",
-        note: "Press smoothly back to lockout.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with elbows nearly straight.",
-      },
+      makeZone("depth", "Depth", "bottom", status(["bottom", "depth", "range"]), note("Lower your chest closer to the floor.")),
+      makeZone("body_line", "Body Line", "descent", status(["body_line"]), note("Keep shoulders, hips, and ankles aligned.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish with elbows nearly straight.")),
+      makeZone("range", "Range", "ascent", status(["range"]), note("Move through a full controlled range of motion.")),
+    ];
+  }
+
+  if (label.includes("clean_and_jerk") || label.includes("clean & jerk") || label.includes("clean and jerk")) {
+    const cleanBreakdown = breakdown.clean || breakdown;
+    const jerkBreakdown = breakdown.jerk || {};
+    return [
+      makeZone("clean_catch", "Clean Catch", "clean_catch", status(["catch"], ["Catch"]), note("Receive the clean in a strong front rack.", ["Catch"])),
+      makeZone("front_rack", "Front Rack", "clean_recovery", status(["front_rack"], ["Front Rack"]), note("Stand up smoothly from the clean before initiating the jerk.", ["Front Rack"])),
+      makeZone("jerk_dip", "Jerk Dip", "jerk_dip", pickBreakdown(jerkBreakdown, "dip") !== "good" ? pickBreakdown(jerkBreakdown, "dip") : status(["dip"], ["Dip"]), note("Dip straight down with a vertical torso.", ["Dip"])),
+      makeZone("jerk_lockout", "Jerk Lockout", "jerk_catch", pickBreakdown(jerkBreakdown, "lockout") !== "good" ? pickBreakdown(jerkBreakdown, "lockout") : status(["lockout"], ["Lockout"]), note("Catch locked out overhead with control.", ["Lockout"])),
+      makeZone("bar_path", "Bar Path", "finish", pickBreakdown(cleanBreakdown, "bar_path"), note("Keep the bar close through the clean and jerk.")),
+    ];
+  }
+
+  if (label.includes("split_jerk") || label.includes("split jerk")) {
+    const fromCoaching = zonesFromCoaching(coaching, {
+      Setup: "setup", Dip: "dip", Drive: "drive", "Split Catch": "catch",
+      Lockout: "finish", Torso: "catch", "Bar Path": "drive",
+    }, "setup", breakdown);
+    if (fromCoaching?.length) return fromCoaching;
+    return [
+      makeZone("dip", "Dip", "dip", status(["dip"]), note("Dip straight down with a vertical torso.")),
+      makeZone("drive", "Drive", "drive", status(["drive"]), note("Drive aggressively through the legs.")),
+      makeZone("split_catch", "Split Catch", "catch", status(["split_catch"]), note("Catch locked out overhead in a strong split.")),
+      makeZone("lockout", "Lockout", "finish", status(["lockout"]), note("Recover under control and stabilize overhead.")),
+      makeZone("torso_stack", "Torso Stack", "catch", status(["torso_stack"]), note("Keep ribs stacked and torso vertical under the bar.")),
+      makeZone("bar_path", "Bar Path", "drive", status(["bar_path"]), note("Drive the bar straight up overhead.")),
+    ];
+  }
+
+  if (label.includes("snatch")) {
+    const fromCoaching = zonesFromCoaching(coaching, {
+      "First Pull": "first_pull", Extension: "extension", Turnover: "catch",
+      "Overhead Catch": "catch", Catch: "catch", Stability: "finish", "Bar Path": "first_pull",
+    }, "setup", breakdown);
+    if (fromCoaching?.length) return fromCoaching;
+    return [
+      makeZone("first_pull", "First Pull", "first_pull", status(["first_pull"]), note("Keep the bar close as it passes the knees.")),
+      makeZone("extension", "Extension", "extension", status(["extension"]), note("Drive tall through the legs and hips.")),
+      makeZone("turnover", "Turnover", "catch", status(["turnover"]), note("Pull yourself under the bar aggressively.")),
+      makeZone("overhead_catch", "Overhead Catch", "catch", status(["overhead_catch", "catch"]), note("Receive the bar in a strong overhead position.")),
+      makeZone("stability", "Stability", "finish", status(["stability"]), note("Stabilize the bar overhead before standing.")),
+      makeZone("bar_path", "Bar Path", "first_pull", status(["bar_path"]), note("Keep the bar closer to your body during the pull.")),
+    ];
+  }
+
+  if (label.includes("clean") && !label.includes("jerk")) {
+    const fromCoaching = zonesFromCoaching(coaching, {
+      "First Pull": "first_pull", Extension: "extension", Turnover: "catch",
+      Catch: "catch", "Front Rack": "catch", "Bar Path": "first_pull",
+    }, "setup", breakdown);
+    if (fromCoaching?.length) return fromCoaching;
+    return [
+      makeZone("first_pull", "First Pull", "first_pull", status(["first_pull"]), note("Keep the bar close as it passes the knees.")),
+      makeZone("extension", "Extension", "extension", status(["extension"]), note("Drive tall through the legs and hips.")),
+      makeZone("turnover", "Turnover", "catch", status(["turnover"]), note("Rotate the elbows faster into the rack.")),
+      makeZone("catch", "Catch", "catch", status(["catch"]), note("Receive the bar under control.")),
+      makeZone("front_rack", "Front Rack", "catch", status(["front_rack"]), note("Drive elbows high and keep the bar on your shoulders.")),
+      makeZone("bar_path", "Bar Path", "first_pull", status(["bar_path"]), note("Keep the bar close through the pull and turnover.")),
     ];
   }
 
   if (label.includes("push_press") || label.includes("push press")) {
     return [
-      {
-        id: "dip",
-        title: "Dip",
-        imageKey: "dip",
-        status: breakdown.dip || "good",
-        note: "Use a vertical dip and drive straight through the bar.",
-      },
-      {
-        id: "drive",
-        title: "Drive",
-        imageKey: "drive",
-        status: breakdown.bar_path || "good",
-        note: "Keep the bar close and drive straight overhead.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with elbows fully extended overhead.",
-      },
+      makeZone("dip", "Dip", "dip", status(["dip"]), note("Use a vertical dip and drive straight through the bar.")),
+      makeZone("timing", "Timing", "drive", status(["timing"]), note("Connect the leg drive to the press without pressing too early.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout", "active_finish"]), note("Finish with elbows fully extended overhead.")),
+      makeZone("bar_path", "Bar Path", "drive", status(["bar_path"]), note("Keep the bar close and drive straight overhead.")),
+      makeZone("valgus", "Knees", "dip", status(["valgus"]), note("Drive knees out and keep a stable dip.")),
+    ];
+  }
+
+  if (label.includes("strict_press") || label.includes("strict press") || (label.includes("strict") && label.includes("press"))) {
+    return [
+      makeZone("leg_drive", "Leg Drive", "setup", status(["leg_drive"]), note("Keep your knees locked and press without dipping.")),
+      makeZone("torso_stack", "Torso Stack", "press", status(["torso_stack"]), note("Brace ribs down and avoid overextending your lower back.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout", "active_finish"]), note("Finish stacked overhead with strong elbow extension.")),
+      makeZone("bar_path", "Bar Path", "press", status(["bar_path"]), note("Press straight up and move your head through as the bar passes.")),
     ];
   }
 
   if (label.includes("squat")) {
-    return [
-      {
-        id: "torso",
-        title: "Torso",
-        imageKey: "descent",
-        status: breakdown.torso || "good",
-        note: "Keep your chest tall and avoid folding forward.",
-      },
-      {
-        id: "depth",
-        title: "Depth",
-        imageKey: "bottom",
-        status: breakdown.depth || "good",
-        note: "Reach clear depth while keeping control.",
-      },
-      {
-        id: "knees",
-        title: "Knees",
-        imageKey: "bottom",
-        status: breakdown.knees || "good",
-        note: "Drive knees out and keep them tracking over toes.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Stand tall and finish the rep under control.",
-      },
+    const fromCoaching = zonesFromCoaching(coaching, {
+      Depth: "bottom", Torso: "descent", Knees: "bottom", Heels: "lockout", Neck: "setup",
+      "Front Rack": "bottom", "Bar Position": "descent", "Overhead Stability": "lockout", "Bar Stack": "descent",
+    }, "bottom", breakdown);
+    if (fromCoaching?.length) return fromCoaching;
+
+    const zones = [
+      makeZone("depth", "Depth", "bottom", status(["depth"]), note("Reach clear depth while keeping control.")),
+      makeZone("torso", "Torso", "descent", status(["torso"]), note("Keep your chest tall and avoid folding forward.")),
+      makeZone("knees", "Knees", "bottom", status(["knees"]), note("Drive knees out and keep them tracking over toes.")),
+      makeZone("heels", "Heels", "lockout", status(["heels"]), note("Keep your heels planted and drive through midfoot.")),
+      makeZone("neck", "Neck", "setup", status(["neck"]), note("Keep your head aligned with your torso.")),
     ];
+    if (breakdown.front_rack) zones.push(makeZone("front_rack", "Front Rack", "bottom", status(["front_rack"]), note("Drive elbows higher to keep the bar secure.")));
+    if (breakdown.bar_position) zones.push(makeZone("bar_position", "Bar Position", "descent", status(["bar_position"]), note("Keep the bar close to your throat and elbows pointed forward.")));
+    if (breakdown.overhead) zones.push(makeZone("overhead", "Overhead Stability", "lockout", status(["overhead"]), note("Lock the bar directly over midfoot and stay stacked.")));
+    if (breakdown.bar_path) zones.push(makeZone("bar_path", "Bar Stack", "descent", status(["bar_path"]), note("Prevent forward drift — keep the bar over midfoot.")));
+    return zones;
   }
 
   if (label.includes("bench")) {
     return [
-      {
-        id: "wrists",
-        title: "Wrists",
-        imageKey: "press",
-        status: breakdown.wrists || "good",
-        note: "Keep wrists stacked and avoid letting them bend back.",
-      },
-      {
-        id: "elbows",
-        title: "Elbows",
-        imageKey: "bottom",
-        status: breakdown.elbows || "good",
-        note: "Keep elbows controlled without excessive flare.",
-      },
-      {
-        id: "bar",
-        title: "Bar Path",
-        imageKey: "press",
-        status: breakdown.bar_path || breakdown.depth || "good",
-        note: "Move from chest to lockout with a controlled path.",
-      },
-      {
-        id: "lockout",
-        title: "Lockout",
-        imageKey: "lockout",
-        status: breakdown.lockout || "good",
-        note: "Finish with arms fully extended.",
-      },
+      makeZone("depth", "Depth", "bottom", status(["depth"]), note("Lower the bar under control toward your chest.")),
+      makeZone("elbows", "Elbows", "bottom", status(["elbows"]), note("Keep elbows controlled without excessive flare.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish with arms fully extended.")),
+      makeZone("arch", "Arch", "press", status(["arch"]), note("Keep a controlled arch without losing ribcage position.")),
+      makeZone("legs", "Leg Drive", "press", status(["legs"]), note("Keep feet planted and drive through your legs.")),
     ];
   }
 
-  if (label.includes("split jerk")) {
-  return [
-    { id: "setup", title: "Setup", imageKey: "setup", status: "good", note: "Start tall and braced with the bar in the front rack." },
-    { id: "dip", title: "Dip", imageKey: "dip", status: "good", note: "Dip straight down with a vertical torso." },
-    { id: "drive", title: "Drive", imageKey: "drive", status: "good", note: "Drive aggressively through the legs." },
-    { id: "catch", title: "Catch", imageKey: "catch", status: "good", note: "Catch locked out overhead in a strong split." },
-    { id: "finish", title: "Finish", imageKey: "finish", status: "good", note: "Recover under control and stabilize overhead." },
-  ];
-}
-  
-  if (label.includes("clean_and_jerk") || label.includes("clean & jerk") || label.includes("clean and jerk")) {
+  if (label.includes("deadlift")) {
     return [
-      {
-        id: "setup",
-        title: "Setup",
-        imageKey: "setup",
-        status: "good",
-        note: "Start tight with the bar close and chest up.",
-      },
-      {
-        id: "clean_catch",
-        title: "Clean Catch",
-        imageKey: "clean_catch",
-        status: "good",
-        note: "Receive the clean in a strong front rack.",
-      },
-      {
-        id: "jerk_dip",
-        title: "Jerk Dip",
-        imageKey: "jerk_dip",
-        status: "good",
-        note: "Dip straight down with a vertical torso.",
-      },
-      {
-          id: "clean_recovery",
-          title: "Clean Recovery",
-          imageKey: "clean_recovery",
-          status: "good",
-          note: "Stand up smoothly from the clean before initiating the jerk.",
-        },
-      {
-        id: "jerk_catch",
-        title: "Jerk Catch",
-        imageKey: "jerk_catch",
-        status: "good",
-        note: "Catch locked out overhead with control.",
-      },
-      {
-        id: "finish",
-        title: "Finish",
-        imageKey: "finish",
-        status: "good",
-        note: "Stand tall and stabilize the finished position.",
-      },
+      makeZone("back", "Back Position", "pull", status(["back"]), note("Brace hard and keep a neutral spine.")),
+      makeZone("hinge", "Hip Hinge", "mid", status(["hinge"]), note("Push hips back and keep tension through the pull.")),
+      makeZone("bar_path", "Bar Path", "mid", status(["bar_path"]), note("Keep the bar close to your body.")),
+      makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish tall with hips and knees extended.")),
+      makeZone("knees", "Knees", "mid", status(["knees"]), note("Keep knees tracking and avoid excessive bend.")),
+      makeZone("control", "Control", "lockout", status(["control"]), note("Lower the bar with control on the way down.")),
     ];
   }
 
-  if (
-    label.includes("olympic") ||
-    label.includes("clean") ||
-    label.includes("snatch") ||
-    label.includes("jerk")
-  ) {
+  if (label.includes("pull") && !label.includes("push")) {
     return [
-      {
-        id: "setup",
-        title: "Setup",
-        imageKey: "setup",
-        status: "good",
-        note: "Start tight with the bar close and chest up.",
-      },
-      {
-        id: "first_pull",
-        title: "First Pull",
-        imageKey: "first_pull",
-        status: "good",
-        note: "Keep the bar close as it passes the knees.",
-      },
-      {
-        id: "extension",
-        title: "Extension",
-        imageKey: "extension",
-        status: "good",
-        note: "Drive tall through the legs and hips.",
-      },
-      {
-        id: "catch",
-        title: "Catch",
-        imageKey: "catch",
-        status: "good",
-        note: "Receive the bar under control.",
-      },
-      {
-        id: "finish",
-        title: "Finish",
-        imageKey: "finish",
-        status: "good",
-        note: "Stand tall and stabilize the finished position.",
-      },
-    ];
-  }
-
-  if (
-    label.includes("strict_press") ||
-    label.includes("strict press") ||
-    (label.includes("strict") && label.includes("press"))
-  ) {
-    return [
-      { id: "setup", title: "Setup", imageKey: "setup", status: "good", note: "Start tall and braced." },
-      { id: "press", title: "Press Path", imageKey: "press", status: "good", note: "Press straight up." },
-      { id: "lockout", title: "Lockout", imageKey: "lockout", status: "good", note: "Finish stacked overhead." },
+      makeZone("hang", "Hang", "hang", status(["range"]), note("Start from a controlled dead hang.")),
+      makeZone("pull", "Pull", "pull", status(["range"]), note("Pull strongly with control.")),
+      makeZone("top", "Top", "top", status(["top"]), note("Finish high with chin near or above the bar.")),
+      makeZone("finish", "Finish", "finish", status(["control"]), note("Return to a controlled hang before the next rep.")),
     ];
   }
 
   return [
-    {
-      id: "back",
-      title: "Back Position",
-      imageKey: "pull",
-      status: breakdown.back || "good",
-      note: "Brace hard and keep a neutral spine.",
-    },
-    {
-      id: "hips",
-      title: "Hip Hinge",
-      imageKey: "mid",
-      status: breakdown.hinge || "good",
-      note: "Push hips back and keep tension through the pull.",
-    },
-    {
-      id: "bar",
-      title: "Bar Path",
-      imageKey: "mid",
-      status: breakdown.bar_path || "good",
-      note: "Keep the bar close to your body.",
-    },
-    {
-      id: "lockout",
-      title: "Lockout",
-      imageKey: "lockout",
-      status: breakdown.lockout || "good",
-      note: "Finish tall with hips and knees extended.",
-    },
+    makeZone("back", "Back Position", "pull", status(["back"]), note("Brace hard and keep a neutral spine.")),
+    makeZone("hinge", "Hip Hinge", "mid", status(["hinge"]), note("Push hips back and keep tension through the pull.")),
+    makeZone("bar_path", "Bar Path", "mid", status(["bar_path"]), note("Keep the bar close to your body.")),
+    makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish tall with hips and knees extended.")),
+    makeZone("knees", "Knees", "mid", status(["knees"]), note("Keep knees tracking and avoid excessive bend.")),
+    makeZone("control", "Control", "lockout", status(["control"]), note("Lower the bar with control on the way down.")),
   ];
 };
 
@@ -816,6 +740,10 @@ export default function App() {
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [pendingVideos, setPendingVideos] = useState([]);
+  const [overlayUrl, setOverlayUrl] = useState(null);
+  const [overlayLoading, setOverlayLoading] = useState(false);
+  const [overlayProgress, setOverlayProgress] = useState("");
+  const [overlayStatus, setOverlayStatus] = useState("idle");
 
   useEffect(() => {
     loadPendingVideos(setPendingVideos);
@@ -1045,12 +973,7 @@ export default function App() {
     }
   };
 
-  const [overlayUrl, setOverlayUrl] = useState(null);
-  const [overlayLoading, setOverlayLoading] = useState(false);
-  const [overlayProgress, setOverlayProgress] = useState("");
-  const [overlayStatus, setOverlayStatus] = useState("idle");
-
-  const generateOverlay = async () => {
+  const analyzeVideo = async () => {
     console.log("GENERATE OVERLAY CLICKED", {
       hasVideo: !!video,
       hasResult: !!result,
@@ -1194,8 +1117,11 @@ export default function App() {
   const displayScore = avgScore !== null ? Math.round(avgScore * 10) : null;
   const bestRep = getBestRep(reps);
 
+  // biggest_fix is not returned by the backend — derive it from rep feedback
   const biggestFix =
     result?.set_summary?.biggest_fix ||
+    bestRep?.coaching?.priority ||
+    bestRep?.issues?.[0] ||
     bestRep?.feedback?.[0] ||
     "Upload a clear side-angle video for analysis.";
 
@@ -1221,58 +1147,95 @@ export default function App() {
   const buildCoachSummary = (result) => {
     if (!result) return "";
 
-    const rep = result.rep_feedback?.[0];
-    if (!rep) return "";
+    const bestRep = getBestRep(result.rep_feedback || []);
+    if (!bestRep) return "";
 
-    const issues = rep.issues || [];
-    const biggestFix = result.set_summary?.biggest_fix;
-    const breakdown = rep.breakdown || {};
+    const issues = bestRep.issues || [];
+    const breakdown = bestRep.breakdown || {};
+    const coaching = bestRep.coaching;
 
+    // If the backend provided coaching data (Olympic lifts), use it directly.
+    // This gives real per-phase messages instead of reconstructed cues.
+    if (coaching?.priority && coaching?.sections?.length > 0) {
+      let text = coaching.priority;
+
+      // Add messages for any non-good sections
+      const warnings = coaching.sections.filter(
+        (s) => s.status === "warning" || s.status === "poor"
+      );
+
+      if (warnings.length > 0) {
+        text += " Focus on: " + warnings.map((s) => s.message).join(" ");
+      }
+
+      // Append any issues the backend flagged
+      if (issues.length > 0) {
+        const issueText = issues.slice(0, 2).join(" ");
+        if (!text.includes(issueText)) {
+          text += " " + issueText;
+        }
+      }
+
+      return text;
+    }
+
+    // Fallback: reconstruct from breakdown (squats, deadlifts, bench press)
     let intro = "Solid rep overall.";
     let body = [];
     let cues = [];
 
-    // Tone based on score
-    if (rep.score >= 9) {
+    if (bestRep.score >= 9) {
       intro = "Great rep — very strong execution.";
-    } else if (rep.score >= 7) {
+    } else if (bestRep.score >= 7) {
       intro = "Good rep overall, but there are a couple things to clean up.";
     } else {
       intro = "This rep needs some work.";
     }
 
-    // Explain issue
-    if (issues.length > 0) {
-      body.push(issues[0]);
-    }
+    if (issues.length > 0) body.push(issues[0]);
 
-    // Smart cues
-    if (breakdown.knees === "poor") {
+    if (breakdown.knees === "poor")
       cues.push("Drive your knees out and keep them tracking over your toes.");
-    }
-
-    if (breakdown.depth === "borderline") {
+    if (breakdown.depth === "borderline")
       cues.push("Sit slightly deeper while keeping your chest up.");
-    }
-
-    if (breakdown.torso === "poor") {
+    if (breakdown.torso === "poor")
       cues.push("Keep your chest tall and avoid leaning forward.");
-    }
-
-    if (breakdown.heels === "poor") {
+    if (breakdown.heels === "poor")
       cues.push("Keep your weight through your mid-foot and heels.");
+    if (breakdown.first_pull === "poor")
+      cues.push("Keep the bar close and maintain tension off the floor.");
+    if (breakdown.extension === "poor")
+      cues.push("Drive tall through your hips — full extension before the pull.");
+    if (breakdown.catch === "poor")
+      cues.push("Lock in under the bar — fast elbows into a stable receiving position.");
+    if (breakdown.lockout === "incomplete" || breakdown.lockout === "poor" || breakdown.lockout === "soft" || breakdown.lockout === "short")
+      cues.push("Punch aggressively into lockout and hold the overhead position.");
+    if (breakdown.back === "poor" || breakdown.back === "fair")
+      cues.push("Brace your core and keep a neutral spine throughout the pull.");
+    if (breakdown.hinge === "poor")
+      cues.push("Push your hips back and load the hamstrings before driving up.");
+    if (breakdown.bar_path === "drifting" || breakdown.bar_path === "poor")
+      cues.push("Keep the bar close to your body through the full range of motion.");
+    if (breakdown.elbows === "severe_flare" || breakdown.elbows === "borderline")
+      cues.push("Tuck elbows slightly and control the bar path.");
+    if (breakdown.arch === "excessive")
+      cues.push("Keep a controlled arch without losing ribcage position.");
+    if (breakdown.legs === "weak" || breakdown.legs === "unknown")
+      cues.push("Keep feet planted and drive through your legs.");
+    if (breakdown.body_line === "sagging" || breakdown.body_line === "borderline")
+      cues.push("Keep your body in a straight line from head to heels.");
+    if (breakdown.pull === "short" || breakdown.transition === "slow")
+      cues.push("Pull higher and turn over the bar more aggressively.");
+    if (breakdown.plank === "sagging" || breakdown.plank === "borderline")
+      cues.push("Brace your core and keep a tight plank position.");
+
+    if (bestRep.feedback?.length > 1) {
+      body.push(...bestRep.feedback.slice(1, 3));
     }
 
-    // Build paragraph
     let text = intro;
-
-    if (body.length > 0) {
-      text += " " + body.join(" ");
-    }
-
-    if (cues.length > 0) {
-      text += " Focus on this next: " + cues.join(" ");
-    }
+    if (body.length > 0) text += " " + body.join(" ");
+    if (cues.length > 0) text += " Focus on this next: " + cues.join(" ");
 
     return text;
   };
@@ -1377,7 +1340,7 @@ export default function App() {
           </View>
         )}
 
-        {result?.feedback && !result.error && reps.length === 0 && (
+        {result && !result.error && reps.length === 0 && (
           <View style={styles.errorCard}>
             <Text style={styles.errorTitle}>Video Not Usable</Text>
             <Text style={styles.errorText}>
@@ -1406,7 +1369,7 @@ export default function App() {
                   <Text style={styles.scoreSmall}>/100</Text>
                 </View>
 
-                <Text style={styles.exerciseName}>{result.exercise_label}</Text>
+                <Text style={styles.exerciseName}>{formatLabel(result.exercise_label)}</Text>
                 <Text style={styles.confidenceText}>
                   Confidence {Math.round(Number(result.confidence || 0) * 100)}%
                 </Text>
@@ -1482,15 +1445,24 @@ export default function App() {
 
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Rep Breakdown</Text>
-              <Text style={styles.sectionSub}>Score trend across the set</Text>
+              <Text style={styles.sectionSub}>
+                {result?.set_summary?.trend || "Score trend across the set"}
+              </Text>
               {reps.map((rep) => {
                 const score = Number(rep.score || 0);
                 const barWidth = `${Math.min(100, Math.max(8, score * 10))}%`;
+                const repNotes = [
+                  ...(rep.feedback || []),
+                  ...(rep.issues || []),
+                ].filter(Boolean);
 
                 return (
                   <View key={`rep-${rep.rep}`} style={styles.repRow}>
                     <View style={styles.repTop}>
-                      <Text style={styles.repLabel}>Rep {rep.rep}</Text>
+                      <Text style={styles.repLabel}>
+                        Rep {rep.rep}
+                        {rep.grade ? ` · ${rep.grade}` : ""}
+                      </Text>
                       <Text style={styles.repScore}>{score.toFixed(1)}/10</Text>
                     </View>
 
@@ -1506,20 +1478,24 @@ export default function App() {
                       />
                     </View>
 
-                    <Text style={styles.repFeedback}>
-                      {rep.feedback?.[0] || rep.issues?.[0] || "Good rep."}
-                    </Text>
+                    {repNotes.length > 0 ? (
+                      repNotes.map((line, idx) => (
+                        <Text key={`rep-${rep.rep}-note-${idx}`} style={styles.repFeedback}>
+                          {line}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text style={styles.repFeedback}>Good rep.</Text>
+                    )}
                   </View>
                 );
               })}
             </View>
 
-              {hasPhaseImageUrls && (
-                <>
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Interactive Coaching Map</Text>
               <Text style={styles.sectionSub}>
-                Tap a zone to see the most relevant saved phase frame.
+                Tap a zone to review form cues and status colors from the analysis.
               </Text>
 
               <View style={styles.coachImageWrap}>
@@ -1533,7 +1509,9 @@ export default function App() {
                 ) : (
                   <View style={styles.emptyImage}>
                     <Text style={styles.emptyImageText}>
-                      Visuals are not available yet.
+                      {hasPhaseImageUrls
+                        ? "Select a zone to preview the matching phase frame."
+                        : "Generate phase review images to preview each zone."}
                     </Text>
                   </View>
                 )}
@@ -1574,6 +1552,19 @@ export default function App() {
               )}
             </View>
 
+            {bestRep?.visibility_notes?.length > 0 && (
+              <View style={styles.warningCard}>
+                <Text style={styles.warningTitle}>Visibility Notes</Text>
+                {bestRep.visibility_notes.map((note, idx) => (
+                  <Text key={`visibility-${idx}`} style={styles.warningText}>
+                    {note}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+              {hasPhaseImageUrls && (
+                <>
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>{phaseConfig.title}</Text>
               <Text style={styles.sectionSub}>{phaseConfig.text}</Text>
