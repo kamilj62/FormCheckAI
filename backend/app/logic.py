@@ -30,8 +30,19 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     # IMPORTANT:
     # If the model already predicts bench press, trust it.
     # Bench angles can make wrist_above_shoulder_ratio falsely high.
-    if raw_label == "bench_press":
+    obvious_push_up = (
+        wrist_ratio < 0.10
+        and min_torso >= 45
+        and max_torso <= 85
+        and elbow_range >= 60
+        and min_elbow >= 70
+    )
+
+    if raw_label == "bench_press" and not obvious_push_up:
         return "bench_press", max(confidence, 0.80), True, "trusted_model_bench_press"
+
+    if raw_label == "bench_press" and obvious_push_up:
+        return "push_up", max(confidence, 0.86), True, "push_up_bodyweight_pattern"
 
     # BENCH PRESS fallback:
     # Use this only when the model did NOT predict bench,

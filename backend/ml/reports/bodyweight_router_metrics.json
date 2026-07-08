@@ -1,0 +1,49 @@
+{
+  "accuracy": 0.975609756097561,
+  "labels": [
+    "handstand_push_up",
+    "pull_up",
+    "push_up"
+  ],
+  "rows_total": 406,
+  "rows_train": 324,
+  "rows_test": 82,
+  "feature_count": 16,
+  "classification_report": {
+    "handstand_push_up": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 26.0
+    },
+    "pull_up": {
+      "precision": 0.9259259259259259,
+      "recall": 1.0,
+      "f1-score": 0.9615384615384616,
+      "support": 25.0
+    },
+    "push_up": {
+      "precision": 1.0,
+      "recall": 0.9354838709677419,
+      "f1-score": 0.9666666666666667,
+      "support": 31.0
+    },
+    "accuracy": 0.975609756097561,
+    "macro avg": {
+      "precision": 0.9753086419753086,
+      "recall": 0.978494623655914,
+      "f1-score": 0.9760683760683762,
+      "support": 82.0
+    },
+    "weighted avg": {
+      "precision": 0.977416440831075,
+      "recall": 0.975609756097561,
+      "f1-score": 0.9756722951844904,
+      "support": 82.0
+    }
+  },
+  "model_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/app/models/bodyweight_router.joblib",
+  "labels_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/app/models/bodyweight_router_labels.joblib",
+  "feature_importance_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/ml/reports/bodyweight_feature_importance.csv",
+  "confusion_matrix_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/ml/reports/bodyweight_confusion_matrix.csv"
+}

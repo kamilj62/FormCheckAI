@@ -1,0 +1,87 @@
+label,labels_in_group,name,size,parent,trusted,path
+unknown,"squat_back,unknown",Back Squat- knee valgus.mov,53707563,Capstone,False,/Users/josephkamil/Desktop/Capstone/Back Squat- knee valgus.mov
+squat_back,"squat_back,unknown",Back Squat- knee valgus.mov,53707563,squat_back,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/Back Squat- knee valgus.mov
+unknown,"squat_front,unknown",Front Squat- Depth.mov,59034108,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front Squat- Depth.mov
+squat_front,"squat_front,unknown",Front Squat- Depth.mov,59034108,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front Squat- Depth.mov
+unknown,"squat_front,unknown",Front squats- butt wink .mov,47260543,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front squats- butt wink .mov
+squat_front,"squat_front,unknown",Front squats- butt wink .mov,47260543,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squats- butt wink .mov
+unknown,"squat_front,unknown",Front squats- bar drift.mov,49081646,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front squats- bar drift.mov
+squat_front,"squat_front,unknown",Front squats- bar drift.mov,49081646,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squats- bar drift.mov
+unknown,"squat_front,unknown",Front squat- elbow drop.mov,56408274,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front squat- elbow drop.mov
+squat_front,"squat_front,unknown",Front squat- elbow drop.mov,56408274,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squat- elbow drop.mov
+unknown,"squat_back,unknown",Back squats- forward lean.mov,31429399,Capstone,False,/Users/josephkamil/Desktop/Capstone/Back squats- forward lean.mov
+squat_back,"squat_back,unknown",Back squats- forward lean.mov,31429399,squat_back,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/Back squats- forward lean.mov
+push_press,"push_press,strict_press",shoulder press_9.mp4,7599356,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_9.mp4
+strict_press,"push_press,strict_press",shoulder press_9.mp4,7599356,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_9.mp4
+push_press,"push_press,strict_press",shoulder press_8.mp4,3580142,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_8.mp4
+strict_press,"push_press,strict_press",shoulder press_8.mp4,3580142,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_8.mp4
+push_press,"push_press,strict_press",17496a37-c1f7-4105-9c07-e7cfbca06106.mp4,591381,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/17496a37-c1f7-4105-9c07-e7cfbca06106.mp4
+strict_press,"push_press,strict_press",17496a37-c1f7-4105-9c07-e7cfbca06106.mp4,591381,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/17496a37-c1f7-4105-9c07-e7cfbca06106.mp4
+push_press,"push_press,strict_press",shoulder press_23.mp4,1338571,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_23.mp4
+strict_press,"push_press,strict_press",shoulder press_23.mp4,1338571,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_23.mp4
+push_press,"push_press,strict_press",shoulder press_22.mp4,607691,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_22.mp4
+strict_press,"push_press,strict_press",shoulder press_22.mp4,607691,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_22.mp4
+push_press,"push_press,strict_press",b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,7257779,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/b066cbc1-931a-4af5-b668-36e98e7091b6.mp4
+strict_press,"push_press,strict_press",b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,7257779,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/b066cbc1-931a-4af5-b668-36e98e7091b6.mp4
+push_press,"push_press,strict_press",b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4,3736972,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4
+strict_press,"push_press,strict_press",b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4,3736972,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4
+push_press,"push_press,strict_press",555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4,2249523,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4
+strict_press,"push_press,strict_press",555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4,2249523,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4
+push_press,"push_press,strict_press",shoulder press_25.mp4,725697,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_25.mp4
+strict_press,"push_press,strict_press",shoulder press_25.mp4,725697,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_25.mp4
+push_press,"push_press,strict_press",shoulder press_18.mp4,725697,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_18.mp4
+strict_press,"push_press,strict_press",shoulder press_18.mp4,725697,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_18.mp4
+push_press,"push_press,strict_press",shoulder press_24.mp4,3252732,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_24.mp4
+strict_press,"push_press,strict_press",shoulder press_24.mp4,3252732,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_24.mp4
+push_press,"push_press,strict_press",shoulder press_20.MOV,65393361,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_20.MOV
+strict_press,"push_press,strict_press",shoulder press_20.MOV,65393361,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_20.MOV
+push_press,"push_press,strict_press",fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4,2601951,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4
+strict_press,"push_press,strict_press",fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4,2601951,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4
+push_press,"push_press,strict_press",shoulder press_21.mov,7523060,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_21.mov
+strict_press,"push_press,strict_press",shoulder press_21.mov,7523060,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_21.mov
+push_press,"push_press,strict_press",shoulder press_19.MOV,74479189,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_19.MOV
+strict_press,"push_press,strict_press",shoulder press_19.MOV,74479189,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_19.MOV
+push_press,"push_press,strict_press",6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4,461046,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4
+strict_press,"push_press,strict_press",6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4,461046,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4
+push_press,"push_press,strict_press",51f72e68-ec28-4272-b15c-45586c244398.mp4,3615048,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/51f72e68-ec28-4272-b15c-45586c244398.mp4
+strict_press,"push_press,strict_press",51f72e68-ec28-4272-b15c-45586c244398.mp4,3615048,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/51f72e68-ec28-4272-b15c-45586c244398.mp4
+push_press,"push_press,strict_press",shoulder press_3.MOV,45937856,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_3.MOV
+strict_press,"push_press,strict_press",shoulder press_3.MOV,45937856,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_3.MOV
+push_press,"push_press,strict_press",30fe126e-0985-48af-813f-65c30d49913d.mp4,2391820,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/30fe126e-0985-48af-813f-65c30d49913d.mp4
+strict_press,"push_press,strict_press",30fe126e-0985-48af-813f-65c30d49913d.mp4,2391820,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/30fe126e-0985-48af-813f-65c30d49913d.mp4
+push_press,"push_press,strict_press",f44ec93a-ce42-46a4-97f4-015bea952a00.mp4,6979211,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/f44ec93a-ce42-46a4-97f4-015bea952a00.mp4
+strict_press,"push_press,strict_press",f44ec93a-ce42-46a4-97f4-015bea952a00.mp4,6979211,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/f44ec93a-ce42-46a4-97f4-015bea952a00.mp4
+push_press,"push_press,strict_press",shoulder press_4.MOV,53886217,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_4.MOV
+strict_press,"push_press,strict_press",shoulder press_4.MOV,53886217,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_4.MOV
+push_press,"push_press,strict_press",shoulder press_15.mp4,5644624,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_15.mp4
+strict_press,"push_press,strict_press",shoulder press_15.mp4,5644624,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_15.mp4
+push_press,"push_press,strict_press",shoulder press_14.mp4,3178175,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_14.mp4
+strict_press,"push_press,strict_press",shoulder press_14.mp4,3178175,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_14.mp4
+push_press,"push_press,strict_press",shoulder press_1.mp4,5332355,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_1.mp4
+strict_press,"push_press,strict_press",shoulder press_1.mp4,5332355,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_1.mp4
+push_press,"push_press,strict_press",shoulder press_3.mp4,19248957,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_3.mp4
+strict_press,"push_press,strict_press",shoulder press_3.mp4,19248957,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_3.mp4
+push_press,"push_press,strict_press",shoulder press_16.mp4,7310146,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_16.mp4
+strict_press,"push_press,strict_press",shoulder press_16.mp4,7310146,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_16.mp4
+push_press,"push_press,strict_press",shoulder press_17.mp4,7727134,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_17.mp4
+strict_press,"push_press,strict_press",shoulder press_17.mp4,7727134,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_17.mp4
+push_press,"push_press,strict_press",shoulder press_2.mp4,1059806,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_2.mp4
+strict_press,"push_press,strict_press",shoulder press_2.mp4,1059806,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_2.mp4
+push_press,"push_press,strict_press",shoulder press_13.mp4,3644697,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_13.mp4
+strict_press,"push_press,strict_press",shoulder press_13.mp4,3644697,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_13.mp4
+push_press,"push_press,strict_press",shoulder press_6.mp4,3755079,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_6.mp4
+strict_press,"push_press,strict_press",shoulder press_6.mp4,3755079,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_6.mp4
+push_press,"push_press,strict_press",shoulder press_7.mp4,7491881,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_7.mp4
+strict_press,"push_press,strict_press",shoulder press_7.mp4,7491881,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_7.mp4
+push_press,"push_press,strict_press",shoulder press_12.mp4,4760451,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_12.mp4
+strict_press,"push_press,strict_press",shoulder press_12.mp4,4760451,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_12.mp4
+push_press,"push_press,strict_press",shoulder press_10.mp4,6753325,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_10.mp4
+strict_press,"push_press,strict_press",shoulder press_10.mp4,6753325,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_10.mp4
+push_press,"push_press,strict_press",shoulder press_5.mp4,8614244,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_5.mp4
+strict_press,"push_press,strict_press",shoulder press_5.mp4,8614244,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_5.mp4
+push_press,"push_press,strict_press",shoulder press_4.mp4,17600177,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_4.mp4
+strict_press,"push_press,strict_press",shoulder press_4.mp4,17600177,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_4.mp4
+push_press,"push_press,strict_press",shoulder press_11.mp4,3902993,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_11.mp4
+strict_press,"push_press,strict_press",shoulder press_11.mp4,3902993,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_11.mp4
+clean,"clean,clean_and_jerk",clean_correct_320x240.mp4,207590,real_clean,True,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_clean/clean_correct_320x240.mp4
+clean_and_jerk,"clean,clean_and_jerk",clean_correct_320x240.mp4,207590,clean_and_jerk,True,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_router/clean_and_jerk/clean_correct_320x240.mp4

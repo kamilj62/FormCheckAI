@@ -1,0 +1,21 @@
+{
+  "true_label": "pull_up",
+  "predicted_label": "bench_press",
+  "confidence": 0.96,
+  "analysis_mode": "biomechanics_override",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/pull Up/pull up_26.mp4",
+  "rep_count": 1,
+  "raw_label": "squat",
+  "bio_label": "push_press",
+  "squat_label": "overhead_squat",
+  "olympic_pred": "snatch",
+  "bodyweight_router_label": "pull_up",
+  "bodyweight_router_conf": 0.948,
+  "protected_reason": "bench_press_short_overhead_rescue",
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"squat\", \"conf\": 0.961, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"push_press\", \"conf\": 0.961, \"reason\": \"overhead_press_detected\"}, {\"stage\": \"squat_router\", \"label\": \"overhead_squat\", \"conf\": 0.811, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"snatch\", \"conf\": 0.528, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"pull_up\", \"conf\": 0.948, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"bench_press\", \"conf\": 0.961, \"reason\": \"biomechanics_override\"}]",
+  "router_v6_label": "pull_up",
+  "router_v6_conf": 0.711,
+  "router_v6_decision": "score_winner"
+}

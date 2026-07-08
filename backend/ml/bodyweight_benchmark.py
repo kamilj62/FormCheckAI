@@ -2,16 +2,17 @@ from pathlib import Path
 from datetime import datetime
 import subprocess
 import json
+import shutil
 import os
 import sys
+import pandas as pd
 
 script_dir = str(Path(__file__).resolve().parent)
 if script_dir in sys.path:
     sys.path.remove(script_dir)
 
-import pandas as pd
-
 API_URL = os.getenv("API_URL", "http://localhost:8000")
+FAILURES_DIR = Path("ml/reports/bodyweight_failures")
 
 BENCHMARKS = [
     {
@@ -76,6 +77,24 @@ def analyze_video(path):
         }
 
 
+
+def _safe_name(x):
+    return str(x or "unknown").replace("/", "_").replace(" ", "_").replace(":", "_")
+
+
+def save_failure_artifacts(row):
+    true_label = _safe_name(row.get("true_label"))
+    predicted = _safe_name(row.get("predicted_label"))
+    video = row.get("video")
+
+    stem = Path(str(video)).stem if video else "unknown_video"
+    out_dir = FAILURES_DIR / true_label / f"{stem}__pred_{predicted}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    payload = dict(row)
+    (out_dir / "result.json").write_text(json.dumps(payload, indent=2, default=str))
+
+
 rows = []
 
 for bench in BENCHMARKS:
@@ -97,7 +116,10 @@ for bench in BENCHMARKS:
 
     for f in files:
         print("Testing", bench["name"], f.name, flush=True)
+        print("FULL_PATH=", str(f), flush=True)
         data = analyze_video(f)
+
+        debug = data.get("debug") or {}
 
         rows.append({
             "true_label": bench["name"],
@@ -112,6 +134,17 @@ for bench in BENCHMARKS:
             ),
             "video": str(f),
             "rep_count": len(data.get("rep_feedback", [])),
+            "raw_label": debug.get("raw_label"),
+            "bio_label": debug.get("bio_label"),
+            "squat_label": debug.get("squat_label"),
+            "olympic_pred": debug.get("olympic_pred"),
+            "bodyweight_router_label": debug.get("bodyweight_router_label"),
+            "bodyweight_router_conf": debug.get("bodyweight_router_conf"),
+            "protected_reason": debug.get("protected_reason"),
+            "routing_trace": json.dumps(debug.get("routing_trace", []), default=str),
+            "router_v6_label": debug.get("router_v6_label"),
+            "router_v6_conf": debug.get("router_v6_conf"),
+            "router_v6_decision": debug.get("router_v6_decision"),
         })
 
 
@@ -150,10 +183,14 @@ overall = (df.true_label == df.predicted_label).mean()
 valid = df[df.valid_extraction == True]
 valid_overall = (valid.true_label == valid.predicted_label).mean() if len(valid) else 0
 invalid = df[df.valid_extraction != True]
+v6_valid = df[df.router_v6_label.notna()] if "router_v6_label" in df.columns else pd.DataFrame()
+v6_overall = (v6_valid.true_label == v6_valid.router_v6_label).mean() if len(v6_valid) else 0
+
 
 print("\n==============================")
 print(f"OVERALL RAW: {100*overall:.1f}%")
 print(f"VALID ONLY: {100*valid_overall:.1f}% ({len(valid)}/{len(df)} valid)")
+print(f"ROUTER V6 AUDIT: {100*v6_overall:.1f}% ({len(v6_valid)}/{len(df)} with v6 label)")
 print(f"INVALID / INSUFFICIENT: {len(invalid)}")
 print("==============================")
 
@@ -177,5 +214,14 @@ print("==============================")
 
 if len(mistakes):
     print(mistakes.to_string(index=False))
+
+    if FAILURES_DIR.exists():
+        shutil.rmtree(FAILURES_DIR)
+    FAILURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    for _, row in mistakes.iterrows():
+        save_failure_artifacts(row.to_dict())
+
+    print(f"\nSaved failure artifacts: {FAILURES_DIR}")
 else:
     print("None 🎉")

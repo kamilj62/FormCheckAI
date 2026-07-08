@@ -1,0 +1,21 @@
+{
+  "true_label": "push_up",
+  "predicted_label": "snatch",
+  "confidence": 0.7,
+  "analysis_mode": "router_v5",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/push-up/push-up_56.mp4",
+  "rep_count": 1,
+  "raw_label": "deadlift",
+  "bio_label": "squat",
+  "squat_label": "squat_front",
+  "olympic_pred": "snatch",
+  "bodyweight_router_label": "push_up",
+  "bodyweight_router_conf": 0.959,
+  "protected_reason": NaN,
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"deadlift\", \"conf\": 0.994, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"squat\", \"conf\": 0.994, \"reason\": \"squat_pattern_detected\"}, {\"stage\": \"squat_router\", \"label\": \"squat_front\", \"conf\": 0.848, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"snatch\", \"conf\": 0.7, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"push_up\", \"conf\": 0.959, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"snatch\", \"conf\": 0.7, \"reason\": \"router_v5\"}]",
+  "router_v6_label": "push_up",
+  "router_v6_conf": 0.719,
+  "router_v6_decision": "score_winner"
+}

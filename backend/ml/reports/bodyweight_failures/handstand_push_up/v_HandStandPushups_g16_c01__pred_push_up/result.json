@@ -1,0 +1,21 @@
+{
+  "true_label": "handstand_push_up",
+  "predicted_label": "push_up",
+  "confidence": 0.86,
+  "analysis_mode": "biomechanics_override",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/HandstandPushups/v_HandStandPushups_g16_c01.avi",
+  "rep_count": 1,
+  "raw_label": "squat",
+  "bio_label": "bench_press",
+  "squat_label": "squat_front",
+  "olympic_pred": NaN,
+  "bodyweight_router_label": "handstand_push_up",
+  "bodyweight_router_conf": 0.954,
+  "protected_reason": "push_up_bodyweight_pattern",
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"squat\", \"conf\": 0.978, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"bench_press\", \"conf\": 0.978, \"reason\": \"bench_pattern_detected\"}, {\"stage\": \"squat_router\", \"label\": \"squat_front\", \"conf\": 0.97, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"\", \"conf\": 0.0, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"handstand_push_up\", \"conf\": 0.954, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"push_up\", \"conf\": 0.86, \"reason\": \"biomechanics_override\"}]",
+  "router_v6_label": "handstand_push_up",
+  "router_v6_conf": 0.716,
+  "router_v6_decision": "score_winner"
+}

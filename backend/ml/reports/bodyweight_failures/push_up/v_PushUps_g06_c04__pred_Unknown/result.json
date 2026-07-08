@@ -1,0 +1,21 @@
+{
+  "true_label": "push_up",
+  "predicted_label": "Unknown",
+  "confidence": 0.0,
+  "analysis_mode": "insufficient_data",
+  "error": null,
+  "valid_extraction": false,
+  "video": "/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g06_c04.avi",
+  "rep_count": 0,
+  "raw_label": NaN,
+  "bio_label": NaN,
+  "squat_label": NaN,
+  "olympic_pred": NaN,
+  "bodyweight_router_label": NaN,
+  "bodyweight_router_conf": NaN,
+  "protected_reason": NaN,
+  "routing_trace": "[]",
+  "router_v6_label": NaN,
+  "router_v6_conf": NaN,
+  "router_v6_decision": NaN
+}

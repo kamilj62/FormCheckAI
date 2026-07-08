@@ -1,0 +1,21 @@
+{
+  "true_label": "pull_up",
+  "predicted_label": "push_press",
+  "confidence": 1.0,
+  "analysis_mode": "biomechanics_override",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g14_c01.avi",
+  "rep_count": 1,
+  "raw_label": "push_press",
+  "bio_label": "push_press",
+  "squat_label": "squat_back",
+  "olympic_pred": NaN,
+  "bodyweight_router_label": "pull_up",
+  "bodyweight_router_conf": 0.875,
+  "protected_reason": "push_press_pattern_detected",
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"push_press\", \"conf\": 1.0, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"push_press\", \"conf\": 1.0, \"reason\": \"model_prediction\"}, {\"stage\": \"squat_router\", \"label\": \"squat_back\", \"conf\": 0.879, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"\", \"conf\": 0.0, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"pull_up\", \"conf\": 0.875, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"push_press\", \"conf\": 1.0, \"reason\": \"biomechanics_override\"}]",
+  "router_v6_label": "push_press",
+  "router_v6_conf": 0.99,
+  "router_v6_decision": "score_winner"
+}

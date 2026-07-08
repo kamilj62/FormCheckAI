@@ -1,0 +1,841 @@
+label,name,size,copies,labels_in_group,parent,path
+snatch,snatch- correct.mov,70444467,2,snatch,Capstone,/Users/josephkamil/Desktop/Capstone/snatch- correct.mov
+snatch,snatch- correct.mov,70444467,2,snatch,real_snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_snatch/snatch- correct.mov
+clean,clean-correct.mov,44157165,3,clean,Capstone,/Users/josephkamil/Desktop/Capstone/clean-correct.mov
+clean,clean-correct.mov,44157165,3,clean,clean,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean/clean-correct.mov
+clean,clean-correct.mov,44157165,3,clean,real_clean,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_clean/clean-correct.mov
+overhead_squat,OverheadSquats- correct3.mov,98915811,3,overhead_squat,Capstone,/Users/josephkamil/Desktop/Capstone/OverheadSquats- correct3.mov
+overhead_squat,OverheadSquats- correct3.mov,98915811,3,overhead_squat,overhead_squat,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/OverheadSquats- correct3.mov
+overhead_squat,OverheadSquats- correct3.mov,98915811,3,overhead_squat,correct,/Users/josephkamil/Desktop/Capstone/data/raw/overhead_squat/correct/OverheadSquats- correct3.mov
+push_press,Push Press- Head Clearance .mov,56708525,2,push_press,Capstone,/Users/josephkamil/Desktop/Capstone/Push Press- Head Clearance .mov
+push_press,Push Press- Head Clearance .mov,56708525,2,push_press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/Push Press- Head Clearance .mov
+push_press,Push press- knee cave.mov,43641110,2,push_press,Capstone,/Users/josephkamil/Desktop/Capstone/Push press- knee cave.mov
+push_press,Push press- knee cave.mov,43641110,2,push_press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/Push press- knee cave.mov
+unknown,squat_8.mp4,2998318,2,unknown,Capstone,/Users/josephkamil/Desktop/Capstone/squat_8.mp4
+unknown,squat_8.mp4,2998318,2,unknown,squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_8.mp4
+unknown,Back Squat- knee valgus.mov,53707563,2,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/Back Squat- knee valgus.mov
+squat_back,Back Squat- knee valgus.mov,53707563,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/Back Squat- knee valgus.mov
+bench_press,Bench press- bar path.mov,55461752,2,bench_press,Capstone,/Users/josephkamil/Desktop/Capstone/Bench press- bar path.mov
+bench_press,Bench press- bar path.mov,55461752,2,bench_press,bench_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/bench_press/Bench press- bar path.mov
+push_press,Push press- elbows drop.mov,40179139,2,push_press,Capstone,/Users/josephkamil/Desktop/Capstone/Push press- elbows drop.mov
+push_press,Push press- elbows drop.mov,40179139,2,push_press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/Push press- elbows drop.mov
+unknown,squat_20.mp4,5869719,2,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/squat_20.mp4
+squat_back,squat_20.mp4,5869719,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_20.mp4
+deadlift,Deadlift- bar drift.mov,53545831,2,deadlift,Capstone,/Users/josephkamil/Desktop/Capstone/Deadlift- bar drift.mov
+deadlift,Deadlift- bar drift.mov,53545831,2,deadlift,deadlift,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/deadlift/Deadlift- bar drift.mov
+unknown,Front Squat- Depth.mov,59034108,2,"squat_front,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/Front Squat- Depth.mov
+squat_front,Front Squat- Depth.mov,59034108,2,"squat_front,unknown",squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front Squat- Depth.mov
+overhead_squat,OverheadSquat- correct5.mov,100334261,2,overhead_squat,Capstone,/Users/josephkamil/Desktop/Capstone/OverheadSquat- correct5.mov
+overhead_squat,OverheadSquat- correct5.mov,100334261,2,overhead_squat,overhead_squat,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/OverheadSquat- correct5.mov
+bench_press,Bench press- head lift.mov,50749482,2,bench_press,Capstone,/Users/josephkamil/Desktop/Capstone/Bench press- head lift.mov
+bench_press,Bench press- head lift.mov,50749482,2,bench_press,bench_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/bench_press/Bench press- head lift.mov
+overhead_squat,OverheadSquat- correct4.mov,92644624,2,overhead_squat,Capstone,/Users/josephkamil/Desktop/Capstone/OverheadSquat- correct4.mov
+overhead_squat,OverheadSquat- correct4.mov,92644624,2,overhead_squat,overhead_squat,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/OverheadSquat- correct4.mov
+bench_press,Bench press- elbow flare.mov,50537311,2,bench_press,Capstone,/Users/josephkamil/Desktop/Capstone/Bench press- elbow flare.mov
+bench_press,Bench press- elbow flare.mov,50537311,2,bench_press,bench_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/bench_press/Bench press- elbow flare.mov
+unknown,squat_15.mp4,6881795,3,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/squat_15.mp4
+unknown,squat_15.mp4,6881795,3,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_15.mp4
+squat_back,squat_15.mp4,6881795,3,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_15.mp4
+unknown,squat_29.mp4,1639227,2,unknown,Capstone,/Users/josephkamil/Desktop/Capstone/squat_29.mp4
+unknown,squat_29.mp4,1639227,2,unknown,squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_29.mp4
+unknown,Front squats- butt wink .mov,47260543,2,"squat_front,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/Front squats- butt wink .mov
+squat_front,Front squats- butt wink .mov,47260543,2,"squat_front,unknown",squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squats- butt wink .mov
+deadlift,Deadlift - bad back.mov,42742092,2,deadlift,Capstone,/Users/josephkamil/Desktop/Capstone/Deadlift - bad back.mov
+deadlift,Deadlift - bad back.mov,42742092,2,deadlift,deadlift,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/deadlift/Deadlift - bad back.mov
+unknown,squat_12.mp4,3291481,3,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/squat_12.mp4
+unknown,squat_12.mp4,3291481,3,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_12.mp4
+squat_back,squat_12.mp4,3291481,3,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_12.mp4
+unknown,Front squats- bar drift.mov,49081646,2,"squat_front,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/Front squats- bar drift.mov
+squat_front,Front squats- bar drift.mov,49081646,2,"squat_front,unknown",squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squats- bar drift.mov
+unknown,squat_13.mp4,3499401,2,unknown,Capstone,/Users/josephkamil/Desktop/Capstone/squat_13.mp4
+unknown,squat_13.mp4,3499401,2,unknown,squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_13.mp4
+unknown,squat_11.mp4,4172352,3,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/squat_11.mp4
+unknown,squat_11.mp4,4172352,3,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_11.mp4
+squat_back,squat_11.mp4,4172352,3,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_11.mp4
+unknown,Front squat- elbow drop.mov,56408274,2,"squat_front,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/Front squat- elbow drop.mov
+squat_front,Front squat- elbow drop.mov,56408274,2,"squat_front,unknown",squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squat- elbow drop.mov
+unknown,squat_10.mp4,4376853,3,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/squat_10.mp4
+unknown,squat_10.mp4,4376853,3,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_10.mp4
+squat_back,squat_10.mp4,4376853,3,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_10.mp4
+bench_press,Bench press- arch.mov,79830701,2,bench_press,Capstone,/Users/josephkamil/Desktop/Capstone/Bench press- arch.mov
+bench_press,Bench press- arch.mov,79830701,2,bench_press,bench_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/bench_press/Bench press- arch.mov
+unknown,Back squats- forward lean.mov,31429399,2,"squat_back,unknown",Capstone,/Users/josephkamil/Desktop/Capstone/Back squats- forward lean.mov
+squat_back,Back squats- forward lean.mov,31429399,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/Back squats- forward lean.mov
+push_press,Push press- diptiming.mov,44619111,2,push_press,Capstone,/Users/josephkamil/Desktop/Capstone/Push press- diptiming.mov
+push_press,Push press- diptiming.mov,44619111,2,push_press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/Push press- diptiming.mov
+unknown,squat_14.mp4,2539162,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_14.mp4
+squat_back,squat_14.mp4,2539162,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_14.mp4
+unknown,squat_5.MOV,59539790,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_5.MOV
+squat_back,squat_5.MOV,59539790,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_5.MOV
+unknown,squat_4.MOV,65781931,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_4.MOV
+squat_back,squat_4.MOV,65781931,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_4.MOV
+unknown,squat_6.MOV,69187980,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_6.MOV
+squat_back,squat_6.MOV,69187980,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_6.MOV
+unknown,squat_16.mp4,1469564,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_16.mp4
+squat_back,squat_16.mp4,1469564,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_16.mp4
+unknown,squat_3.MOV,63872296,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_3.MOV
+squat_back,squat_3.MOV,63872296,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_3.MOV
+unknown,squat_2.MOV,47479850,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_2.MOV
+squat_back,squat_2.MOV,47479850,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_2.MOV
+unknown,squat_1.MOV,64504070,2,"squat_back,unknown",squat_keep,/Users/josephkamil/Desktop/Capstone/squat_keep/squat_1.MOV
+squat_back,squat_1.MOV,64504070,2,"squat_back,unknown",squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_1.MOV
+push_up,v_PushUps_g01_c05.avi,129950,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g01_c05.avi
+push_up,v_PushUps_g01_c05.avi,129950,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g01_c05.avi
+push_up,v_PushUps_g09_c03.avi,230014,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g09_c03.avi
+push_up,v_PushUps_g09_c03.avi,230014,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g09_c03.avi
+push_up,v_PushUps_g19_c03.avi,203934,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g19_c03.avi
+push_up,v_PushUps_g19_c03.avi,203934,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g19_c03.avi
+push_up,v_PushUps_g19_c02.avi,201856,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g19_c02.avi
+push_up,v_PushUps_g19_c02.avi,201856,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g19_c02.avi
+push_up,v_PushUps_g09_c02.avi,223574,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g09_c02.avi
+push_up,v_PushUps_g09_c02.avi,223574,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g09_c02.avi
+push_up,v_PushUps_g10_c01.avi,173272,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g10_c01.avi
+push_up,v_PushUps_g10_c01.avi,173272,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g10_c01.avi
+push_up,v_PushUps_g01_c04.avi,188622,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g01_c04.avi
+push_up,v_PushUps_g01_c04.avi,188622,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g01_c04.avi
+push_up,v_PushUps_g11_c04.avi,164682,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g11_c04.avi
+push_up,v_PushUps_g11_c04.avi,164682,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g11_c04.avi
+push_up,v_PushUps_g10_c03.avi,165056,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g10_c03.avi
+push_up,v_PushUps_g10_c03.avi,165056,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g10_c03.avi
+push_up,v_PushUps_g09_c01.avi,228026,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g09_c01.avi
+push_up,v_PushUps_g09_c01.avi,228026,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g09_c01.avi
+push_up,v_PushUps_g19_c01.avi,188942,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g19_c01.avi
+push_up,v_PushUps_g19_c01.avi,188942,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g19_c01.avi
+push_up,v_PushUps_g18_c04.avi,224966,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g18_c04.avi
+push_up,v_PushUps_g18_c04.avi,224966,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g18_c04.avi
+push_up,v_PushUps_g08_c04.avi,234054,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g08_c04.avi
+push_up,v_PushUps_g08_c04.avi,234054,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g08_c04.avi
+push_up,v_PushUps_g10_c02.avi,162406,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g10_c02.avi
+push_up,v_PushUps_g10_c02.avi,162406,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g10_c02.avi
+push_up,v_PushUps_g01_c03.avi,108472,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g01_c03.avi
+push_up,v_PushUps_g01_c03.avi,108472,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g01_c03.avi
+push_up,v_PushUps_g11_c03.avi,138272,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g11_c03.avi
+push_up,v_PushUps_g11_c03.avi,138272,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g11_c03.avi
+push_up,v_PushUps_g09_c04.avi,226334,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g09_c04.avi
+push_up,v_PushUps_g09_c04.avi,226334,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g09_c04.avi
+push_up,v_PushUps_g19_c04.avi,206868,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g19_c04.avi
+push_up,v_PushUps_g19_c04.avi,206868,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g19_c04.avi
+push_up,v_PushUps_g18_c01.avi,236612,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g18_c01.avi
+push_up,v_PushUps_g18_c01.avi,236612,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g18_c01.avi
+push_up,v_PushUps_g08_c01.avi,233140,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g08_c01.avi
+push_up,v_PushUps_g08_c01.avi,233140,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g08_c01.avi
+push_up,v_PushUps_g11_c02.avi,148624,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g11_c02.avi
+push_up,v_PushUps_g11_c02.avi,148624,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g11_c02.avi
+push_up,v_PushUps_g01_c02.avi,104424,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g01_c02.avi
+push_up,v_PushUps_g01_c02.avi,104424,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g01_c02.avi
+push_up,v_PushUps_g18_c03.avi,245262,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g18_c03.avi
+push_up,v_PushUps_g18_c03.avi,245262,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g18_c03.avi
+push_up,v_PushUps_g08_c03.avi,226014,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g08_c03.avi
+push_up,v_PushUps_g08_c03.avi,226014,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g08_c03.avi
+push_up,v_PushUps_g08_c02.avi,229032,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g08_c02.avi
+push_up,v_PushUps_g08_c02.avi,229032,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g08_c02.avi
+push_up,v_PushUps_g18_c02.avi,229656,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g18_c02.avi
+push_up,v_PushUps_g18_c02.avi,229656,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g18_c02.avi
+push_up,v_PushUps_g10_c04.avi,177856,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g10_c04.avi
+push_up,v_PushUps_g10_c04.avi,177856,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g10_c04.avi
+push_up,v_PushUps_g01_c01.avi,104616,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g01_c01.avi
+push_up,v_PushUps_g01_c01.avi,104616,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g01_c01.avi
+push_up,v_PushUps_g11_c01.avi,169814,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g11_c01.avi
+push_up,v_PushUps_g11_c01.avi,169814,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g11_c01.avi
+push_up,v_PushUps_g13_c03.avi,168208,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g13_c03.avi
+push_up,v_PushUps_g13_c03.avi,168208,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g13_c03.avi
+push_up,v_PushUps_g03_c03.avi,168816,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g03_c03.avi
+push_up,v_PushUps_g03_c03.avi,168816,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g03_c03.avi
+push_up,v_PushUps_g25_c01.avi,260800,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g25_c01.avi
+push_up,v_PushUps_g25_c01.avi,260800,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g25_c01.avi
+push_up,v_PushUps_g24_c04.avi,112492,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g24_c04.avi
+push_up,v_PushUps_g24_c04.avi,112492,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g24_c04.avi
+push_up,v_PushUps_g03_c02.avi,176998,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g03_c02.avi
+push_up,v_PushUps_g03_c02.avi,176998,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g03_c02.avi
+push_up,v_PushUps_g13_c02.avi,212950,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g13_c02.avi
+push_up,v_PushUps_g13_c02.avi,212950,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g13_c02.avi
+push_up,v_PushUps_g25_c02.avi,310132,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g25_c02.avi
+push_up,v_PushUps_g25_c02.avi,310132,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g25_c02.avi
+push_up,v_PushUps_g02_c04.avi,215720,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g02_c04.avi
+push_up,v_PushUps_g02_c04.avi,215720,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g02_c04.avi
+push_up,v_PushUps_g12_c04.avi,209722,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g12_c04.avi
+push_up,v_PushUps_g12_c04.avi,209722,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g12_c04.avi
+push_up,v_PushUps_g25_c03.avi,317926,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g25_c03.avi
+push_up,v_PushUps_g25_c03.avi,317926,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g25_c03.avi
+push_up,v_PushUps_g13_c01.avi,210952,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g13_c01.avi
+push_up,v_PushUps_g13_c01.avi,210952,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g13_c01.avi
+push_up,v_PushUps_g03_c01.avi,191000,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g03_c01.avi
+push_up,v_PushUps_g03_c01.avi,191000,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g03_c01.avi
+push_up,v_PushUps_g24_c02.avi,113298,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g24_c02.avi
+push_up,v_PushUps_g24_c02.avi,113298,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g24_c02.avi
+push_up,v_PushUps_g02_c01.avi,176016,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g02_c01.avi
+push_up,v_PushUps_g02_c01.avi,176016,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g02_c01.avi
+push_up,v_PushUps_g12_c01.avi,220142,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g12_c01.avi
+push_up,v_PushUps_g12_c01.avi,220142,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g12_c01.avi
+push_up,v_PushUps_g24_c03.avi,113888,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g24_c03.avi
+push_up,v_PushUps_g24_c03.avi,113888,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g24_c03.avi
+push_up,v_PushUps_g13_c04.avi,189794,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g13_c04.avi
+push_up,v_PushUps_g13_c04.avi,189794,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g13_c04.avi
+push_up,v_PushUps_g03_c04.avi,190738,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g03_c04.avi
+push_up,v_PushUps_g03_c04.avi,190738,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g03_c04.avi
+push_up,v_PushUps_g25_c04.avi,282498,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g25_c04.avi
+push_up,v_PushUps_g25_c04.avi,282498,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g25_c04.avi
+push_up,v_PushUps_g24_c01.avi,116176,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g24_c01.avi
+push_up,v_PushUps_g24_c01.avi,116176,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g24_c01.avi
+push_up,v_PushUps_g02_c03.avi,204728,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g02_c03.avi
+push_up,v_PushUps_g02_c03.avi,204728,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g02_c03.avi
+push_up,v_PushUps_g12_c03.avi,202124,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g12_c03.avi
+push_up,v_PushUps_g12_c03.avi,202124,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g12_c03.avi
+push_up,v_PushUps_g12_c02.avi,218402,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g12_c02.avi
+push_up,v_PushUps_g12_c02.avi,218402,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g12_c02.avi
+push_up,v_PushUps_g02_c02.avi,197190,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g02_c02.avi
+push_up,v_PushUps_g02_c02.avi,197190,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g02_c02.avi
+push_up,v_PushUps_g07_c02.avi,230198,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g07_c02.avi
+push_up,v_PushUps_g07_c02.avi,230198,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g07_c02.avi
+push_up,v_PushUps_g17_c02.avi,217236,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g17_c02.avi
+push_up,v_PushUps_g17_c02.avi,217236,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g17_c02.avi
+push_up,v_PushUps_g20_c04.avi,270416,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g20_c04.avi
+push_up,v_PushUps_g20_c04.avi,270416,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g20_c04.avi
+push_up,v_PushUps_g21_c01.avi,243334,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g21_c01.avi
+push_up,v_PushUps_g21_c01.avi,243334,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g21_c01.avi
+push_up,v_PushUps_g17_c03.avi,208552,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g17_c03.avi
+push_up,v_PushUps_g17_c03.avi,208552,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g17_c03.avi
+push_up,v_PushUps_g07_c03.avi,240188,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g07_c03.avi
+push_up,v_PushUps_g07_c03.avi,240188,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g07_c03.avi
+push_up,v_PushUps_g17_c01.avi,230528,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g17_c01.avi
+push_up,v_PushUps_g17_c01.avi,230528,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g17_c01.avi
+push_up,v_PushUps_g07_c01.avi,229740,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g07_c01.avi
+push_up,v_PushUps_g07_c01.avi,229740,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g07_c01.avi
+push_up,v_PushUps_g21_c03.avi,378248,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g21_c03.avi
+push_up,v_PushUps_g21_c03.avi,378248,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g21_c03.avi
+push_up,v_PushUps_g06_c04.avi,117662,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g06_c04.avi
+push_up,v_PushUps_g06_c04.avi,117662,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g06_c04.avi
+push_up,v_PushUps_g16_c04.avi,89688,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g16_c04.avi
+push_up,v_PushUps_g16_c04.avi,89688,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g16_c04.avi
+push_up,v_PushUps_g21_c02.avi,436934,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g21_c02.avi
+push_up,v_PushUps_g21_c02.avi,436934,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g21_c02.avi
+push_up,v_PushUps_g17_c04.avi,212260,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g17_c04.avi
+push_up,v_PushUps_g17_c04.avi,212260,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g17_c04.avi
+push_up,v_PushUps_g07_c04.avi,220056,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g07_c04.avi
+push_up,v_PushUps_g07_c04.avi,220056,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g07_c04.avi
+push_up,v_PushUps_g20_c03.avi,266362,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g20_c03.avi
+push_up,v_PushUps_g20_c03.avi,266362,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g20_c03.avi
+push_up,v_PushUps_g06_c01.avi,148356,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g06_c01.avi
+push_up,v_PushUps_g06_c01.avi,148356,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g06_c01.avi
+push_up,v_PushUps_g16_c01.avi,208476,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g16_c01.avi
+push_up,v_PushUps_g16_c01.avi,208476,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g16_c01.avi
+push_up,v_PushUps_g20_c02.avi,262366,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g20_c02.avi
+push_up,v_PushUps_g20_c02.avi,262366,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g20_c02.avi
+push_up,v_PushUps_g16_c02.avi,217110,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g16_c02.avi
+push_up,v_PushUps_g16_c02.avi,217110,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g16_c02.avi
+push_up,v_PushUps_g06_c02.avi,135706,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g06_c02.avi
+push_up,v_PushUps_g06_c02.avi,135706,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g06_c02.avi
+push_up,v_PushUps_g06_c03.avi,146388,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g06_c03.avi
+push_up,v_PushUps_g06_c03.avi,146388,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g06_c03.avi
+push_up,v_PushUps_g16_c03.avi,101980,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g16_c03.avi
+push_up,v_PushUps_g16_c03.avi,101980,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g16_c03.avi
+push_up,v_PushUps_g20_c01.avi,283674,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g20_c01.avi
+push_up,v_PushUps_g20_c01.avi,283674,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g20_c01.avi
+push_up,v_PushUps_g21_c04.avi,288854,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g21_c04.avi
+push_up,v_PushUps_g21_c04.avi,288854,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g21_c04.avi
+push_up,v_PushUps_g05_c04.avi,421476,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g05_c04.avi
+push_up,v_PushUps_g05_c04.avi,421476,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g05_c04.avi
+push_up,v_PushUps_g15_c04.avi,274118,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g15_c04.avi
+push_up,v_PushUps_g15_c04.avi,274118,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g15_c04.avi
+push_up,v_PushUps_g14_c01.avi,228960,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g14_c01.avi
+push_up,v_PushUps_g14_c01.avi,228960,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g14_c01.avi
+push_up,v_PushUps_g04_c01.avi,247556,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g04_c01.avi
+push_up,v_PushUps_g04_c01.avi,247556,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g04_c01.avi
+push_up,v_PushUps_g22_c03.avi,181566,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g22_c03.avi
+push_up,v_PushUps_g22_c03.avi,181566,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g22_c03.avi
+push_up,v_PushUps_g22_c02.avi,318262,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g22_c02.avi
+push_up,v_PushUps_g22_c02.avi,318262,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g22_c02.avi
+push_up,v_PushUps_g04_c02.avi,258386,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g04_c02.avi
+push_up,v_PushUps_g04_c02.avi,258386,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g04_c02.avi
+push_up,v_PushUps_g14_c02.avi,216398,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g14_c02.avi
+push_up,v_PushUps_g14_c02.avi,216398,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g14_c02.avi
+push_up,v_PushUps_g22_c01.avi,172544,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g22_c01.avi
+push_up,v_PushUps_g22_c01.avi,172544,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g22_c01.avi
+push_up,v_PushUps_g14_c03.avi,220060,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g14_c03.avi
+push_up,v_PushUps_g14_c03.avi,220060,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g14_c03.avi
+push_up,v_PushUps_g04_c03.avi,292542,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g04_c03.avi
+push_up,v_PushUps_g04_c03.avi,292542,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g04_c03.avi
+push_up,v_PushUps_g23_c04.avi,221610,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g23_c04.avi
+push_up,v_PushUps_g23_c04.avi,221610,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g23_c04.avi
+push_up,v_PushUps_g15_c02.avi,259136,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g15_c02.avi
+push_up,v_PushUps_g15_c02.avi,259136,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g15_c02.avi
+push_up,v_PushUps_g05_c02.avi,426060,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g05_c02.avi
+push_up,v_PushUps_g05_c02.avi,426060,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g05_c02.avi
+push_up,v_PushUps_g22_c04.avi,272144,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g22_c04.avi
+push_up,v_PushUps_g22_c04.avi,272144,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g22_c04.avi
+push_up,v_PushUps_g05_c03.avi,423902,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g05_c03.avi
+push_up,v_PushUps_g05_c03.avi,423902,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g05_c03.avi
+push_up,v_PushUps_g15_c03.avi,249688,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g15_c03.avi
+push_up,v_PushUps_g15_c03.avi,249688,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g15_c03.avi
+push_up,v_PushUps_g23_c01.avi,238150,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g23_c01.avi
+push_up,v_PushUps_g23_c01.avi,238150,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g23_c01.avi
+push_up,v_PushUps_g23_c03.avi,229034,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g23_c03.avi
+push_up,v_PushUps_g23_c03.avi,229034,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g23_c03.avi
+push_up,v_PushUps_g05_c01.avi,424990,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g05_c01.avi
+push_up,v_PushUps_g05_c01.avi,424990,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g05_c01.avi
+push_up,v_PushUps_g15_c01.avi,307956,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g15_c01.avi
+push_up,v_PushUps_g15_c01.avi,307956,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g15_c01.avi
+push_up,v_PushUps_g14_c04.avi,201906,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g14_c04.avi
+push_up,v_PushUps_g14_c04.avi,201906,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g14_c04.avi
+push_up,v_PushUps_g04_c04.avi,333440,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g04_c04.avi
+push_up,v_PushUps_g04_c04.avi,333440,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g04_c04.avi
+push_up,v_PushUps_g04_c05.avi,357752,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g04_c05.avi
+push_up,v_PushUps_g04_c05.avi,357752,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g04_c05.avi
+push_up,v_PushUps_g23_c02.avi,228568,2,push_up,PushUps,/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g23_c02.avi
+push_up,v_PushUps_g23_c02.avi,228568,2,push_up,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_PushUps_g23_c02.avi
+bench_press,v_BenchPress_g24_c04.avi,496318,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c04.avi
+bench_press,v_BenchPress_g24_c04.avi,496318,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c04.avi
+bench_press,v_BenchPress_g24_c04.avi,496318,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c04.avi
+bench_press,v_BenchPress_g12_c06.avi,243936,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c06.avi
+bench_press,v_BenchPress_g12_c06.avi,243936,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c06.avi
+bench_press,v_BenchPress_g12_c06.avi,243936,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c06.avi
+bench_press,v_BenchPress_g02_c06.avi,262448,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c06.avi
+bench_press,v_BenchPress_g02_c06.avi,262448,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c06.avi
+bench_press,v_BenchPress_g02_c06.avi,262448,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c06.avi
+bench_press,v_BenchPress_g25_c01.avi,318740,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c01.avi
+bench_press,v_BenchPress_g25_c01.avi,318740,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c01.avi
+bench_press,v_BenchPress_g25_c01.avi,318740,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c01.avi
+bench_press,v_BenchPress_g03_c03.avi,440110,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c03.avi
+bench_press,v_BenchPress_g03_c03.avi,440110,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c03.avi
+bench_press,v_BenchPress_g03_c03.avi,440110,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c03.avi
+bench_press,v_BenchPress_g13_c03.avi,598048,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c03.avi
+bench_press,v_BenchPress_g13_c03.avi,598048,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c03.avi
+bench_press,v_BenchPress_g13_c03.avi,598048,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c03.avi
+bench_press,v_BenchPress_g13_c02.avi,298170,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c02.avi
+bench_press,v_BenchPress_g13_c02.avi,298170,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c02.avi
+bench_press,v_BenchPress_g13_c02.avi,298170,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c02.avi
+bench_press,v_BenchPress_g03_c02.avi,296766,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c02.avi
+bench_press,v_BenchPress_g03_c02.avi,296766,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c02.avi
+bench_press,v_BenchPress_g03_c02.avi,296766,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c02.avi
+bench_press,v_BenchPress_g02_c07.avi,284020,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c07.avi
+bench_press,v_BenchPress_g02_c07.avi,284020,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c07.avi
+bench_press,v_BenchPress_g02_c07.avi,284020,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c07.avi
+bench_press,v_BenchPress_g12_c07.avi,226274,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c07.avi
+bench_press,v_BenchPress_g12_c07.avi,226274,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c07.avi
+bench_press,v_BenchPress_g12_c07.avi,226274,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c07.avi
+bench_press,v_BenchPress_g24_c05.avi,340338,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c05.avi
+bench_press,v_BenchPress_g24_c05.avi,340338,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c05.avi
+bench_press,v_BenchPress_g24_c05.avi,340338,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c05.avi
+bench_press,v_BenchPress_g24_c07.avi,237988,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c07.avi
+bench_press,v_BenchPress_g24_c07.avi,237988,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c07.avi
+bench_press,v_BenchPress_g24_c07.avi,237988,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c07.avi
+bench_press,v_BenchPress_g02_c05.avi,270222,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c05.avi
+bench_press,v_BenchPress_g02_c05.avi,270222,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c05.avi
+bench_press,v_BenchPress_g02_c05.avi,270222,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c05.avi
+bench_press,v_BenchPress_g12_c05.avi,269778,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c05.avi
+bench_press,v_BenchPress_g12_c05.avi,269778,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c05.avi
+bench_press,v_BenchPress_g12_c05.avi,269778,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c05.avi
+bench_press,v_BenchPress_g25_c02.avi,318458,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c02.avi
+bench_press,v_BenchPress_g25_c02.avi,318458,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c02.avi
+bench_press,v_BenchPress_g25_c02.avi,318458,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c02.avi
+bench_press,v_BenchPress_g03_c01.avi,274014,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c01.avi
+bench_press,v_BenchPress_g03_c01.avi,274014,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c01.avi
+bench_press,v_BenchPress_g03_c01.avi,274014,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c01.avi
+bench_press,v_BenchPress_g13_c01.avi,429988,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c01.avi
+bench_press,v_BenchPress_g13_c01.avi,429988,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c01.avi
+bench_press,v_BenchPress_g13_c01.avi,429988,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c01.avi
+bench_press,v_BenchPress_g25_c03.avi,295946,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c03.avi
+bench_press,v_BenchPress_g25_c03.avi,295946,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c03.avi
+bench_press,v_BenchPress_g25_c03.avi,295946,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c03.avi
+bench_press,v_BenchPress_g12_c04.avi,329422,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c04.avi
+bench_press,v_BenchPress_g12_c04.avi,329422,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c04.avi
+bench_press,v_BenchPress_g12_c04.avi,329422,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c04.avi
+bench_press,v_BenchPress_g02_c04.avi,337138,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c04.avi
+bench_press,v_BenchPress_g02_c04.avi,337138,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c04.avi
+bench_press,v_BenchPress_g02_c04.avi,337138,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c04.avi
+bench_press,v_BenchPress_g24_c06.avi,250574,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c06.avi
+bench_press,v_BenchPress_g24_c06.avi,250574,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c06.avi
+bench_press,v_BenchPress_g24_c06.avi,250574,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c06.avi
+bench_press,v_BenchPress_g24_c02.avi,218648,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c02.avi
+bench_press,v_BenchPress_g24_c02.avi,218648,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c02.avi
+bench_press,v_BenchPress_g24_c02.avi,218648,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c02.avi
+bench_press,v_BenchPress_g13_c05.avi,430544,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c05.avi
+bench_press,v_BenchPress_g13_c05.avi,430544,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c05.avi
+bench_press,v_BenchPress_g13_c05.avi,430544,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c05.avi
+bench_press,v_BenchPress_g03_c05.avi,248564,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c05.avi
+bench_press,v_BenchPress_g03_c05.avi,248564,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c05.avi
+bench_press,v_BenchPress_g03_c05.avi,248564,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c05.avi
+bench_press,v_BenchPress_g25_c07.avi,374658,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c07.avi
+bench_press,v_BenchPress_g25_c07.avi,374658,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c07.avi
+bench_press,v_BenchPress_g25_c07.avi,374658,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c07.avi
+bench_press,v_BenchPress_g25_c06.avi,365974,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c06.avi
+bench_press,v_BenchPress_g25_c06.avi,365974,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c06.avi
+bench_press,v_BenchPress_g25_c06.avi,365974,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c06.avi
+bench_press,v_BenchPress_g03_c04.avi,305532,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c04.avi
+bench_press,v_BenchPress_g03_c04.avi,305532,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c04.avi
+bench_press,v_BenchPress_g03_c04.avi,305532,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c04.avi
+bench_press,v_BenchPress_g13_c04.avi,446924,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c04.avi
+bench_press,v_BenchPress_g13_c04.avi,446924,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c04.avi
+bench_press,v_BenchPress_g13_c04.avi,446924,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c04.avi
+bench_press,v_BenchPress_g24_c03.avi,205714,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c03.avi
+bench_press,v_BenchPress_g24_c03.avi,205714,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c03.avi
+bench_press,v_BenchPress_g24_c03.avi,205714,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c03.avi
+bench_press,v_BenchPress_g12_c01.avi,221658,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c01.avi
+bench_press,v_BenchPress_g12_c01.avi,221658,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c01.avi
+bench_press,v_BenchPress_g12_c01.avi,221658,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c01.avi
+bench_press,v_BenchPress_g02_c01.avi,292506,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c01.avi
+bench_press,v_BenchPress_g02_c01.avi,292506,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c01.avi
+bench_press,v_BenchPress_g02_c01.avi,292506,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c01.avi
+bench_press,v_BenchPress_g12_c03.avi,589336,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c03.avi
+bench_press,v_BenchPress_g12_c03.avi,589336,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c03.avi
+bench_press,v_BenchPress_g12_c03.avi,589336,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c03.avi
+bench_press,v_BenchPress_g02_c03.avi,703758,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c03.avi
+bench_press,v_BenchPress_g02_c03.avi,703758,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c03.avi
+bench_press,v_BenchPress_g02_c03.avi,703758,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c03.avi
+bench_press,v_BenchPress_g24_c01.avi,217616,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g24_c01.avi
+bench_press,v_BenchPress_g24_c01.avi,217616,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g24_c01.avi
+bench_press,v_BenchPress_g24_c01.avi,217616,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g24_c01.avi
+bench_press,v_BenchPress_g03_c06.avi,241148,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c06.avi
+bench_press,v_BenchPress_g03_c06.avi,241148,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c06.avi
+bench_press,v_BenchPress_g03_c06.avi,241148,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c06.avi
+bench_press,v_BenchPress_g13_c06.avi,328312,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c06.avi
+bench_press,v_BenchPress_g13_c06.avi,328312,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c06.avi
+bench_press,v_BenchPress_g13_c06.avi,328312,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c06.avi
+bench_press,v_BenchPress_g25_c04.avi,617242,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c04.avi
+bench_press,v_BenchPress_g25_c04.avi,617242,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c04.avi
+bench_press,v_BenchPress_g25_c04.avi,617242,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c04.avi
+bench_press,v_BenchPress_g25_c05.avi,623692,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g25_c05.avi
+bench_press,v_BenchPress_g25_c05.avi,623692,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g25_c05.avi
+bench_press,v_BenchPress_g25_c05.avi,623692,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g25_c05.avi
+bench_press,v_BenchPress_g13_c07.avi,327154,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g13_c07.avi
+bench_press,v_BenchPress_g13_c07.avi,327154,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g13_c07.avi
+bench_press,v_BenchPress_g13_c07.avi,327154,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g13_c07.avi
+bench_press,v_BenchPress_g03_c07.avi,255846,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g03_c07.avi
+bench_press,v_BenchPress_g03_c07.avi,255846,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g03_c07.avi
+bench_press,v_BenchPress_g03_c07.avi,255846,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g03_c07.avi
+bench_press,v_BenchPress_g02_c02.avi,346738,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g02_c02.avi
+bench_press,v_BenchPress_g02_c02.avi,346738,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g02_c02.avi
+bench_press,v_BenchPress_g02_c02.avi,346738,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g02_c02.avi
+bench_press,v_BenchPress_g12_c02.avi,212910,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g12_c02.avi
+bench_press,v_BenchPress_g12_c02.avi,212910,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g12_c02.avi
+bench_press,v_BenchPress_g12_c02.avi,212910,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g12_c02.avi
+bench_press,v_BenchPress_g01_c05.avi,294794,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g01_c05.avi
+bench_press,v_BenchPress_g01_c05.avi,294794,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g01_c05.avi
+bench_press,v_BenchPress_g01_c05.avi,294794,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c05.avi
+bench_press,v_BenchPress_g11_c05.avi,349636,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c05.avi
+bench_press,v_BenchPress_g11_c05.avi,349636,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g11_c05.avi
+bench_press,v_BenchPress_g11_c05.avi,349636,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g11_c05.avi
+bench_press,v_BenchPress_g19_c03.avi,233686,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g19_c03.avi
+bench_press,v_BenchPress_g19_c03.avi,233686,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g19_c03.avi
+bench_press,v_BenchPress_g19_c03.avi,233686,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g19_c03.avi
+bench_press,v_BenchPress_g09_c03.avi,234640,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c03.avi
+bench_press,v_BenchPress_g09_c03.avi,234640,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c03.avi
+bench_press,v_BenchPress_g09_c03.avi,234640,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c03.avi
+bench_press,v_BenchPress_g08_c06.avi,275242,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c06.avi
+bench_press,v_BenchPress_g08_c06.avi,275242,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c06.avi
+bench_press,v_BenchPress_g08_c06.avi,275242,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c06.avi
+bench_press,v_BenchPress_g18_c06.avi,338298,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c06.avi
+bench_press,v_BenchPress_g18_c06.avi,338298,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c06.avi
+bench_press,v_BenchPress_g18_c06.avi,338298,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c06.avi
+bench_press,v_BenchPress_g18_c07.avi,242918,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c07.avi
+bench_press,v_BenchPress_g18_c07.avi,242918,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c07.avi
+bench_press,v_BenchPress_g18_c07.avi,242918,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c07.avi
+bench_press,v_BenchPress_g08_c07.avi,228478,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c07.avi
+bench_press,v_BenchPress_g08_c07.avi,228478,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c07.avi
+bench_press,v_BenchPress_g08_c07.avi,228478,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c07.avi
+bench_press,v_BenchPress_g09_c02.avi,226106,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c02.avi
+bench_press,v_BenchPress_g09_c02.avi,226106,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c02.avi
+bench_press,v_BenchPress_g09_c02.avi,226106,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c02.avi
+bench_press,v_BenchPress_g19_c02.avi,242544,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g19_c02.avi
+bench_press,v_BenchPress_g19_c02.avi,242544,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g19_c02.avi
+bench_press,v_BenchPress_g19_c02.avi,242544,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g19_c02.avi
+bench_press,v_BenchPress_g11_c04.avi,718614,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c04.avi
+bench_press,v_BenchPress_g11_c04.avi,718614,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g11_c04.avi
+bench_press,v_BenchPress_g11_c04.avi,718614,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g11_c04.avi
+bench_press,v_BenchPress_g01_c04.avi,349182,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g01_c04.avi
+bench_press,v_BenchPress_g01_c04.avi,349182,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g01_c04.avi
+bench_press,v_BenchPress_g01_c04.avi,349182,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c04.avi
+bench_press,v_BenchPress_g10_c01.avi,326154,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c01.avi
+bench_press,v_BenchPress_g10_c01.avi,326154,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g10_c01.avi
+bench_press,v_BenchPress_g10_c01.avi,326154,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g10_c01.avi
+bench_press,v_BenchPress_g10_c03.avi,686714,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c03.avi
+bench_press,v_BenchPress_g10_c03.avi,686714,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g10_c03.avi
+bench_press,v_BenchPress_g10_c03.avi,686714,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g10_c03.avi
+bench_press,v_BenchPress_g01_c06.avi,368440,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g01_c06.avi
+bench_press,v_BenchPress_g01_c06.avi,368440,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g01_c06.avi
+bench_press,v_BenchPress_g01_c06.avi,368440,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c06.avi
+bench_press,v_BenchPress_g18_c05.avi,341598,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c05.avi
+bench_press,v_BenchPress_g18_c05.avi,341598,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c05.avi
+bench_press,v_BenchPress_g18_c05.avi,341598,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c05.avi
+bench_press,v_BenchPress_g08_c05.avi,554018,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c05.avi
+bench_press,v_BenchPress_g08_c05.avi,554018,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c05.avi
+bench_press,v_BenchPress_g08_c05.avi,554018,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c05.avi
+bench_press,v_BenchPress_g08_c04.avi,189752,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c04.avi
+bench_press,v_BenchPress_g08_c04.avi,189752,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c04.avi
+bench_press,v_BenchPress_g08_c04.avi,189752,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c04.avi
+bench_press,v_BenchPress_g18_c04.avi,381582,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c04.avi
+bench_press,v_BenchPress_g18_c04.avi,381582,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c04.avi
+bench_press,v_BenchPress_g18_c04.avi,381582,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c04.avi
+bench_press,v_BenchPress_g19_c01.avi,258264,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g19_c01.avi
+bench_press,v_BenchPress_g19_c01.avi,258264,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g19_c01.avi
+bench_press,v_BenchPress_g19_c01.avi,258264,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g19_c01.avi
+bench_press,v_BenchPress_g09_c01.avi,274320,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c01.avi
+bench_press,v_BenchPress_g09_c01.avi,274320,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c01.avi
+bench_press,v_BenchPress_g09_c01.avi,274320,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c01.avi
+bench_press,v_BenchPress_g10_c02.avi,317322,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c02.avi
+bench_press,v_BenchPress_g10_c02.avi,317322,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g10_c02.avi
+bench_press,v_BenchPress_g10_c02.avi,317322,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g10_c02.avi
+bench_press,v_BenchPress_g11_c03.avi,289806,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c03.avi
+bench_press,v_BenchPress_g11_c03.avi,289806,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g11_c03.avi
+bench_press,v_BenchPress_g11_c03.avi,289806,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g11_c03.avi
+bench_press,v_BenchPress_g01_c03.avi,344872,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g01_c03.avi
+bench_press,v_BenchPress_g01_c03.avi,344872,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g01_c03.avi
+bench_press,v_BenchPress_g01_c03.avi,344872,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c03.avi
+bench_press,v_BenchPress_g09_c05.avi,210708,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c05.avi
+bench_press,v_BenchPress_g09_c05.avi,210708,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c05.avi
+bench_press,v_BenchPress_g09_c05.avi,210708,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c05.avi
+bench_press,v_BenchPress_g19_c05.avi,338538,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g19_c05.avi
+bench_press,v_BenchPress_g19_c05.avi,338538,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g19_c05.avi
+bench_press,v_BenchPress_g19_c05.avi,338538,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g19_c05.avi
+bench_press,v_BenchPress_g08_c01.avi,208150,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c01.avi
+bench_press,v_BenchPress_g08_c01.avi,208150,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c01.avi
+bench_press,v_BenchPress_g08_c01.avi,208150,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c01.avi
+bench_press,v_BenchPress_g18_c01.avi,286506,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c01.avi
+bench_press,v_BenchPress_g18_c01.avi,286506,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c01.avi
+bench_press,v_BenchPress_g18_c01.avi,286506,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c01.avi
+bench_press,v_BenchPress_g19_c04.avi,676842,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g19_c04.avi
+bench_press,v_BenchPress_g19_c04.avi,676842,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g19_c04.avi
+bench_press,v_BenchPress_g19_c04.avi,676842,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g19_c04.avi
+bench_press,v_BenchPress_g09_c04.avi,232376,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c04.avi
+bench_press,v_BenchPress_g09_c04.avi,232376,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c04.avi
+bench_press,v_BenchPress_g09_c04.avi,232376,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c04.avi
+bench_press,v_BenchPress_g01_c02.avi,561880,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g01_c02.avi
+bench_press,v_BenchPress_g01_c02.avi,561880,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g01_c02.avi
+bench_press,v_BenchPress_g01_c02.avi,561880,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c02.avi
+bench_press,v_BenchPress_g11_c02.avi,298388,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c02.avi
+bench_press,v_BenchPress_g11_c02.avi,298388,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g11_c02.avi
+bench_press,v_BenchPress_g11_c02.avi,298388,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g11_c02.avi
+bench_press,v_BenchPress_g19_c06.avi,285670,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g19_c06.avi
+bench_press,v_BenchPress_g19_c06.avi,285670,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g19_c06.avi
+bench_press,v_BenchPress_g19_c06.avi,285670,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g19_c06.avi
+bench_press,v_BenchPress_g09_c06.avi,638968,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c06.avi
+bench_press,v_BenchPress_g09_c06.avi,638968,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c06.avi
+bench_press,v_BenchPress_g09_c06.avi,638968,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c06.avi
+bench_press,v_BenchPress_g08_c03.avi,187034,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c03.avi
+bench_press,v_BenchPress_g08_c03.avi,187034,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c03.avi
+bench_press,v_BenchPress_g08_c03.avi,187034,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c03.avi
+bench_press,v_BenchPress_g18_c03.avi,780858,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c03.avi
+bench_press,v_BenchPress_g18_c03.avi,780858,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c03.avi
+bench_press,v_BenchPress_g18_c03.avi,780858,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c03.avi
+bench_press,v_BenchPress_g18_c02.avi,311352,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g18_c02.avi
+bench_press,v_BenchPress_g18_c02.avi,311352,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g18_c02.avi
+bench_press,v_BenchPress_g18_c02.avi,311352,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g18_c02.avi
+bench_press,v_BenchPress_g08_c02.avi,203474,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g08_c02.avi
+bench_press,v_BenchPress_g08_c02.avi,203474,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g08_c02.avi
+bench_press,v_BenchPress_g08_c02.avi,203474,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g08_c02.avi
+bench_press,v_BenchPress_g09_c07.avi,348010,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g09_c07.avi
+bench_press,v_BenchPress_g09_c07.avi,348010,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g09_c07.avi
+bench_press,v_BenchPress_g09_c07.avi,348010,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g09_c07.avi
+bench_press,v_BenchPress_g11_c01.avi,305292,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g11_c01.avi
+bench_press,v_BenchPress_g11_c01.avi,305292,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g11_c01.avi
+bench_press,v_BenchPress_g11_c01.avi,305292,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g11_c01.avi
+bench_press,v_BenchPress_g01_c01.avi,489494,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g01_c01.avi
+bench_press,v_BenchPress_g01_c01.avi,489494,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g01_c01.avi
+bench_press,v_BenchPress_g01_c01.avi,489494,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c01.avi
+bench_press,v_BenchPress_g10_c04.avi,394900,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g10_c04.avi
+bench_press,v_BenchPress_g10_c04.avi,394900,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g10_c04.avi
+bench_press,v_BenchPress_g10_c04.avi,394900,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g10_c04.avi
+bench_press,v_BenchPress_g22_c03.avi,242808,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c03.avi
+bench_press,v_BenchPress_g22_c03.avi,242808,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c03.avi
+bench_press,v_BenchPress_g22_c03.avi,242808,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c03.avi
+bench_press,v_BenchPress_g04_c01.avi,214848,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c01.avi
+bench_press,v_BenchPress_g04_c01.avi,214848,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c01.avi
+bench_press,v_BenchPress_g04_c01.avi,214848,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c01.avi
+bench_press,v_BenchPress_g14_c01.avi,294406,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c01.avi
+bench_press,v_BenchPress_g14_c01.avi,294406,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c01.avi
+bench_press,v_BenchPress_g14_c01.avi,294406,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c01.avi
+bench_press,v_BenchPress_g15_c04.avi,491308,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g15_c04.avi
+bench_press,v_BenchPress_g15_c04.avi,491308,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g15_c04.avi
+bench_press,v_BenchPress_g15_c04.avi,491308,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g15_c04.avi
+bench_press,v_BenchPress_g05_c04.avi,885744,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c04.avi
+bench_press,v_BenchPress_g05_c04.avi,885744,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c04.avi
+bench_press,v_BenchPress_g05_c04.avi,885744,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c04.avi
+bench_press,v_BenchPress_g05_c05.avi,514380,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c05.avi
+bench_press,v_BenchPress_g05_c05.avi,514380,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c05.avi
+bench_press,v_BenchPress_g05_c05.avi,514380,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c05.avi
+bench_press,v_BenchPress_g15_c05.avi,199990,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g15_c05.avi
+bench_press,v_BenchPress_g15_c05.avi,199990,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g15_c05.avi
+bench_press,v_BenchPress_g15_c05.avi,199990,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g15_c05.avi
+bench_press,v_BenchPress_g22_c02.avi,251570,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c02.avi
+bench_press,v_BenchPress_g22_c02.avi,251570,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c02.avi
+bench_press,v_BenchPress_g22_c02.avi,251570,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c02.avi
+bench_press,v_BenchPress_g14_c02.avi,310334,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c02.avi
+bench_press,v_BenchPress_g14_c02.avi,310334,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c02.avi
+bench_press,v_BenchPress_g14_c02.avi,310334,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c02.avi
+bench_press,v_BenchPress_g04_c02.avi,212322,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c02.avi
+bench_press,v_BenchPress_g04_c02.avi,212322,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c02.avi
+bench_press,v_BenchPress_g04_c02.avi,212322,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c02.avi
+bench_press,v_BenchPress_g23_c05.avi,375708,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c05.avi
+bench_press,v_BenchPress_g23_c05.avi,375708,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g23_c05.avi
+bench_press,v_BenchPress_g23_c05.avi,375708,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g23_c05.avi
+bench_press,v_BenchPress_g05_c07.avi,220908,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c07.avi
+bench_press,v_BenchPress_g05_c07.avi,220908,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c07.avi
+bench_press,v_BenchPress_g05_c07.avi,220908,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c07.avi
+bench_press,v_BenchPress_g15_c06.avi,134574,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g15_c06.avi
+bench_press,v_BenchPress_g15_c06.avi,134574,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g15_c06.avi
+bench_press,v_BenchPress_g15_c06.avi,134574,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g15_c06.avi
+bench_press,v_BenchPress_g05_c06.avi,607366,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c06.avi
+bench_press,v_BenchPress_g05_c06.avi,607366,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c06.avi
+bench_press,v_BenchPress_g05_c06.avi,607366,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c06.avi
+bench_press,v_BenchPress_g23_c04.avi,468988,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c04.avi
+bench_press,v_BenchPress_g23_c04.avi,468988,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g23_c04.avi
+bench_press,v_BenchPress_g23_c04.avi,468988,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g23_c04.avi
+bench_press,v_BenchPress_g04_c03.avi,622428,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c03.avi
+bench_press,v_BenchPress_g04_c03.avi,622428,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c03.avi
+bench_press,v_BenchPress_g04_c03.avi,622428,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c03.avi
+bench_press,v_BenchPress_g14_c03.avi,322142,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c03.avi
+bench_press,v_BenchPress_g14_c03.avi,322142,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c03.avi
+bench_press,v_BenchPress_g14_c03.avi,322142,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c03.avi
+bench_press,v_BenchPress_g22_c01.avi,278410,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c01.avi
+bench_press,v_BenchPress_g22_c01.avi,278410,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c01.avi
+bench_press,v_BenchPress_g22_c01.avi,278410,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c01.avi
+bench_press,v_BenchPress_g14_c07.avi,315268,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c07.avi
+bench_press,v_BenchPress_g14_c07.avi,315268,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c07.avi
+bench_press,v_BenchPress_g14_c07.avi,315268,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c07.avi
+bench_press,v_BenchPress_g04_c07.avi,231416,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c07.avi
+bench_press,v_BenchPress_g04_c07.avi,231416,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c07.avi
+bench_press,v_BenchPress_g04_c07.avi,231416,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c07.avi
+bench_press,v_BenchPress_g22_c05.avi,226668,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c05.avi
+bench_press,v_BenchPress_g22_c05.avi,226668,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c05.avi
+bench_press,v_BenchPress_g22_c05.avi,226668,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c05.avi
+bench_press,v_BenchPress_g05_c02.avi,234516,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c02.avi
+bench_press,v_BenchPress_g05_c02.avi,234516,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c02.avi
+bench_press,v_BenchPress_g05_c02.avi,234516,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c02.avi
+bench_press,v_BenchPress_g15_c02.avi,201612,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g15_c02.avi
+bench_press,v_BenchPress_g15_c02.avi,201612,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g15_c02.avi
+bench_press,v_BenchPress_g15_c02.avi,201612,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g15_c02.avi
+bench_press,v_BenchPress_g23_c01.avi,381638,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c01.avi
+bench_press,v_BenchPress_g23_c01.avi,381638,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g23_c01.avi
+bench_press,v_BenchPress_g23_c01.avi,381638,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g23_c01.avi
+bench_press,v_BenchPress_g15_c03.avi,212234,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g15_c03.avi
+bench_press,v_BenchPress_g15_c03.avi,212234,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g15_c03.avi
+bench_press,v_BenchPress_g15_c03.avi,212234,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g15_c03.avi
+bench_press,v_BenchPress_g05_c03.avi,220460,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c03.avi
+bench_press,v_BenchPress_g05_c03.avi,220460,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c03.avi
+bench_press,v_BenchPress_g05_c03.avi,220460,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c03.avi
+bench_press,v_BenchPress_g22_c04.avi,228892,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c04.avi
+bench_press,v_BenchPress_g22_c04.avi,228892,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c04.avi
+bench_press,v_BenchPress_g22_c04.avi,228892,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c04.avi
+bench_press,v_BenchPress_g04_c06.avi,521656,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c06.avi
+bench_press,v_BenchPress_g04_c06.avi,521656,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c06.avi
+bench_press,v_BenchPress_g04_c06.avi,521656,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c06.avi
+bench_press,v_BenchPress_g14_c06.avi,515352,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c06.avi
+bench_press,v_BenchPress_g14_c06.avi,515352,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c06.avi
+bench_press,v_BenchPress_g14_c06.avi,515352,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c06.avi
+bench_press,v_BenchPress_g04_c04.avi,602970,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c04.avi
+bench_press,v_BenchPress_g04_c04.avi,602970,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c04.avi
+bench_press,v_BenchPress_g04_c04.avi,602970,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c04.avi
+bench_press,v_BenchPress_g14_c04.avi,867046,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c04.avi
+bench_press,v_BenchPress_g14_c04.avi,867046,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c04.avi
+bench_press,v_BenchPress_g14_c04.avi,867046,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c04.avi
+bench_press,v_BenchPress_g22_c06.avi,791196,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c06.avi
+bench_press,v_BenchPress_g22_c06.avi,791196,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c06.avi
+bench_press,v_BenchPress_g22_c06.avi,791196,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c06.avi
+bench_press,v_BenchPress_g15_c01.avi,203042,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g15_c01.avi
+bench_press,v_BenchPress_g15_c01.avi,203042,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g15_c01.avi
+bench_press,v_BenchPress_g15_c01.avi,203042,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g15_c01.avi
+bench_press,v_BenchPress_g05_c01.avi,256162,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g05_c01.avi
+bench_press,v_BenchPress_g05_c01.avi,256162,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g05_c01.avi
+bench_press,v_BenchPress_g05_c01.avi,256162,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g05_c01.avi
+bench_press,v_BenchPress_g23_c03.avi,516802,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c03.avi
+bench_press,v_BenchPress_g23_c03.avi,516802,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g23_c03.avi
+bench_press,v_BenchPress_g23_c03.avi,516802,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g23_c03.avi
+bench_press,v_BenchPress_g23_c02.avi,380760,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g23_c02.avi
+bench_press,v_BenchPress_g23_c02.avi,380760,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g23_c02.avi
+bench_press,v_BenchPress_g23_c02.avi,380760,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g23_c02.avi
+bench_press,v_BenchPress_g22_c07.avi,400812,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g22_c07.avi
+bench_press,v_BenchPress_g22_c07.avi,400812,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g22_c07.avi
+bench_press,v_BenchPress_g22_c07.avi,400812,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g22_c07.avi
+bench_press,v_BenchPress_g14_c05.avi,615140,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g14_c05.avi
+bench_press,v_BenchPress_g14_c05.avi,615140,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g14_c05.avi
+bench_press,v_BenchPress_g14_c05.avi,615140,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g14_c05.avi
+bench_press,v_BenchPress_g04_c05.avi,442262,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g04_c05.avi
+bench_press,v_BenchPress_g04_c05.avi,442262,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g04_c05.avi
+bench_press,v_BenchPress_g04_c05.avi,442262,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g04_c05.avi
+bench_press,v_BenchPress_g20_c05.avi,292036,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c05.avi
+bench_press,v_BenchPress_g20_c05.avi,292036,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c05.avi
+bench_press,v_BenchPress_g20_c05.avi,292036,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c05.avi
+bench_press,v_BenchPress_g06_c07.avi,242518,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c07.avi
+bench_press,v_BenchPress_g06_c07.avi,242518,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c07.avi
+bench_press,v_BenchPress_g06_c07.avi,242518,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c07.avi
+bench_press,v_BenchPress_g17_c02.avi,190492,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c02.avi
+bench_press,v_BenchPress_g17_c02.avi,190492,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c02.avi
+bench_press,v_BenchPress_g17_c02.avi,190492,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c02.avi
+bench_press,v_BenchPress_g07_c02.avi,233156,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c02.avi
+bench_press,v_BenchPress_g07_c02.avi,233156,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c02.avi
+bench_press,v_BenchPress_g07_c02.avi,233156,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c02.avi
+bench_press,v_BenchPress_g07_c03.avi,233646,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c03.avi
+bench_press,v_BenchPress_g07_c03.avi,233646,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c03.avi
+bench_press,v_BenchPress_g07_c03.avi,233646,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c03.avi
+bench_press,v_BenchPress_g17_c03.avi,180780,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c03.avi
+bench_press,v_BenchPress_g17_c03.avi,180780,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c03.avi
+bench_press,v_BenchPress_g17_c03.avi,180780,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c03.avi
+bench_press,v_BenchPress_g21_c01.avi,557758,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g21_c01.avi
+bench_press,v_BenchPress_g21_c01.avi,557758,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g21_c01.avi
+bench_press,v_BenchPress_g21_c01.avi,557758,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g21_c01.avi
+bench_press,v_BenchPress_g06_c06.avi,274926,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c06.avi
+bench_press,v_BenchPress_g06_c06.avi,274926,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c06.avi
+bench_press,v_BenchPress_g06_c06.avi,274926,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c06.avi
+bench_press,v_BenchPress_g20_c04.avi,631242,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c04.avi
+bench_press,v_BenchPress_g20_c04.avi,631242,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c04.avi
+bench_press,v_BenchPress_g20_c04.avi,631242,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c04.avi
+bench_press,v_BenchPress_g20_c06.avi,291576,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c06.avi
+bench_press,v_BenchPress_g20_c06.avi,291576,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c06.avi
+bench_press,v_BenchPress_g20_c06.avi,291576,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c06.avi
+bench_press,v_BenchPress_g16_c04.avi,662794,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c04.avi
+bench_press,v_BenchPress_g16_c04.avi,662794,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g16_c04.avi
+bench_press,v_BenchPress_g16_c04.avi,662794,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g16_c04.avi
+bench_press,v_BenchPress_g06_c04.avi,684872,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c04.avi
+bench_press,v_BenchPress_g06_c04.avi,684872,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c04.avi
+bench_press,v_BenchPress_g06_c04.avi,684872,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c04.avi
+bench_press,v_BenchPress_g21_c03.avi,297472,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g21_c03.avi
+bench_press,v_BenchPress_g21_c03.avi,297472,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g21_c03.avi
+bench_press,v_BenchPress_g21_c03.avi,297472,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g21_c03.avi
+bench_press,v_BenchPress_g07_c01.avi,242118,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c01.avi
+bench_press,v_BenchPress_g07_c01.avi,242118,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c01.avi
+bench_press,v_BenchPress_g07_c01.avi,242118,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c01.avi
+bench_press,v_BenchPress_g17_c01.avi,190300,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c01.avi
+bench_press,v_BenchPress_g17_c01.avi,190300,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c01.avi
+bench_press,v_BenchPress_g17_c01.avi,190300,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c01.avi
+bench_press,v_BenchPress_g21_c02.avi,350394,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g21_c02.avi
+bench_press,v_BenchPress_g21_c02.avi,350394,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g21_c02.avi
+bench_press,v_BenchPress_g21_c02.avi,350394,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g21_c02.avi
+bench_press,v_BenchPress_g06_c05.avi,357662,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c05.avi
+bench_press,v_BenchPress_g06_c05.avi,357662,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c05.avi
+bench_press,v_BenchPress_g06_c05.avi,357662,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c05.avi
+bench_press,v_BenchPress_g16_c05.avi,403050,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c05.avi
+bench_press,v_BenchPress_g16_c05.avi,403050,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g16_c05.avi
+bench_press,v_BenchPress_g16_c05.avi,403050,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g16_c05.avi
+bench_press,v_BenchPress_g20_c07.avi,268304,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c07.avi
+bench_press,v_BenchPress_g20_c07.avi,268304,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c07.avi
+bench_press,v_BenchPress_g20_c07.avi,268304,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c07.avi
+bench_press,v_BenchPress_g16_c01.avi,350918,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c01.avi
+bench_press,v_BenchPress_g16_c01.avi,350918,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g16_c01.avi
+bench_press,v_BenchPress_g16_c01.avi,350918,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g16_c01.avi
+bench_press,v_BenchPress_g06_c01.avi,201140,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c01.avi
+bench_press,v_BenchPress_g06_c01.avi,201140,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c01.avi
+bench_press,v_BenchPress_g06_c01.avi,201140,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c01.avi
+bench_press,v_BenchPress_g20_c03.avi,294636,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c03.avi
+bench_press,v_BenchPress_g20_c03.avi,294636,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c03.avi
+bench_press,v_BenchPress_g20_c03.avi,294636,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c03.avi
+bench_press,v_BenchPress_g07_c04.avi,793404,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c04.avi
+bench_press,v_BenchPress_g07_c04.avi,793404,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c04.avi
+bench_press,v_BenchPress_g07_c04.avi,793404,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c04.avi
+bench_press,v_BenchPress_g17_c04.avi,831992,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c04.avi
+bench_press,v_BenchPress_g17_c04.avi,831992,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c04.avi
+bench_press,v_BenchPress_g17_c04.avi,831992,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c04.avi
+bench_press,v_BenchPress_g17_c05.avi,464954,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c05.avi
+bench_press,v_BenchPress_g17_c05.avi,464954,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c05.avi
+bench_press,v_BenchPress_g17_c05.avi,464954,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c05.avi
+bench_press,v_BenchPress_g07_c05.avi,406658,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c05.avi
+bench_press,v_BenchPress_g07_c05.avi,406658,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c05.avi
+bench_press,v_BenchPress_g07_c05.avi,406658,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c05.avi
+bench_press,v_BenchPress_g20_c02.avi,266298,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c02.avi
+bench_press,v_BenchPress_g20_c02.avi,266298,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c02.avi
+bench_press,v_BenchPress_g20_c02.avi,266298,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c02.avi
+bench_press,v_BenchPress_g06_c02.avi,197734,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c02.avi
+bench_press,v_BenchPress_g06_c02.avi,197734,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c02.avi
+bench_press,v_BenchPress_g06_c02.avi,197734,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c02.avi
+bench_press,v_BenchPress_g16_c02.avi,330998,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c02.avi
+bench_press,v_BenchPress_g16_c02.avi,330998,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g16_c02.avi
+bench_press,v_BenchPress_g16_c02.avi,330998,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g16_c02.avi
+bench_press,v_BenchPress_g17_c07.avi,196342,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c07.avi
+bench_press,v_BenchPress_g17_c07.avi,196342,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c07.avi
+bench_press,v_BenchPress_g17_c07.avi,196342,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c07.avi
+bench_press,v_BenchPress_g07_c07.avi,259562,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c07.avi
+bench_press,v_BenchPress_g07_c07.avi,259562,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c07.avi
+bench_press,v_BenchPress_g07_c07.avi,259562,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c07.avi
+bench_press,v_BenchPress_g21_c04.avi,845494,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g21_c04.avi
+bench_press,v_BenchPress_g21_c04.avi,845494,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g21_c04.avi
+bench_press,v_BenchPress_g21_c04.avi,845494,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g21_c04.avi
+bench_press,v_BenchPress_g07_c06.avi,279068,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g07_c06.avi
+bench_press,v_BenchPress_g07_c06.avi,279068,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g07_c06.avi
+bench_press,v_BenchPress_g07_c06.avi,279068,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g07_c06.avi
+bench_press,v_BenchPress_g17_c06.avi,310610,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g17_c06.avi
+bench_press,v_BenchPress_g17_c06.avi,310610,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g17_c06.avi
+bench_press,v_BenchPress_g17_c06.avi,310610,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g17_c06.avi
+bench_press,v_BenchPress_g20_c01.avi,287096,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g20_c01.avi
+bench_press,v_BenchPress_g20_c01.avi,287096,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g20_c01.avi
+bench_press,v_BenchPress_g20_c01.avi,287096,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g20_c01.avi
+bench_press,v_BenchPress_g16_c03.avi,333342,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g16_c03.avi
+bench_press,v_BenchPress_g16_c03.avi,333342,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g16_c03.avi
+bench_press,v_BenchPress_g16_c03.avi,333342,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g16_c03.avi
+bench_press,v_BenchPress_g06_c03.avi,196750,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/BenchPress/v_BenchPress_g06_c03.avi
+bench_press,v_BenchPress_g06_c03.avi,196750,3,bench_press,BenchPress,/Users/josephkamil/Desktop/Capstone/Archived_Datasets/ucf50/UCF50/BenchPress/v_BenchPress_g06_c03.avi
+bench_press,v_BenchPress_g06_c03.avi,196750,3,bench_press,not_oly,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g06_c03.avi
+push_press,shoulder press_9.mp4,7599356,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_9.mp4
+strict_press,shoulder press_9.mp4,7599356,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_9.mp4
+push_press,shoulder press_8.mp4,3580142,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_8.mp4
+strict_press,shoulder press_8.mp4,3580142,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_8.mp4
+push_press,17496a37-c1f7-4105-9c07-e7cfbca06106.mp4,591381,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/17496a37-c1f7-4105-9c07-e7cfbca06106.mp4
+strict_press,17496a37-c1f7-4105-9c07-e7cfbca06106.mp4,591381,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/17496a37-c1f7-4105-9c07-e7cfbca06106.mp4
+push_press,shoulder press_23.mp4,1338571,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_23.mp4
+strict_press,shoulder press_23.mp4,1338571,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_23.mp4
+push_press,shoulder press_22.mp4,607691,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_22.mp4
+strict_press,shoulder press_22.mp4,607691,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_22.mp4
+push_press,b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,7257779,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/b066cbc1-931a-4af5-b668-36e98e7091b6.mp4
+strict_press,b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,7257779,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/b066cbc1-931a-4af5-b668-36e98e7091b6.mp4
+push_press,b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4,3736972,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4
+strict_press,b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4,3736972,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/b8a72e6b-f7ad-406a-9aa5-a3df903ec40e.mp4
+push_press,555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4,2249523,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4
+strict_press,555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4,2249523,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/555859e7-8a16-4494-8dca-dff27cbdd9c8.mp4
+push_press,shoulder press_25.mp4,725697,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_25.mp4
+strict_press,shoulder press_25.mp4,725697,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_25.mp4
+push_press,shoulder press_18.mp4,725697,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_18.mp4
+strict_press,shoulder press_18.mp4,725697,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_18.mp4
+push_press,shoulder press_24.mp4,3252732,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_24.mp4
+strict_press,shoulder press_24.mp4,3252732,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_24.mp4
+push_press,shoulder press_20.MOV,65393361,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_20.MOV
+strict_press,shoulder press_20.MOV,65393361,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_20.MOV
+push_press,fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4,2601951,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4
+strict_press,fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4,2601951,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/fc319e88-4be0-467e-9dfd-cb7b3512f3ed.mp4
+push_press,shoulder press_21.mov,7523060,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_21.mov
+strict_press,shoulder press_21.mov,7523060,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_21.mov
+push_press,shoulder press_19.MOV,74479189,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_19.MOV
+strict_press,shoulder press_19.MOV,74479189,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_19.MOV
+push_press,6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4,461046,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4
+strict_press,6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4,461046,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/6397dc79-5ba3-4244-a426-c24d6e7cfeb0.mp4
+push_press,51f72e68-ec28-4272-b15c-45586c244398.mp4,3615048,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/51f72e68-ec28-4272-b15c-45586c244398.mp4
+strict_press,51f72e68-ec28-4272-b15c-45586c244398.mp4,3615048,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/51f72e68-ec28-4272-b15c-45586c244398.mp4
+push_press,shoulder press_3.MOV,45937856,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_3.MOV
+strict_press,shoulder press_3.MOV,45937856,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_3.MOV
+push_press,30fe126e-0985-48af-813f-65c30d49913d.mp4,2391820,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/30fe126e-0985-48af-813f-65c30d49913d.mp4
+strict_press,30fe126e-0985-48af-813f-65c30d49913d.mp4,2391820,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/30fe126e-0985-48af-813f-65c30d49913d.mp4
+push_press,f44ec93a-ce42-46a4-97f4-015bea952a00.mp4,6979211,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/f44ec93a-ce42-46a4-97f4-015bea952a00.mp4
+strict_press,f44ec93a-ce42-46a4-97f4-015bea952a00.mp4,6979211,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/f44ec93a-ce42-46a4-97f4-015bea952a00.mp4
+push_press,shoulder press_4.MOV,53886217,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_4.MOV
+strict_press,shoulder press_4.MOV,53886217,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_4.MOV
+push_press,shoulder press_15.mp4,5644624,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_15.mp4
+strict_press,shoulder press_15.mp4,5644624,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_15.mp4
+push_press,shoulder press_14.mp4,3178175,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_14.mp4
+strict_press,shoulder press_14.mp4,3178175,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_14.mp4
+push_press,shoulder press_1.mp4,5332355,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_1.mp4
+strict_press,shoulder press_1.mp4,5332355,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_1.mp4
+push_press,shoulder press_3.mp4,19248957,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_3.mp4
+strict_press,shoulder press_3.mp4,19248957,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_3.mp4
+push_press,shoulder press_16.mp4,7310146,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_16.mp4
+strict_press,shoulder press_16.mp4,7310146,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_16.mp4
+push_press,shoulder press_17.mp4,7727134,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_17.mp4
+strict_press,shoulder press_17.mp4,7727134,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_17.mp4
+push_press,shoulder press_2.mp4,1059806,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_2.mp4
+strict_press,shoulder press_2.mp4,1059806,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_2.mp4
+push_press,shoulder press_13.mp4,3644697,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_13.mp4
+strict_press,shoulder press_13.mp4,3644697,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_13.mp4
+push_press,shoulder press_6.mp4,3755079,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_6.mp4
+strict_press,shoulder press_6.mp4,3755079,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_6.mp4
+push_press,shoulder press_7.mp4,7491881,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_7.mp4
+strict_press,shoulder press_7.mp4,7491881,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_7.mp4
+push_press,shoulder press_12.mp4,4760451,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_12.mp4
+strict_press,shoulder press_12.mp4,4760451,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_12.mp4
+push_press,shoulder press_10.mp4,6753325,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_10.mp4
+strict_press,shoulder press_10.mp4,6753325,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_10.mp4
+push_press,shoulder press_5.mp4,8614244,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_5.mp4
+strict_press,shoulder press_5.mp4,8614244,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_5.mp4
+push_press,shoulder press_4.mp4,17600177,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_4.mp4
+strict_press,shoulder press_4.mp4,17600177,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_4.mp4
+push_press,shoulder press_11.mp4,3902993,2,"push_press,strict_press",push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_11.mp4
+strict_press,shoulder press_11.mp4,3902993,2,"push_press,strict_press",strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_11.mp4
+snatch,snatch_correct_320x240.mp4,296925,2,snatch,real_snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_snatch/snatch_correct_320x240.mp4
+snatch,snatch_correct_320x240.mp4,296925,2,snatch,snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_router/snatch/snatch_correct_320x240.mp4
+clean,clean_correct_320x240.mp4,207590,2,"clean,clean_and_jerk",real_clean,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_clean/clean_correct_320x240.mp4
+clean_and_jerk,clean_correct_320x240.mp4,207590,2,"clean,clean_and_jerk",clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_router/clean_and_jerk/clean_correct_320x240.mp4

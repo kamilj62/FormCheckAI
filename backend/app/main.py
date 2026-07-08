@@ -1,4 +1,3 @@
-from fastapi.middleware.cors import CORSMiddleware
 from sys import prefix
 import tempfile
 from pathlib import Path
@@ -59,7 +58,7 @@ import subprocess
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # Experimental: use YOLO to isolate the foreground athlete before pose estimation.
 USE_YOLO_TRACKING = False
@@ -174,6 +173,35 @@ OLY_ROUTER_LABELS = {
     3: "split_jerk"
 }
 
+BODYWEIGHT_ROUTER_MODEL = None
+BODYWEIGHT_ROUTER_ENCODER = None
+
+try:
+    BODYWEIGHT_ROUTER_MODEL = joblib.load(MODEL_DIR / "bodyweight_router.joblib")
+    BODYWEIGHT_ROUTER_ENCODER = joblib.load(MODEL_DIR / "bodyweight_router_labels.joblib")
+    print("BODYWEIGHT ROUTER LOADED")
+except Exception as e:
+    print("BODYWEIGHT ROUTER NOT LOADED:", e)
+
+BODYWEIGHT_ROUTER_FEATURES = [
+    "total_frames",
+    "wrist_above_shoulder_ratio",
+    "wrist_below_shoulder_ratio",
+    "mean_wrist_minus_shoulder_y",
+    "mean_hip_minus_shoulder_y",
+    "mean_knee_minus_hip_y",
+    "median_head_drop",
+    "avg_wrist_forward",
+    "wrist_y_range",
+    "shoulder_y_range",
+    "hip_y_range",
+    "elbow_range",
+    "min_elbow",
+    "max_elbow",
+    "avg_elbow",
+    "avg_torso_angle",
+]
+
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
@@ -239,7 +267,6 @@ def decode_olympic_label(raw_label, label_encoder=None):
         return OLY_ROUTER_LABELS.get(int(raw_label), str(raw_label))
     except Exception:
         return str(raw_label)
-
 
 
 def point(landmarks, landmark):
@@ -465,7 +492,23 @@ def save_phase_contact_sheet(input_path, phase_frames, output_dir, prefix="squat
 
 def summarize_biomechanics(biomechanics):
     if not biomechanics:
-        return {}
+        return {
+            "avg_knee_angle": 180.0,
+            "min_knee_angle": 180.0,
+            "max_knee_angle": 180.0,
+            "avg_hip_angle": 180.0,
+            "min_hip_angle": 180.0,
+            "max_hip_angle": 180.0,
+            "avg_torso_angle": 0.0,
+            "min_torso_angle": 0.0,
+            "max_torso_angle": 0.0,
+            "avg_elbow_angle": 180.0,
+            "min_elbow_angle": 180.0,
+            "max_elbow_angle": 180.0,
+            "avg_valgus_ratio": 1.0,
+            "min_valgus_ratio": 1.0,
+            "wrist_above_shoulder_ratio": 0.0,
+        }
 
     knee = np.array([b["knee_angle"] for b in biomechanics])
     hip = np.array([b["hip_angle"] for b in biomechanics])
@@ -4017,7 +4060,24 @@ def analyze_push_up_reps(biomechanics):
 
 def build_bodyweight_features(biomechanics):
     if not biomechanics:
-        return {}
+        return {
+            "total_frames": 0,
+            "wrist_above_shoulder_ratio": 0.0,
+            "wrist_below_shoulder_ratio": 0.0,
+            "mean_wrist_minus_shoulder_y": 0.0,
+            "mean_hip_minus_shoulder_y": 0.0,
+            "mean_knee_minus_hip_y": 0.0,
+            "median_head_drop": 0.0,
+            "avg_wrist_forward": 0.0,
+            "wrist_y_range": 0.0,
+            "shoulder_y_range": 0.0,
+            "hip_y_range": 0.0,
+            "elbow_range": 0.0,
+            "min_elbow": 180.0,
+            "max_elbow": 180.0,
+            "avg_elbow": 180.0,
+            "avg_torso_angle": 0.0,
+        }
 
     wrist_y = np.array([b.get("wrist_y", 0.0) for b in biomechanics], dtype=np.float32)
     wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics], dtype=np.float32)
@@ -4047,6 +4107,29 @@ def build_bodyweight_features(biomechanics):
         "avg_elbow": float(np.mean(elbow)),
         "avg_torso_angle": float(np.mean(torso)),
     }
+
+
+def predict_bodyweight_router(biomechanics):
+    if BODYWEIGHT_ROUTER_MODEL is None or BODYWEIGHT_ROUTER_ENCODER is None:
+        return None, 0.0, {}
+
+    try:
+        feats = build_bodyweight_features(biomechanics)
+        X = np.array([[float(feats.get(k, 0.0)) for k in BODYWEIGHT_ROUTER_FEATURES]], dtype=np.float32)
+
+        pred_idx = BODYWEIGHT_ROUTER_MODEL.predict(X)[0]
+        label = BODYWEIGHT_ROUTER_ENCODER.inverse_transform([pred_idx])[0]
+
+        conf = 0.0
+        if hasattr(BODYWEIGHT_ROUTER_MODEL, "predict_proba"):
+            probs = BODYWEIGHT_ROUTER_MODEL.predict_proba(X)[0]
+            conf = float(np.max(probs))
+
+        return str(label), conf, feats
+
+    except Exception as e:
+        print("BODYWEIGHT ROUTER PREDICT ERROR:", e)
+        return None, 0.0, {}
 
 
 def analyze_muscle_up_reps(biomechanics):
@@ -7044,6 +7127,21 @@ def build_separated_feature_space(biomech):
 
 
 def debug_feature_space(biomech):
+    if not biomech:
+        return {
+            "frames": 0,
+            "hip_range": 0.0,
+            "hip_mean": 0.0,
+            "knee_range": 0.0,
+            "knee_min": 180.0,
+            "knee_mean": 180.0,
+            "wrist_overhead": 0.0,
+            "wrist_overhead_ratio": 0.0,
+            "torso_mean": 0.0,
+            "elbow_range": 0.0,
+            "explosion_velocity": 0.0,
+            "explosion_accel": 0.0,
+        }
     hip_y = np.array([b["hip_y"] for b in biomech])
     knee = np.array([b["knee_angle"] for b in biomech])
     wrist_y = np.array([b["wrist_y"] for b in biomech])
@@ -7255,6 +7353,82 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         _looks_strict     = looks_like_strict_press(biomech)
         _looks_thruster   = looks_like_thruster(biomech)
         bodyweight_debug = build_bodyweight_features(biomech)
+        bodyweight_router_label, bodyweight_router_conf, _bodyweight_router_features = predict_bodyweight_router(biomech)
+
+        routing_trace = []
+
+        def trace_route(stage, label=None, conf=None, reason=None):
+            routing_trace.append({
+                "stage": stage,
+                "label": str(label if label is not None else ""),
+                "conf": round(float(conf or 0.0), 3),
+                "reason": str(reason or ""),
+            })
+
+        trace_route("raw_model", raw_label, base_conf)
+        trace_route("bio_model", bio_label, bio_conf, bio_reason)
+        trace_route("squat_router", squat_label, squat_conf)
+        trace_route("olympic_router", olympic_pred, olympic_conf)
+        trace_route("bodyweight_router", bodyweight_router_label, bodyweight_router_conf)
+
+        router_scores = {}
+
+        def add_router_score(label, score, source):
+            if not label:
+                return
+            label = str(label)
+            score = float(score or 0.0)
+            if label not in router_scores:
+                router_scores[label] = {
+                    "score": 0.0,
+                    "sources": []
+                }
+            router_scores[label]["score"] += score
+            router_scores[label]["sources"].append({
+                "source": source,
+                "score": round(score, 3)
+            })
+
+        bodyweight_high_conf = (
+            bodyweight_router_label in {"push_up", "pull_up", "handstand_push_up"}
+            and float(bodyweight_router_conf or 0.0) >= 0.95
+        )
+
+        raw_weight = 0.35 if bodyweight_high_conf else 1.0
+        bio_weight = 0.35 if bodyweight_high_conf else 1.0
+
+        add_router_score(raw_label, float(base_conf or 0.0) * raw_weight, "raw_model")
+        add_router_score(bio_label, float(bio_conf or 0.0) * bio_weight, "bio_model")
+        add_router_score(squat_label, squat_conf, "squat_router")
+        add_router_score(olympic_pred, olympic_conf, "olympic_router")
+        add_router_score(bodyweight_router_label, bodyweight_router_conf, "bodyweight_router")
+
+        # Strong movement-family bonuses. These are audit-only for now.
+        if bodyweight_router_label in {"push_up", "pull_up", "handstand_push_up"}:
+            add_router_score(bodyweight_router_label, float(bodyweight_router_conf or 0.0) * 0.50, "bodyweight_bonus")
+
+        if squat_label in {"squat_back", "squat_front", "overhead_squat"}:
+            add_router_score(squat_label, float(squat_conf or 0.0) * 0.25, "squat_bonus")
+
+        if olympic_pred in OLY_SET and _truly_explosive:
+            add_router_score(olympic_pred, float(olympic_conf or 0.0) * 0.35, "olympic_explosive_bonus")
+
+        router_score_winner = None
+        router_score_value = 0.0
+        router_v6_label = None
+        router_v6_conf = 0.0
+        router_v6_decision = "no_scores"
+
+        if router_scores:
+            router_score_winner, _router_score_info = max(
+                router_scores.items(),
+                key=lambda kv: float(kv[1].get("score", 0.0))
+            )
+            router_score_value = float(_router_score_info.get("score", 0.0))
+
+            router_v6_label = router_score_winner
+            router_v6_conf = min(0.99, max(0.01, router_score_value / 2.0))
+            router_v6_decision = "score_winner"
         _deadlift_setup_geometry = (
             squat_label == "squat_back"
             and wrist_overhead_ratio < 0.12
@@ -7511,7 +7685,24 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "handstand_push_up"
             protected_conf = 0.86
             protected_reason = "handstand_push_up_bodyweight_pattern"
-        elif _looks_pull_up:
+        elif (
+            _looks_pull_up
+            or (
+                raw_label == "push_press"
+                and not (
+                    squat_label == "overhead_squat"
+                    and float(bodyweight_debug.get("wrist_y_range", 1.0)) > 0.20
+                )
+                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.75
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
+                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 20.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.36
+                and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.38
+            )
+        ):
             protected_label = "pull_up"
             protected_conf = 0.86
             protected_reason = "pull_up_bodyweight_pattern"
@@ -7519,7 +7710,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "push_up"
             protected_conf = 0.86
             protected_reason = "push_up_bodyweight_pattern"
-        elif _short_overhead_bench_setup:
+        elif _short_overhead_bench_setup and not _pull_up_router_guard:
             protected_label = "bench_press"
             protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
             protected_reason = "bench_press_short_overhead_rescue"
@@ -7538,11 +7729,28 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "deadlift"
             protected_conf = max(float(bio_conf or 0.0), float(base_conf or 0.0), 0.82)
             protected_reason = "deadlift_setup_rescue"
-        elif raw_label == "bench_press":
+        elif (
+            raw_label == "bench_press"
+            and not (_looks_push_up or _looks_pull_up or _looks_handstand_push_up)
+            and not (
+                float(bodyweight_debug.get("wrist_above_shoulder_ratio", 1.0)) < 0.10
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) > 0.15
+                and float(bodyweight_debug.get("median_head_drop", 0.0)) > 0.04
+                and float(bodyweight_debug.get("wrist_y_range", 1.0)) < 0.12
+            )
+        ):
             protected_label = "bench_press"
             protected_conf = max(base_conf, 0.80)
             protected_reason = "trusted_base_bench_press"
-        elif _looks_strict and raw_label == "push_press" and not _looks_split:
+        elif (
+            _looks_strict
+            and raw_label == "push_press"
+            and not (
+                bio_label == "push_press"
+                and float(bio_conf or 0.0) >= 0.95
+            )
+            and not _looks_split
+        ):
             protected_label = "strict_press"
             protected_conf = max(base_conf, 0.78)
             protected_reason = "strict_press_pattern_detected"
@@ -7646,6 +7854,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = "deadlift"
             protected_conf = bio_conf
             protected_reason = bio_reason
+        vertical_pullup_signature = (
+            raw_label == "push_press"
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.80
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 110.0
+            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
+            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 10.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.03
+            and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.18
+            and not _truly_explosive
+        )
+
+        if vertical_pullup_signature and protected_label is None:
+            protected_label = "pull_up"
+            protected_conf = 0.86
+            protected_reason = "vertical_pullup_signature"
+
         push_press_should_hold = (
             protected_label == "push_press"
             and raw_label == "push_press"
@@ -7672,10 +7897,39 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             )
         )
 
+
         if protected_label and not strong_oly_lock:
             final_label = protected_label
             final_conf = protected_conf
             analysis_mode = "biomechanics_override"
+
+        elif (
+            bodyweight_router_label == "pull_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.95
+              and not (
+                  squat_label == "overhead_squat"
+                  and float(squat_conf or 0.0) < 0.86
+              )
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.80
+        ):
+            final_label = "pull_up"
+            final_conf = max(float(bodyweight_router_conf or 0.0), 0.90)
+            protected_label = "pull_up"
+            protected_conf = final_conf
+            protected_reason = "bodyweight_router_pull_up_high_conf"
+            analysis_mode = "bodyweight_router"
+
+        elif (
+            squat_label == "squat_front"
+            and float(squat_conf or 0.0) >= 0.80
+            and raw_label == "push_press"
+            and float(olympic_conf or 0.0) < 0.75
+        ):
+            final_label = "squat_front"
+            final_conf = squat_conf
+            analysis_mode = "detailed_rep_analysis"
 
         elif (
             run_oly_router
@@ -7684,8 +7938,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and explosive_score > 20
             and not (
                 _pull_up_router_guard
+              and not (
+                  squat_label == "overhead_squat"
+                  and float(squat_conf or 0.0) >= 0.70
+              )
                 and float(olympic_conf or 0.0) < 0.95
             )
+              and not (
+                  squat_label == "squat_front"
+                  and float(squat_conf or 0.0) >= 0.80
+                  and float(olympic_conf or 0.0) < 0.75
+              )
             and (
                 raw_label in {"squat", "squat_back", "squat_front", "bench_press"}
                 or (raw_label == "push_press" and not _looks_split)
@@ -7697,6 +7960,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         elif (
             _looks_split
+              and not (
+                  squat_label == "overhead_squat"
+                  and float(squat_conf or 0.0) >= 0.75
+              )
             and not _looks_cj
             and explosive_score > 20
             and olympic_pred != "snatch"
@@ -7712,6 +7979,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         elif (
             _squat_confident
+            and bio_label not in {"push_up", "pull_up", "handstand_push_up"}
             and raw_label == "squat"
             and squat_label in {"squat_back", "squat_front"}
             and not _truly_explosive
@@ -7726,6 +7994,16 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             squat_label == "overhead_squat"
             and squat_conf >= 0.75
             and float(olympic_conf or 0.0) < 0.85
+            and not (
+                raw_label == "push_press"
+                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
+            )
         ):
             final_label = "overhead_squat"
             final_conf = max(bar_conf, squat_conf)
@@ -7735,7 +8013,27 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # router. Let them win before squat/overhead/split-shape fallbacks steal
         # Olympic benchmark clips; Router V5 below can still rescue standalone
         # split jerks from clean-and-jerk.
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.65 and not push_press_should_hold:
+        elif (
+            run_oly_router
+            and olympic_pred in OLY_SET
+            and olympic_conf >= 0.65
+            and not push_press_should_hold
+              and not (
+                  squat_label == "squat_front"
+                  and float(squat_conf or 0.0) >= 0.80
+                  and float(olympic_conf or 0.0) < 0.75
+              )
+            and not (
+                raw_label == "push_press"
+                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                and not _truly_explosive
+            )
+        ):
             final_label = olympic_pred
             final_conf = olympic_conf
             analysis_mode = "olympic_locked"
@@ -7757,7 +8055,21 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # Must check this first before any Olympic path.
         elif (
             (_bar_says_ohs and not _truly_explosive)
-            or (squat_label == "overhead_squat" and squat_conf >= 0.90 and olympic_conf < 0.85)
+            or (
+                squat_label == "overhead_squat"
+                and squat_conf >= 0.90
+                and olympic_conf < 0.85
+                and not (
+                    raw_label == "push_press"
+                    and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+                    and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+                    and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                    and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+                    and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+                    and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                    and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
+                )
+            )
         ):
             final_label   = "overhead_squat"
             final_conf    = max(bar_conf, squat_conf)
@@ -7783,7 +8095,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # distinct enough that the router is reliable for it).
         # Split jerk is less explosive than clean/snatch (dip-and-drive, not full pull)
         # so we use a lower explosive threshold (>20).
-        elif _looks_split and explosive_score > 20 and olympic_pred != "snatch":
+        elif (
+            _looks_split
+            and not (
+                squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.75
+            )
+            and explosive_score > 20
+            and olympic_pred != "snatch"
+        ):
             final_label   = "split_jerk"
             final_conf    = 0.80
             analysis_mode = "shape_override"
@@ -7797,7 +8117,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
         # Squat wins: confident squat router, not truly explosive.
         # squat_label is already bar-position-adjusted from step 3.
-        elif _squat_confident and not _truly_explosive:
+        elif _squat_confident and not _truly_explosive and bio_label not in {"push_up", "pull_up", "handstand_push_up"}:
             final_label   = squat_label
             final_conf    = squat_conf
             analysis_mode = "detailed_rep_analysis"
@@ -7813,12 +8133,41 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_conf    = 0.68
             analysis_mode = "shape_override"
 
-        elif squat_label and squat_conf >= 0.55:
+        elif (
+            squat_label
+            and squat_conf >= 0.55
+            and bio_label not in {"push_up", "pull_up", "handstand_push_up"}
+            and not (
+                raw_label == "push_press"
+                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
+            )
+        ):
             final_label   = squat_label
             final_conf    = squat_conf
             analysis_mode = "detailed_rep_analysis"
 
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.50 and not push_press_should_hold:
+        elif (
+            run_oly_router
+            and olympic_pred in OLY_SET
+            and olympic_conf >= 0.50
+            and not push_press_should_hold
+            and not (
+                raw_label == "push_press"
+                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                and not _truly_explosive
+            )
+        ):
             final_label   = olympic_pred
             final_conf    = olympic_conf
             analysis_mode = "olympic_locked"
@@ -7950,6 +8299,29 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
 
             if (
                 not push_press_should_hold
+                    and not (
+                        squat_label == "squat_front"
+                        and float(squat_conf or 0.0) >= 0.80
+                        and raw_label == "push_press"
+                        and float(olympic_conf or 0.0) < 0.75
+                    )
+                  and not (
+                      squat_label == "squat_front"
+                      and float(squat_conf or 0.0) >= 0.80
+                      and router_v5_label == "clean_and_jerk"
+                      and float(router_v5_conf or 0.0) < 0.75
+                  )
+                  and not (
+                      raw_label == "push_press"
+                      and router_v5_label in OLY_SET
+                      and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+                      and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+                      and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+                      and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+                      and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+                      and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+                      and not _truly_explosive
+                  )
                 and (
                     final_label in OLY_SET or (
                         router_v5_label in OLY_SET
@@ -7966,6 +8338,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # low-confidence Olympic label, recover pull_up before rep analysis.
         if (
             _pull_up_router_guard
+              and not (
+                  squat_label == "overhead_squat"
+                  and float(squat_conf or 0.0) >= 0.70
+              )
             and (
                 final_label in OLY_SET
                 or (
@@ -7980,9 +8356,71 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             final_conf = 0.86
             analysis_mode = "biomechanics_override"
 
+        # Bodyweight safety: if biomechanics strongly identified a bodyweight
+        # movement, do not let late squat/Olympic fallbacks steal it.
+        if (
+            bio_label in {"push_up", "pull_up", "handstand_push_up"}
+            and bio_override
+            and final_label not in {"push_up", "pull_up", "handstand_push_up"}
+            and float(final_conf or 0.0) < 0.95
+        ):
+            final_label = bio_label
+            final_conf = max(float(bio_conf or 0.0), 0.86)
+            analysis_mode = "biomechanics_override"
+
+        # Final vertical pull-up recovery: prevents squat/Olympic fallbacks
+        # from stealing clear pull-up motion.
+        if (
+            final_label not in {"pull_up", "push_up", "handstand_push_up"}
+              and not (
+                  squat_label == "overhead_squat"
+                  and float(squat_conf or 0.0) >= 0.70
+              )
+            and raw_label == "push_press"
+            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
+            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
+            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
+            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
+            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+            and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
+        ):
+            final_label = "pull_up"
+            final_conf = 0.86
+            analysis_mode = "biomechanics_override"
+
         # =========================================================
         # 6. REP ANALYSIS
         # =========================================================
+        # ---------------- ROUTER V6 FINAL BODYWEIGHT ARBITRATION ----------------
+        # Runs AFTER legacy routing, BEFORE rep analysis.
+        # This avoids editing the fragile if/elif router chain.
+        router_v6_bodyweight_allowed = (
+            router_v6_label in {"push_up", "pull_up", "handstand_push_up"}
+            and bodyweight_router_label == router_v6_label
+            and float(bodyweight_router_conf or 0.0) >= 0.95
+            and float(router_v6_conf or 0.0) >= 0.72
+            and not strong_oly_lock
+            and not (
+                router_v6_label == "pull_up"
+                and final_label == "overhead_squat"
+                and squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.75
+            )
+            and not (
+                protected_reason == "push_press_pattern_detected"
+                and float(olympic_conf or 0.0) >= 0.90
+            )
+        )
+
+        if router_v6_bodyweight_allowed:
+            final_label = router_v6_label
+            final_conf = max(float(bodyweight_router_conf or 0.0), float(router_v6_conf or 0.0), 0.90)
+            analysis_mode = "router_v6_bodyweight"
+            protected_label = final_label
+            protected_conf = final_conf
+            protected_reason = "router_v6_bodyweight_winner"
+
         if final_label in {"squat_back", "squat_front", "overhead_squat"}:
             rep_feedback, _ = analyze_squat_reps(biomech, final_label)
 
@@ -8031,6 +8469,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # =========================================================
         # 7. FINAL OUTPUT
         # =========================================================
+        trace_route("final", final_label, final_conf, analysis_mode)
+
         return {
             "exercise_label": final_label or "unknown",
             "confidence": round(final_conf, 2),
@@ -8052,6 +8492,8 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
                 "bodyweight":      bodyweight_debug,
+                "bodyweight_router_label": bodyweight_router_label,
+                "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
                 "router_v5":       router_v5_debug,
                 "squat_label":     squat_label,
                 "squat_conf":      round(squat_conf, 3),
@@ -8068,6 +8510,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "truly_explosive": _truly_explosive,
                 "bar_pos_valid":   _bar_pos_valid,
                 "analysis_path":   analysis_mode,
+                "routing_trace":   routing_trace,
+                "router_scores":   router_scores,
+                "router_score_winner": router_score_winner,
+                "router_score_value": round(float(router_score_value or 0.0), 3),
+                "router_v6_label": router_v6_label,
+                "router_v6_conf": round(float(router_v6_conf or 0.0), 3),
+                "router_v6_decision": router_v6_decision,
             },
         }
 

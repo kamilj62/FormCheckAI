@@ -1,0 +1,21 @@
+{
+  "true_label": "pull_up",
+  "predicted_label": "bench_press",
+  "confidence": 1.0,
+  "analysis_mode": "biomechanics_override",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/pull Up/pull up_17.mp4",
+  "rep_count": 1,
+  "raw_label": "bench_press",
+  "bio_label": "bench_press",
+  "squat_label": "squat_back",
+  "olympic_pred": "clean_and_jerk",
+  "bodyweight_router_label": "pull_up",
+  "bodyweight_router_conf": 0.949,
+  "protected_reason": "trusted_base_bench_press",
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"bench_press\", \"conf\": 1.0, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"bench_press\", \"conf\": 1.0, \"reason\": \"trusted_model_bench_press\"}, {\"stage\": \"squat_router\", \"label\": \"squat_back\", \"conf\": 0.869, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"clean_and_jerk\", \"conf\": 0.806, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"pull_up\", \"conf\": 0.949, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"bench_press\", \"conf\": 1.0, \"reason\": \"biomechanics_override\"}]",
+  "router_v6_label": "bench_press",
+  "router_v6_conf": 0.99,
+  "router_v6_decision": "score_winner"
+}

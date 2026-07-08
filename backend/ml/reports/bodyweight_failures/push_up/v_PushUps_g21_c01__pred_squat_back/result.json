@@ -1,0 +1,21 @@
+{
+  "true_label": "push_up",
+  "predicted_label": "squat_back",
+  "confidence": 0.97,
+  "analysis_mode": "detailed_rep_analysis",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g21_c01.avi",
+  "rep_count": 1,
+  "raw_label": "squat_front",
+  "bio_label": "squat_front",
+  "squat_label": "squat_back",
+  "olympic_pred": NaN,
+  "bodyweight_router_label": "push_up",
+  "bodyweight_router_conf": 0.791,
+  "protected_reason": NaN,
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"squat_front\", \"conf\": 0.664, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"squat_front\", \"conf\": 0.664, \"reason\": \"model_prediction\"}, {\"stage\": \"squat_router\", \"label\": \"squat_back\", \"conf\": 0.97, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"\", \"conf\": 0.0, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"push_up\", \"conf\": 0.791, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"squat_back\", \"conf\": 0.97, \"reason\": \"detailed_rep_analysis\"}]",
+  "router_v6_label": "squat_front",
+  "router_v6_conf": 0.664,
+  "router_v6_decision": "score_winner"
+}

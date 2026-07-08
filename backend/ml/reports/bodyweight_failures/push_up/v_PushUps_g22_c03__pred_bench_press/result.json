@@ -1,0 +1,21 @@
+{
+  "true_label": "push_up",
+  "predicted_label": "bench_press",
+  "confidence": 0.8,
+  "analysis_mode": "biomechanics_override",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/PushUps/v_PushUps_g22_c03.avi",
+  "rep_count": 1,
+  "raw_label": "deadlift",
+  "bio_label": "squat",
+  "squat_label": "squat_front",
+  "olympic_pred": "clean_and_jerk",
+  "bodyweight_router_label": "push_up",
+  "bodyweight_router_conf": 0.789,
+  "protected_reason": "bench_press_fast_press_rescue",
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"deadlift\", \"conf\": 0.79, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"squat\", \"conf\": 0.79, \"reason\": \"squat_pattern_detected\"}, {\"stage\": \"squat_router\", \"label\": \"squat_front\", \"conf\": 0.97, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"clean_and_jerk\", \"conf\": 0.512, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"push_up\", \"conf\": 0.789, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"bench_press\", \"conf\": 0.8, \"reason\": \"biomechanics_override\"}]",
+  "router_v6_label": "squat_front",
+  "router_v6_conf": 0.606,
+  "router_v6_decision": "score_winner"
+}

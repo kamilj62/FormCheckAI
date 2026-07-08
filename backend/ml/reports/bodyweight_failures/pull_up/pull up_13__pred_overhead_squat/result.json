@@ -1,0 +1,21 @@
+{
+  "true_label": "pull_up",
+  "predicted_label": "overhead_squat",
+  "confidence": 0.81,
+  "analysis_mode": "detailed_rep_analysis",
+  "error": null,
+  "valid_extraction": true,
+  "video": "/Users/josephkamil/Desktop/Capstone/pull Up/pull up_13.mp4",
+  "rep_count": 1,
+  "raw_label": "push_press",
+  "bio_label": "push_press",
+  "squat_label": "overhead_squat",
+  "olympic_pred": "clean_and_jerk",
+  "bodyweight_router_label": "pull_up",
+  "bodyweight_router_conf": 0.964,
+  "protected_reason": NaN,
+  "routing_trace": "[{\"stage\": \"raw_model\", \"label\": \"push_press\", \"conf\": 0.996, \"reason\": \"\"}, {\"stage\": \"bio_model\", \"label\": \"push_press\", \"conf\": 0.996, \"reason\": \"overhead_press_detected\"}, {\"stage\": \"squat_router\", \"label\": \"overhead_squat\", \"conf\": 0.811, \"reason\": \"\"}, {\"stage\": \"olympic_router\", \"label\": \"clean_and_jerk\", \"conf\": 0.586, \"reason\": \"\"}, {\"stage\": \"bodyweight_router\", \"label\": \"pull_up\", \"conf\": 0.964, \"reason\": \"\"}, {\"stage\": \"final\", \"label\": \"overhead_squat\", \"conf\": 0.811, \"reason\": \"detailed_rep_analysis\"}]",
+  "router_v6_label": "pull_up",
+  "router_v6_conf": 0.723,
+  "router_v6_decision": "score_winner"
+}
