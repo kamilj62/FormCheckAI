@@ -115,6 +115,11 @@ app.add_middleware(
 from pathlib import Path
 from .model_runtime import NumpyFormCheckModel
 
+from app.ml.router_v8.collectors import collect_predictions
+from app.ml.router_v8.fusion import fuse_predictions
+from app.ml.router_v8.debug import build_debug
+from app.ml.router_v8.state import RouterState
+
 from app.logic import (
     classify_with_biomechanics,
     build_set_summary,
@@ -8503,6 +8508,62 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # =========================================================
         trace_route("final", final_label, final_conf, analysis_mode)
 
+        router_state = RouterState(
+            raw_label=raw_label,
+            raw_conf=float(base_conf or 0.0),
+            bio_label=bio_label,
+            bio_conf=float(bio_conf or 0.0),
+            squat_label=squat_label,
+            squat_conf=float(squat_conf or 0.0),
+            olympic_label=olympic_pred,
+            olympic_conf=float(olympic_conf or 0.0),
+            bodyweight_label=bodyweight_router_label,
+            bodyweight_conf=float(bodyweight_router_conf or 0.0),
+            final_label=final_label,
+            final_conf=float(final_conf or 0.0),
+            analysis_mode=analysis_mode,
+            protected_label=protected_label,
+            protected_reason=protected_reason,
+            explosive_score=float(explosive_score or 0.0),
+            wrist_overhead=float(wrist_overhead_ratio or 0.0),
+            routing_trace=routing_trace,
+            router_scores=router_scores,
+        )
+
+        # ------------------------------------------------------------------
+        # Router V8 Shadow (diagnostics only - does NOT affect production)
+        # ------------------------------------------------------------------
+        try:
+            from app.ml.router_v8.collectors import collect_predictions
+            from app.ml.router_v8.fusion import fuse_predictions
+            from app.ml.router_v8.debug import build_debug
+
+            v8_predictions = collect_predictions(
+                raw_label=raw_label,
+                raw_conf=base_conf,
+                bio_label=bio_label,
+                bio_conf=bio_conf,
+                squat_label=squat_label,
+                squat_conf=squat_conf,
+                olympic_label=olympic_pred,
+                olympic_conf=olympic_conf,
+                bodyweight_label=bodyweight_router_label,
+                bodyweight_conf=bodyweight_router_conf,
+            )
+
+            v8_result = fuse_predictions(v8_predictions)
+
+            debug["router_v8"] = build_debug(
+                v8_predictions,
+                v8_result,
+            )
+
+        except Exception as e:
+            debug["router_v8"] = {
+                "version": "router_v8_shadow",
+                "error": str(e),
+            }
+
         return {
             "exercise_label": final_label or "unknown",
             "confidence": round(final_conf, 2),
@@ -8527,6 +8588,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "bodyweight_router_label": bodyweight_router_label,
                 "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
                 "router_v5":       router_v5_debug,
+                  "router_v8":       debug.get("router_v8"),
                 "squat_label":     squat_label,
                 "squat_conf":      round(squat_conf, 3),
                 "bar_position":    bar_debug,

@@ -3,7 +3,7 @@
 import csv
 import json
 import subprocess
-from collections import defaultdict
+from collections import defaultdict, Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -38,6 +38,7 @@ for row in rows:
     groups[row["label"]].append(row)
 
 results = []
+verdict_counts = Counter()
 
 for label in sorted(groups):
     print()
@@ -53,23 +54,51 @@ for label in sorted(groups):
 
         data = analyze(video)
 
-        got_label = data.get("exercise_label")
-        got_reps = len(data.get("rep_feedback") or [])
-        confidence = data.get("confidence")
+        v7_label = data.get("exercise_label")
+        v7_reps = len(data.get("rep_feedback") or [])
+        v7_conf = data.get("confidence")
         analysis_mode = data.get("analysis_mode")
-        ok_label = got_label == label
 
-        print(f"  expected={label} got={got_label} reps={got_reps} conf={confidence} {'PASS' if ok_label else 'FAIL'}")
+        router_v8 = ((data.get("debug") or {}).get("router_v8") or {})
+        v8_label = router_v8.get("winner") or v7_label
+        v8_conf = router_v8.get("winner_confidence")
+
+        v7_correct = v7_label == label
+        v8_correct = v8_label == label
+
+        if v7_correct and v8_correct:
+            verdict = "BOTH_PASS"
+        elif (not v7_correct) and v8_correct:
+            verdict = "V8_FIXED"
+        elif v7_correct and (not v8_correct):
+            verdict = "V8_REGRESSION"
+        else:
+            verdict = "BOTH_FAIL"
+
+        verdict_counts[verdict] += 1
+
+        print(
+            f"  expected={label} "
+            f"V7={v7_label} "
+            f"V8={v8_label} "
+            f"reps={v7_reps} "
+            f"conf={v7_conf} "
+            f"{verdict}"
+        )
 
         results.append({
             "expected_label": label,
             "video": video,
             "name": name,
-            "got_label": got_label,
-            "got_reps": got_reps,
-            "confidence": confidence,
-            "analysis_mode": analysis_mode,
-            "label_ok": ok_label,
+            "v7_label": v7_label,
+            "v7_reps": v7_reps,
+            "v7_confidence": v7_conf,
+            "v7_analysis_mode": analysis_mode,
+            "v7_label_ok": v7_correct,
+            "v8_label": v8_label,
+            "v8_confidence": v8_conf,
+            "v8_label_ok": v8_correct,
+            "verdict": verdict,
             "error": data.get("error"),
         })
 
@@ -81,11 +110,15 @@ fieldnames = [
     "expected_label",
     "video",
     "name",
-    "got_label",
-    "got_reps",
-    "confidence",
-    "analysis_mode",
-    "label_ok",
+    "v7_label",
+    "v7_reps",
+    "v7_confidence",
+    "v7_analysis_mode",
+    "v7_label_ok",
+    "v8_label",
+    "v8_confidence",
+    "v8_label_ok",
+    "verdict",
     "error",
 ]
 
@@ -95,13 +128,19 @@ for path in [out, latest]:
         writer.writeheader()
         writer.writerows(results)
 
-passed = sum(1 for r in results if r["label_ok"])
+v7_passed = sum(1 for r in results if r["v7_label_ok"])
+v8_passed = sum(1 for r in results if r["v8_label_ok"])
 total = len(results)
 
 print()
 print("=" * 70)
-print("AUTO CURATE SUMMARY")
+print("AUTO CURATE V7 vs V8 SUMMARY")
 print("=" * 70)
-print(f"Passed labels: {passed}/{total}")
+print(f"V7 passed: {v7_passed}/{total} ({v7_passed / total:.1%})")
+print(f"V8 passed: {v8_passed}/{total} ({v8_passed / total:.1%})")
+print()
+for k in ["BOTH_PASS", "V8_FIXED", "V8_REGRESSION", "BOTH_FAIL"]:
+    print(f"{k:15} {verdict_counts[k]}")
+print()
 print(f"Saved: {out}")
 print(f"Latest: {latest}")
