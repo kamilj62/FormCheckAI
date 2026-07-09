@@ -1,0 +1,8 @@
+video,label,expected_reps,tier,notes,got_label,got_reps,label_ok,reps_ok,pass,analysis_mode,confidence,error
+/Users/josephkamil/Desktop/Capstone/backsquat_short.mov,squat_back,1,production,known regression clip,squat_back,1,True,True,True,detailed_rep_analysis,0.97,
+/Users/josephkamil/Desktop/Capstone/Back Squat- knee valgus.mov,squat_back,1,production,knee valgus example,,0,False,False,False,,,name 'clear_squat_should_hold' is not defined
+/Users/josephkamil/Desktop/Capstone/FrontSquat- correct3.mov,squat_front,2,production,known front squat clip,squat_front,2,True,True,True,detailed_rep_analysis,0.77,
+/Users/josephkamil/Desktop/Capstone/OverheadSquat- correct5.mov,overhead_squat,9,production,known overhead squat clip,overhead_squat,9,True,True,True,detailed_rep_analysis,0.81,
+/Users/josephkamil/Desktop/Capstone/clean-correct.mov,clean,2,production,known clean clip,,0,False,False,False,,,name 'clear_squat_should_hold' is not defined
+/Users/josephkamil/Desktop/Capstone/snatch- correct.mov,snatch,4,production,known snatch clip,,0,False,False,False,,,name 'clear_squat_should_hold' is not defined
+/Users/josephkamil/Desktop/Capstone/pushpress_short.mov,push_press,2,production,known push press clip,push_press,2,True,True,True,biomechanics_override,0.78,

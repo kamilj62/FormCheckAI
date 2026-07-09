@@ -155,6 +155,7 @@ CLASS_NAMES = [
 ]
 
 USE_OLY_ROUTER_V4 = True  # Experimental video-level Olympic router
+USE_ROUTER_V7 = False  # Candidate 70-feature Olympic router. Loaded but not active.
 
 OLY_ROUTER_BUNDLE = joblib.load(MODEL_DIR / "oly_router_v2.joblib")
 OLY_ROUTER_MODEL = OLY_ROUTER_BUNDLE["model"]
@@ -165,6 +166,12 @@ try:
     OLY_ROUTER_V4_MODEL = joblib.load(MODEL_DIR / "oly_router_v4.joblib")
 except Exception as e:
     print("OLY ROUTER V4 NOT LOADED:", e)
+
+OLY_ROUTER_V7_MODEL = None
+try:
+    OLY_ROUTER_V7_MODEL = joblib.load(MODEL_DIR / "candidates" / "oly_router_v7.joblib")
+except Exception as e:
+    print("OLY ROUTER V7 NOT LOADED:", e)
 
 OLY_ROUTER_LABELS = {
     0: "clean",
@@ -8188,6 +8195,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             analysis_mode = "insufficient_signal"
 
         router_v5_debug = None
+        clear_squat_should_hold = False
         if run_oly_router:
             try:
                 router_v5_label, router_v5_conf, router_v5_debug = route_olympic_lift(
@@ -8330,9 +8338,33 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                     )
                 )
             ):
-                final_label = router_v5_label
-                final_conf = router_v5_conf
-                analysis_mode = "router_v5"
+                # Hard block: clear squat should not be stolen by weak Olympic Router V5.
+                if (
+                    raw_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
+                    and squat_label in {"squat_back", "squat_front", "overhead_squat"}
+                    and float(squat_conf or 0.0) >= 0.90
+                    and router_v5_label in OLY_SET
+                    and float(router_v5_conf or 0.0) < 0.85
+                ):
+                    final_label = squat_label
+                    final_conf = max(float(squat_conf or 0.0), float(base_conf or 0.0), float(bio_conf or 0.0))
+                    analysis_mode = "squat_router_protected"
+                else:
+                    final_label = router_v5_label
+                    final_conf = router_v5_conf
+                    analysis_mode = "router_v5"
+
+                # Final squat recovery after Router V5.
+                if clear_squat_should_hold:
+                    final_label = squat_label
+                    final_conf = max(float(squat_conf or 0.0), float(base_conf or 0.0), float(bio_conf or 0.0))
+                    analysis_mode = "squat_router_protected"
+
+        # Final squat recovery after Router V5 / Olympic override.
+        if clear_squat_should_hold:
+            final_label = squat_label
+            final_conf = max(float(squat_conf or 0.0), float(base_conf or 0.0), float(bio_conf or 0.0))
+            analysis_mode = "squat_router_protected"
 
         # Pull-up safety: if an obvious pull-up posture was routed into a
         # low-confidence Olympic label, recover pull_up before rep analysis.
