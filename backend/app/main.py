@@ -119,6 +119,7 @@ from app.ml.router_v8.collectors import collect_predictions
 from app.ml.router_v8.fusion import fuse_predictions
 from app.ml.router_v8.debug import build_debug
 from app.ml.router_v8.state import RouterState
+from app.ml.router_v8.locks import get_locks
 
 from app.logic import (
     classify_with_biomechanics,
@@ -8557,6 +8558,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 v8_predictions,
                 v8_result,
             )
+            debug["router_v8"]["locks"] = get_locks(router_state)
 
         except Exception as e:
             debug["router_v8"] = {
