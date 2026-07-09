@@ -1,4 +1,5 @@
 from pathlib import Path
+import argparse
 import joblib
 import numpy as np
 import pandas as pd
@@ -9,7 +10,15 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 CLEAN_CSV = Path("/Users/josephkamil/Desktop/Capstone/Oly_Data/clean_and_jerk_keypoints.csv")
 SNATCH_CSV = Path("/Users/josephkamil/Desktop/Capstone/Oly_Data/snatch_keypoints.csv")
-OUT = Path("app/models/oly_router_rf.joblib")
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--model-out",
+    default="app/models/oly_router_rf.joblib",
+    help="Where to save the trained Olympic RF router",
+)
+args = parser.parse_args()
+
+OUT = Path(args.model_out)
 
 clean = pd.read_csv(CLEAN_CSV)
 snatch = pd.read_csv(SNATCH_CSV)
@@ -67,6 +76,8 @@ pred = model.predict(X_test)
 
 print(confusion_matrix(y_test, pred, labels=["clean_and_jerk", "snatch"]))
 print(classification_report(y_test, pred))
+
+OUT.parent.mkdir(parents=True, exist_ok=True)
 
 joblib.dump(
     {

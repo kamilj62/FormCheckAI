@@ -1,0 +1,30 @@
+Olympic Router Inventory
+
+Production / existing:
+- app/models/oly_router_v2.joblib
+  - 54 features
+  - loaded in app/main.py as OLY_ROUTER_MODEL
+  - has label_encoder
+
+- app/models/oly_router_v4.joblib
+  - 80 features
+  - loaded in app/main.py as OLY_ROUTER_V4_MODEL
+  - used when USE_OLY_ROUTER_V4 = True
+
+- app/models/oly_router_rf.joblib
+  - 528 features
+  - trained by scripts/train_oly_router_rf_video_level.py
+  - not directly used by app/main.py final router path
+
+Router V5:
+- app/ml/oly_router_v5.py
+  - rule-based wrapper
+  - uses olympic_label/olympic_confidence produced earlier
+  - does not load a model
+
+Candidate:
+- app/models/candidates/olympic_router_v2_candidate.joblib
+  - 70 features
+  - trained by ml/trainer_v2.py on olympic_video_dataset_v2.csv
+  - 95% held-out accuracy
+  - not production-compatible yet

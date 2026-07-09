@@ -69,6 +69,18 @@ LABEL_RULES = [
     ("benchpress", "bench_press"),
     ("bench_press", "bench_press"),
     ("bench press", "bench_press"),
+    ("benchshort", "bench_press"),
+    ("idealbench", "bench_press"),
+
+    ("backsquat", "squat_back"),
+    ("back squat", "squat_back"),
+    ("back squats", "squat_back"),
+
+    ("frontsquat", "squat_front"),
+    ("front squat", "squat_front"),
+    ("front squats", "squat_front"),
+
+    ("thruster", "thruster"),
     ("pullups", "pull_up"),
     ("pullup", "pull_up"),
     ("pull up", "pull_up"),

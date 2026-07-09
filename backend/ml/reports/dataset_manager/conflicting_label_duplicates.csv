@@ -1,16 +1,4 @@
 label,labels_in_group,name,size,parent,trusted,path
-unknown,"squat_back,unknown",Back Squat- knee valgus.mov,53707563,Capstone,False,/Users/josephkamil/Desktop/Capstone/Back Squat- knee valgus.mov
-squat_back,"squat_back,unknown",Back Squat- knee valgus.mov,53707563,squat_back,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/Back Squat- knee valgus.mov
-unknown,"squat_front,unknown",Front Squat- Depth.mov,59034108,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front Squat- Depth.mov
-squat_front,"squat_front,unknown",Front Squat- Depth.mov,59034108,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front Squat- Depth.mov
-unknown,"squat_front,unknown",Front squats- butt wink .mov,47260543,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front squats- butt wink .mov
-squat_front,"squat_front,unknown",Front squats- butt wink .mov,47260543,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squats- butt wink .mov
-unknown,"squat_front,unknown",Front squats- bar drift.mov,49081646,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front squats- bar drift.mov
-squat_front,"squat_front,unknown",Front squats- bar drift.mov,49081646,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squats- bar drift.mov
-unknown,"squat_front,unknown",Front squat- elbow drop.mov,56408274,Capstone,False,/Users/josephkamil/Desktop/Capstone/Front squat- elbow drop.mov
-squat_front,"squat_front,unknown",Front squat- elbow drop.mov,56408274,squat_front,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squat- elbow drop.mov
-unknown,"squat_back,unknown",Back squats- forward lean.mov,31429399,Capstone,False,/Users/josephkamil/Desktop/Capstone/Back squats- forward lean.mov
-squat_back,"squat_back,unknown",Back squats- forward lean.mov,31429399,squat_back,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/Back squats- forward lean.mov
 push_press,"push_press,strict_press",shoulder press_9.mp4,7599356,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_9.mp4
 strict_press,"push_press,strict_press",shoulder press_9.mp4,7599356,strict_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_9.mp4
 push_press,"push_press,strict_press",shoulder press_8.mp4,3580142,push_press,True,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_8.mp4
