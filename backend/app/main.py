@@ -43,6 +43,8 @@ import joblib
 from app.movement.event_detector import detect_movement_events
 from app.feature_engine.movement_video_features import build_movement_video_features
 
+from app.ml.router_v8.protections import bodyweight_protections
+
 try:
     from celery.result import AsyncResult
     from app.celery_app import celery
@@ -7686,43 +7688,21 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         protected_conf = 0.0
         protected_reason = None
 
-        if _looks_muscle_up:
-            protected_label = "muscle_up"
-            protected_conf = 0.86
-            protected_reason = "muscle_up_bodyweight_pattern"
-        elif _looks_burpee:
-            protected_label = "burpee"
-            protected_conf = 0.84
-            protected_reason = "burpee_bodyweight_pattern"
-        elif _looks_handstand_push_up:
-            protected_label = "handstand_push_up"
-            protected_conf = 0.86
-            protected_reason = "handstand_push_up_bodyweight_pattern"
-        elif (
-            _looks_pull_up
-            or (
-                raw_label == "push_press"
-                and not (
-                    squat_label == "overhead_squat"
-                    and float(bodyweight_debug.get("wrist_y_range", 1.0)) > 0.20
-                )
-                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.75
-                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
-                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
-                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 20.0
-                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.36
-                and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.38
-            )
-        ):
-            protected_label = "pull_up"
-            protected_conf = 0.86
-            protected_reason = "pull_up_bodyweight_pattern"
-        elif _looks_push_up:
-            protected_label = "push_up"
-            protected_conf = 0.86
-            protected_reason = "push_up_bodyweight_pattern"
+        protection = bodyweight_protections(
+            raw_label=raw_label,
+            squat_label=squat_label,
+            bodyweight_debug=bodyweight_debug,
+            looks_push_up=_looks_push_up,
+            looks_pull_up=_looks_pull_up,
+            looks_handstand_push_up=_looks_handstand_push_up,
+            looks_muscle_up=_looks_muscle_up,
+            looks_burpee=_looks_burpee,
+        )
+
+        if protection.label:
+            protected_label = protection.label
+            protected_conf = protection.confidence
+            protected_reason = protection.reason
         elif _short_overhead_bench_setup and not _pull_up_router_guard:
             protected_label = "bench_press"
             protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
