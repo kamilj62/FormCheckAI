@@ -230,9 +230,7 @@ async def root():
 @app.get("/health")
 @app.head("/health")
 async def health():
-    return {"status": "ok", "model_loaded": True, "build": "snatch_patch_1"}
-        "build": "clean_v2_251f968",
-
+    return {"status": "ok", "model_loaded": True, "build": "clean_v2_251f968"}
 
 def angle(a, b, c):
     a = np.array(a)
