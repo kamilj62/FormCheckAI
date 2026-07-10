@@ -77,3 +77,95 @@ def bodyweight_protections(
         )
 
     return ProtectionResult()
+
+
+def early_strength_protections(
+    *,
+    raw_label: str | None,
+    base_conf: float,
+    bio_conf: float,
+    squat_label: str | None,
+    bodyweight_debug: dict[str, Any],
+    short_overhead_bench_setup: bool,
+    pull_up_router_guard: bool,
+    deadlift_low_speed_setup: bool,
+    deadlift_upright_setup: bool,
+    deadlift_raw_pull_setup: bool,
+    looks_push_up: bool,
+    looks_pull_up: bool,
+    looks_handstand_push_up: bool,
+) -> ProtectionResult:
+    """
+    Preserve the original V7 priority order for the first strength
+    protection rules immediately following bodyweight protections.
+    """
+
+    if short_overhead_bench_setup and not pull_up_router_guard:
+        return ProtectionResult(
+            label="bench_press",
+            confidence=max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.80,
+            ),
+            reason="bench_press_short_overhead_rescue",
+        )
+
+    if (
+        deadlift_low_speed_setup
+        or deadlift_upright_setup
+        or deadlift_raw_pull_setup
+    ):
+        return ProtectionResult(
+            label="deadlift",
+            confidence=max(
+                float(bio_conf or 0.0),
+                float(base_conf or 0.0),
+                0.82,
+            ),
+            reason="deadlift_setup_rescue",
+        )
+
+    trusted_base_bench = (
+        raw_label == "bench_press"
+        and not (
+            looks_push_up
+            or looks_pull_up
+            or looks_handstand_push_up
+        )
+        and not (
+            float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) < 0.10
+            and float(
+                bodyweight_debug.get(
+                    "mean_wrist_minus_shoulder_y",
+                    0.0,
+                )
+            ) > 0.15
+            and float(
+                bodyweight_debug.get(
+                    "median_head_drop",
+                    0.0,
+                )
+            ) > 0.04
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    1.0,
+                )
+            ) < 0.12
+        )
+    )
+
+    if trusted_base_bench:
+        return ProtectionResult(
+            label="bench_press",
+            confidence=max(float(base_conf or 0.0), 0.80),
+            reason="trusted_base_bench_press",
+        )
+
+    return ProtectionResult()
