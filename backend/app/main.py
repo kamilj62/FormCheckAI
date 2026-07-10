@@ -34,6 +34,8 @@ from app.phase_engine.fatigue_engine import (
 
 from app.feature_engine.feature_engine_rf import build_rf_features
 
+from app.ml.events.clean_events import detect_clean_events
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -2409,6 +2411,12 @@ def analyze_clean_reps(biomechanics):
             "breakdown": breakdown,
             "feedback": feedback,
         }
+
+        timeline_v2 = detect_clean_events(
+            biomechanics,
+            frames,
+        )
+        rep["event_timeline_v2"] = timeline_v2.to_dict()
 
         rep["coaching"] = build_clean_coaching(rep)
 
@@ -6130,43 +6138,122 @@ def create_olympic_lift_phase_images(
         }
 
     elif normalized_label == "clean":
+        timeline = rep.get("event_timeline_v2") or {}
 
-        first_pull_frame = rep_frame("first_pull_frame", start)
+        def timeline_frame(key, fallback):
+            value = timeline.get(key)
 
-        # Clean visual mapping:
-        # extension key = Pull Under
-        # catch key = front-rack catch
-        # finish key = standing front-rack lockout
-        #
-        # For clean, the analyzer's catch_frame can drift late when the bar comes down.
-        # The extension_frame is currently the better front-rack/catch anchor.
-        front_rack_catch = rep_frame("extension_frame", rep_frame("catch_frame", start))
+            if value is None:
+                return int(fallback)
 
-        # First Pull: make it visibly different from setup.
-        # Show the bar clearly moving off the floor, around the knee.
-        first_pull_frame = first_pull_frame + int(
-            (front_rack_catch - first_pull_frame) * 0.24
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return int(fallback)
+
+        # Legacy fallbacks preserve compatibility with older analyze
+        # responses and manually supplied rep_json payloads.
+        legacy_first_pull = rep_frame("first_pull_frame", start)
+        legacy_pull_under = rep_frame(
+            "extension_frame",
+            legacy_first_pull,
+        )
+        legacy_catch = rep_frame(
+            "catch_frame",
+            legacy_pull_under,
+        )
+        legacy_recovery = rep_frame("end_frame", end)
+
+        duration = max(1, legacy_catch - start)
+
+        setup_frame = timeline_frame("setup", start)
+
+        first_pull_frame = timeline_frame(
+            "first_pull",
+            legacy_first_pull,
         )
 
-        # Pull Under: show the transition after extension but before catch.
-        # Keep this earlier than the previous late turnover frame.
-        pull_under_frame = first_pull_frame + int(
-            (front_rack_catch - first_pull_frame) * 0.38
+        transition_frame = timeline_frame(
+            "transition",
+            first_pull_frame + int(
+                max(1, legacy_pull_under - first_pull_frame) * 0.35
+            ),
         )
 
-        # Finish: allow more time to stand completely upright.
-        finish_frame = min(
-            total_frames - 1,
-            rep_frame("end_frame", end),
-            front_rack_catch + max(20, (end - start) // 6)
+        power_position_frame = timeline_frame(
+            "power_position",
+            transition_frame + int(
+                max(1, legacy_pull_under - transition_frame) * 0.55
+            ),
+        )
+
+        true_extension_frame = timeline_frame(
+            "extension",
+            power_position_frame + max(1, duration // 12),
+        )
+
+        pull_under_frame = timeline_frame(
+            "pull_under",
+            legacy_pull_under,
+        )
+
+        catch_frame = timeline_frame(
+            "catch",
+            legacy_catch,
+        )
+
+        recovery_frame = timeline_frame(
+            "recovery",
+            legacy_recovery,
+        )
+
+        # Keep every visual frame valid and ordered.
+        setup_frame = max(0, min(setup_frame, total_frames - 1))
+
+        first_pull_frame = max(
+            setup_frame + 1,
+            min(first_pull_frame, total_frames - 1),
+        )
+
+        transition_frame = max(
+            first_pull_frame + 1,
+            min(transition_frame, total_frames - 1),
+        )
+
+        power_position_frame = max(
+            transition_frame + 1,
+            min(power_position_frame, total_frames - 1),
+        )
+
+        true_extension_frame = max(
+            power_position_frame + 1,
+            min(true_extension_frame, total_frames - 1),
+        )
+
+        pull_under_frame = max(
+            true_extension_frame + 1,
+            min(pull_under_frame, total_frames - 1),
+        )
+
+        catch_frame = max(
+            pull_under_frame + 1,
+            min(catch_frame, total_frames - 1),
+        )
+
+        recovery_frame = max(
+            catch_frame + 1,
+            min(recovery_frame, total_frames - 1),
         )
 
         phase_frames = {
-            "setup": start,
+            "setup": setup_frame,
             "first_pull": first_pull_frame,
-            "extension": pull_under_frame,
-            "catch": front_rack_catch,
-            "finish": finish_frame,
+            "transition": transition_frame,
+            "power_position": power_position_frame,
+            "extension_v2": true_extension_frame,
+            "pull_under": pull_under_frame,
+            "catch": catch_frame,
+            "recovery": recovery_frame,
         }
 
     # -----------------------------------
