@@ -7746,12 +7746,6 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             },
         )
 
-        strength_protection_debug = {
-            "label": protection.label,
-            "confidence": float(protection.confidence or 0.0),
-            "reason": protection.reason,
-        }
-
         if protection.label:
             protected_label = protection.label
             protected_conf = protection.confidence
@@ -8567,7 +8561,6 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "bio_reason":      bio_reason,
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
-                "strength_protection_before_v6": strength_protection_debug,
                 "bodyweight":      bodyweight_debug,
                 "bodyweight_router_label": bodyweight_router_label,
                 "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
