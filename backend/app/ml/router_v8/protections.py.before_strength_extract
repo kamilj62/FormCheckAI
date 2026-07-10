@@ -9,10 +9,6 @@ class ProtectionResult:
     reason: str | None = None
 
 
-# ------------------------------------------------------------------
-# Bodyweight protections
-# ------------------------------------------------------------------
-
 def bodyweight_protections(
     *,
     raw_label: str | None,
@@ -25,7 +21,8 @@ def bodyweight_protections(
     looks_burpee: bool,
 ) -> ProtectionResult:
     """
-    Preserve the original V7 priority order for bodyweight protections.
+    Preserve the original V7 priority order for the first five
+    bodyweight protection rules.
     """
 
     if looks_muscle_up:
@@ -55,23 +52,13 @@ def bodyweight_protections(
             squat_label == "overhead_squat"
             and float(bodyweight_debug.get("wrist_y_range", 1.0)) > 0.20
         )
-        and float(
-            bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)
-        ) >= 0.75
-        and float(
-            bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)
-        ) <= -0.08
+        and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.75
+        and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
         and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
         and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
-        and float(
-            bodyweight_debug.get("avg_torso_angle", 180.0)
-        ) <= 20.0
-        and float(
-            bodyweight_debug.get("avg_wrist_forward", 1.0)
-        ) <= 0.02
-        and float(
-            bodyweight_debug.get("shoulder_y_range", 1.0)
-        ) <= 0.36
+        and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 20.0
+        and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
+        and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.36
         and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.38
     )
 
@@ -92,19 +79,12 @@ def bodyweight_protections(
     return ProtectionResult()
 
 
-# ------------------------------------------------------------------
-# Early strength protections
-# ------------------------------------------------------------------
-
 def early_strength_protections(
     *,
     raw_label: str | None,
     base_conf: float,
     bio_conf: float,
     squat_label: str | None,
-    olympic_conf: float,
-    explosive_score: float,
-    bar_debug: dict[str, Any],
     bodyweight_debug: dict[str, Any],
     short_overhead_bench_setup: bool,
     pull_up_router_guard: bool,
@@ -114,12 +94,10 @@ def early_strength_protections(
     looks_push_up: bool,
     looks_pull_up: bool,
     looks_handstand_push_up: bool,
-    looks_thruster: bool,
-    looks_split: bool,
 ) -> ProtectionResult:
     """
-    Preserve the original V7 priority order immediately following
-    bodyweight protections.
+    Preserve the original V7 priority order for the first strength
+    protection rules immediately following bodyweight protections.
     """
 
     if short_overhead_bench_setup and not pull_up_router_guard:
@@ -131,26 +109,6 @@ def early_strength_protections(
                 0.80,
             ),
             reason="bench_press_short_overhead_rescue",
-        )
-
-    # This rule existed in main.py between the short-bench rescue
-    # and deadlift rescue. Keep that exact priority.
-    early_thruster = (
-        looks_thruster
-        and raw_label in {"bench_press", "push_press"}
-        and float(explosive_score or 0.0) > 20.0
-        and float(
-            bar_debug.get("front_rack_elbow_p25", 180.0)
-        ) <= 65.0
-        and float(olympic_conf or 0.0) < 0.65
-        and not looks_split
-    )
-
-    if early_thruster:
-        return ProtectionResult(
-            label="thruster",
-            confidence=max(float(base_conf or 0.0), 0.76),
-            reason="thruster_pattern_detected",
         )
 
     if (
@@ -213,94 +171,16 @@ def early_strength_protections(
     return ProtectionResult()
 
 
-# ------------------------------------------------------------------
-# Press / thruster protections
-# ------------------------------------------------------------------
-
-def strength_protections(
-    *,
-    raw_label: str | None,
-    base_conf: float,
-    bio_label: str | None,
-    bio_conf: float,
-    looks_strict: bool,
-    looks_thruster: bool,
-    looks_clean_only: bool,
-    looks_cj: bool,
-    looks_split: bool,
-) -> ProtectionResult:
-    """
-    Preserve the original V7 priority for strict press, push press,
-    and the later thruster protection.
-    """
-
-    strict_press_pattern = (
-        looks_strict
-        and raw_label == "push_press"
-        and not (
-            bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.95
-        )
-        and not looks_split
-    )
-
-    if strict_press_pattern:
-        return ProtectionResult(
-            label="strict_press",
-            confidence=max(float(base_conf or 0.0), 0.78),
-            reason="strict_press_pattern_detected",
-        )
-
-    push_press_pattern = (
-        raw_label == "push_press"
-        and bio_label == "push_press"
-        and not looks_clean_only
-        and not looks_cj
-        and not looks_split
-    )
-
-    if push_press_pattern:
-        return ProtectionResult(
-            label="push_press",
-            confidence=max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.78,
-            ),
-            reason="push_press_pattern_detected",
-        )
-
-    later_thruster_pattern = (
-        looks_thruster
-        and raw_label == "push_press"
-        and bio_label == "squat"
-        and not looks_split
-    )
-
-    if later_thruster_pattern:
-        return ProtectionResult(
-            label="thruster",
-            confidence=max(float(base_conf or 0.0), 0.76),
-            reason="thruster_pattern_detected",
-        )
-
-    return ProtectionResult()
-
-
-# ------------------------------------------------------------------
-# Public orchestrator
-# ------------------------------------------------------------------
-
 def apply_protections(
     *,
     bodyweight_inputs: dict[str, Any],
     early_strength_inputs: dict[str, Any],
-    strength_inputs: dict[str, Any],
 ) -> ProtectionResult:
     """
     Run extracted protection groups in the original V7 priority order.
 
-    Remaining bench rescues and Olympic interactions still live in main.py.
+    This function intentionally stops at the first matched protection.
+    Remaining strength and Olympic protections still live in main.py.
     """
 
     result = bodyweight_protections(**bodyweight_inputs)
@@ -308,10 +188,6 @@ def apply_protections(
         return result
 
     result = early_strength_protections(**early_strength_inputs)
-    if result.label:
-        return result
-
-    result = strength_protections(**strength_inputs)
     if result.label:
         return result
 

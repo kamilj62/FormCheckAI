@@ -7688,6 +7688,20 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         protected_conf = 0.0
         protected_reason = None
 
+        effective_looks_split_for_protection = (
+            _looks_split
+            and not (
+                _looks_thruster
+                and raw_label in {"bench_press", "push_press"}
+                and bio_label in {"bench_press", "squat", "push_press"}
+                and float(olympic_conf or 0.0) < 0.65
+                and float(
+                    bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)
+                ) < 0.35
+                and float(bar_debug.get("overhead_ratio", 0.0)) < 0.35
+            )
+        )
+
         protection = apply_protections(
             bodyweight_inputs={
                 "raw_label": raw_label,
@@ -7704,6 +7718,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "base_conf": float(base_conf or 0.0),
                 "bio_conf": float(bio_conf or 0.0),
                 "squat_label": squat_label,
+                "olympic_conf": float(olympic_conf or 0.0),
+                "explosive_score": float(explosive_score or 0.0),
+                "bar_debug": bar_debug,
                 "bodyweight_debug": bodyweight_debug,
                 "short_overhead_bench_setup": _short_overhead_bench_setup,
                 "pull_up_router_guard": _pull_up_router_guard,
@@ -7713,39 +7730,32 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "looks_push_up": _looks_push_up,
                 "looks_pull_up": _looks_pull_up,
                 "looks_handstand_push_up": _looks_handstand_push_up,
+                "looks_thruster": _looks_thruster,
+                "looks_split": effective_looks_split_for_protection,
+            },
+            strength_inputs={
+                "raw_label": raw_label,
+                "base_conf": float(base_conf or 0.0),
+                "bio_label": bio_label,
+                "bio_conf": float(bio_conf or 0.0),
+                "looks_strict": _looks_strict,
+                "looks_thruster": _looks_thruster,
+                "looks_clean_only": _looks_clean_only,
+                "looks_cj": _looks_cj,
+                "looks_split": effective_looks_split_for_protection,
             },
         )
+
+        strength_protection_debug = {
+            "label": protection.label,
+            "confidence": float(protection.confidence or 0.0),
+            "reason": protection.reason,
+        }
 
         if protection.label:
             protected_label = protection.label
             protected_conf = protection.confidence
             protected_reason = protection.reason
-        elif (
-            _looks_strict
-            and raw_label == "push_press"
-            and not (
-                bio_label == "push_press"
-                and float(bio_conf or 0.0) >= 0.95
-            )
-            and not _looks_split
-        ):
-            protected_label = "strict_press"
-            protected_conf = max(base_conf, 0.78)
-            protected_reason = "strict_press_pattern_detected"
-        elif (
-            raw_label == "push_press"
-            and bio_label == "push_press"
-            and not _looks_clean_only
-            and not _looks_cj
-            and not _looks_split
-        ):
-            protected_label = "push_press"
-            protected_conf = max(base_conf, bio_conf, 0.78)
-            protected_reason = "push_press_pattern_detected"
-        elif _looks_thruster and raw_label == "push_press" and bio_label == "squat" and not _looks_split:
-            protected_label = "thruster"
-            protected_conf = max(base_conf, 0.76)
-            protected_reason = "thruster_pattern_detected"
         elif bio_label == "bench_press" and not _looks_strict and not _looks_thruster and not (_looks_push_up or _looks_pull_up or _looks_handstand_push_up):
             bench_blocked_by_oly = (
                 olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
@@ -8399,6 +8409,12 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # Runs AFTER legacy routing, BEFORE rep analysis.
         # This avoids editing the fragile if/elif router chain.
         router_v6_bodyweight_allowed = (
+            not (
+                protected_reason == "strict_press_pattern_detected"
+                and protected_label == "strict_press"
+                and float(protected_conf or 0.0) >= 0.90
+            )
+            and
             router_v6_label in {"push_up", "pull_up", "handstand_push_up"}
             and bodyweight_router_label == router_v6_label
             and float(bodyweight_router_conf or 0.0) >= 0.95
@@ -8551,6 +8567,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "bio_reason":      bio_reason,
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
+                "strength_protection_before_v6": strength_protection_debug,
                 "bodyweight":      bodyweight_debug,
                 "bodyweight_router_label": bodyweight_router_label,
                 "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
