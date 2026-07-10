@@ -8408,7 +8408,10 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                     and float(router_v5_conf or 0.0) < 0.85
                 ):
                     final_label = squat_label
-                    final_conf = max(float(squat_conf or 0.0), float(base_conf or 0.0), float(bio_conf or 0.0))
+                    final_conf = max(
+                        float(squat_conf or 0.0),
+                        float(base_conf or 0.0) if raw_label == squat_label else 0.0,
+                    )
                     analysis_mode = "squat_router_protected"
                 else:
                     final_label = router_v5_label
@@ -8418,13 +8421,19 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 # Final squat recovery after Router V5.
                 if clear_squat_should_hold:
                     final_label = squat_label
-                    final_conf = max(float(squat_conf or 0.0), float(base_conf or 0.0), float(bio_conf or 0.0))
+                    final_conf = max(
+                        float(squat_conf or 0.0),
+                        float(base_conf or 0.0) if raw_label == squat_label else 0.0,
+                    )
                     analysis_mode = "squat_router_protected"
 
         # Final squat recovery after Router V5 / Olympic override.
         if clear_squat_should_hold:
             final_label = squat_label
-            final_conf = max(float(squat_conf or 0.0), float(base_conf or 0.0), float(bio_conf or 0.0))
+            final_conf = max(
+                        float(squat_conf or 0.0),
+                        float(base_conf or 0.0) if raw_label == squat_label else 0.0,
+                    )
             analysis_mode = "squat_router_protected"
 
         # Pull-up safety: if an obvious pull-up posture was routed into a
@@ -8500,6 +8509,18 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and float(bodyweight_router_conf or 0.0) >= 0.95
             and float(router_v6_conf or 0.0) >= 0.72
             and not strong_oly_lock
+
+            # Split-jerk guard: an explosive overhead Olympic movement can look
+            # like a pull-up to the bodyweight router because of the long elbow
+            # range and sustained overhead wrist position.
+            and not (
+                router_v6_label == "pull_up"
+                and bool(_looks_split)
+                and bool(run_oly_router)
+                and float(olympic_conf or 0.0) >= 0.85
+                and float(explosive_score or 0.0) >= 30.0
+            )
+
             and not (
                 router_v6_label == "pull_up"
                 and final_label == "overhead_squat"
@@ -8510,6 +8531,17 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 protected_reason == "push_press_pattern_detected"
                 and float(olympic_conf or 0.0) >= 0.90
             )
+
+            # Clear push-press agreement should not be stolen by a false
+            # pull-up prediction from the bodyweight router.
+            and not (
+                router_v6_label == "pull_up"
+                and raw_label == "push_press"
+                and bio_label == "push_press"
+                and float(base_conf or 0.0) >= 0.65
+                and float(bio_conf or 0.0) >= 0.75
+                and float(explosive_score or 0.0) < 30.0
+            )
         )
 
         if router_v6_bodyweight_allowed:
@@ -8519,6 +8551,45 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_label = final_label
             protected_conf = final_conf
             protected_reason = "router_v6_bodyweight_winner"
+
+        # Final clean-and-jerk shape recovery.
+        # Some C&J clips are classified as squat/snatch because the clean catch
+        # dominates the base and squat routers. A clear C&J event shape plus
+        # extreme explosiveness is stronger evidence than the squat fallback.
+        if (
+            final_label in {"squat_back", "squat_front", "overhead_squat", "squat"}
+            and bool(_looks_cj)
+            and bool(run_oly_router)
+            and float(olympic_conf or 0.0) >= 0.80
+            and float(explosive_score or 0.0) >= 100.0
+        ):
+            final_label = "clean_and_jerk"
+            final_conf = max(0.86, float(olympic_conf or 0.0))
+            analysis_mode = "router_v5"
+            protected_label = final_label
+            protected_conf = final_conf
+            protected_reason = "clean_and_jerk_shape_final_recovery"
+
+        # Final muscle-up recovery.
+        # Ring muscle-ups may look like highly explosive pull-ups to Router V6.
+        # Preserve the muscle-up class when the clip has the characteristic
+        # upright/explosive transition signature and weak Olympic evidence.
+        if (
+            final_label == "pull_up"
+            and router_v6_label == "pull_up"
+            and raw_label == "squat"
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.88
+            and float(bodyweight_router_conf or 0.0) >= 0.97
+            and float(explosive_score or 0.0) >= 90.0
+            and float(olympic_conf or 0.0) < 0.70
+        ):
+            final_label = "muscle_up"
+            final_conf = 0.86
+            analysis_mode = "biomechanics_override"
+            protected_label = final_label
+            protected_conf = final_conf
+            protected_reason = "explosive_muscle_up_final_recovery"
 
         if final_label in {"squat_back", "squat_front", "overhead_squat"}:
             rep_feedback, _ = analyze_squat_reps(biomech, final_label)

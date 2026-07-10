@@ -155,7 +155,7 @@
     "label": "pull_up",
     "min_confidence": 0.6,
     "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis",
+    "analysis_mode": "router_v6_bodyweight",
     "expect_coaching": false,
     "expect_breakdown_keys": []
   },
@@ -163,7 +163,7 @@
     "label": "push_up",
     "min_confidence": 0.6,
     "min_reps": 0,
-    "analysis_mode": "detailed_rep_analysis",
+    "analysis_mode": "router_v6_bodyweight",
     "expect_coaching": false,
     "expect_breakdown_keys": []
   },

@@ -33,7 +33,7 @@ run_test "/Users/josephkamil/Desktop/Capstone/OverheadSquat_one_rep_720p.mp4" "o
 # =========================
 # OLYMPIC LIFTS
 # =========================
-run_test "/Users/josephkamil/Desktop/Capstone/CleanAndJerk/v_CleanAndJerk_g25_c04.avi" "clean_and_jerk"
+run_test "/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g25_c04.avi" "clean_and_jerk"
 run_test "/Users/josephkamil/Desktop/Capstone/snatch- correct.mov" "snatch"
 run_test "/Users/josephkamil/Desktop/Capstone/splitjerk-short.mp4" "split_jerk"
 run_test "/Users/josephkamil/Desktop/Capstone/clean-correct.mov" "clean"
