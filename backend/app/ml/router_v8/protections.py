@@ -169,3 +169,26 @@ def early_strength_protections(
         )
 
     return ProtectionResult()
+
+
+def apply_protections(
+    *,
+    bodyweight_inputs: dict[str, Any],
+    early_strength_inputs: dict[str, Any],
+) -> ProtectionResult:
+    """
+    Run extracted protection groups in the original V7 priority order.
+
+    This function intentionally stops at the first matched protection.
+    Remaining strength and Olympic protections still live in main.py.
+    """
+
+    result = bodyweight_protections(**bodyweight_inputs)
+    if result.label:
+        return result
+
+    result = early_strength_protections(**early_strength_inputs)
+    if result.label:
+        return result
+
+    return ProtectionResult()

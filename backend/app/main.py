@@ -43,7 +43,7 @@ import joblib
 from app.movement.event_detector import detect_movement_events
 from app.feature_engine.movement_video_features import build_movement_video_features
 
-from app.ml.router_v8.protections import bodyweight_protections, early_strength_protections
+from app.ml.router_v8.protections import apply_protections
 
 try:
     from celery.result import AsyncResult
@@ -7688,41 +7688,38 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         protected_conf = 0.0
         protected_reason = None
 
-        protection = bodyweight_protections(
-            raw_label=raw_label,
-            squat_label=squat_label,
-            bodyweight_debug=bodyweight_debug,
-            looks_push_up=_looks_push_up,
-            looks_pull_up=_looks_pull_up,
-            looks_handstand_push_up=_looks_handstand_push_up,
-            looks_muscle_up=_looks_muscle_up,
-            looks_burpee=_looks_burpee,
-        )
-
-        early_protection = early_strength_protections(
-            raw_label=raw_label,
-            base_conf=float(base_conf or 0.0),
-            bio_conf=float(bio_conf or 0.0),
-            squat_label=squat_label,
-            bodyweight_debug=bodyweight_debug,
-            short_overhead_bench_setup=_short_overhead_bench_setup,
-            pull_up_router_guard=_pull_up_router_guard,
-            deadlift_low_speed_setup=_deadlift_low_speed_setup,
-            deadlift_upright_setup=_deadlift_upright_setup,
-            deadlift_raw_pull_setup=_deadlift_raw_pull_setup,
-            looks_push_up=_looks_push_up,
-            looks_pull_up=_looks_pull_up,
-            looks_handstand_push_up=_looks_handstand_push_up,
+        protection = apply_protections(
+            bodyweight_inputs={
+                "raw_label": raw_label,
+                "squat_label": squat_label,
+                "bodyweight_debug": bodyweight_debug,
+                "looks_push_up": _looks_push_up,
+                "looks_pull_up": _looks_pull_up,
+                "looks_handstand_push_up": _looks_handstand_push_up,
+                "looks_muscle_up": _looks_muscle_up,
+                "looks_burpee": _looks_burpee,
+            },
+            early_strength_inputs={
+                "raw_label": raw_label,
+                "base_conf": float(base_conf or 0.0),
+                "bio_conf": float(bio_conf or 0.0),
+                "squat_label": squat_label,
+                "bodyweight_debug": bodyweight_debug,
+                "short_overhead_bench_setup": _short_overhead_bench_setup,
+                "pull_up_router_guard": _pull_up_router_guard,
+                "deadlift_low_speed_setup": _deadlift_low_speed_setup,
+                "deadlift_upright_setup": _deadlift_upright_setup,
+                "deadlift_raw_pull_setup": _deadlift_raw_pull_setup,
+                "looks_push_up": _looks_push_up,
+                "looks_pull_up": _looks_pull_up,
+                "looks_handstand_push_up": _looks_handstand_push_up,
+            },
         )
 
         if protection.label:
             protected_label = protection.label
             protected_conf = protection.confidence
             protected_reason = protection.reason
-        elif early_protection.label:
-            protected_label = early_protection.label
-            protected_conf = early_protection.confidence
-            protected_reason = early_protection.reason
         elif (
             _looks_strict
             and raw_label == "push_press"
