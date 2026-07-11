@@ -6081,6 +6081,215 @@ def create_squat_phase_images(input_path, output_dir, rep, mp_pose, uuid, os, cv
     return saved if saved else None
 
 
+def create_thruster_phase_images(
+    input_path,
+    output_dir,
+    rep,
+    sample_every=1,
+):
+    """
+    Generate a six-phase thruster storyboard:
+
+    setup -> descent -> bottom -> drive -> catch -> lockout
+    """
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Thruster phase error: video could not be opened")
+        return None
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if total_frames <= 0:
+        cap.release()
+        print("Thruster phase error: no video frames")
+        return None
+
+    start_frame = int(rep.get("start_frame", 0))
+    dip_frame = int(rep.get("dip_frame", start_frame))
+    analyzer_drive_frame = int(
+        rep.get("drive_frame", dip_frame)
+    )
+
+    # The analyzer drive anchor can be late, near the overhead portion.
+    # For the storyboard, show the upward leg drive between the squat
+    # bottom and that later analyzer anchor.
+    drive_frame = dip_frame + max(
+        1,
+        int((analyzer_drive_frame - dip_frame) * 0.64),
+    )
+    analyzer_catch_frame = int(
+        rep.get(
+            "catch_frame",
+            analyzer_drive_frame + max(
+                1,
+                (
+                    int(rep.get("lockout_frame", analyzer_drive_frame))
+                    - analyzer_drive_frame
+                ) // 2,
+            ),
+        )
+    )
+
+    # Thruster analyzer anchors can run into the next descent.
+    # For coach-facing visuals, use the early overhead portion of the
+    # drive-to-catch window. On the regression clip this selects roughly
+    # frame 96 for catch and frame 100 for stable lockout.
+    overhead_span = max(
+        1,
+        analyzer_catch_frame - analyzer_drive_frame,
+    )
+
+    # Spread the overhead phases enough to show clear progression:
+    # drive -> first overhead catch -> stable lockout.
+    # The analyzer drive anchor corresponds well to the first overhead
+    # receiving position once the coach-facing drive has been moved earlier.
+    catch_frame = analyzer_drive_frame
+
+    # Use a later frame for the stabilized overhead lockout.
+    lockout_frame = analyzer_drive_frame + max(
+        2,
+        int(overhead_span * 0.47),
+    )
+
+    lockout_frame = max(catch_frame + 1, lockout_frame)
+
+    # The analyzer's start frame can already be close to the squat.
+    # Step backward to capture a clear standing/front-rack setup.
+    setup_frame = max(0, start_frame - 35)
+
+    # Capture the lowering phase between setup and the detected squat bottom.
+    descent_frame = setup_frame + int(
+        max(1, dip_frame - setup_frame) * 0.65
+    )
+
+    phase_frames = {
+        "setup": setup_frame,
+        "descent": descent_frame,
+        "bottom": dip_frame,
+        "drive": drive_frame,
+        "catch": catch_frame,
+        "lockout": lockout_frame,
+    }
+
+    normalized_phase_frames = {
+        phase: max(0, min(int(frame_idx), total_frames - 1))
+        for phase, frame_idx in phase_frames.items()
+    }
+
+    # Decode sequentially so MOV/VFR files return reliable frames.
+    wanted_frames = set(normalized_phase_frames.values())
+    frame_cache = {}
+
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    current_idx = 0
+
+    while current_idx < total_frames and wanted_frames:
+        ret, frame = cap.read()
+
+        if not ret:
+            break
+
+        if current_idx in wanted_frames:
+            frame_cache[current_idx] = frame.copy()
+            wanted_frames.remove(current_idx)
+
+        current_idx += 1
+
+    saved = {}
+    debug_tiles = []
+
+    for phase, frame_idx in normalized_phase_frames.items():
+        frame = frame_cache.get(frame_idx)
+
+        if frame is None:
+            print(
+                f"Thruster phase frame unavailable: "
+                f"{phase} frame={frame_idx}"
+            )
+            continue
+
+        filename = (
+            f"thruster_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        )
+        filepath = os.path.join(output_dir, filename)
+
+        if cv2.imwrite(
+            filepath,
+            frame,
+            [cv2.IMWRITE_JPEG_QUALITY, 95],
+        ):
+            saved[phase] = f"/outputs/{filename}"
+
+        tile = cv2.resize(frame.copy(), (320, 180))
+
+        cv2.rectangle(
+            tile,
+            (0, 0),
+            (320, 34),
+            (0, 0, 0),
+            -1,
+        )
+        cv2.putText(
+            tile,
+            f"{phase.upper()}  frame {frame_idx}",
+            (10, 23),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (255, 255, 255),
+            1,
+            cv2.LINE_AA,
+        )
+
+        debug_tiles.append(tile)
+
+    if debug_tiles:
+        import math
+        import numpy as np
+
+        cols = 3
+        rows = math.ceil(len(debug_tiles) / cols)
+
+        sheet = (
+            np.ones(
+                (rows * 180, cols * 320, 3),
+                dtype=np.uint8,
+            )
+            * 255
+        )
+
+        for i, tile in enumerate(debug_tiles):
+            row, col = divmod(i, cols)
+
+            sheet[
+                row * 180:(row + 1) * 180,
+                col * 320:(col + 1) * 320,
+            ] = tile
+
+        debug_filename = (
+            f"thruster_phase_debug_"
+            f"{uuid.uuid4().hex[:8]}.jpg"
+        )
+        debug_filepath = os.path.join(
+            output_dir,
+            debug_filename,
+        )
+
+        if cv2.imwrite(
+            debug_filepath,
+            sheet,
+            [cv2.IMWRITE_JPEG_QUALITY, 95],
+        ):
+            saved["debug_sheet"] = (
+                f"/outputs/{debug_filename}"
+            )
+
+    cap.release()
+
+    print("Saved thruster phase images:", saved)
+    return saved if saved else None
+
+
 def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, exercise_label=None):
     cap = cv2.VideoCapture(input_path)
 
@@ -9818,8 +10027,11 @@ async def generate_visuals(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
         elif "thruster" in label:
-            phase_images = create_push_press_phase_images(
-                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="thruster"
+            phase_images = create_thruster_phase_images(
+                temp_path,
+                OVERLAY_DIR,
+                rep,
+                sample_every=1,
             )
         elif "strict press" in label or "strict_press" in label:
             phase_images = create_push_press_phase_images(
