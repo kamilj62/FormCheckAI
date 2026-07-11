@@ -117,7 +117,7 @@
       "catch"
     ]
   },
-  "clean_and_jerk.mp4": {
+  "clean_and_jerk.avi": {
     "label": "clean_and_jerk",
     "min_confidence": 0.6,
     "min_reps": 1,

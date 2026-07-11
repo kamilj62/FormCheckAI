@@ -2567,70 +2567,283 @@ def analyze_strict_press_reps(biomechanics):
 
 def find_split_jerk_phase_reps(biomechanics):
     n = len(biomechanics)
-    if n < 10:
+    if n < 20:
         return []
 
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
     ])
-    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics], dtype=np.float32)
-    hip = np.array([b.get("hip_angle", 180.0) for b in biomechanics], dtype=np.float32)
-    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics], dtype=np.float32)
-    wrist_y = np.array([b.get("wrist_y", 1.0) for b in biomechanics], dtype=np.float32)
-    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics], dtype=np.float32)
 
-    overhead = (wrist_y < shoulder_y) & (elbow > 145)
+    knee = np.array([
+        b.get("knee_angle", 180.0)
+        for b in biomechanics
+    ], dtype=np.float32)
+
+    hip = np.array([
+        b.get("hip_angle", 180.0)
+        for b in biomechanics
+    ], dtype=np.float32)
+
+    elbow = np.array([
+        b.get("elbow_angle", 180.0)
+        for b in biomechanics
+    ], dtype=np.float32)
+
+    wrist_y = np.array([
+        b.get("wrist_y", 1.0)
+        for b in biomechanics
+    ], dtype=np.float32)
+
+    shoulder_y = np.array([
+        b.get("shoulder_y", 0.0)
+        for b in biomechanics
+    ], dtype=np.float32)
+
+    # Stable overhead requires both bar position and arm extension.
+    overhead = (
+        (wrist_y < shoulder_y - 0.02)
+        & (elbow > 145)
+    )
+
     overhead_idxs = np.where(overhead)[0]
 
     if len(overhead_idxs) == 0:
         return []
 
+    # Group overhead frames into separate jerk attempts.
     clusters = []
     current = [int(overhead_idxs[0])]
-    max_gap = max(8, n // 60)
+    max_gap = max(6, n // 80)
 
-    for idx in overhead_idxs[1:]:
-        idx = int(idx)
+    for raw_idx in overhead_idxs[1:]:
+        idx = int(raw_idx)
+
         if idx - current[-1] <= max_gap:
             current.append(idx)
         else:
-            if len(current) >= 3:
+            if len(current) >= 4:
                 clusters.append(current)
             current = [idx]
 
-    if len(current) >= 3:
+    if len(current) >= 4:
         clusters.append(current)
 
     reps = []
+    stable_needed = 3
 
     for cluster in clusters:
-        catch_idx = max(2, min(int(cluster[0]), n - 2))
-        finish_idx = max(catch_idx + 1, min(int(cluster[-1]), n - 1))
+        cluster_start = int(cluster[0])
+        cluster_end = int(cluster[-1])
 
-        dip_start = max(0, catch_idx - max(35, n // 8))
-        dip_end = max(dip_start + 1, catch_idx)
-        dip_idx = dip_start + int(np.argmin(knee[dip_start:dip_end]))
-        start_idx = max(0, dip_idx - 10)
+        # Ignore an opening overhead hold from a prior rep. A valid jerk
+        # should have enough pre-catch frames to show setup, dip and drive.
+        if cluster_start < 12:
+            continue
 
+        # Find the first genuinely stable overhead receive rather than the
+        # first noisy wrist-above-shoulder frame.
+        catch_idx = None
+
+        search_end = min(n - stable_needed, cluster_end)
+
+        for i in range(cluster_start, search_end + 1):
+            if all(overhead[i:i + stable_needed]):
+                catch_idx = i
+                break
+
+        if catch_idx is None:
+            continue
+
+        # Search backward from the catch for the dip. Keep the window local
+        # to this attempt so it cannot attach to the previous jerk.
+        pre_catch_window = max(35, min(80, n // 7))
+        dip_search_start = max(0, catch_idx - pre_catch_window)
+        dip_search_end = max(dip_search_start + 2, catch_idx - 3)
+
+        if dip_search_end <= dip_search_start:
+            continue
+
+        # Require at least some front-rack/non-overhead frames before catch.
+        rack_like = np.abs(
+            wrist_y[dip_search_start:dip_search_end]
+            - shoulder_y[dip_search_start:dip_search_end]
+        ) < 0.25
+
+        non_overhead = ~overhead[dip_search_start:dip_search_end]
+
+        if not np.any(rack_like & non_overhead):
+            continue
+
+        dip_idx = dip_search_start + int(
+            np.argmin(knee[dip_search_start:dip_search_end])
+        )
+
+        # Reject clusters without a meaningful dip.
+        pre_dip_start = max(dip_search_start, dip_idx - 12)
+        pre_dip_knee = float(np.median(knee[pre_dip_start:dip_idx + 1]))
+        dip_depth = pre_dip_knee - float(knee[dip_idx])
+
+        if dip_depth < 3.0 and knee[dip_idx] > 165:
+            continue
+
+        # Drive is the strongest knee/hip extension after the dip but before
+        # the stable overhead receive.
         drive_start = min(n - 2, dip_idx + 1)
-        drive_end = max(drive_start + 1, catch_idx)
-        drive_score = knee[drive_start:drive_end] + hip[drive_start:drive_end]
-        drive_idx = drive_start + int(np.argmax(drive_score))
-        drive_idx = max(dip_idx + 1, min(drive_idx, catch_idx - 1))
+        drive_end = max(drive_start + 2, catch_idx - 1)
 
-        lockout_idx = min(finish_idx, catch_idx + max(2, len(cluster) // 2))
+        if drive_end <= drive_start:
+            continue
+
+        knee_norm = (
+            knee - np.min(knee)
+        ) / (np.ptp(knee) + 1e-6)
+
+        hip_norm = (
+            hip - np.min(hip)
+        ) / (np.ptp(hip) + 1e-6)
+
+        extension_signal = (
+            0.60 * knee_norm
+            + 0.40 * hip_norm
+        )
+
+        drive_idx = drive_start + int(
+            np.argmax(extension_signal[drive_start:drive_end])
+        )
+
+        # Maintain meaningful visual spacing.
+        drive_idx = max(
+            dip_idx + 2,
+            min(drive_idx, catch_idx - 3),
+        )
+
+        catch_idx = max(
+            drive_idx + 3,
+            min(catch_idx, n - 3),
+        )
+
+        # Setup should show the athlete upright before beginning the dip.
+        setup_search_start = max(0, dip_idx - 25)
+        setup_candidates = [
+            i for i in range(setup_search_start, dip_idx)
+            if knee[i] > 155 and hip[i] > 150
+        ]
+
+        if setup_candidates:
+            # Use an earlier stable rack position so setup is visibly
+            # different from the bottom of the dip.
+            start_idx = int(setup_candidates[0])
+        else:
+            start_idx = max(0, dip_idx - 15)
+
+        # Enforce useful visual spacing between setup and dip.
+        start_idx = min(start_idx, max(0, dip_idx - 8))
+
+        # Lockout: stable arms-overhead position shortly after the split catch.
+        # Select a clearly established overhead lockout after the initial
+        # split receive, rather than an early frame while the bar is still
+        # settling overhead.
+        lockout_idx = min(
+            cluster_end,
+            catch_idx + max(12, int((cluster_end - catch_idx) * 0.32)),
+        )
+        lockout_idx = max(
+            catch_idx + 8,
+            min(lockout_idx, n - 3),
+        )
+
+        # Recovery must occur substantially later than lockout. Knee/hip
+        # extension alone cannot prove that the feet have recovered because
+        # the athlete can be upright while still holding the split.
+        recovery_search_start = min(
+            n - stable_needed,
+            catch_idx + max(18, int((cluster_end - catch_idx) * 0.55)),
+        )
+
+        recovery_idx = None
+
+        for i in range(recovery_search_start, min(n - stable_needed, cluster_end) + 1):
+            stable_overhead = all(overhead[i:i + stable_needed])
+            upright = (
+                np.mean(knee[i:i + stable_needed]) > 155
+                and np.mean(hip[i:i + stable_needed]) > 150
+            )
+
+            if stable_overhead and upright:
+                recovery_idx = i
+                break
+
+        if recovery_idx is None:
+            recovery_idx = catch_idx + int(
+                (cluster_end - catch_idx) * 0.72
+            )
+
+        recovery_idx = max(
+            lockout_idx + 6,
+            min(int(recovery_idx), n - 2),
+        )
+
+        # Finish should be a later stable overhead frame after recovery,
+        # but not the end of the whole cluster because that may include
+        # lowering the bar or beginning the next attempt.
+        finish_search_start = min(
+            n - stable_needed,
+            recovery_idx + 4,
+        )
+
+        finish_search_end = min(
+            n - stable_needed,
+            cluster_end,
+            recovery_idx + max(10, min(20, len(cluster) // 8)),
+        )
+
+        finish_idx = min(
+            cluster_end,
+            recovery_idx + max(6, min(12, len(cluster) // 10)),
+        )
+
+        for i in range(finish_search_start, finish_search_end + 1):
+            stable_overhead = all(overhead[i:i + stable_needed])
+            upright = (
+                np.mean(knee[i:i + stable_needed]) > 155
+                and np.mean(hip[i:i + stable_needed]) > 150
+            )
+
+            if stable_overhead and upright:
+                finish_idx = i
+
+        finish_idx = max(
+            recovery_idx + 4,
+            min(int(finish_idx), cluster_end, n - 1),
+        )
 
         rep = {
             "start_frame": int(frame_numbers[start_idx]),
             "dip_frame": int(frame_numbers[dip_idx]),
             "drive_frame": int(frame_numbers[drive_idx]),
             "catch_frame": int(frame_numbers[catch_idx]),
+            "recovery_frame": int(frame_numbers[recovery_idx]),
             "lockout_frame": int(frame_numbers[lockout_idx]),
             "end_frame": int(frame_numbers[finish_idx]),
+            "debug_frames": {
+                "start_idx": int(start_idx),
+                "dip_idx": int(dip_idx),
+                "drive_idx": int(drive_idx),
+                "catch_idx": int(catch_idx),
+                "recovery_idx": int(recovery_idx),
+                "lockout_idx": int(lockout_idx),
+                "finish_idx": int(finish_idx),
+                "cluster_start": int(cluster_start),
+                "cluster_end": int(cluster_end),
+            },
         }
 
-        if reps and rep["catch_frame"] - reps[-1]["catch_frame"] < 45:
+        # Avoid duplicate detections within the same overhead event.
+        if (
+            reps
+            and rep["catch_frame"] - reps[-1]["catch_frame"] < 45
+        ):
             continue
 
         reps.append(rep)
@@ -3112,206 +3325,152 @@ def analyze_clean_and_jerk_reps(biomechanics):
             np.argmax(extension_signal[recovery_search_start:recovery_search_end])
         )
 
-    # Jerk dip occurs after clean recovery and before first overhead.
-    jerk_start = min(n - 2, max(recovery_idx + 1, clean_catch_idx + max(4, int(n * 0.04))))
-    jerk_end = max(jerk_start + 2, min(first_overhead_idx, n - 1))
+    # ---------------- C&J EVENT SEQUENCE ----------------
+    # Detect one continuous:
+    # clean catch -> upright front rack -> jerk dip -> drive
+    # -> overhead receive -> stable overhead finish.
 
-    jerk_dip_idx = jerk_start + int(np.argmin(knee[jerk_start:jerk_end]))
-
-    drive_start = min(n - 2, jerk_dip_idx + 1)
-    drive_end = max(drive_start + 1, first_overhead_idx)
-
-    jerk_drive_idx = drive_start + int(np.argmax(extension_signal[drive_start:drive_end]))
-
-    # Jerk catch should be a real overhead receive, not the first noisy
-    # frame where the wrist barely appears above the shoulder.
-    jerk_catch_idx = first_overhead_idx
     stable_needed = 3
 
-    for i in range(jerk_drive_idx + 1, n - stable_needed):
-        stable_overhead = all(overhead[i:i + stable_needed])
-        stable_lockout = np.mean(elbow[i:i + stable_needed]) > 150
+    # Clean recovery: first stable upright front-rack position after catch.
+    recovery_idx = min(n - 1, clean_catch_idx + 1)
 
-        if stable_overhead and stable_lockout:
+    # Skip the immediate receiving frames so recovery represents the
+    # athlete standing in the front rack, not still rising from the catch.
+    recovery_search_start = min(
+        n - stable_needed,
+        clean_catch_idx + max(10, int(n * 0.04)),
+    )
+    recovery_search_end = min(
+        n - stable_needed,
+        clean_catch_idx + max(35, int(n * 0.35)),
+    )
+
+    for i in range(recovery_search_start, recovery_search_end + 1):
+        stable_rack = all(rack_like[i:i + stable_needed])
+        standing = (
+            np.mean(knee[i:i + stable_needed]) > 150
+            and np.mean(hip[i:i + stable_needed]) > 145
+        )
+
+        if stable_rack and standing:
+            recovery_idx = i
+            break
+
+    # Require a clearly overhead, extended-arm posture. This avoids treating
+    # noisy clean/front-rack wrist positions as the start of the jerk.
+    clear_overhead = (
+        (wrist_y < shoulder_y - 0.04)
+        & (elbow > 150)
+    )
+
+    overhead_search_start = min(
+        n - stable_needed,
+        recovery_idx + max(8, int(n * 0.04)),
+    )
+
+    jerk_catch_idx = None
+
+    for i in range(overhead_search_start, n - stable_needed):
+        stable_overhead = all(clear_overhead[i:i + stable_needed])
+
+        if stable_overhead:
             jerk_catch_idx = i
             break
 
-    # Finish should be clearly after jerk catch, not the catch itself.
-    # For short C&J clips, prefer a later stabilized frame so the visual is distinct.
-    min_finish_gap = max(12, int(n * 0.12))
-    end_idx = min(n - 1, jerk_catch_idx + max(min_finish_gap, int(n * 0.35)))
+    # Relax the vertical margin only if the stricter detector found nothing.
+    if jerk_catch_idx is None:
+        fallback_overhead = (
+            (wrist_y < shoulder_y)
+            & (elbow > 145)
+        )
 
-    for i in range(jerk_catch_idx + min_finish_gap, n - stable_needed):
-        stable_overhead = all(overhead[i:i + stable_needed])
-        stable_lockout = np.mean(elbow[i:i + stable_needed]) > 150
-        standing = knee[i] > 145 and hip[i] > 140
+        for i in range(overhead_search_start, n - stable_needed):
+            if all(fallback_overhead[i:i + stable_needed]):
+                jerk_catch_idx = i
+                break
 
-        if stable_overhead and stable_lockout and standing:
+    if jerk_catch_idx is None:
+        jerk_catch_idx = min(
+            n - 2,
+            recovery_idx + max(20, int(n * 0.25)),
+        )
+
+    # Search only shortly before the overhead receive. This prevents the
+    # clean catch or a long front-rack pause from being selected as jerk dip.
+    pre_catch_window = max(40, int(n * 0.20))
+
+    jerk_start = max(
+        recovery_idx + 2,
+        jerk_catch_idx - pre_catch_window,
+    )
+    jerk_end = max(jerk_start + 2, jerk_catch_idx)
+
+    jerk_dip_idx = jerk_start + int(
+        np.argmin(knee[jerk_start:jerk_end])
+    )
+
+    # Jerk drive: strongest extension between dip and overhead receive.
+    drive_start = min(n - 2, jerk_dip_idx + 1)
+    drive_end = max(drive_start + 1, jerk_catch_idx)
+
+    jerk_drive_idx = drive_start + int(
+        np.argmax(extension_signal[drive_start:drive_end])
+    )
+
+    # Preserve strict chronological ordering.
+    recovery_idx = max(
+        clean_catch_idx + 1,
+        min(int(recovery_idx), n - 5),
+    )
+    jerk_dip_idx = max(
+        recovery_idx + 1,
+        min(int(jerk_dip_idx), n - 4),
+    )
+    jerk_drive_idx = max(
+        jerk_dip_idx + 1,
+        min(int(jerk_drive_idx), n - 3),
+    )
+    jerk_catch_idx = max(
+        jerk_drive_idx + 1,
+        min(int(jerk_catch_idx), n - 2),
+    )
+
+    # Finish: first stable standing overhead frame after the receive.
+    end_idx = min(
+        n - 1,
+        jerk_catch_idx + max(10, int(n * 0.10)),
+    )
+
+    finish_search_start = min(
+        n - stable_needed,
+        jerk_catch_idx + max(5, int(n * 0.03)),
+    )
+
+    for i in range(finish_search_start, n - stable_needed):
+        stable_overhead = all(clear_overhead[i:i + stable_needed])
+        standing = (
+            np.mean(knee[i:i + stable_needed]) > 150
+            and np.mean(hip[i:i + stable_needed]) > 145
+        )
+
+        if stable_overhead and standing:
             end_idx = i
             break
 
-    frame_numbers = np.array([
-        b.get("frame_number", i)
-        for i, b in enumerate(biomechanics)
-    ])
+    end_idx = max(
+        jerk_catch_idx + 1,
+        min(int(end_idx), n - 1),
+    )
 
-    # Clean & Jerk frontend contract:
-    # setup -> clean_catch -> clean_recovery -> jerk_dip -> jerk_catch -> finish
-    #
-    # If the jerk phase detector collapses near the end of a short clip,
-    # use stable spaced anchors so the frontend gets distinct images.
-    if (
-        jerk_drive_idx <= jerk_dip_idx + 1
-        or jerk_catch_idx <= jerk_drive_idx + 1
-        or end_idx <= jerk_catch_idx + 1
-    ):
-        # Event-based fallback for short/fast C&J clips.
-        # Do not use late percentages; find the athlete's actual positions.
-
-        # Clean catch: best front-rack receiving posture in early/mid lift.
-        # Prefer deepest knee bend while wrists are near shoulder height.
-        clean_start = max(1, int(n * 0.05))
-        clean_end = max(clean_start + 2, min(int(n * 0.45), n - 1))
-
-        rack_like = np.abs(wrist_y - shoulder_y) < 0.24
-        clean_window = np.arange(clean_start, clean_end)
-
-        clean_candidates = [
-            i for i in clean_window
-            if rack_like[i] and knee[i] < 140
-        ]
-
-        if clean_candidates:
-            clean_catch_idx = int(clean_candidates[np.argmin(knee[clean_candidates])])
-        else:
-            clean_catch_idx = clean_start + int(np.argmin(knee[clean_start:clean_end]))
-
-        # Jerk search starts after the clean catch/recovery.
-        search_start = min(n - 3, max(recovery_idx + 1, clean_catch_idx + max(3, int(n * 0.06))))
-        jerk_start = search_start
-        search_end = max(search_start + 3, min(int(n * 0.75), n - 1))
-
-        # Jerk dip: next meaningful knee bend after clean catch.
-        jerk_dip_idx = search_start + int(np.argmin(knee[search_start:search_end]))
-
-        # Jerk drive: strongest extension shortly after dip.
-        drive_start = min(n - 3, jerk_dip_idx + 1)
-        drive_end = max(drive_start + 2, min(jerk_dip_idx + max(8, int(n * 0.18)), n - 1))
-        jerk_drive_idx = drive_start + int(np.argmax(extension_signal[drive_start:drive_end]))
-
-        # Detect a stable overhead window instead of using the
-        # first overhead frame. This generalizes much better.
-        catch_idx, finish_idx = find_stable_overhead_window(
-            overhead=overhead,
-            elbow=elbow,
-            knee=knee,
-            hip=hip,
-            wrist_y=wrist_y,
-            hip_y=hip_y,
-            start_idx=jerk_drive_idx,
-            end_idx=n - 1,
-        )
-
-        if catch_idx is not None:
-            jerk_catch_idx = catch_idx
-            end_idx = finish_idx
-        else:
-            overhead_after = np.where(overhead & (np.arange(n) > jerk_drive_idx))[0]
-
-            if len(overhead_after):
-                jerk_catch_idx = int(overhead_after[0])
-            else:
-                jerk_catch_idx = min(
-                    n - 2,
-                    jerk_drive_idx + max(3, int(n * 0.05))
-                )
-
-        # Finish: choose a later stable upright overhead posture.
-        # Body-based selection, not a fixed timestamp.
-        finish_start = min(n - 1, jerk_catch_idx + max(5, int(n * 0.05)))
-        finish_end = min(n - 1, jerk_catch_idx + max(30, int(n * 0.25)))
-
-        finish_candidates = []
-        for i in range(finish_start, finish_end + 1):
-            if not overhead[i]:
-                continue
-            if knee[i] < 150 or hip[i] < 145 or elbow[i] < 150:
-                continue
-
-            if i >= 2:
-                wrist_motion = abs(wrist_y[i] - wrist_y[i - 2])
-                hip_motion = abs(hip_y[i] - hip_y[i - 2])
-
-                if wrist_motion > 0.025:
-                    continue
-                if hip_motion > 0.025:
-                    continue
-
-            finish_candidates.append(i)
-
-        if finish_candidates:
-            end_idx = int(finish_candidates[min(3, len(finish_candidates) - 1)])
-        else:
-            end_idx = min(n - 1, jerk_catch_idx + max(10, int(n * 0.10)))
-
-        # Final ordering/bounds.
-        jerk_dip_idx = max(clean_catch_idx + 1, min(jerk_dip_idx, n - 5))
-        jerk_drive_idx = max(jerk_dip_idx + 1, min(jerk_drive_idx, n - 4))
-        jerk_catch_idx = max(jerk_drive_idx + 1, min(jerk_catch_idx, n - 2))
-
-        # IMPORTANT: prevent finish collapsing into jerk catch
-        min_finish_gap = max(8, int(n * 0.06))
-        end_idx = max(jerk_catch_idx + min_finish_gap, min(end_idx, n - 1))
-
-    # Prefer shared movement-engine events for C&J phase anchors.
-    events = detect_movement_events(biomechanics, "clean_and_jerk")
-
-    if events:
-        clean_catch_idx = int(events.get("clean_catch", clean_catch_idx))
-        recovery_idx = int(events.get("clean_recovery", recovery_idx))
-        jerk_dip_idx = int(events.get("jerk_dip", jerk_dip_idx))
-        jerk_drive_idx = int(events.get("jerk_drive", jerk_drive_idx))
-        jerk_catch_idx = int(events.get("jerk_catch", jerk_catch_idx))
-        end_idx = int(events.get("finish", end_idx))
-
+    # Convert biomechanics indices to source-video frames.
     start_frame = int(frame_numbers[0])
     clean_catch_frame = int(frame_numbers[clean_catch_idx])
-
-      # Clean Recovery = athlete standing in front rack after the clean.
-    # This must come from recovery_idx, not jerk_dip_idx.
     clean_recovery_frame = int(frame_numbers[recovery_idx])
-
-    # Use detected body events directly.
-    # Do not synthesize jerk dip from clean recovery / jerk catch.
     jerk_dip_frame = int(frame_numbers[jerk_dip_idx])
-
     jerk_drive_frame = int(frame_numbers[jerk_drive_idx])
-    # Catch should show the athlete RECEIVING the jerk,
-    # not after they have already stabilized.
-    jerk_catch_idx = jerk_drive_idx + int((end_idx - jerk_drive_idx) * 0.65)
-    jerk_catch_idx = max(jerk_drive_idx + 2, min(jerk_catch_idx, end_idx - 2))
-    jerk_catch_idx = max(0, min(int(jerk_catch_idx), len(frame_numbers) - 1))
-    # If the jerk frames collapse near the end, spread the visual anchors
-    # so the frontend gets distinct Dip → Drive → Catch → Finish images.
-    jerk_catch_idx = max(
-        jerk_drive_idx + 2,
-        min(jerk_catch_idx, n - 2)
-    )
-    jerk_catch_idx = max(0, min(int(jerk_catch_idx), n - 2))
-
-    end_idx = max(jerk_catch_idx + 4, end_idx)
-    end_idx = max(jerk_catch_idx + 1, min(int(end_idx), n - 1))
-
-    # Keep jerk catch/finish slightly later for a clearer overhead sequence.
-    jerk_catch_frame = min(
-        int(frame_numbers[-1]),
-        int(frame_numbers[jerk_catch_idx]) + 6
-    )
-
-    end_frame = min(
-        int(frame_numbers[-1]),
-        max(jerk_catch_frame + 8, int(frame_numbers[end_idx]) + 10)
-    )
+    jerk_catch_frame = int(frame_numbers[jerk_catch_idx])
+    end_frame = int(frame_numbers[end_idx])
 
     reps = [{
         "rep": 1,
@@ -5897,10 +6056,25 @@ def create_clean_and_jerk_phase_images(input_path, output_dir, rep, sample_every
 
     phases = {
         "setup": int(rep.get("start_frame", start)),
-        "clean_catch": int(rep.get("clean_catch_frame", start + int(span * 0.35))),
-        "clean_recovery": int(rep.get("clean_recovery_frame", start + int(span * 0.50))),
-        "jerk_dip": int(rep.get("jerk_dip_frame", start + int(span * 0.62))),
-        "jerk_catch": int(rep.get("jerk_catch_frame", start + int(span * 0.82))),
+
+        # The analyzer's clean_catch_frame currently represents the final
+        # extension/turnover position immediately before receiving the clean.
+        "clean_extension": int(
+            rep.get("clean_catch_frame", start + int(span * 0.35))
+        ),
+
+        # The analyzer's clean_recovery_frame visually represents the athlete
+        # receiving/rising from the clean, so expose it as clean_catch.
+        "clean_catch": int(
+            rep.get("clean_recovery_frame", start + int(span * 0.50))
+        ),
+
+        "jerk_dip": int(
+            rep.get("jerk_dip_frame", start + int(span * 0.62))
+        ),
+        "jerk_catch": int(
+            rep.get("jerk_catch_frame", start + int(span * 0.82))
+        ),
         "finish": min(
             total,
             max(
@@ -5910,11 +6084,12 @@ def create_clean_and_jerk_phase_images(input_path, output_dir, rep, sample_every
         ),
     }
 
-    # C&J storyboard cleanup:
-    # If clean recovery is too close to clean catch, move it later between catch and dip.
-    if phases["clean_recovery"] <= phases["clean_catch"] + 8:
-        gap = max(1, phases["jerk_dip"] - phases["clean_catch"])
-        phases["clean_recovery"] = phases["clean_catch"] + int(gap * 0.35)
+    # Keep the clean catch visually separated from clean extension.
+    if phases["clean_catch"] <= phases["clean_extension"] + 8:
+        gap = max(1, phases["jerk_dip"] - phases["clean_extension"])
+        phases["clean_catch"] = (
+            phases["clean_extension"] + int(gap * 0.35)
+        )
 
     # Finish should be a later/stabler overhead position than jerk catch.
     # Use total video frames, not rep end_frame, so finish can move later.
@@ -5985,12 +6160,30 @@ def pick_phase_frames_from_rep(rep, exercise_label, start, end, total_frames):
         catch_frame = rf("catch_frame", start + int(duration * 0.60))
         finish_frame = max(catch_frame + 10, end - 15)
 
+        lockout_frame = rf(
+            "lockout_frame",
+            catch_frame + max(6, int(duration * 0.10)),
+        )
+
+        recovery_frame = rf(
+            "recovery_frame",
+            lockout_frame + max(8, int(duration * 0.15)),
+        )
+
+        # Use the analyzer's true end frame rather than an early generic
+        # fallback so finish shows the completed recovery.
+        finish_frame = max(
+            recovery_frame + 4,
+            rf("end_frame", end),
+        )
+
         phase_frames = {
             "setup": start,
             "dip": rf("dip_frame", start + int(duration * 0.20)),
             "drive": rf("drive_frame", start + int(duration * 0.35)),
-            "catch": catch_frame,
-            "lockout": rf("lockout_frame", start + int(duration * 0.75)),
+            "split_catch": catch_frame,
+            "lockout": lockout_frame,
+            "recovery": recovery_frame,
             "finish": finish_frame,
         }
 
@@ -6075,27 +6268,75 @@ def create_olympic_lift_phase_images(
     # -----------------------------------
     if normalized_label == "split_jerk":
         raw_dip_frame = rep_frame("dip_frame", start)
+
+        setup_frame = rep_frame(
+            "start_frame",
+            max(start, raw_dip_frame - max(8, (end - start) // 10)),
+        )
+
         drive_frame = rep_frame(
             "drive_frame",
-            raw_dip_frame + max(3, (end - start) // 8)
+            raw_dip_frame + max(3, (end - start) // 8),
         )
-        catch_frame = rep_frame("catch_frame", end)
 
-        setup_frame = max(start, raw_dip_frame - max(6, (end - start) // 10))
-        dip_frame = max(setup_frame + 1, min(raw_dip_frame, catch_frame - 3))
-        drive_frame = max(dip_frame + 1, min(drive_frame, catch_frame - 1))
-        catch_frame = max(drive_frame + 1, min(catch_frame, end - 1))
+        catch_frame = rep_frame(
+            "catch_frame",
+            drive_frame + max(3, (end - start) // 10),
+        )
+
+        lockout_frame = rep_frame(
+            "lockout_frame",
+            catch_frame + max(8, (end - start) // 8),
+        )
+
+        recovery_frame = rep_frame(
+            "recovery_frame",
+            lockout_frame + max(8, (end - start) // 8),
+        )
+
+        finish_frame = rep_frame("end_frame", end)
+
+        # Preserve the analyzer's chronological event sequence while keeping
+        # every phase safely inside the source video.
+        setup_frame = max(0, min(setup_frame, total_frames - 7))
+
+        dip_frame = max(
+            setup_frame + 2,
+            min(raw_dip_frame, total_frames - 6),
+        )
+
+        drive_frame = max(
+            dip_frame + 2,
+            min(drive_frame, total_frames - 5),
+        )
+
+        catch_frame = max(
+            drive_frame + 3,
+            min(catch_frame, total_frames - 4),
+        )
+
+        lockout_frame = max(
+            catch_frame + 4,
+            min(lockout_frame, total_frames - 3),
+        )
+
+        recovery_frame = max(
+            lockout_frame + 4,
+            min(recovery_frame, total_frames - 2),
+        )
+
         finish_frame = max(
-            catch_frame + 1,
-            min(end, catch_frame + max(10, (end - start) // 4))
+            recovery_frame + 1,
+            min(finish_frame, total_frames - 1),
         )
 
         phase_frames = {
             "setup": setup_frame,
             "dip": dip_frame,
             "drive": drive_frame,
-            "catch": catch_frame,
-            "finish": finish_frame,
+            "split_catch": catch_frame,
+            "lockout": lockout_frame,
+            "recovery": recovery_frame,
         }
 
     # -----------------------------------
@@ -6112,28 +6353,77 @@ def create_olympic_lift_phase_images(
         }
 
     elif normalized_label == "snatch":
+        # Use the analyzer's real snatch event frames directly:
+        # setup -> first pull -> full extension -> overhead catch -> finish.
+        setup_frame = start
+        first_pull_frame = rep_frame(
+            "first_pull_frame",
+            setup_frame + max(4, (end - setup_frame) // 6),
+        )
+        extension_frame = rep_frame(
+            "extension_frame",
+            first_pull_frame + max(4, (end - first_pull_frame) // 4),
+        )
+        catch_frame = rep_frame(
+            "catch_frame",
+            extension_frame + max(4, (end - extension_frame) // 3),
+        )
+        finish_frame = rep_frame("end_frame", end)
 
-        # For snatch visuals:
-        # extension key shows the receiving catch position.
-        # catch key shows the standing overhead lockout.
-        # finish key shows a brief stabilized overhead position.
-        first_pull_frame = rep_frame("first_pull_frame", start)
-        receiving_catch_frame = rep_frame("extension_frame", start)
-        lockout_frame = rep_frame("catch_frame", receiving_catch_frame)
-        finish_frame = min(lockout_frame + 10, end)
+        # Analyzer frames identify the lift region, but catch_frame can mark
+        # the beginning of the turnover and end_frame can still be inside the
+        # receiving squat. Derive visual anchors later in the same rep.
+        analyzer_end = finish_frame
+        rep_duration = max(1, analyzer_end - setup_frame)
+        pull_duration = max(1, extension_frame - setup_frame)
 
-        # Frontend keys stay unchanged:
-        # extension = transition image between first pull and catch
-        # catch = receiving catch
-        # finish = lockout / stable overhead
-        transition_frame = first_pull_frame + int((receiving_catch_frame - first_pull_frame) * 0.40)
+        setup_frame = max(0, min(setup_frame, total_frames - 1))
+
+        # Show the bar clearly leaving the floor.
+        # Select a visibly advanced first-pull position. Earlier weighting
+        # landed too close to setup while the bar was still near the floor.
+        first_pull_frame = max(
+            first_pull_frame,
+            setup_frame + max(18, int(pull_duration * 0.70)),
+        )
+        first_pull_frame = min(
+            first_pull_frame,
+            extension_frame - 7,
+        )
+
+        extension_frame = max(
+            first_pull_frame + 7,
+            min(extension_frame, total_frames - 1),
+        )
+
+        # Move from initial turnover to the deeper overhead receiving position.
+        visual_catch_offset = max(
+            18,
+            int(rep_duration * 0.35),
+        )
+        catch_frame = max(
+            catch_frame,
+            extension_frame + visual_catch_offset,
+        )
+        catch_frame = min(catch_frame, total_frames - 2)
+
+        # Finish should show the athlete standing and stabilized overhead.
+        visual_finish_offset = max(
+            45,
+            int(rep_duration * 0.90),
+        )
+        finish_frame = max(
+            analyzer_end,
+            catch_frame + visual_finish_offset,
+        )
+        finish_frame = min(finish_frame, total_frames - 1)
 
         phase_frames = {
-            "setup": start,
+            "setup": setup_frame,
             "first_pull": first_pull_frame,
-            "extension": transition_frame,
-            "catch": receiving_catch_frame,
-            "finish": lockout_frame,
+            "extension": extension_frame,
+            "catch": catch_frame,
+            "finish": finish_frame,
         }
 
     elif normalized_label == "clean":
@@ -6206,50 +6496,56 @@ def create_olympic_lift_phase_images(
             legacy_recovery,
         )
 
-        # Keep every visual frame valid and ordered.
+        # Build a clean storyboard with meaningful visual separation.
+        # The event detector can return valid but tightly packed frames, which
+        # makes neighboring images appear nearly identical.
         setup_frame = max(0, min(setup_frame, total_frames - 1))
+        catch_frame = max(setup_frame + 6, min(catch_frame, total_frames - 2))
 
+        lift_duration = max(1, catch_frame - setup_frame)
+        min_gap = max(4, lift_duration // 16)
+
+        # Use the detected events when possible, but keep each user-facing
+        # phase visibly separated from the previous one.
         first_pull_frame = max(
-            setup_frame + 1,
-            min(first_pull_frame, total_frames - 1),
-        )
-
-        transition_frame = max(
-            first_pull_frame + 1,
-            min(transition_frame, total_frames - 1),
+            setup_frame + min_gap,
+            min(first_pull_frame, catch_frame - 5 * min_gap),
         )
 
         power_position_frame = max(
-            transition_frame + 1,
-            min(power_position_frame, total_frames - 1),
+            first_pull_frame + min_gap,
+            min(power_position_frame, catch_frame - 4 * min_gap),
         )
 
         true_extension_frame = max(
-            power_position_frame + 1,
-            min(true_extension_frame, total_frames - 1),
+            power_position_frame + min_gap,
+            min(true_extension_frame, catch_frame - 3 * min_gap),
         )
 
         pull_under_frame = max(
-            true_extension_frame + 1,
-            min(pull_under_frame, total_frames - 1),
+            true_extension_frame + min_gap,
+            min(pull_under_frame, catch_frame - min_gap),
         )
 
         catch_frame = max(
-            pull_under_frame + 1,
-            min(catch_frame, total_frames - 1),
+            pull_under_frame + min_gap,
+            min(catch_frame, total_frames - 2),
         )
 
+        # Recovery should show the athlete clearly standing out of the catch.
+        # If the analyzer end frame is too close, move later into the video.
+        recovery_gap = max(8, lift_duration // 10)
         recovery_frame = max(
-            catch_frame + 1,
-            min(recovery_frame, total_frames - 1),
+            catch_frame + recovery_gap,
+            recovery_frame,
         )
+        recovery_frame = min(recovery_frame, total_frames - 1)
 
         phase_frames = {
             "setup": setup_frame,
             "first_pull": first_pull_frame,
-            "transition": transition_frame,
             "power_position": power_position_frame,
-            "extension_v2": true_extension_frame,
+            "extension": true_extension_frame,
             "pull_under": pull_under_frame,
             "catch": catch_frame,
             "recovery": recovery_frame,
@@ -6279,25 +6575,66 @@ def create_olympic_lift_phase_images(
     saved = {}
     debug_images = []
 
-    for phase, frame_idx in phase_frames.items():
-        frame_idx = max(0, min(frame_idx, total_frames - 1))
+    # Decode sequentially instead of repeatedly seeking with CAP_PROP_POS_FRAMES.
+    # Random seeking is unreliable for some variable-frame-rate MOV files and
+    # can return images that appear out of chronological order.
+    clean_targets = {
+        phase: max(0, min(int(frame_idx), total_frames - 1))
+        for phase, frame_idx in phase_frames.items()
+    }
 
-        frame = None
+    targets_by_frame = {}
+    for phase, frame_idx in clean_targets.items():
+        targets_by_frame.setdefault(frame_idx, []).append(phase)
 
-        for offset in [0, 1, 2, 3, 5, 8, -1, -2]:
-            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
+    captured = {}
+    remaining = set(targets_by_frame)
 
-            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
-            ret, candidate = cap.read()
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    decoded_idx = 0
 
-            if ret and candidate is not None:
-                frame = candidate
-                frame_idx = safe_idx
-                break
+    while remaining:
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            break
 
-        if frame is None:
-            print(f"Could not read {phase} frame near: {frame_idx}")
-            continue
+        if decoded_idx in remaining:
+            for phase in targets_by_frame[decoded_idx]:
+                captured[phase] = (decoded_idx, frame.copy())
+            remaining.remove(decoded_idx)
+
+        decoded_idx += 1
+
+    # Small sequential fallback around any frame that could not be decoded.
+    # This should be rare, but keeps visuals available on unusual codecs.
+    for phase, target_idx in clean_targets.items():
+        item = captured.get(phase)
+
+        if item is None:
+            fallback_frame = None
+            fallback_idx = target_idx
+
+            for offset in [1, 2, 3, -1, -2]:
+                candidate_idx = max(
+                    0,
+                    min(target_idx + offset, total_frames - 1),
+                )
+
+                cap.set(cv2.CAP_PROP_POS_FRAMES, candidate_idx)
+                ret, candidate = cap.read()
+
+                if ret and candidate is not None:
+                    fallback_frame = candidate
+                    fallback_idx = candidate_idx
+                    break
+
+            if fallback_frame is None:
+                print(f"Could not read {phase} frame near: {target_idx}")
+                continue
+
+            item = (fallback_idx, fallback_frame)
+
+        frame_idx, frame = item
 
         filename = f"{prefix}_{phase}_{uuid.uuid4().hex[:8]}.jpg"
         filepath = os.path.join(output_dir, filename)
