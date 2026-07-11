@@ -6180,32 +6180,107 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
 
     saved = {}
 
-    for phase, frame_idx in phase_frames.items():
+    # MOV/VFR files can return incorrect or unreadable frames when seeking
+    # repeatedly with CAP_PROP_POS_FRAMES. Decode once in sequence and cache
+    # only the exact phase frames we need.
+    normalized_phase_frames = {
+        phase: max(0, min(int(frame_idx), total_frames - 1))
+        for phase, frame_idx in phase_frames.items()
+    }
 
-        frame_idx = max(0, min(int(frame_idx), total_frames - 1))
+    wanted_frames = set(normalized_phase_frames.values())
+    frame_cache = {}
 
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    current_idx = 0
+
+    while current_idx < total_frames and wanted_frames:
         ret, frame = cap.read()
 
         if not ret:
+            break
+
+        if current_idx in wanted_frames:
+            frame_cache[current_idx] = frame.copy()
+            wanted_frames.remove(current_idx)
+
+        current_idx += 1
+
+    for phase, frame_idx in normalized_phase_frames.items():
+        frame = frame_cache.get(frame_idx)
+
+        if frame is None:
+            print(
+                f"Push press phase frame unavailable: "
+                f"{phase} frame={frame_idx}"
+            )
             continue
 
         filename = f"push_press_{phase}_{uuid.uuid4().hex[:8]}.jpg"
         filepath = os.path.join(output_dir, filename)
 
-        cv2.imwrite(filepath, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        if cv2.imwrite(
+            filepath,
+            frame,
+            [cv2.IMWRITE_JPEG_QUALITY, 95],
+        ):
+            saved[phase] = f"/outputs/{filename}"
 
-        saved[phase] = f"/outputs/{filename}"
+    # Build the contact sheet from the sequentially decoded frame cache.
+    debug_tiles = []
 
-    sheet_url = save_phase_contact_sheet(
-        input_path,
-        phase_frames,
-        output_dir,
-        prefix="push_press_phase_debug",
-    )
+    for phase, frame_idx in normalized_phase_frames.items():
+        frame = frame_cache.get(frame_idx)
 
-    if sheet_url:
-        saved["debug_sheet"] = sheet_url
+        if frame is None:
+            continue
+
+        tile = cv2.resize(frame.copy(), (320, 180))
+
+        cv2.rectangle(tile, (0, 0), (320, 34), (0, 0, 0), -1)
+        cv2.putText(
+            tile,
+            f"{phase.upper()}  frame {frame_idx}",
+            (10, 23),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (255, 255, 255),
+            1,
+            cv2.LINE_AA,
+        )
+
+        debug_tiles.append(tile)
+
+    if debug_tiles:
+        import math
+        import numpy as np
+
+        cols = 2
+        rows = math.ceil(len(debug_tiles) / cols)
+
+        sheet = np.ones(
+            (rows * 180, cols * 320, 3),
+            dtype=np.uint8,
+        ) * 255
+
+        for i, tile in enumerate(debug_tiles):
+            row, col = divmod(i, cols)
+            sheet[
+                row * 180:(row + 1) * 180,
+                col * 320:(col + 1) * 320,
+            ] = tile
+
+        debug_filename = (
+            f"push_press_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        )
+        debug_filepath = os.path.join(output_dir, debug_filename)
+
+        if cv2.imwrite(
+            debug_filepath,
+            sheet,
+            [cv2.IMWRITE_JPEG_QUALITY, 95],
+        ):
+            saved["debug_sheet"] = f"/outputs/{debug_filename}"
 
     cap.release()
 
