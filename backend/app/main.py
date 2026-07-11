@@ -8646,6 +8646,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             raw_conf=float(base_conf or 0.0),
             bio_label=bio_label,
             bio_conf=float(bio_conf or 0.0),
+            bio_reason=bio_reason,
             squat_label=squat_label,
             squat_conf=float(squat_conf or 0.0),
             olympic_label=olympic_pred,
@@ -8659,6 +8660,13 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_reason=protected_reason,
             explosive_score=float(explosive_score or 0.0),
             wrist_overhead=float(wrist_overhead_ratio or 0.0),
+            looks_clean=bool(_looks_clean_only),
+            looks_cj=bool(_looks_cj),
+            looks_split=bool(_looks_split),
+            looks_strict=bool(_looks_strict),
+            looks_thruster=bool(_looks_thruster),
+            truly_explosive=bool(_truly_explosive),
+            bar_pos_valid=bool(_bar_pos_valid),
             routing_trace=routing_trace,
             router_scores=router_scores,
         )
@@ -8684,13 +8692,15 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 bodyweight_conf=bodyweight_router_conf,
             )
 
-            v8_result = fuse_predictions(v8_predictions)
+            v8_result = fuse_predictions(
+                v8_predictions,
+                state=router_state,
+            )
 
             debug["router_v8"] = build_debug(
                 v8_predictions,
                 v8_result,
             )
-            debug["router_v8"]["locks"] = get_locks(router_state)
 
         except Exception as e:
             debug["router_v8"] = {
