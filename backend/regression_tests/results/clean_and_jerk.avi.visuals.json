@@ -1,0 +1,14 @@
+{
+  "exercise_label": "clean_and_jerk",
+  "overlay_video_url": null,
+  "phase_images": {
+    "setup": "/outputs/clean_and_jerk_setup_692558c9.jpg",
+    "clean_extension": "/outputs/clean_and_jerk_clean_extension_5fded86a.jpg",
+    "clean_catch": "/outputs/clean_and_jerk_clean_catch_94023d20.jpg",
+    "jerk_dip": "/outputs/clean_and_jerk_jerk_dip_755e3dd3.jpg",
+    "jerk_catch": "/outputs/clean_and_jerk_jerk_catch_1b2996b6.jpg",
+    "finish": "/outputs/clean_and_jerk_finish_7e8f588d.jpg",
+    "debug_sheet": "/outputs/clean_and_jerk_phase_debug_e3baa25c.jpg"
+  },
+  "visuals_error": null
+}

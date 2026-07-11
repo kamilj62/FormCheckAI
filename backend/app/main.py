@@ -227,10 +227,12 @@ mp_drawing = mp.solutions.drawing_utils
 async def root():
     return {"status": "ok"}
 
+
 @app.get("/health")
 @app.head("/health")
 async def health():
     return {"status": "ok", "model_loaded": True, "build": "clean_v2_251f968"}
+
 
 def angle(a, b, c):
     a = np.array(a)
@@ -1079,6 +1081,10 @@ def draw_deadlift_guides(frame, landmarks, width, height):
 def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
     knee_angles = np.array([b["knee_angle"] for b in biomechanics])
     torso_angles = np.array([b["torso_angle"] for b in biomechanics])
+    hip_y_values = np.array(
+        [b.get("hip_y", 0.5) for b in biomechanics],
+        dtype=np.float32,
+    )
     valgus_ratios = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
     heel_lifts = np.array([b.get("heel_lift", 0.0) for b in biomechanics])
     head_drops = np.array([b.get("head_drop", 0.0) for b in biomechanics])
@@ -1098,6 +1104,37 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
 
     is_front_squat = exercise_label == "squat_front"
     is_overhead_squat = exercise_label == "overhead_squat"
+
+    # Temporary development diagnostic for front-squat segmentation.
+    if is_front_squat:
+        import csv
+
+        signal_path = "/tmp/front_squat_signals.csv"
+
+        with open(signal_path, "w", newline="") as signal_file:
+            writer = csv.writer(signal_file)
+            writer.writerow([
+                "index",
+                "frame",
+                "knee_angle",
+                "hip_y",
+                "torso_angle",
+                "wrist_y",
+                "shoulder_y",
+            ])
+
+            for signal_idx, signal_row in enumerate(biomechanics):
+                writer.writerow([
+                    signal_idx,
+                    int(signal_row.get("frame_number", signal_idx)),
+                    round(float(signal_row.get("knee_angle", 180.0)), 3),
+                    round(float(signal_row.get("hip_y", 0.5)), 5),
+                    round(float(signal_row.get("torso_angle", 0.0)), 3),
+                    round(float(signal_row.get("wrist_y", 0.0)), 5),
+                    round(float(signal_row.get("shoulder_y", 0.0)), 5),
+                ])
+
+        print("FRONT SQUAT SIGNALS:", signal_path)
 
     reps = []
     # Use different threshold for overhead squats due to different mechanics
@@ -1134,8 +1171,11 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
 
     in_rep = False
     start = 0
+    skip_until_idx = -1
 
     for i, knee in enumerate(knee_angles):
+        if i <= skip_until_idx:
+            continue
         if not in_rep and knee < threshold:
             in_rep = True
             start = i
@@ -1143,7 +1183,91 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
         elif in_rep and knee >= threshold:
             end = i
 
-            min_frames = 3 if is_overhead_squat else 5  # Lower threshold for overhead squats
+            if is_front_squat:
+                raw_start = int(start)
+                raw_end = int(end)
+
+                # Search forward in source-video time, not just contiguous
+                # biomechanics indices. Pose may disappear behind the plates
+                # during the ascent and return near lockout.
+                raw_end_frame = int(frame_numbers[raw_end])
+                forward_limit_frame = raw_end_frame + 120
+
+                search_end = raw_end
+
+                while (
+                    search_end + 1 < len(frame_numbers)
+                    and int(frame_numbers[search_end + 1]) <= forward_limit_frame
+                ):
+                    search_end += 1
+
+                # Search backward for a genuine upright setup. This rejects
+                # an opening partial rep that began before the video.
+                raw_start_frame = int(frame_numbers[raw_start])
+                backward_limit_frame = raw_start_frame - 90
+
+                search_start = raw_start
+
+                while (
+                    search_start - 1 >= 0
+                    and int(frame_numbers[search_start - 1]) >= backward_limit_frame
+                ):
+                    search_start -= 1
+
+                # Hip position is the most reliable bottom signal in this
+                # front-squat clip because knee landmarks are intermittently
+                # obscured by the bar and plates.
+                bottom = search_start + int(
+                    np.argmax(hip_y_values[search_start:search_end + 1])
+                )
+
+                bottom_hip_y = float(hip_y_values[bottom])
+
+                setup_candidates = [
+                    j
+                    for j in range(search_start, bottom)
+                    if (
+                        knee_angles[j] >= 165
+                        and hip_y_values[j] <= bottom_hip_y - 0.08
+                    )
+                ]
+
+                lockout_candidates = [
+                    j
+                    for j in range(bottom + 1, search_end + 1)
+                    if (
+                        knee_angles[j] >= 165
+                        and hip_y_values[j] <= bottom_hip_y - 0.08
+                    )
+                ]
+
+                # A complete front squat needs an upright position on both
+                # sides of the bottom. This rejects the partial opening rep.
+                if not setup_candidates or not lockout_candidates:
+                    in_rep = False
+                    continue
+
+                start = int(setup_candidates[-1])
+                end = int(lockout_candidates[0])
+
+                source_descent_span = (
+                    int(frame_numbers[bottom])
+                    - int(frame_numbers[start])
+                )
+                source_ascent_span = (
+                    int(frame_numbers[end])
+                    - int(frame_numbers[bottom])
+                )
+
+                if source_descent_span < 15 or source_ascent_span < 15:
+                    in_rep = False
+                    continue
+
+                # Prevent later threshold fragments from generating duplicate
+                # reps inside this already-expanded squat window.
+                skip_until_idx = end
+
+            min_frames = 3 if is_overhead_squat else 5
             if end - start < min_frames:
                 in_rep = False
                 continue
@@ -1162,7 +1286,8 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
             rep_wrist_x = wrist_x[start:end + 1]
             rep_shoulder_x = shoulder_x[start:end + 1]
 
-            bottom = start + int(np.argmin(rep_knee))
+            if not is_front_squat:
+                bottom = start + int(np.argmin(rep_knee))
 
             phase_frames = find_squat_phase_window(
                 start,
@@ -5649,22 +5774,73 @@ def create_squat_phase_images(input_path, output_dir, rep, mp_pose, uuid, os, cv
     # ---------------------------------------------------
     # DERIVED PHASES (NO SCHEMA CHANGE)
     # ---------------------------------------------------
+    # The analyzer start can occur after the athlete has already begun
+    # descending. Pad backward so setup shows a clearer upright position.
+    visual_setup = max(
+        0,
+        start - max(12, int((bottom - start) * 0.45)),
+    )
+
+    # Select descent earlier in the downward movement so it remains visibly
+    # distinct from the bottom position.
+    visual_descent = visual_setup + int(
+        (bottom - visual_setup) * 0.42
+    )
+
+    # Front squats can lose pose tracking during the early ascent because
+    # the plates obscure the athlete. Select a later rising position so the
+    # ascent image is visually distinct from the bottom.
+    is_front_squat_visual = (
+        "front_rack" in rep.get("breakdown", {})
+        or "bar_position" in rep.get("breakdown", {})
+    )
+
+    ascent_ratio = 0.62 if is_front_squat_visual else 0.45
+
     phase_frames = {
-        "setup": start,
-        "descent": int(start + (bottom - start) * 0.6),
+        "setup": visual_setup,
+        "descent": visual_descent,
         "bottom": bottom,
-        "ascent": int(bottom + (end - bottom) * 0.45),
+        "ascent": int(bottom + (end - bottom) * ascent_ratio),
         "lockout": end,
     }
 
     saved = {}
+    debug_tiles = []
 
-    def get_frame(idx):
-        cap = cv2.VideoCapture(input_path)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+    # Decode sequentially instead of repeatedly seeking. Random frame seeks
+    # can fail on variable-frame-rate MOV files and previously caused later
+    # phases such as ascent and lockout to disappear.
+    target_frames = {
+        int(idx)
+        for idx in phase_frames.values()
+    }
+    frame_cache = {}
+
+    cap = cv2.VideoCapture(input_path)
+
+    if not cap.isOpened():
+        print("Squat phase sequential decode error")
+        return None
+
+    frame_idx = 0
+    final_target = max(target_frames) if target_frames else -1
+
+    while True:
         ret, frame = cap.read()
-        cap.release()
-        return frame if ret else None
+
+        if not ret:
+            break
+
+        if frame_idx in target_frames:
+            frame_cache[frame_idx] = frame.copy()
+
+        if frame_idx >= final_target:
+            break
+
+        frame_idx += 1
+
+    cap.release()
 
     with mp_pose.Pose(
         static_image_mode=True,
@@ -5673,9 +5849,14 @@ def create_squat_phase_images(input_path, output_dir, rep, mp_pose, uuid, os, cv
 
         for phase, idx in phase_frames.items():
 
-            frame = get_frame(idx)
+            idx = int(idx)
+            frame = frame_cache.get(idx)
+
             if frame is None:
+                print(f"Missing squat phase frame: {phase} at {idx}")
                 continue
+
+            frame = frame.copy()
 
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
@@ -5702,11 +5883,43 @@ def create_squat_phase_images(input_path, output_dir, rep, mp_pose, uuid, os, cv
                 cv2.LINE_AA,
             )
 
+            cv2.putText(
+                frame,
+                f"frame {int(idx)}",
+                (35, 108),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
+
             filename = f"squat_{phase}_{uuid.uuid4().hex[:8]}.jpg"
             filepath = os.path.join(output_dir, filename)
 
             if cv2.imwrite(filepath, frame):
                 saved[phase] = f"/outputs/{filename}"
+
+                tile = cv2.resize(frame, (320, 180))
+                debug_tiles.append(tile)
+
+    if debug_tiles:
+        import math
+        import numpy as np
+
+        cols = 3
+        rows = math.ceil(len(debug_tiles) / cols)
+        sheet = np.ones((rows * 180, cols * 320, 3), dtype=np.uint8) * 255
+
+        for i, tile in enumerate(debug_tiles):
+            r, c = divmod(i, cols)
+            sheet[r * 180:(r + 1) * 180, c * 320:(c + 1) * 320] = tile
+
+        debug_filename = f"squat_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        debug_filepath = os.path.join(output_dir, debug_filename)
+
+        if cv2.imwrite(debug_filepath, sheet):
+            saved["debug_sheet"] = f"/outputs/{debug_filename}"
 
     return saved if saved else None
 
