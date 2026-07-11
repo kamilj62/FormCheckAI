@@ -675,7 +675,7 @@ def find_deadlift_phase_window(start_idx, top_idx):
     setup_idx = start_idx + int(span * 0.10)
     pull_idx = start_idx + int(span * 0.42)
     mid_idx = start_idx + int(span * 0.68)
-    finish_idx = start_idx + int(span * 0.88)
+    finish_idx = start_idx + int(span * 0.84)
     lockout_idx = top_idx
 
     return {
@@ -789,13 +789,55 @@ def analyze_deadlift_reps(biomechanics):
                 in_rep = False
                 continue
 
-            rep_signal = movement_signal[start:end + 1]
-            rep_torso = torso[start:end + 1]
-            rep_hip = hip[start:end + 1]
-            rep_knee = knee[start:end + 1]
-            rep_bar = bar_distance[start:end + 1]
-            rep_head_drop = head_drop[start:end + 1]
-            rep_head_forward = head_forward[start:end + 1]
+            # The threshold crossing can occur before the lifter reaches a
+            # stable lockout. Search slightly beyond it for the strongest
+            # combined hip and knee extension with an upright torso.
+            original_end = end
+
+            # Preserve the original segmentation endpoint for coaching.
+            # The refined endpoint is only used for visual phase timing.
+            score_end = original_end
+            rep_span = max(1, original_end - start)
+
+            lockout_search_start = max(
+                start + 4,
+                original_end - 2,
+            )
+            lockout_search_end = min(
+                len(biomechanics) - 1,
+                original_end + max(10, int(rep_span * 0.65)),
+            )
+
+            if lockout_search_end > lockout_search_start:
+                candidate_hip = hip[
+                    lockout_search_start:lockout_search_end + 1
+                ]
+                candidate_knee = knee[
+                    lockout_search_start:lockout_search_end + 1
+                ]
+                candidate_torso = torso[
+                    lockout_search_start:lockout_search_end + 1
+                ]
+
+                lockout_score = (
+                    candidate_hip
+                    + candidate_knee
+                    - (0.80 * candidate_torso)
+                )
+
+                end = int(
+                    lockout_search_start + np.argmax(lockout_score)
+                )
+
+            # Score only the original segmented pull window.
+            # Later lockout frames are reserved for phase visuals.
+            rep_signal = movement_signal[start:score_end + 1]
+            rep_torso = torso[start:score_end + 1]
+            rep_hip = hip[start:score_end + 1]
+            rep_knee = knee[start:score_end + 1]
+            rep_bar = bar_distance[start:score_end + 1]
+            rep_head_drop = head_drop[start:score_end + 1]
+            rep_head_forward = head_forward[start:score_end + 1]
 
             max_head_drop = float(np.max(rep_head_drop))
             max_head_forward = float(np.max(rep_head_forward))
@@ -910,6 +952,7 @@ def analyze_deadlift_reps(biomechanics):
                 "mid_frame": int(frame_numbers[phase_frames["mid"]]),
                 "finish_frame": int(frame_numbers[phase_frames["finish"]]),
                 "bottom_frame": int(frame_numbers[start + np.argmax(rep_signal)]),
+                "lockout_frame": int(frame_numbers[phase_frames["lockout"]]),
                 "end_frame": int(frame_numbers[phase_frames["lockout"]]),
                 "score": score,
                 "grade": grade_score(score),
@@ -936,6 +979,7 @@ def analyze_deadlift_reps(biomechanics):
             "mid_frame": int(frame_numbers[phase_frames["mid"]]),
             "finish_frame": int(frame_numbers[phase_frames["finish"]]),
             "bottom_frame": int(frame_numbers[bottom_idx]),
+            "lockout_frame": int(frame_numbers[phase_frames["lockout"]]),
             "end_frame": int(frame_numbers[phase_frames["lockout"]]),
             "score": 7.0,
             "grade": grade_score(7.0),
