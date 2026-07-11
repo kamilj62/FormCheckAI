@@ -4086,6 +4086,119 @@ def analyze_bench_press_reps(biomechanics):
                 ],
             })
 
+    # ---------------------------------------------------------
+    # SINGLE-REP FULL-CYCLE REFINEMENT
+    # ---------------------------------------------------------
+    # Search ordered clip regions instead of accepting a small local
+    # elbow cycle. This prevents a brief wobble from becoming the rep.
+    if len(reps) == 1 and len(elbow_all) >= 30:
+        full_elbow = np.asarray(elbow_all, dtype=float)
+
+        kernel_size = 7
+        kernel = np.ones(kernel_size, dtype=float) / kernel_size
+        pad = kernel_size // 2
+
+        smooth_elbow = np.convolve(
+            np.pad(full_elbow, (pad, pad), mode="edge"),
+            kernel,
+            mode="valid",
+        )
+
+        n_full = len(smooth_elbow)
+
+        # Setup must come from the early portion of the clip.
+        setup_region_end = max(5, int(n_full * 0.35))
+        setup_idx = int(
+            np.argmax(smooth_elbow[:setup_region_end])
+        )
+
+        # For a validated single-rep bench clip, the final available
+        # frame is the completed lockout. Pose confidence near the end
+        # can make an earlier frame appear to have a larger elbow angle,
+        # so do not shorten the rep based on that noisy local maximum.
+        lockout_idx = n_full - 1
+
+        # Bottom must lie between setup and lockout.
+        bottom_search_start = setup_idx + 3
+        bottom_search_end = lockout_idx - 3
+
+        if bottom_search_end > bottom_search_start:
+            bottom_idx = int(
+                bottom_search_start
+                + np.argmin(
+                    smooth_elbow[
+                        bottom_search_start:bottom_search_end + 1
+                    ]
+                )
+            )
+
+            descent_span = bottom_idx - setup_idx
+            press_span = lockout_idx - bottom_idx
+            cycle_span = lockout_idx - setup_idx
+
+            setup_extension = float(
+                smooth_elbow[setup_idx] - smooth_elbow[bottom_idx]
+            )
+            lockout_extension = float(
+                smooth_elbow[lockout_idx] - smooth_elbow[bottom_idx]
+            )
+
+            rep = reps[0]
+            breakdown = rep.setdefault("breakdown", {})
+            breakdown["bench_ordered_debug"] = {
+                "n_full": int(n_full),
+                "setup_idx": int(setup_idx),
+                "bottom_idx": int(bottom_idx),
+                "lockout_idx": int(lockout_idx),
+                "descent_span": int(descent_span),
+                "press_span": int(press_span),
+                "cycle_span": int(cycle_span),
+                "required_cycle_span": int(n_full * 0.55),
+                "setup_elbow": round(float(smooth_elbow[setup_idx]), 1),
+                "bottom_elbow": round(float(smooth_elbow[bottom_idx]), 1),
+                "lockout_elbow": round(float(smooth_elbow[lockout_idx]), 1),
+                "setup_extension": round(setup_extension, 1),
+                "lockout_extension": round(lockout_extension, 1),
+            }
+
+            complete_cycle = (
+                descent_span >= 8
+                and press_span >= 5
+                and cycle_span >= int(n_full * 0.55)
+                and setup_extension >= 25.0
+                and lockout_extension >= 25.0
+            )
+
+            breakdown["bench_ordered_debug"]["complete_cycle"] = bool(
+                complete_cycle
+            )
+
+            if complete_cycle:
+                descent_idx = setup_idx + max(
+                    1,
+                    int(descent_span * 0.50),
+                )
+                press_idx = bottom_idx + max(
+                    1,
+                    int(press_span * 0.50),
+                )
+
+                rep = reps[0]
+                rep["start_frame"] = int(frame_numbers_all[setup_idx])
+                rep["descent_frame"] = int(frame_numbers_all[descent_idx])
+                rep["bottom_frame"] = int(frame_numbers_all[bottom_idx])
+                rep["press_frame"] = int(frame_numbers_all[press_idx])
+                rep["lockout_frame"] = int(frame_numbers_all[lockout_idx])
+                rep["end_frame"] = int(frame_numbers_all[lockout_idx])
+
+                breakdown = rep.setdefault("breakdown", {})
+                breakdown.pop("bench_refine_debug", None)
+                breakdown["full_cycle_refined"] = True
+                breakdown["cycle_coverage"] = round(
+                    cycle_span / max(1, n_full - 1),
+                    3,
+                )
+
     return reps, build_set_summary(reps)
 
 
@@ -6071,9 +6184,10 @@ def find_bench_press_phase_window(start, end):
     bottom_frame = start + int(span * 0.50)
     press_frame = start + int(span * 0.70)
 
-    # Do not use the exact end frame.
-    # It often catches the athlete moving after the rep.
-    lockout_frame = start + int(span * 0.85)
+    # Bench rep windows are already bounded by the analyzer.
+    # Use the final analyzed frame so the lockout image shows the
+    # completed press rather than an earlier mid-press position.
+    lockout_frame = end
 
     return {
         "setup": setup_frame,
@@ -6150,61 +6264,19 @@ def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1)
                 "wrist_y": wrist_y,
             })
 
-    if candidates:
-        # Lowest bar = bottom
-        bottom_frame = max(
-            candidates,
-            key=lambda x: x["wrist_y"],
-        )["frame"]
+    # Use the analyzed repetition window as the source of truth.
+    # The pose-based search previously wandered before rep_start and
+    # selected nearly identical setup frames outside the actual rep.
+    phase_frames = find_bench_press_phase_window(
+        rep_start,
+        rep_end,
+    )
 
-        before_bottom = [
-            c for c in candidates
-            if c["frame"] <= bottom_frame
-        ]
-
-        after_bottom = [
-            c for c in candidates
-            if c["frame"] >= bottom_frame
-        ]
-
-        # Highest bar before bottom = setup
-        setup_frame = min(
-            before_bottom,
-            key=lambda x: x["wrist_y"],
-        )["frame"]
-
-        # Highest bar after bottom = lockout
-        lockout_frame = min(
-            after_bottom,
-            key=lambda x: x["wrist_y"],
-        )["frame"]
-
-        descent_frame = setup_frame + int(
-            (bottom_frame - setup_frame) * 0.50
-        )
-
-        # PRESS = 75% up from bottom to lockout
-        press_frame = bottom_frame + int(
-            (lockout_frame - bottom_frame) * 0.75
-        )
-
-    else:
-        # Safe fallback
-        span = rep_end - rep_start
-
-        setup_frame = rep_start + int(span * 0.10)
-        descent_frame = rep_start + int(span * 0.30)
-        bottom_frame = rep_start + int(span * 0.50)
-        press_frame = rep_start + int(span * 0.75)
-        lockout_frame = rep_start + int(span * 0.90)
-
-    phase_frames = {
-        "setup": setup_frame,
-        "descent": descent_frame,
-        "bottom": bottom_frame,
-        "press": press_frame,
-        "lockout": lockout_frame,
-    }
+    setup_frame = phase_frames["setup"]
+    descent_frame = phase_frames["descent"]
+    bottom_frame = phase_frames["bottom"]
+    press_frame = phase_frames["press"]
+    lockout_frame = phase_frames["lockout"]
 
     cleaned = {}
     for phase, frame_idx in phase_frames.items():
@@ -6213,37 +6285,95 @@ def create_bench_press_phase_images(input_path, output_dir, rep, sample_every=1)
             min(int(frame_idx), total_frames - 1),
         )
 
+    # Decode sequentially instead of randomly seeking.
+    # Some MOV/VFR clips return the same keyframe for several cap.set()
+    # requests, making every phase image appear identical.
+    target_frames = {
+        int(frame_idx): phase
+        for phase, frame_idx in cleaned.items()
+    }
+    decoded_frames = {}
+
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    current_frame = 0
+    final_target = max(target_frames) if target_frames else -1
+
+    while current_frame <= final_target:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if current_frame in target_frames:
+            decoded_frames[target_frames[current_frame]] = frame.copy()
+
+        current_frame += 1
+
     saved = {}
 
-    for phase, frame_idx in cleaned.items():
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = cap.read()
-
-        if not ret:
+    for phase in ("setup", "descent", "bottom", "press", "lockout"):
+        frame = decoded_frames.get(phase)
+        if frame is None:
             continue
 
         filename = (
             f"bench_press_{phase}_"
             f"{uuid.uuid4().hex[:8]}.jpg"
         )
-
-        filepath = os.path.join(
-            output_dir,
-            filename,
-        )
+        filepath = os.path.join(output_dir, filename)
 
         cv2.imwrite(filepath, frame)
         saved[phase] = f"/outputs/{filename}"
 
-    sheet_url = save_phase_contact_sheet(
-        input_path,
-        cleaned,
-        output_dir,
-        prefix="bench_press_phase_debug",
-    )
+    # Build the bench debug sheet from the exact sequentially decoded
+    # frames rather than calling the random-seeking generic helper.
+    tiles = []
 
-    if sheet_url:
-        saved["debug_sheet"] = sheet_url
+    for phase in ("setup", "descent", "bottom", "press", "lockout"):
+        frame = decoded_frames.get(phase)
+        if frame is None:
+            continue
+
+        tile = frame.copy()
+        label = f"{phase.upper()}  frame={cleaned[phase]}"
+
+        cv2.rectangle(
+            tile,
+            (0, 0),
+            (tile.shape[1], 42),
+            (0, 0, 0),
+            -1,
+        )
+        cv2.putText(
+            tile,
+            label,
+            (10, 29),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.72,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
+        target_height = 320
+        scale = target_height / max(1, tile.shape[0])
+        target_width = max(1, int(tile.shape[1] * scale))
+
+        tile = cv2.resize(
+            tile,
+            (target_width, target_height),
+        )
+        tiles.append(tile)
+
+    if tiles:
+        sheet = cv2.hconcat(tiles)
+        sheet_filename = (
+            f"bench_press_phase_debug_"
+            f"{uuid.uuid4().hex[:8]}.jpg"
+        )
+        sheet_path = os.path.join(output_dir, sheet_filename)
+
+        cv2.imwrite(sheet_path, sheet)
+        saved["debug_sheet"] = f"/outputs/{sheet_filename}"
 
     cap.release()
 
@@ -8040,9 +8170,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "score": round(score, 3)
             })
 
+        # Two independent high-confidence bench predictions should not be
+        # weakened or overridden by a false bodyweight-router prediction.
+        strong_bench_evidence = (
+            raw_label == "bench_press"
+            and float(base_conf or 0.0) >= 0.95
+            and bio_label == "bench_press"
+            and float(bio_conf or 0.0) >= 0.95
+
+            # Do not let camera-angle bench agreement override a clear
+            # squat-to-overhead thruster movement.
+            and not bool(_looks_thruster)
+        )
+
         bodyweight_high_conf = (
             bodyweight_router_label in {"push_up", "pull_up", "handstand_push_up"}
             and float(bodyweight_router_conf or 0.0) >= 0.95
+            and not strong_bench_evidence
         )
 
         raw_weight = 0.35 if bodyweight_high_conf else 1.0
@@ -8343,6 +8487,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
                 "raw_label": raw_label,
                 "squat_label": squat_label,
                 "bodyweight_debug": bodyweight_debug,
+                "strong_bench_evidence": strong_bench_evidence,
                 "looks_push_up": _looks_push_up,
                 "looks_pull_up": _looks_pull_up,
                 "looks_handstand_push_up": _looks_handstand_push_up,
@@ -8382,10 +8527,23 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             },
         )
 
-        if protection.label:
+        # Two independent perfect bench predictions take priority over
+        # false overhead-squat/bodyweight signatures caused by the camera
+        # orientation of a horizontal bench-press clip.
+        if strong_bench_evidence:
+            protected_label = "bench_press"
+            protected_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.95,
+            )
+            protected_reason = "strong_bench_model_agreement"
+
+        elif protection.label:
             protected_label = protection.label
             protected_conf = protection.confidence
             protected_reason = protection.reason
+
         elif bio_label == "bench_press" and not _looks_strict and not _looks_thruster and not (_looks_push_up or _looks_pull_up or _looks_handstand_push_up):
             bench_blocked_by_oly = (
                 olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
@@ -9059,6 +9217,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             and float(bodyweight_router_conf or 0.0) >= 0.95
             and float(router_v6_conf or 0.0) >= 0.72
             and not strong_oly_lock
+            and not strong_bench_evidence
 
             # Split-jerk guard: an explosive overhead Olympic movement can look
             # like a pull-up to the bodyweight router because of the long elbow

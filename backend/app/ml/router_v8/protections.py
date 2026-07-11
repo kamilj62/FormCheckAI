@@ -18,7 +18,8 @@ def bodyweight_protections(
     raw_label: str | None,
     squat_label: str | None,
     bodyweight_debug: dict[str, Any],
-    looks_push_up: bool,
+    strong_bench_evidence: bool = False,
+    looks_push_up: bool = False,
     looks_pull_up: bool,
     looks_handstand_push_up: bool,
     looks_muscle_up: bool,
@@ -75,7 +76,10 @@ def bodyweight_protections(
         and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.38
     )
 
-    if looks_pull_up or push_press_pull_up_signature:
+    if (
+        (looks_pull_up or push_press_pull_up_signature)
+        and not strong_bench_evidence
+    ):
         return ProtectionResult(
             label="pull_up",
             confidence=0.86,
