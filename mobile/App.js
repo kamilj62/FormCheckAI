@@ -608,12 +608,12 @@ const getPhaseConfig = (exerciseLabel) => {
   ) {
     return {
       title: "Pull-Up Phase Review",
-      text: "Hang → Pull → Top → Finish",
+      text: "Hang → Pull → Top → Descent",
       items: [
         ["hang", "Hang"],
         ["pull", "Pull"],
         ["top", "Top"],
-        ["finish", "Finish"],
+        ["descent", "Descent"],
       ],
     };
   }
@@ -831,7 +831,7 @@ const getInteractiveZones = (result) => {
       makeZone("hang", "Hang", "hang", status(["range"]), note("Start from a controlled dead hang.")),
       makeZone("pull", "Pull", "pull", status(["range"]), note("Pull strongly with control.")),
       makeZone("top", "Top", "top", status(["top"]), note("Finish high with chin near or above the bar.")),
-      makeZone("finish", "Finish", "finish", status(["control"]), note("Return to a controlled hang before the next rep.")),
+      makeZone("descent", "Descent", "descent", status(["control"]), note("Lower under control without beginning another rep.")),
     ];
   }
 

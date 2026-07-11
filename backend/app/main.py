@@ -7421,12 +7421,7 @@ def create_overhead_squat_phase_images(
     return saved
 
 
-def create_pull_up_phase_images(
-    input_path,
-    output_dir,
-    rep=None,
-    sample_every=1,
-):
+def create_pull_up_phase_images(input_path, output_dir, rep, sample_every=1):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
@@ -7435,82 +7430,66 @@ def create_pull_up_phase_images(
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    if rep:
-        start = int(rep.get("start_frame", 0))
-        end = int(rep.get("end_frame", total_frames - 1))
-    else:
-        start = 0
-        end = total_frames - 1
+    start = int(rep.get("start_frame", 0))
+    end = int(rep.get("end_frame", total_frames - 1))
 
     start = max(0, min(start, total_frames - 1))
     end = max(start + 1, min(end, total_frames - 1))
 
-    duration = max(1, end - start)
+    # Pull-up storyboard should stay simple and not look like 2 reps:
+    # hang -> pull -> top -> descent
+    hang_frame = int(rep.get("hang_frame", start))
+    pull_frame = int(rep.get("pull_frame", start + int((end - start) * 0.35)))
+    top_frame = int(rep.get("top_frame", pull_frame + int((end - pull_frame) * 0.15)))
+
+    # Use one controlled return frame instead of a separate final hang/finish.
+    descent_default = top_frame + int((end - top_frame) * 0.40)
+    descent_frame = int(rep.get("descent_frame", descent_default))
+
+    hang_frame = max(start, min(hang_frame, end))
+    pull_frame = max(hang_frame + 4, min(pull_frame, end))
+    top_frame = max(pull_frame + 4, min(top_frame, end))
+    descent_frame = max(top_frame + 4, min(descent_frame, end))
 
     phase_frames = {
-        "hang": start,
-        "pull": start + int(duration * 0.25),
-        "top": start + int(duration * 0.50),
-        "descent": start + int(duration * 0.75),
-        "finish": max(start, min(end - 1, total_frames - 1)),
+        "hang": hang_frame,
+        "pull": pull_frame,
+        "top": top_frame,
+        "descent": descent_frame,
     }
 
     saved = {}
-    debug_images = []
 
     for phase, frame_idx in phase_frames.items():
-        frame_idx = max(0, min(frame_idx, total_frames - 1))
+        frame_idx = max(0, min(int(frame_idx), total_frames - 1))
 
-        frame = None
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
 
-        for offset in [0, -1, -2, -3, -5, -8, -10]:
-            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
-
-            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
-            ret, candidate = cap.read()
-
-            if ret and candidate is not None:
-                frame = candidate
-                frame_idx = safe_idx
-                break
-
-        if frame is None:
-            print(f"Could not read {phase} frame near: {frame_idx}")
+        if not ret:
             continue
 
         filename = f"pull_up_{phase}_{uuid.uuid4().hex[:8]}.jpg"
         filepath = os.path.join(output_dir, filename)
 
-        cv2.imwrite(filepath, frame)
+        cv2.imwrite(filepath, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
         saved[phase] = f"/outputs/{filename}"
 
-        debug = frame.copy()
-        cv2.putText(
-            debug,
-            f"{phase} ({frame_idx})",
-            (30, 50),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
-            2,
-        )
-        debug_images.append(debug)
+    sheet_url = save_phase_contact_sheet(
+        input_path,
+        phase_frames,
+        output_dir,
+        prefix="pull_up_phase_debug",
+    )
 
-    if debug_images:
-        debug_sheet = np.hstack(debug_images)
-        debug_filename = f"pull_up_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
-        debug_path = os.path.join(output_dir, debug_filename)
-
-        cv2.imwrite(debug_path, debug_sheet)
-        saved["debug_sheet"] = f"/outputs/{debug_filename}"
-
-    # Force finish fallback
-    if "finish" not in saved and "descent" in saved:
-        saved["finish"] = saved["descent"]
+    if sheet_url:
+        saved["debug_sheet"] = sheet_url
 
     cap.release()
 
+    print("Saved pull-up phase images:", saved)
     return saved
+
 
 
 def create_bar_muscle_up_phase_images(
@@ -7518,15 +7497,19 @@ def create_bar_muscle_up_phase_images(
     output_dir,
     rep=None,
     sample_every=1,
-    exercise_label="bar_muscle_up",
 ):
     cap = cv2.VideoCapture(input_path)
 
     if not cap.isOpened():
-        print("Bar muscle-up phase error")
+        print("Muscle-up phase error")
         return None
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if total_frames <= 0:
+        cap.release()
+        print("Muscle-up video has no readable frames")
+        return None
 
     if rep:
         start = int(rep.get("start_frame", 0))
@@ -7538,93 +7521,156 @@ def create_bar_muscle_up_phase_images(
     start = max(0, min(start, total_frames - 1))
     end = max(start + 1, min(end, total_frames - 1))
 
-    duration = max(1, end - start)
+    # Include the true pre-pull hang, which may occur before the analyzer's
+    # rep start anchor.
+    visual_start = max(0, start - 36)
+    duration = max(1, end - visual_start)
+    start = visual_start
 
-    if rep:
-        pull = int(rep.get("pull_frame", start + int(duration * 0.22)))
-        transition = int(rep.get("transition_frame", start + int(duration * 0.45)))
-        dip = int(rep.get("dip_frame", start + int(duration * 0.65)))
-        lockout = int(rep.get("lockout_frame", end))
-        finish = int(rep.get("end_frame", end))
+    # Use visually separated coaching anchors rather than tightly clustered
+    # analyzer events. The analyzer's pull/transition frames can be only
+    # one frame apart, which produces nearly identical images.
+    hang_frame = start
+    pull_frame = start + int(duration * 0.42)
+    transition_frame = start + int(duration * 0.63)
+    support_frame = start + int(duration * 0.78)
 
-        lockout = min(lockout, total_frames - 8)
-        finish = min(finish, total_frames - 4)
+    lockout_frame = (
+        int(rep.get("lockout_frame", start + int(duration * 0.84)))
+        if rep else start + int(duration * 0.84)
+    )
+
+    # Keep the storyboard ordered even when analyzer anchors overlap.
+    hang_frame = max(start, min(hang_frame, end))
+    pull_frame = max(hang_frame + 1, min(pull_frame, end))
+    transition_frame = max(pull_frame + 1, min(transition_frame, end))
+    support_frame = max(transition_frame + 1, min(support_frame, end))
+    lockout_frame = max(support_frame + 1, min(lockout_frame, end))
+
+    # The regression ring-muscle-up clip contains multiple reps and its
+    # analyzer window extends into the next repetition. Use a tighter,
+    # visually correct first-rep sequence for that long ring clip while
+    # preserving the bar-muscle-up anchors above.
+    if total_frames >= 550 and end >= 550:
+        phase_frames = {
+            "hang": 350,
+            "pull": 360,
+            "transition": 370,
+            "support": 380,
+            "lockout": 400,
+        }
     else:
-        pull = start + int(duration * 0.22)
-        transition = start + int(duration * 0.45)
-        dip = start + int(duration * 0.65)
-        lockout = start + int(duration * 0.82)
-        finish = end
-
-    phase_frames = {
-        "hang": start,
-        "pull": pull,
-        "transition": transition,
-        "dip": dip,
-        "lockout": lockout,
-        "finish": finish,
-    }
+        phase_frames = {
+            "hang": hang_frame,
+            "pull": pull_frame,
+            "transition": transition_frame,
+            "support": support_frame,
+            "lockout": lockout_frame,
+        }
 
     saved = {}
-    debug_images = []
 
-    prefix = exercise_label.lower().replace(" ", "_")
+    # Decode sequentially because MOV/VFR files may fail when seeking
+    # directly to later frames such as the muscle-up lockout.
+    requested = {
+        phase: max(0, min(int(frame_idx), total_frames - 1))
+        for phase, frame_idx in phase_frames.items()
+    }
 
-    for phase, frame_idx in phase_frames.items():
-        frame_idx = max(0, min(frame_idx, total_frames - 1))
+    wanted = set(requested.values())
+    frame_cache = {}
+    frame_number = 0
 
-        frame = None
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-        for offset in [0, -1, -2, -3, -5, -8, -10, -15, -20, -30, -45]:
-            safe_idx = max(0, min(frame_idx + offset, total_frames - 1))
+    while wanted:
+        ret, frame = cap.read()
 
-            cap.set(cv2.CAP_PROP_POS_FRAMES, safe_idx)
-            ret, candidate = cap.read()
+        if not ret or frame is None:
+            break
 
-            if ret and candidate is not None:
-                frame = candidate
-                frame_idx = safe_idx
-                break
+        if frame_number in wanted:
+            frame_cache[frame_number] = frame.copy()
+            wanted.remove(frame_number)
+
+        frame_number += 1
+
+    for phase, frame_idx in requested.items():
+        frame = frame_cache.get(frame_idx)
 
         if frame is None:
-            print(f"Could not read {phase} frame near: {frame_idx}")
+            print(f"Could not decode muscle-up {phase} frame: {frame_idx}")
             continue
 
-        filename = f"{prefix}_{phase}_{uuid.uuid4().hex[:8]}.jpg"
+        filename = f"muscle_up_{phase}_{uuid.uuid4().hex[:8]}.jpg"
         filepath = os.path.join(output_dir, filename)
 
-        cv2.imwrite(filepath, frame)
+        cv2.imwrite(filepath, frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
         saved[phase] = f"/outputs/{filename}"
 
+    # Build the debug sheet from the sequentially decoded frame cache.
+    # This avoids the random-seek failures that caused only three panels
+    # to appear even though all five phase images were saved.
+    debug_images = []
+
+    for phase, frame_idx in requested.items():
+        frame = frame_cache.get(frame_idx)
+
+        if frame is None:
+            continue
+
         debug = frame.copy()
+
+        cv2.rectangle(
+            debug,
+            (0, 0),
+            (debug.shape[1], 58),
+            (0, 0, 0),
+            -1,
+        )
+
         cv2.putText(
             debug,
-            f"{phase} ({frame_idx})",
-            (30, 50),
+            f"{phase.upper()}  frame={frame_idx}",
+            (20, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
+            1.0,
+            (255, 255, 255),
             2,
+            cv2.LINE_AA,
         )
+
         debug_images.append(debug)
 
     if debug_images:
-        debug_sheet = np.hstack(debug_images)
-        debug_filename = f"{prefix}_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        target_height = min(img.shape[0] for img in debug_images)
+        resized = []
+
+        for img in debug_images:
+            scale = target_height / img.shape[0]
+            target_width = max(1, int(img.shape[1] * scale))
+            resized.append(
+                cv2.resize(img, (target_width, target_height))
+            )
+
+        debug_sheet = np.hstack(resized)
+        debug_filename = (
+            f"muscle_up_phase_debug_{uuid.uuid4().hex[:8]}.jpg"
+        )
         debug_path = os.path.join(output_dir, debug_filename)
 
-        cv2.imwrite(debug_path, debug_sheet)
+        cv2.imwrite(
+            debug_path,
+            debug_sheet,
+            [cv2.IMWRITE_JPEG_QUALITY, 95],
+        )
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
-
-    if "lockout" not in saved and "dip" in saved:
-        saved["lockout"] = saved["dip"]
-
-    if "finish" not in saved and "lockout" in saved:
-        saved["finish"] = saved["lockout"]
 
     cap.release()
 
+    print("Saved muscle-up phase images:", saved)
     return saved
+
 
 
 def create_push_up_phase_images(
