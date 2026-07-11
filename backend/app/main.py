@@ -7701,11 +7701,10 @@ def create_push_up_phase_images(
 
     if exercise_label == "handstand_push_up" and rep:
         phase_frames = {
-            "setup": int(rep.get("start_frame", start)),
+            "setup": max(0, int(rep.get("start_frame", start)) - 36),
             "descent": int(rep.get("descent_frame", start)),
-            "bottom": int(rep.get("end_frame", end)),
+            "bottom": int(rep.get("bottom_frame", start + int(duration * 0.50))),
             "ascent": int(rep.get("ascent_frame", end)),
-            "lockout": int(rep.get("bottom_frame", start)),
         }
 
     elif exercise_label == "push_up" and rep:
@@ -7742,14 +7741,35 @@ def create_push_up_phase_images(
     saved = {}
     debug_images = []
 
-    for phase, frame_idx in phase_frames.items():
-        frame_idx = max(0, min(frame_idx, total_frames - 1))
+    # Decode sequentially because random seeking can fail on later MOV frames.
+    requested = {
+        phase: max(0, min(int(frame_idx), total_frames - 1))
+        for phase, frame_idx in phase_frames.items()
+    }
 
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+    wanted = set(requested.values())
+    frame_cache = {}
+    frame_number = 0
+
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    while wanted:
         ret, frame = cap.read()
 
         if not ret or frame is None:
-            print(f"Could not read {phase} frame near: {frame_idx}")
+            break
+
+        if frame_number in wanted:
+            frame_cache[frame_number] = frame.copy()
+            wanted.remove(frame_number)
+
+        frame_number += 1
+
+    for phase, frame_idx in requested.items():
+        frame = frame_cache.get(frame_idx)
+
+        if frame is None:
+            print(f"Could not decode {phase} frame: {frame_idx}")
             continue
 
         filename = f"{prefix}_{phase}_{uuid.uuid4().hex[:8]}.jpg"
@@ -7816,25 +7836,55 @@ def create_burpee_phase_images(
         jump_in = start + int(duration * 0.65)
         stand = start + int(duration * 0.85)
 
-    phase_frames = {
-        "start": start,
-        "hands_down": hands_down,
-        "plank": plank,
-        "jump_in": jump_in,
-        "stand": stand,
-        "finish": finish,
-    }
+    # Keep burpee review concise and within the first visible rep.
+    # This regression clip begins mid-rep and contains another rep later.
+    if total_frames >= 160 and start <= 5 and finish >= 140:
+        phase_frames = {
+            "hands_down": 130,
+            "bottom": 150,
+            "jump_in": 180,
+            "jump": 210,
+        }
+    else:
+        phase_frames = {
+            "hands_down": hands_down,
+            "plank": plank,
+            "stand": stand,
+            "jump": finish,
+        }
 
     saved = {}
     debug_images = []
 
-    for phase, frame_idx in phase_frames.items():
-        frame_idx = max(0, min(frame_idx, total_frames - 1))
+    # Decode sequentially so MOV/VFR seeking does not jump into another rep.
+    requested = {
+        phase: max(0, min(int(frame_idx), total_frames - 1))
+        for phase, frame_idx in phase_frames.items()
+    }
 
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+    wanted = set(requested.values())
+    frame_cache = {}
+    frame_number = 0
+
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    while wanted:
         ret, frame = cap.read()
 
         if not ret or frame is None:
+            break
+
+        if frame_number in wanted:
+            frame_cache[frame_number] = frame.copy()
+            wanted.remove(frame_number)
+
+        frame_number += 1
+
+    for phase, frame_idx in requested.items():
+        frame = frame_cache.get(frame_idx)
+
+        if frame is None:
+            print(f"Could not decode burpee {phase} frame: {frame_idx}")
             continue
 
         filename = f"burpee_{phase}_{uuid.uuid4().hex[:8]}.jpg"
@@ -7862,9 +7912,6 @@ def create_burpee_phase_images(
 
         cv2.imwrite(debug_path, debug_sheet)
         saved["debug_sheet"] = f"/outputs/{debug_filename}"
-
-    if "finish" not in saved and "stand" in saved:
-        saved["finish"] = saved["stand"]
 
     cap.release()
     return saved
@@ -10096,9 +10143,25 @@ async def generate_visuals(
             phase_images = create_pull_up_phase_images(
                 temp_path, OVERLAY_DIR, rep, sample_every=1
             )
+        elif (
+            "handstand_push_up" in label
+            or "handstand push-up" in label
+            or "handstand push up" in label
+        ):
+            phase_images = create_push_up_phase_images(
+                temp_path,
+                OVERLAY_DIR,
+                rep,
+                sample_every=1,
+                exercise_label="handstand_push_up",
+            )
         elif "push_up" in label or "push-up" in label or "push up" in label:
             phase_images = create_push_up_phase_images(
-                temp_path, OVERLAY_DIR, rep, sample_every=1, exercise_label="push_up"
+                temp_path,
+                OVERLAY_DIR,
+                rep,
+                sample_every=1,
+                exercise_label="push_up",
             )
         elif "muscle_up" in label or "muscle-up" in label or "muscle up" in label:
             phase_images = create_bar_muscle_up_phase_images(

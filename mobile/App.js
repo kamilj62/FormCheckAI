@@ -572,13 +572,12 @@ const getPhaseConfig = (exerciseLabel) => {
   ) {
     return {
       title: "Handstand Push-Up Phase Review",
-      text: "Setup → Descent → Bottom → Ascent → Lockout",
+      text: "Setup → Descent → Bottom → Ascent",
       items: [
         ["setup", "Setup"],
         ["descent", "Descent"],
         ["bottom", "Bottom"],
         ["ascent", "Ascent"],
-        ["lockout", "Lockout"],
       ],
     };
   }
@@ -621,14 +620,12 @@ const getPhaseConfig = (exerciseLabel) => {
   if (label.includes("burpee")) {
     return {
       title: "Burpee Phase Review",
-      text: "Start → Hands Down → Plank → Jump In → Stand → Finish",
+        text: "Hands Down → Bottom → Jump In → Jump",
       items: [
-        ["start", "Start"],
-        ["hands_down", "Hands Down"],
-        ["plank", "Plank"],
-        ["jump_in", "Jump In"],
-        ["stand", "Stand"],
-        ["finish", "Finish"],
+          ["hands_down", "Hands Down"],
+          ["bottom", "Bottom"],
+          ["jump_in", "Jump In"],
+          ["jump", "Jump"],
       ],
     };
   }
@@ -670,11 +667,10 @@ const getInteractiveZones = (result) => {
 
   if (label.includes("burpee")) {
     return [
-      makeZone("hands_down", "Hands Down", "hands_down", status(["hands_down"]), note("Move quickly to the floor while staying balanced.")),
-      makeZone("plank", "Plank", "plank", status(["plank"]), note("Keep your body tight and avoid sagging through the core.")),
-      makeZone("jump_in", "Jump In", "jump_in", status(["jump_in"]), note("Bring your feet underneath you efficiently.")),
-      makeZone("stand", "Stand", "stand", status(["stand"]), note("Stand tall with control before finishing the rep.")),
-      makeZone("finish", "Finish", "finish", status(["finish", "stand"]), note("Complete the rep fully before starting the next one.")),
+        makeZone("hands_down", "Hands Down", "hands_down", status(["hands_down"]), note("Place both hands firmly on the floor.")),
+        makeZone("bottom", "Bottom", "bottom", status(["plank", "bottom"]), note("Keep your body controlled through the floor position.")),
+        makeZone("jump_in", "Jump In", "jump_in", status(["jump_in"]), note("Bring your feet underneath you efficiently.")),
+        makeZone("jump", "Jump", "jump", status(["stand", "finish"]), note("Finish with a strong vertical jump.")),
     ];
   }
 
@@ -691,7 +687,6 @@ const getInteractiveZones = (result) => {
     return [
       makeZone("depth", "Depth", "bottom", status(["depth", "bottom"]), note("Lower your head toward the floor under control.")),
       makeZone("body_line", "Body Line", "descent", status(["body_line"]), note("Keep your body stacked and avoid arching or sagging.")),
-      makeZone("lockout", "Lockout", "lockout", status(["lockout"]), note("Finish with arms fully locked out overhead.")),
       makeZone("control", "Control", "ascent", status(["control", "range"]), note("Press smoothly away from the floor.")),
     ];
   }
