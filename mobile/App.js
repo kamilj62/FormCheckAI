@@ -24,17 +24,29 @@ import * as DocumentPicker from "expo-document-picker";
 import { useVideoPlayer, VideoView } from "expo-video";
 
 const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
   "http://formcheck-ai-api-v3.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
 
 const API_URL = BACKEND_URL;
 
 const MEDIA_URL = BACKEND_URL;
 
+console.log("CURRENT API URL:", API_URL);
+console.log("CURRENT MEDIA URL:", MEDIA_URL);
+
 const fullUrl = (path) => {
   if (!path) return null;
   if (String(path).startsWith("http")) return path;
   return `${MEDIA_URL}${path}`;
 };
+
+const isPhaseImageUrl = (value) =>
+  typeof value === "string" &&
+  (
+    value.startsWith("/") ||
+    value.startsWith("http://") ||
+    value.startsWith("https://")
+  );
 
 const hasRealPhaseImages = (phaseImages) => {
   if (!phaseImages) return false;
@@ -182,6 +194,124 @@ const resolveZoneNote = ({
   return fallback;
 };
 
+const resolvePhaseImagePath = (phaseImages, key) => {
+  if (!phaseImages) return null;
+
+  const aliases = {
+    setup: ["setup"],
+    first_pull: ["first_pull"],
+    transition: ["transition", "first_pull", "extension"],
+    power_position: ["power_position", "extension"],
+    extension_v2: ["extension_v2", "true_extension", "extension"],
+    pull_under: ["pull_under", "extension"],
+    catch: ["catch", "clean_catch"],
+    recovery: ["recovery", "finish", "lockout"],
+  };
+
+  const candidates = aliases[key] || [key];
+
+  for (const candidate of candidates) {
+    if (phaseImages[candidate]) {
+      return phaseImages[candidate];
+    }
+  }
+
+  return null;
+};
+
+const alignZonesToPhaseReview = (
+  zones,
+  phaseConfig,
+  phaseImages
+) => {
+  if (!Array.isArray(zones) || !phaseConfig?.items?.length) {
+    return zones || [];
+  }
+
+  const phaseEntries = phaseConfig.items.map(([key, label]) => ({
+    key,
+    label,
+    path: resolvePhaseImagePath(phaseImages, key),
+  }));
+
+  return zones.map((zone) => {
+    const zonePath = resolvePhaseImagePath(
+      phaseImages,
+      zone?.imageKey
+    );
+
+    if (!zonePath) {
+      return zone;
+    }
+
+    const matchingPhase = phaseEntries.find(
+      (phase) => phase.path && phase.path === zonePath
+    );
+
+    if (!matchingPhase) {
+      return zone;
+    }
+
+    return {
+      ...zone,
+      imageKey: matchingPhase.key,
+      phaseLabel: matchingPhase.label,
+    };
+  });
+};
+
+const buildPhaseMatchedZones = (
+  coachingZones,
+  phaseConfig,
+  phaseImages
+) => {
+  if (!phaseConfig?.items?.length) {
+    return coachingZones || [];
+  }
+
+  const sourceZones = Array.isArray(coachingZones)
+    ? coachingZones
+    : [];
+
+  return phaseConfig.items
+    .map(([phaseKey, phaseLabel]) => {
+      const imagePath = resolvePhaseImagePath(
+        phaseImages,
+        phaseKey
+      );
+
+      if (!imagePath) {
+        return null;
+      }
+
+      const matchingZone =
+        sourceZones.find((zone) => zone.imageKey === phaseKey) ||
+        sourceZones.find(
+          (zone) =>
+            resolvePhaseImagePath(
+              phaseImages,
+              zone.imageKey
+            ) === imagePath
+        ) ||
+        sourceZones.find(
+          (zone) =>
+            String(zone.title || "").toLowerCase() ===
+            String(phaseLabel || "").toLowerCase()
+        );
+
+      return {
+        id: `phase-${phaseKey}`,
+        title: phaseLabel,
+        imageKey: phaseKey,
+        status: matchingZone?.status || "good",
+        note:
+          matchingZone?.note ||
+          `Review the ${String(phaseLabel || "").toLowerCase()} position.`,
+      };
+    })
+    .filter(Boolean);
+};
+
 const makeZone = (id, title, imageKey, status, note) => ({
   id,
   title,
@@ -255,50 +385,84 @@ const zonesFromCoaching = (
 };
 
 const getPhaseConfig = (exerciseLabel) => {
-  const label = String(exerciseLabel || "").toLowerCase();
+  const label = String(exerciseLabel || "").toLowerCase().trim();
 
   if (label.includes("thruster")) {
-  return {
-    title: "Thruster Phase Review",
-    text: "Start → Squat → Lockout",
-    items: [
-      ["setup", "Start"],
-      ["dip", "Squat"],
-      ["lockout", "Lockout"],
-    ],
-  };
-}
-  
-  if (label.includes("clean_and_jerk") || label.includes("clean & jerk") || label.includes("clean and jerk")) {
     return {
-      title: "Clean & Jerk Phase Review",
-        text: "Setup → Clean Catch → Clean Recovery → Jerk Dip → Jerk Catch → Finish",
+      title: "Thruster Phase Review",
+      text: "Start → Squat → Lockout",
       items: [
-          ["setup", "Setup"],
-          ["clean_catch", "Clean Catch"],
-          ["clean_recovery", "Clean Recovery"],
-          ["jerk_dip", "Jerk Dip"],
-          ["jerk_catch", "Jerk Catch"],
-          ["finish", "Finish"],
+        ["setup", "Start"],
+        ["dip", "Squat"],
+        ["lockout", "Lockout"],
       ],
     };
   }
-  
-  if (label.includes("split_jerk") || label.includes("split jerk")) {
-  return {
-    title: "Split Jerk Phase Review",
-    text: "Setup → Dip → Drive → Catch → Finish",
-    items: [
-      ["setup", "Setup"],
-      ["dip", "Dip"],
-      ["drive", "Drive"],
-      ["catch", "Catch"],
-      ["finish", "Finish"],
-    ],
-  };
-}
 
-  if (!label.includes("push_press") && !label.includes("push press") && (label.includes("olympic") || label.includes("clean") || label.includes("snatch") || label.includes("jerk"))) {
+  if (
+    label.includes("clean_and_jerk") ||
+    label.includes("clean & jerk") ||
+    label.includes("clean and jerk")
+  ) {
+    return {
+      title: "Clean & Jerk Phase Review",
+      text:
+        "Setup → Clean Catch → Clean Recovery → Jerk Dip → Jerk Catch → Finish",
+      items: [
+        ["setup", "Setup"],
+        ["clean_catch", "Clean Catch"],
+        ["clean_recovery", "Clean Recovery"],
+        ["jerk_dip", "Jerk Dip"],
+        ["jerk_catch", "Jerk Catch"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
+  if (
+    label.includes("split_jerk") ||
+    label.includes("split jerk")
+  ) {
+    return {
+      title: "Split Jerk Phase Review",
+      text: "Setup → Dip → Drive → Catch → Finish",
+      items: [
+        ["setup", "Setup"],
+        ["dip", "Dip"],
+        ["drive", "Drive"],
+        ["catch", "Catch"],
+        ["finish", "Finish"],
+      ],
+    };
+  }
+
+  if (label === "clean" || label === "clean_only") {
+    return {
+      title: "Clean Phase Review",
+      text:
+        "Setup → First Pull → Transition → Power Position → Extension → Pull Under → Catch → Recovery",
+      items: [
+        ["setup", "Setup"],
+        ["first_pull", "First Pull"],
+        ["transition", "Transition"],
+        ["power_position", "Power Position"],
+        ["extension_v2", "Extension"],
+        ["pull_under", "Pull Under"],
+        ["catch", "Catch"],
+        ["recovery", "Recovery"],
+      ],
+    };
+  }
+
+  if (
+    !label.includes("push_press") &&
+    !label.includes("push press") &&
+    (
+      label.includes("olympic") ||
+      label.includes("snatch") ||
+      label.includes("jerk")
+    )
+  ) {
     return {
       title: "Olympic Lift Phase Review",
       text: "Setup → First Pull → Pull Under → Catch → Lockout",
@@ -312,7 +476,10 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-  if (label.includes("push_press") || label.includes("push press")) {
+  if (
+    label.includes("push_press") ||
+    label.includes("push press")
+  ) {
     return {
       title: "Push Press Phase Review",
       text: "Setup → Dip → Drive → Lockout",
@@ -320,6 +487,22 @@ const getPhaseConfig = (exerciseLabel) => {
         ["setup", "Setup"],
         ["dip", "Dip"],
         ["drive", "Drive"],
+        ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  if (
+    label.includes("strict_press") ||
+    label.includes("strict press") ||
+    (label.includes("strict") && label.includes("press"))
+  ) {
+    return {
+      title: "Strict Press Phase Review",
+      text: "Setup → Press → Lockout",
+      items: [
+        ["setup", "Setup"],
+        ["press", "Press"],
         ["lockout", "Lockout"],
       ],
     };
@@ -366,19 +549,6 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-  if (label.includes("pull")) {
-  return {
-    title: "Pull-Up Phase Review",
-    text: "Hang → Pull → Top → Finish",
-    items: [
-      ["hang", "Hang"],
-      ["pull", "Pull"],
-      ["top", "Top"],
-      ["finish", "Finish"],
-    ],
-  };
-}
-
   if (label.includes("muscle")) {
     return {
       title: label.includes("ring")
@@ -396,7 +566,10 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-  if (label.includes("handstand push")) {
+  if (
+    label.includes("handstand push") ||
+    label.includes("handstand_push")
+  ) {
     return {
       title: "Handstand Push-Up Phase Review",
       text: "Setup → Descent → Bottom → Ascent → Lockout",
@@ -410,7 +583,11 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-  if (label.includes("push up") || label.includes("push-up")) {
+  if (
+    label.includes("push up") ||
+    label.includes("push-up") ||
+    label.includes("push_up")
+  ) {
     return {
       title: "Push-Up Phase Review",
       text: "Setup → Descent → Bottom → Ascent → Lockout",
@@ -420,6 +597,23 @@ const getPhaseConfig = (exerciseLabel) => {
         ["bottom", "Bottom"],
         ["ascent", "Ascent"],
         ["lockout", "Lockout"],
+      ],
+    };
+  }
+
+  if (
+    label.includes("pull up") ||
+    label.includes("pull-up") ||
+    label.includes("pull_up")
+  ) {
+    return {
+      title: "Pull-Up Phase Review",
+      text: "Hang → Pull → Top → Finish",
+      items: [
+        ["hang", "Hang"],
+        ["pull", "Pull"],
+        ["top", "Top"],
+        ["finish", "Finish"],
       ],
     };
   }
@@ -439,29 +633,13 @@ const getPhaseConfig = (exerciseLabel) => {
     };
   }
 
-    if (
-      label.includes("strict_press") ||
-      label.includes("strict press") ||
-      (label.includes("strict") && label.includes("press"))
-    ) {
-      return {
-        title: "Strict Press Phase Review",
-        text: "Setup → Press → Lockout",
-        items: [
-          ["setup", "Setup"],
-          ["press", "Press"],
-          ["lockout", "Lockout"],
-        ],
-      };
-    }
-
   return {
     title: "Movement Phase Review",
     text: "Setup → Movement → Finish",
-      items: [
-        ["setup", "Setup"],
-        ["finish", "Finish"],
-      ],
+    items: [
+      ["setup", "Setup"],
+      ["finish", "Finish"],
+    ],
   };
 };
 
@@ -573,14 +751,14 @@ const getInteractiveZones = (result) => {
 
   if (label.includes("clean") && !label.includes("jerk")) {
     const fromCoaching = zonesFromCoaching(coaching, {
-      "First Pull": "first_pull", Extension: "extension", Turnover: "catch",
+      "First Pull": "first_pull", Extension: "extension", Turnover: "pull_under",
       Catch: "catch", "Front Rack": "catch", "Bar Path": "first_pull",
     }, "setup", breakdown);
     if (fromCoaching?.length) return fromCoaching;
     return [
       makeZone("first_pull", "First Pull", "first_pull", status(["first_pull"]), note("Keep the bar close as it passes the knees.")),
       makeZone("extension", "Extension", "extension", status(["extension"]), note("Drive tall through the legs and hips.")),
-      makeZone("turnover", "Turnover", "catch", status(["turnover"]), note("Rotate the elbows faster into the rack.")),
+      makeZone("turnover", "Turnover", "pull_under", status(["turnover"]), note("Rotate the elbows faster into the rack.")),
       makeZone("catch", "Catch", "catch", status(["catch"]), note("Receive the bar under control.")),
       makeZone("front_rack", "Front Rack", "catch", status(["front_rack"]), note("Drive elbows high and keep the bar on your shoulders.")),
       makeZone("bar_path", "Bar Path", "first_pull", status(["bar_path"]), note("Keep the bar close through the pull and turnover.")),
@@ -909,10 +1087,8 @@ export default function App() {
   const generateVisuals = async (analysisResult) => {
     if (visualsLoading) return;
     const hasUrls =
-      result?.phase_images &&
-      Object.values(result.phase_images).some(
-        (v) => typeof v === "string" && v.startsWith("/")
-      );
+      analysisResult?.phase_images &&
+      Object.values(analysisResult.phase_images).some(isPhaseImageUrl);
     if (hasUrls) return;
 
     try {
@@ -958,8 +1134,8 @@ export default function App() {
       setResult((prev) => ({
         ...prev,
         overlay_video_url: visualsData.overlay_video_url,
-        phase_images: visualsData.phase_images,
-        visuals_error: visualsData.visuals_error,
+        phase_images: visualsData.phase_images || {},
+        visuals_error: visualsData.visuals_error || null,
       }));
     } catch (err) {
       console.log("VISUALS ERROR:", err);
@@ -973,7 +1149,7 @@ export default function App() {
     }
   };
 
-  const analyzeVideo = async () => {
+  const generateOverlay = async () => {
     console.log("GENERATE OVERLAY CLICKED", {
       hasVideo: !!video,
       hasResult: !!result,
@@ -1082,19 +1258,25 @@ export default function App() {
         "Analyze request failed"
       );
     }
+      setSelectedZone(null);
+      setOverlayUrl(null);
 
-    setSelectedZone(null);
-    setOverlayUrl(null);
-    setResult({
-      ...data,
-      phase_images: data.phase_images || {},
-    });
+      const analysisResult = {
+        ...data,
+        phase_images: data.phase_images || {},
+      };
 
-    if (data.overlay_video_url) {
-      setOverlayUrl(fullUrl(data.overlay_video_url));
-    }
+      setResult(analysisResult);
 
-    await saveAnalysisHistory(data);
+      if (analysisResult.overlay_video_url) {
+        setOverlayUrl(fullUrl(analysisResult.overlay_video_url));
+      }
+
+      await saveAnalysisHistory(analysisResult);
+
+      // Automatically generate phase-review images after analysis.
+      // The existing button remains available as a retry.
+      await generateVisuals(analysisResult);
   } catch (err) {
     console.error(err);
     setResult({ error: true, message: err.message });
@@ -1128,16 +1310,27 @@ export default function App() {
   const phaseConfig = getPhaseConfig(result?.exercise_label);
   const rawPhaseImages = result?.phase_images || {};
   const phaseImages = Object.fromEntries(
-    Object.entries(rawPhaseImages).filter(
-      ([_, v]) => typeof v === "string" && v.startsWith("/")
+    Object.entries(rawPhaseImages).filter(([_, value]) =>
+      isPhaseImageUrl(value)
     )
   );
   const hasPhaseImageUrls = Object.keys(phaseImages).length > 0;
-  const zones = getInteractiveZones(result);
-  const activeZone = selectedZone || zones[0];
+  const rawZones = getInteractiveZones(result);
+
+  // Interactive Coaching Map mirrors Phase Review exactly:
+  // same order, same labels, and same image keys/files.
+  const zones = buildPhaseMatchedZones(
+    rawZones,
+    phaseConfig,
+    phaseImages
+  );
+
+  const activeZone = selectedZone
+    ? zones.find((zone) => zone.id === selectedZone.id) || zones[0]
+    : zones[0];
 
   const activeImagePath =
-    phaseImages?.[activeZone?.imageKey] || null;
+    resolvePhaseImagePath(phaseImages, activeZone?.imageKey);
 
   const activeImageUrl = fullUrl(activeImagePath);
   const overlayPlayer = useVideoPlayer(overlayUrl, (player) => {
@@ -1575,7 +1768,7 @@ export default function App() {
                 contentContainerStyle={styles.phaseScroller}
               >
                 {phaseConfig.items.map(([key, label]) => {
-                  const path = phaseImages[key];
+                  const path = resolvePhaseImagePath(phaseImages, key);
                   const url = fullUrl(path);
 
                   return (
