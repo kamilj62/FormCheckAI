@@ -120,7 +120,7 @@ from pathlib import Path
 from .model_runtime import NumpyFormCheckModel
 
 from app.ml.router_v8.collectors import collect_predictions
-from app.ml.router_v8.fusion_clean_v22 import fuse_predictions
+from app.ml.router_v8.fusion_clean_v24 import fuse_predictions
 from app.ml.router_v8.debug import build_debug
 from app.ml.router_v8.state import RouterState
 from app.ml.router_v8.locks import get_locks
@@ -9804,7 +9804,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # ------------------------------------------------------------------
         try:
             from app.ml.router_v8.collectors import collect_predictions
-            from app.ml.router_v8.fusion_clean_v22 import fuse_predictions
+            from app.ml.router_v8.fusion_clean_v24 import fuse_predictions
             from app.ml.router_v8.debug import build_debug
 
             v8_predictions = collect_predictions(
