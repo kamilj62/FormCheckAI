@@ -120,7 +120,7 @@ from pathlib import Path
 from .model_runtime import NumpyFormCheckModel
 
 from app.ml.router_v8.collectors import collect_predictions
-from app.ml.router_v8.fusion import fuse_predictions
+from app.ml.router_v8.fusion_clean_v6 import fuse_predictions
 from app.ml.router_v8.debug import build_debug
 from app.ml.router_v8.state import RouterState
 from app.ml.router_v8.locks import get_locks
@@ -7491,7 +7491,6 @@ def create_pull_up_phase_images(input_path, output_dir, rep, sample_every=1):
     return saved
 
 
-
 def create_bar_muscle_up_phase_images(
     input_path,
     output_dir,
@@ -7670,7 +7669,6 @@ def create_bar_muscle_up_phase_images(
 
     print("Saved muscle-up phase images:", saved)
     return saved
-
 
 
 def create_push_up_phase_images(
@@ -9806,7 +9804,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
         # ------------------------------------------------------------------
         try:
             from app.ml.router_v8.collectors import collect_predictions
-            from app.ml.router_v8.fusion import fuse_predictions
+            from app.ml.router_v8.fusion_clean_v6 import fuse_predictions
             from app.ml.router_v8.debug import build_debug
 
             v8_predictions = collect_predictions(
@@ -9830,6 +9828,7 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             debug["router_v8"] = build_debug(
                 v8_predictions,
                 v8_result,
+                state=router_state,
             )
 
         except Exception as e:
