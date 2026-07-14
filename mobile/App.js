@@ -1124,11 +1124,14 @@ export default function App() {
         );
       }
 
-      setOverlayUrl(fullUrl(visualsData.overlay_video_url));
+      if (visualsData.overlay_video_url) {
+        setOverlayUrl(fullUrl(visualsData.overlay_video_url));
+      }
 
       setResult((prev) => ({
         ...prev,
-        overlay_video_url: visualsData.overlay_video_url,
+        overlay_video_url:
+          visualsData.overlay_video_url || prev?.overlay_video_url || null,
         phase_images: visualsData.phase_images || {},
         visuals_error: visualsData.visuals_error || null,
       }));
@@ -1269,9 +1272,6 @@ export default function App() {
 
       await saveAnalysisHistory(analysisResult);
 
-      // Automatically generate phase-review images after analysis.
-      // The existing button remains available as a retry.
-      await generateVisuals(analysisResult);
   } catch (err) {
     console.error(err);
     setResult({ error: true, message: err.message });
