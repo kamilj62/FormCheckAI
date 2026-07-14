@@ -1258,12 +1258,26 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 ):
                     search_start -= 1
 
-                # Hip position is the most reliable bottom signal in this
-                # front-squat clip because knee landmarks are intermittently
-                # obscured by the bar and plates.
-                bottom = search_start + int(
-                    np.argmax(hip_y_values[search_start:search_end + 1])
+                # If the first usable pose is already below the squat
+                # threshold, the recording begins at the bottom of a rep.
+                # Keep that bottom local to the opening threshold segment;
+                # otherwise the forward expansion can absorb the next squat.
+                starts_at_bottom = (
+                    raw_start == 0
+                    and float(knee_angles[raw_start]) < float(threshold)
                 )
+
+                if starts_at_bottom:
+                    bottom = raw_start + int(
+                        np.argmax(hip_y_values[raw_start:raw_end + 1])
+                    )
+                    search_start = raw_start
+                else:
+                    # Hip position is the most reliable bottom signal because
+                    # knee landmarks may be obscured by the bar and plates.
+                    bottom = search_start + int(
+                        np.argmax(hip_y_values[search_start:search_end + 1])
+                    )
 
                 bottom_hip_y = float(hip_y_values[bottom])
 
@@ -1285,13 +1299,41 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                     )
                 ]
 
-                # A complete front squat needs an upright position on both
-                # sides of the bottom. This rejects the partial opening rep.
-                if not setup_candidates or not lockout_candidates:
+                # Normally require an upright position before and after the
+                # bottom. Also allow one opening bottom-to-lockout repetition
+                # when recording begins with the athlete already in a deep
+                # front-squat position.
+                opening_frame_limit = int(frame_numbers[0]) + 60
+                opening_knee = float(
+                    np.percentile(
+                        knee_angles[:max(bottom + 1, 1)],
+                        25,
+                    )
+                )
+                opening_hip_delta = float(
+                    bottom_hip_y - hip_y_values[search_start]
+                )
+
+                initial_bottom_rep = (
+                    starts_at_bottom
+                    and bool(lockout_candidates)
+                    and int(frame_numbers[bottom]) <= opening_frame_limit
+                    and opening_knee <= 130.0
+                    and opening_hip_delta <= 0.08
+                )
+
+                if not lockout_candidates:
                     in_rep = False
                     continue
 
-                start = int(setup_candidates[-1])
+                if setup_candidates:
+                    start = int(setup_candidates[-1])
+                elif initial_bottom_rep:
+                    start = int(search_start)
+                else:
+                    in_rep = False
+                    continue
+
                 end = int(lockout_candidates[0])
 
                 source_descent_span = (
@@ -1303,7 +1345,13 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                     - int(frame_numbers[bottom])
                 )
 
-                if source_descent_span < 15 or source_ascent_span < 15:
+                if initial_bottom_rep:
+                    # The descent occurred before recording began, so validate
+                    # only the visible bottom-to-lockout ascent.
+                    if source_ascent_span < 15:
+                        in_rep = False
+                        continue
+                elif source_descent_span < 15 or source_ascent_span < 15:
                     in_rep = False
                     continue
 
@@ -3801,7 +3849,10 @@ def analyze_snatch_reps(biomechanics):
     phase_reps = find_snatch_phase_reps(biomechanics)
     overhead_reps = find_split_jerk_phase_reps(biomechanics)
 
-    if len(overhead_reps) > len(phase_reps):
+    # Split-jerk detection is only a fallback when the dedicated snatch
+    # detector found nothing. Do not replace valid snatch catches merely
+    # because the generic overhead detector produced more clusters.
+    if not phase_reps and overhead_reps:
         phase_reps = [
             {
                 "start_frame": rep.get("start_frame", 0),
