@@ -113,6 +113,16 @@ def fuse_predictions(
         weight = ROUTER_WEIGHTS.get(prediction.router, 0.75)
         score = confidence * weight
 
+        # Base and biomechanics frequently repeat the same upstream decision.
+        # Treat the biomechanics copy as correlated evidence rather than a
+        # second independent vote.
+        if (
+            prediction.router == "biomechanics"
+            and state.raw_label
+            and label == state.raw_label
+        ):
+            score *= 0.15
+
         # Specialist routers contribute strongly only when supporting context
         # exists. Otherwise they remain evidence rather than global authority.
         if prediction.router == "squat":
@@ -242,8 +252,12 @@ def fuse_predictions(
     ):
         agreed_label = state.raw_label
         agreed_family = LABEL_FAMILY[agreed_label]
+        # Raw and biomechanics agreement is useful, but these signals are
+        # correlated and have already contributed above. Keep only a small
+        # confirmation bonus instead of effectively counting the same opinion
+        # for a third time.
         agreement_bonus = min(
-            1.0,
+            0.15,
             (
                 float(state.raw_conf or 0.0)
                 + float(state.bio_conf or 0.0)
@@ -303,6 +317,60 @@ def fuse_predictions(
         # squat-family agreement from the receiving squat phase.
         family_scores["olympic"] += 2.00
         label_scores["snatch"] += 1.20
+
+    # ----------------------------------------------------------
+    # Strong specialist family authority
+    # ----------------------------------------------------------
+
+    # A very strong Olympic specialist should defeat correlated generic squat
+    # evidence from the receiving position of a clean, jerk, or snatch.
+    if (
+        state.olympic_label in {
+            "clean",
+            "clean_and_jerk",
+            "snatch",
+            "split_jerk",
+        }
+        and float(state.olympic_conf or 0.0) >= 0.90
+        and not (
+            state.squat_label == "overhead_squat"
+            and float(state.squat_conf or 0.0) >= 0.88
+            and not state.truly_explosive
+            and explosive < 20.0
+        )
+    ):
+        family_scores["olympic"] += 1.35
+        label_scores[state.olympic_label] += 1.35
+
+    # Strong squat specialist rescue. A credible squat subtype should defeat
+    # generic press/clean shape signals when the Olympic specialist itself is
+    # not strong enough to establish Olympic-family authority.
+    if (
+        state.squat_label in {
+            "squat_back",
+            "squat_front",
+            "overhead_squat",
+        }
+        and float(state.squat_conf or 0.0) >= 0.85
+        and float(state.olympic_conf or 0.0) < 0.75
+    ):
+        family_scores["squat"] += 1.75
+        label_scores[state.squat_label] += 1.75
+
+    # Strong squat subtype evidence should defeat false press, clean, and
+    # thruster shape signals when the movement is not meaningfully explosive.
+    if (
+        state.squat_label in {
+            "squat_back",
+            "squat_front",
+            "overhead_squat",
+        }
+        and float(state.squat_conf or 0.0) >= 0.82
+        and not state.truly_explosive
+        and explosive < 20.0
+    ):
+        family_scores["squat"] += 1.25
+        label_scores[state.squat_label] += 1.25
 
     # ----------------------------------------------------------
     # Family first, subtype second

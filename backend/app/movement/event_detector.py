@@ -31,6 +31,49 @@ def _detect_squat_like_events(biomechanics):
     }
 
 
+
+def _detect_snatch_fallback_events(biomechanics):
+    """Return an ordered snatch schema when overhead landmarks are unavailable."""
+    n = len(biomechanics)
+    if n < 10:
+        return {}
+
+    base = _detect_squat_like_events(biomechanics)
+
+    setup_idx = max(0, min(int(base.get("setup", 0)), n - 6))
+    catch_idx = max(
+        setup_idx + 3,
+        min(int(base.get("bottom", int(n * 0.70))), n - 3),
+    )
+
+    extension_idx = setup_idx + int((catch_idx - setup_idx) * 0.75)
+    extension_idx = max(
+        setup_idx + 2,
+        min(extension_idx, catch_idx - 1),
+    )
+
+    first_pull_idx = setup_idx + int(
+        (extension_idx - setup_idx) * 0.45
+    )
+    first_pull_idx = max(
+        setup_idx + 1,
+        min(first_pull_idx, extension_idx - 1),
+    )
+
+    finish_idx = max(
+        catch_idx + 1,
+        min(int(base.get("lockout", n - 1)), n - 1),
+    )
+
+    return {
+        "setup": setup_idx,
+        "first_pull": first_pull_idx,
+        "extension": extension_idx,
+        "catch": catch_idx,
+        "lockout": finish_idx,
+        "finish": finish_idx,
+    }
+
 def _detect_snatch_events(biomechanics):
     n = len(biomechanics)
     if n < 10:
@@ -45,7 +88,7 @@ def _detect_snatch_events(biomechanics):
     overhead = wrist_y < shoulder_y
 
     if not np.any(overhead):
-        return _detect_squat_like_events(biomechanics)
+        return _detect_snatch_fallback_events(biomechanics)
 
     overhead_idxs = np.where(overhead)[0]
 
@@ -66,7 +109,7 @@ def _detect_snatch_events(biomechanics):
         clusters.append(current)
 
     if not clusters:
-        return _detect_squat_like_events(biomechanics)
+        return _detect_snatch_fallback_events(biomechanics)
 
     cluster = clusters[0]
     cluster_start = cluster[0]

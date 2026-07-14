@@ -52,5 +52,8 @@ def main():
 
     print(f"\nOverall event ordering: {passed}/{total} ({100*passed/total:.1f}%)")
 
+    if passed != total:
+        raise SystemExit(1)
+
 if __name__ == "__main__":
     main()

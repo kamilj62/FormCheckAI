@@ -1,12 +1,16 @@
+from dataclasses import asdict
+
 from .models import RouterPrediction
+from .state import RouterState
 
 
 def build_debug(
     predictions: list[RouterPrediction],
     fusion_result: dict,
+    state: RouterState | None = None,
 ) -> dict:
     return {
-        "version": "router_v8_hierarchical_shadow",
+        "version": "router_v8_hierarchical_shadow_snapshot_v1",
         "predictions": [
             {
                 "router": prediction.router,
@@ -32,4 +36,5 @@ def build_debug(
         "locks": fusion_result.get("locks", []),
         "selected_lock": fusion_result.get("lock"),
         "evidence": fusion_result.get("evidence", {}),
+        "state": asdict(state) if state is not None else {},
     }
