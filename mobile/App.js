@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -844,6 +845,95 @@ const QUEUE_KEY = "formcheck_pending_videos";
 
 const HISTORY_KEY = "formcheck_analysis_history";
 
+const PROFILE_KEY = "formcheck_user_profile";
+
+const DEFAULT_PROFILE = {
+  id: "default",
+  name: "",
+  experienceLevel: "intermediate",
+  preferredUnits: "lb",
+  primaryGoal: "improve_form",
+  heightFeet: "",
+  heightInches: "",
+  heightCm: "",
+  weightLb: "",
+  weightKg: "",
+  createdAt: null,
+  updatedAt: null,
+};
+
+const loadProfile = async () => {
+  try {
+    const saved = await AsyncStorage.getItem(PROFILE_KEY);
+
+    if (!saved) {
+      return DEFAULT_PROFILE;
+    }
+
+    return {
+      ...DEFAULT_PROFILE,
+      ...JSON.parse(saved),
+    };
+  } catch (err) {
+    console.log("LOAD PROFILE ERROR:", err);
+    return DEFAULT_PROFILE;
+  }
+};
+
+const saveProfile = async (profile) => {
+  const now = new Date().toISOString();
+
+  const savedProfile = {
+    ...DEFAULT_PROFILE,
+    ...profile,
+    createdAt: profile?.createdAt || now,
+    updatedAt: now,
+  };
+
+  await AsyncStorage.setItem(
+    PROFILE_KEY,
+    JSON.stringify(savedProfile),
+  );
+
+  return savedProfile;
+};
+
+const calculateBMI = (profile) => {
+  if (!profile) return null;
+
+  if (profile.preferredUnits === "kg") {
+    const heightCm = Number(profile.heightCm || 0);
+    const weightKg = Number(profile.weightKg || 0);
+
+    if (heightCm <= 0 || weightKg <= 0) return null;
+
+    const heightMeters = heightCm / 100;
+
+    return Number(
+      (weightKg / (heightMeters * heightMeters)).toFixed(1),
+    );
+  }
+
+  const feet = Number(profile.heightFeet || 0);
+  const inches = Number(profile.heightInches || 0);
+  const weightLb = Number(profile.weightLb || 0);
+  const totalInches = feet * 12 + inches;
+
+  if (totalInches <= 0 || weightLb <= 0) return null;
+
+  return Number(
+    ((weightLb / (totalInches * totalInches)) * 703).toFixed(1),
+  );
+};
+
+const getBMIStatus = (bmi) => {
+  if (bmi === null) return "Enter height and weight";
+  if (bmi < 18.5) return "Below standard range";
+  if (bmi < 25) return "Standard range";
+  if (bmi < 30) return "Above standard range";
+  return "High range";
+};
+
 const savePendingVideo = async (video) => {
   const id = Date.now().toString();
 
@@ -883,13 +973,26 @@ const loadPendingVideos = async (setter) => {
   setter(existing);
 };
 
-const saveAnalysisHistory = async (analysis) => {
+const saveAnalysisHistory = async (
+  analysis,
+  workoutLoad = "",
+  workoutLoadUnit = "lb",
+  profileId = "default",
+) => {
   try {
+    const numericLoad = Number(workoutLoad);
+
     const item = {
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
+      profile_id: profileId,
       exercise_label: analysis.exercise_label,
       confidence: analysis.confidence,
+      load_value:
+        workoutLoad !== "" && Number.isFinite(numericLoad)
+          ? numericLoad
+          : null,
+      load_unit: workoutLoadUnit,
       set_summary: analysis.set_summary || {},
       rep_feedback: analysis.rep_feedback || [],
       coaching_zones: analysis.coaching_zones || [],
@@ -906,6 +1009,18 @@ const saveAnalysisHistory = async (analysis) => {
   }
 };
 
+const loadAnalysisHistory = async (setter) => {
+  try {
+    const existing =
+      JSON.parse(await AsyncStorage.getItem(HISTORY_KEY)) || [];
+
+    setter(existing);
+  } catch (err) {
+    console.log("LOAD HISTORY ERROR:", err);
+    setter([]);
+  }
+};
+
 export default function App() {
   const [video, setVideo] = useState(null);
   const [result, setResult] = useState(null);
@@ -913,6 +1028,14 @@ export default function App() {
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [pendingVideos, setPendingVideos] = useState([]);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [selectedHistoryId, setSelectedHistoryId] = useState(null);
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [exerciseLoad, setExerciseLoad] = useState("");
+  const [exerciseLoadUnit, setExerciseLoadUnit] = useState("lb");
   const [overlayUrl, setOverlayUrl] = useState(null);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayProgress, setOverlayProgress] = useState("");
@@ -920,7 +1043,41 @@ export default function App() {
 
   useEffect(() => {
     loadPendingVideos(setPendingVideos);
+    loadAnalysisHistory(setAnalysisHistory);
+
+    loadProfile().then((savedProfile) => {
+      setProfile(savedProfile);
+      setProfileLoaded(true);
+    });
   }, []);
+
+  useEffect(() => {
+    setExerciseLoadUnit(profile.preferredUnits || "lb");
+  }, [profile.preferredUnits]);
+
+  const clearWorkoutHistory = async () => {
+    try {
+      await AsyncStorage.removeItem(HISTORY_KEY);
+      setAnalysisHistory([]);
+      setSelectedHistoryId(null);
+    } catch (err) {
+      console.log("CLEAR HISTORY ERROR:", err);
+      Alert.alert("Workout history could not be cleared");
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const savedProfile = await saveProfile(profile);
+      setProfile(savedProfile);
+      setProfileEditing(false);
+    } catch (err) {
+      console.log("SAVE PROFILE ERROR:", err);
+      Alert.alert("Profile could not be saved");
+    }
+  };
+
+  const bmi = calculateBMI(profile);
 
   const reset = () => {
     setResult(null);
@@ -1270,7 +1427,14 @@ export default function App() {
         setOverlayUrl(fullUrl(analysisResult.overlay_video_url));
       }
 
-      await saveAnalysisHistory(analysisResult);
+      await saveAnalysisHistory(
+        analysisResult,
+        exerciseLoad,
+        exerciseLoadUnit,
+        profile.id,
+      );
+
+      await loadAnalysisHistory(setAnalysisHistory);
 
   } catch (err) {
     console.error(err);
@@ -1446,6 +1610,287 @@ export default function App() {
           </View>
         </View>
 
+        {profileLoaded && (
+          <View style={styles.profileCard}>
+            <View style={styles.profileHeader}>
+              <View style={styles.profileIdentity}>
+                <View style={styles.profileAvatar}>
+                  <Text style={styles.profileAvatarText}>
+                    {(profile.name || "A").trim().charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+
+                <View style={styles.profileHeaderText}>
+                  <Text style={styles.cardLabel}>Athlete Profile</Text>
+                  <Text style={styles.profileName}>
+                    {profile.name || "Set up your profile"}
+                  </Text>
+                  <Text style={styles.profileSummary}>
+                    {formatLabel(profile.experienceLevel)} ·{" "}
+                    {profile.preferredUnits === "kg" ? "Kilograms" : "Pounds"} ·{" "}
+                    {formatLabel(profile.primaryGoal)}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.profileEditButton}
+                onPress={() => setProfileEditing((value) => !value)}
+              >
+                <Text style={styles.profileEditButtonText}>
+                  {profileEditing ? "Close" : "Edit"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {profileEditing && (
+              <View style={styles.profileForm}>
+                <Text style={styles.profileFieldLabel}>Name</Text>
+                <TextInput
+                  value={profile.name}
+                  onChangeText={(name) =>
+                    setProfile((current) => ({ ...current, name }))
+                  }
+                  placeholder="Your name"
+                  placeholderTextColor="#64748b"
+                  style={styles.profileInput}
+                />
+
+                <Text style={styles.profileFieldLabel}>Experience</Text>
+                <View style={styles.profileChoiceRow}>
+                  {["beginner", "intermediate", "advanced"].map((level) => (
+                    <TouchableOpacity
+                      key={level}
+                      style={[
+                        styles.profileChoice,
+                        profile.experienceLevel === level &&
+                          styles.profileChoiceActive,
+                      ]}
+                      onPress={() =>
+                        setProfile((current) => ({
+                          ...current,
+                          experienceLevel: level,
+                        }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.profileChoiceText,
+                          profile.experienceLevel === level &&
+                            styles.profileChoiceTextActive,
+                        ]}
+                      >
+                        {formatLabel(level)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.profileFieldLabel}>Preferred Units</Text>
+                <View style={styles.profileChoiceRow}>
+                  {[
+                    ["lb", "Pounds"],
+                    ["kg", "Kilograms"],
+                  ].map(([value, label]) => (
+                    <TouchableOpacity
+                      key={value}
+                      style={[
+                        styles.profileChoice,
+                        profile.preferredUnits === value &&
+                          styles.profileChoiceActive,
+                      ]}
+                      onPress={() =>
+                        setProfile((current) => ({
+                          ...current,
+                          preferredUnits: value,
+                        }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.profileChoiceText,
+                          profile.preferredUnits === value &&
+                            styles.profileChoiceTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {profile.preferredUnits === "kg" ? (
+                  <>
+                    <Text style={styles.profileFieldLabel}>Height</Text>
+
+                    <View style={styles.profileMeasurementRow}>
+                      <TextInput
+                        value={String(profile.heightCm || "")}
+                        onChangeText={(heightCm) =>
+                          setProfile((current) => ({
+                            ...current,
+                            heightCm,
+                          }))
+                        }
+                        placeholder="Height"
+                        placeholderTextColor="#64748b"
+                        keyboardType="decimal-pad"
+                        style={[
+                          styles.profileInput,
+                          styles.profileMeasurementInput,
+                        ]}
+                      />
+                      <Text style={styles.profileUnitLabel}>cm</Text>
+                    </View>
+
+                    <Text style={styles.profileFieldLabel}>Weight</Text>
+
+                    <View style={styles.profileMeasurementRow}>
+                      <TextInput
+                        value={String(profile.weightKg || "")}
+                        onChangeText={(weightKg) =>
+                          setProfile((current) => ({
+                            ...current,
+                            weightKg,
+                          }))
+                        }
+                        placeholder="Weight"
+                        placeholderTextColor="#64748b"
+                        keyboardType="decimal-pad"
+                        style={[
+                          styles.profileInput,
+                          styles.profileMeasurementInput,
+                        ]}
+                      />
+                      <Text style={styles.profileUnitLabel}>kg</Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.profileFieldLabel}>Height</Text>
+
+                    <View style={styles.profileMeasurementRow}>
+                      <TextInput
+                        value={String(profile.heightFeet || "")}
+                        onChangeText={(heightFeet) =>
+                          setProfile((current) => ({
+                            ...current,
+                            heightFeet,
+                          }))
+                        }
+                        placeholder="Feet"
+                        placeholderTextColor="#64748b"
+                        keyboardType="number-pad"
+                        style={[
+                          styles.profileInput,
+                          styles.profileMeasurementInput,
+                        ]}
+                      />
+
+                      <Text style={styles.profileUnitLabel}>ft</Text>
+
+                      <TextInput
+                        value={String(profile.heightInches || "")}
+                        onChangeText={(heightInches) =>
+                          setProfile((current) => ({
+                            ...current,
+                            heightInches,
+                          }))
+                        }
+                        placeholder="Inches"
+                        placeholderTextColor="#64748b"
+                        keyboardType="decimal-pad"
+                        style={[
+                          styles.profileInput,
+                          styles.profileMeasurementInput,
+                        ]}
+                      />
+
+                      <Text style={styles.profileUnitLabel}>in</Text>
+                    </View>
+
+                    <Text style={styles.profileFieldLabel}>Weight</Text>
+
+                    <View style={styles.profileMeasurementRow}>
+                      <TextInput
+                        value={String(profile.weightLb || "")}
+                        onChangeText={(weightLb) =>
+                          setProfile((current) => ({
+                            ...current,
+                            weightLb,
+                          }))
+                        }
+                        placeholder="Weight"
+                        placeholderTextColor="#64748b"
+                        keyboardType="decimal-pad"
+                        style={[
+                          styles.profileInput,
+                          styles.profileMeasurementInput,
+                        ]}
+                      />
+                      <Text style={styles.profileUnitLabel}>lb</Text>
+                    </View>
+                  </>
+                )}
+
+                <View style={styles.bmiCard}>
+                  <View>
+                    <Text style={styles.cardLabel}>Calculated BMI</Text>
+                    <Text style={styles.bmiValue}>
+                      {bmi !== null ? bmi : "--"}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.bmiStatus}>
+                    {getBMIStatus(bmi)}
+                  </Text>
+                </View>
+
+                <Text style={styles.profileFieldLabel}>Primary Goal</Text>
+                <View style={styles.profileChoiceRow}>
+                  {[
+                    ["improve_form", "Improve Form"],
+                    ["build_strength", "Build Strength"],
+                    ["competition", "Competition"],
+                  ].map(([value, label]) => (
+                    <TouchableOpacity
+                      key={value}
+                      style={[
+                        styles.profileChoice,
+                        profile.primaryGoal === value &&
+                          styles.profileChoiceActive,
+                      ]}
+                      onPress={() =>
+                        setProfile((current) => ({
+                          ...current,
+                          primaryGoal: value,
+                        }))
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.profileChoiceText,
+                          profile.primaryGoal === value &&
+                            styles.profileChoiceTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TouchableOpacity
+                  style={styles.profileSaveButton}
+                  onPress={handleSaveProfile}
+                >
+                  <Text style={styles.profileSaveButtonText}>Save Profile</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.primaryButton}
@@ -1496,6 +1941,56 @@ export default function App() {
           </View>
         )}
 
+        {video && (
+          <View style={styles.loadCard}>
+            <View style={styles.loadHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Weight Used</Text>
+                <Text style={styles.loadHelp}>
+                  Enter the barbell, dumbbell, kettlebell, or added weight.
+                </Text>
+              </View>
+
+              <Text style={styles.optionalLabel}>Optional</Text>
+            </View>
+
+            <View style={styles.loadInputRow}>
+              <TextInput
+                value={exerciseLoad}
+                onChangeText={setExerciseLoad}
+                placeholder="Example: 225"
+                placeholderTextColor="#64748b"
+                keyboardType="decimal-pad"
+                style={styles.loadInput}
+              />
+
+              <View style={styles.loadUnitRow}>
+                {["lb", "kg"].map((unit) => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={[
+                      styles.loadUnitButton,
+                      exerciseLoadUnit === unit &&
+                        styles.loadUnitButtonActive,
+                    ]}
+                    onPress={() => setExerciseLoadUnit(unit)}
+                  >
+                    <Text
+                      style={[
+                        styles.loadUnitText,
+                        exerciseLoadUnit === unit &&
+                          styles.loadUnitTextActive,
+                      ]}
+                    >
+                      {unit}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
+
         <TouchableOpacity
           style={[
             styles.analyzeButton,
@@ -1520,6 +2015,238 @@ export default function App() {
             <Text style={styles.analyzeButtonText}>Analyze Lift</Text>
           )}
         </TouchableOpacity>
+
+        <View style={styles.historyCard}>
+          <View style={styles.historyHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>Workout History</Text>
+              <Text style={styles.sectionSub}>
+                Saved locally on this device
+              </Text>
+            </View>
+
+            {analysisHistory.length > 0 && (
+              <TouchableOpacity
+                style={styles.historyToggleButton}
+                onPress={() => setHistoryExpanded((current) => !current)}
+              >
+                <Text style={styles.historyToggleText}>
+                  {historyExpanded ? "Hide" : "Show"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {analysisHistory.length === 0 ? (
+            <View style={styles.historyEmpty}>
+              <Text style={styles.historyEmptyTitle}>
+                No saved workouts yet
+              </Text>
+              <Text style={styles.historyEmptyText}>
+                Analyze a lift and it will appear here automatically.
+              </Text>
+            </View>
+          ) : (
+            historyExpanded && (
+              <>
+                {analysisHistory.slice(0, 10).map((entry) => {
+                  const entryReps = entry.rep_feedback || [];
+
+                  const detectedReps =
+                    entry.set_summary?.detected_reps ||
+                    entry.set_summary?.rep_count ||
+                    entryReps.length ||
+                    0;
+
+                  const averageScore =
+                    entryReps.length > 0
+                      ? entryReps.reduce(
+                          (sum, rep) => sum + Number(rep.score || 0),
+                          0,
+                        ) / entryReps.length
+                      : null;
+
+                  const displayHistoryScore =
+                    averageScore !== null
+                      ? Math.round(averageScore * 10)
+                      : null;
+
+                  const workoutDate = entry.createdAt
+                    ? new Date(entry.createdAt).toLocaleDateString(
+                        undefined,
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        },
+                      )
+                    : "Saved workout";
+
+                  const isHistoryEntryOpen =
+                    selectedHistoryId === entry.id;
+
+                  const savedBiggestFix =
+                    entry.set_summary?.biggest_fix ||
+                    entryReps.find(
+                      (rep) =>
+                        rep.feedback?.length > 0 ||
+                        rep.issues?.length > 0,
+                    )?.feedback?.[0] ||
+                    entryReps.find(
+                      (rep) => rep.issues?.length > 0,
+                    )?.issues?.[0] ||
+                    "No additional coaching note was saved.";
+
+                  return (
+                    <TouchableOpacity
+                      key={entry.id}
+                      style={styles.historyItem}
+                      activeOpacity={0.85}
+                      onPress={() =>
+                        setSelectedHistoryId((current) =>
+                          current === entry.id ? null : entry.id,
+                        )
+                      }
+                    >
+                      <View style={styles.historyItemTop}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.historyExercise}>
+                            {formatLabel(entry.exercise_label)}
+                          </Text>
+
+                          <Text style={styles.historyDate}>
+                            {workoutDate}
+                          </Text>
+                        </View>
+
+                        {displayHistoryScore !== null && (
+                          <View style={styles.historyScoreBadge}>
+                            <Text style={styles.historyScoreText}>
+                              {displayHistoryScore}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <View style={styles.historyStatsRow}>
+                        <View style={styles.historyStat}>
+                          <Text style={styles.historyStatValue}>
+                            {entry.load_value !== null &&
+                            entry.load_value !== undefined
+                              ? `${entry.load_value} ${entry.load_unit || "lb"}`
+                              : "Not entered"}
+                          </Text>
+                          <Text style={styles.historyStatLabel}>Load</Text>
+                        </View>
+
+                        <View style={styles.historyStat}>
+                          <Text style={styles.historyStatValue}>
+                            {detectedReps}
+                          </Text>
+                          <Text style={styles.historyStatLabel}>Reps</Text>
+                        </View>
+
+                        <View style={styles.historyStat}>
+                          <Text style={styles.historyStatValue}>
+                            {Math.round(
+                              Number(entry.confidence || 0) * 100,
+                            )}%
+                          </Text>
+                          <Text style={styles.historyStatLabel}>
+                            Confidence
+                          </Text>
+                        </View>
+                      </View>
+
+                      <Text style={styles.historyTapHint}>
+                        {isHistoryEntryOpen
+                          ? "Tap to close"
+                          : "Tap to view saved details"}
+                      </Text>
+
+                      {isHistoryEntryOpen && (
+                        <View style={styles.historyDetails}>
+                          <Text style={styles.historyDetailsLabel}>
+                            Biggest Fix
+                          </Text>
+
+                          <Text style={styles.historyDetailsText}>
+                            {savedBiggestFix}
+                          </Text>
+
+                          {entryReps.length > 0 && (
+                            <>
+                              <Text style={styles.historyDetailsLabel}>
+                                Rep Details
+                              </Text>
+
+                              {entryReps.map((rep, index) => {
+                                const repScore = Number(rep.score || 0);
+
+                                const repNotes = [
+                                  ...(rep.feedback || []),
+                                  ...(rep.issues || []),
+                                ].filter(Boolean);
+
+                                return (
+                                  <View
+                                    key={`${entry.id}-rep-${rep.rep || index}`}
+                                    style={styles.historyRepDetail}
+                                  >
+                                    <View style={styles.historyRepTop}>
+                                      <Text style={styles.historyRepTitle}>
+                                        Rep {rep.rep || index + 1}
+                                      </Text>
+
+                                      <Text style={styles.historyRepScore}>
+                                        {repScore.toFixed(1)}/10
+                                      </Text>
+                                    </View>
+
+                                    {repNotes.length > 0 ? (
+                                      repNotes.map((note, noteIndex) => (
+                                        <Text
+                                          key={`${entry.id}-rep-${index}-note-${noteIndex}`}
+                                          style={styles.historyRepNote}
+                                        >
+                                          {note}
+                                        </Text>
+                                      ))
+                                    ) : (
+                                      <Text style={styles.historyRepNote}>
+                                        No additional feedback saved.
+                                      </Text>
+                                    )}
+                                  </View>
+                                );
+                              })}
+                            </>
+                          )}
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {analysisHistory.length > 10 && (
+                  <Text style={styles.historyMoreText}>
+                    Showing the 10 most recent of{" "}
+                    {analysisHistory.length} workouts
+                  </Text>
+                )}
+
+                <TouchableOpacity
+                  style={styles.clearHistoryButton}
+                  onPress={clearWorkoutHistory}
+                >
+                  <Text style={styles.clearHistoryText}>
+                    Clear History
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )
+          )}
+        </View>
 
         {result?.error && (
           <View style={styles.errorCard}>
@@ -1686,24 +2413,16 @@ export default function App() {
                 Tap a zone to review form cues and status colors from the analysis.
               </Text>
 
-              <View style={styles.coachImageWrap}>
-                {activeImageUrl ? (
+              {activeImageUrl && (
+                <View style={styles.coachImageWrap}>
                   <Image
                     key={`${activeZone?.id}-${activeImagePath}`}
                     source={{ uri: activeImageUrl }}
                     style={styles.coachImage}
                     resizeMode="contain"
                   />
-                ) : (
-                  <View style={styles.emptyImage}>
-                    <Text style={styles.emptyImageText}>
-                      {hasPhaseImageUrls
-                        ? "Select a zone to preview the matching phase frame."
-                        : "Generate phase review images to preview each zone."}
-                    </Text>
-                  </View>
-                )}
-              </View>
+                </View>
+              )}
 
               <View style={styles.zoneGrid}>
                 {zones.map((zone) => {
@@ -1766,20 +2485,16 @@ export default function App() {
                   const path = resolvePhaseImagePath(phaseImages, key);
                   const url = fullUrl(path);
 
+                  if (!url) return null;
+
                   return (
                     <View key={key} style={styles.phaseCard}>
                       <View style={styles.phaseImageWrap}>
-                        {url ? (
-                          <Image
-                            source={{ uri: url }}
-                            style={styles.phaseImage}
-                              resizeMode="contain"
-                          />
-                        ) : (
-                          <View style={styles.emptyPhase}>
-                            <Text style={styles.emptyPhaseText}>No image</Text>
-                          </View>
-                        )}
+                        <Image
+                          source={{ uri: url }}
+                          style={styles.phaseImage}
+                          resizeMode="contain"
+                        />
                       </View>
                       <Text style={styles.phaseLabel}>{label}</Text>
                     </View>
@@ -1847,45 +2562,50 @@ const styles = StyleSheet.create({
     backgroundColor: "#020617",
   },
   content: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 42,
+    maxWidth: 1100,
+    width: "100%",
+    alignSelf: "center",
   },
   hero: {
     backgroundColor: "#0f172a",
-    borderRadius: 28,
-    padding: 22,
+    borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 18,
     borderWidth: 1,
     borderColor: "#1e293b",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   eyebrow: {
     color: "#86efac",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: 5,
   },
   title: {
     color: "#f8fafc",
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: "900",
-    letterSpacing: -1,
+    letterSpacing: -0.8,
   },
   subtitle: {
     color: "#94a3b8",
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: 8,
-    maxWidth: 280,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 6,
+    maxWidth: 390,
   },
   logoBubble: {
-    width: 58,
-    height: 58,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     backgroundColor: "#86efac",
     alignItems: "center",
     justifyContent: "center",
@@ -1895,17 +2615,179 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
   },
+  profileCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    marginBottom: 14,
+  },
+  profileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  profileIdentity: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  profileAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: "#86efac",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileAvatarText: {
+    color: "#020617",
+    fontSize: 20,
+    fontWeight: "900",
+  },
+  profileHeaderText: {
+    flex: 1,
+  },
+  profileName: {
+    color: "#f8fafc",
+    fontSize: 17,
+    fontWeight: "900",
+    marginTop: 3,
+  },
+  profileSummary: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 3,
+  },
+  profileEditButton: {
+    backgroundColor: "#111827",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: "#26324a",
+  },
+  profileEditButtonText: {
+    color: "#86efac",
+    fontWeight: "900",
+    fontSize: 13,
+  },
+  profileForm: {
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#1e293b",
+  },
+  profileFieldLabel: {
+    color: "#cbd5e1",
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  profileInput: {
+    backgroundColor: "#020617",
+    color: "#f8fafc",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  profileChoiceRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  profileChoice: {
+    backgroundColor: "#020617",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+  },
+  profileChoiceActive: {
+    backgroundColor: "#163c2a",
+    borderColor: "#86efac",
+  },
+  profileChoiceText: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  profileChoiceTextActive: {
+    color: "#bbf7d0",
+  },
+  profileMeasurementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  profileMeasurementInput: {
+    flex: 1,
+  },
+  profileUnitLabel: {
+    color: "#94a3b8",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  bmiCard: {
+    backgroundColor: "#020617",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    padding: 16,
+    marginTop: 18,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bmiValue: {
+    color: "#86efac",
+    fontSize: 30,
+    fontWeight: "900",
+    marginTop: 3,
+  },
+  bmiStatus: {
+    color: "#cbd5e1",
+    fontSize: 13,
+    fontWeight: "800",
+    textAlign: "right",
+    maxWidth: 150,
+  },
+  profileSaveButton: {
+    backgroundColor: "#86efac",
+    borderRadius: 16,
+    alignItems: "center",
+    paddingVertical: 13,
+    marginTop: 18,
+  },
+  profileSaveButtonText: {
+    color: "#020617",
+    fontSize: 14,
+    fontWeight: "900",
+  },
   actionRow: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   primaryButton: {
     flex: 1,
+    minHeight: 52,
     backgroundColor: "#22c55e",
-    borderRadius: 18,
-    paddingVertical: 15,
+    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: "center",
+    justifyContent: "center",
   },
   primaryButtonText: {
     color: "#020617",
@@ -1914,12 +2796,14 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     flex: 1,
+    minHeight: 52,
     backgroundColor: "#111827",
-    borderRadius: 18,
-    paddingVertical: 15,
+    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#1f2937",
+    borderColor: "#263244",
   },
   secondaryButtonText: {
     color: "#e5e7eb",
@@ -1928,11 +2812,12 @@ const styles = StyleSheet.create({
   },
   selectedCard: {
     backgroundColor: "#0f172a",
-    borderRadius: 22,
-    padding: 16,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     borderWidth: 1,
     borderColor: "#1e293b",
-    marginBottom: 14,
+    marginBottom: 12,
   },
   cardLabel: {
     color: "#64748b",
@@ -1945,14 +2830,88 @@ const styles = StyleSheet.create({
     color: "#f8fafc",
     fontSize: 15,
     fontWeight: "700",
-    marginTop: 6,
+    marginTop: 4,
+  },
+  loadCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    marginBottom: 14,
+  },
+  loadHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 12,
+  },
+  loadHelp: {
+    color: "#94a3b8",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  optionalLabel: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
+  loadInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  loadInput: {
+    flex: 1,
+    backgroundColor: "#020617",
+    color: "#f8fafc",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  loadUnitRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  loadUnitButton: {
+    minWidth: 48,
+    backgroundColor: "#020617",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  loadUnitButtonActive: {
+    backgroundColor: "#163c2a",
+    borderColor: "#86efac",
+  },
+  loadUnitText: {
+    color: "#94a3b8",
+    fontSize: 13,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  loadUnitTextActive: {
+    color: "#bbf7d0",
   },
   analyzeButton: {
+    minHeight: 58,
     backgroundColor: "#86efac",
-    borderRadius: 22,
-    paddingVertical: 18,
+    borderRadius: 18,
+    paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 18,
+    justifyContent: "center",
+    marginBottom: 14,
   },
   disabledButton: {
     opacity: 0.75,
@@ -1967,33 +2926,34 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dashboardGrid: {
-    gap: 14,
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 12,
   },
   scoreCard: {
     backgroundColor: "#0f172a",
-    borderRadius: 28,
-    padding: 22,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     borderWidth: 1,
     borderColor: "#1e293b",
     alignItems: "center",
   },
   scoreCircle: {
-    width: 154,
-    height: 154,
-    borderRadius: 77,
-    borderWidth: 12,
+    width: 132,
+    height: 132,
+    borderRadius: 66,
+    borderWidth: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 18,
-    marginBottom: 14,
+    marginTop: 14,
+    marginBottom: 10,
     backgroundColor: "#020617",
   },
   scoreBig: {
     color: "#f8fafc",
-    fontSize: 42,
+    fontSize: 38,
     fontWeight: "900",
-    lineHeight: 48,
+    lineHeight: 42,
   },
   scoreSmall: {
     color: "#94a3b8",
@@ -2001,13 +2961,14 @@ const styles = StyleSheet.create({
   },
   exerciseName: {
     color: "#f8fafc",
-    fontSize: 23,
+    fontSize: 21,
     fontWeight: "900",
-    marginTop: 4,
+    marginTop: 2,
   },
   confidenceText: {
     color: "#94a3b8",
-    marginTop: 6,
+    marginTop: 4,
+    fontSize: 13,
     fontWeight: "700",
   },
   insightCard: {
@@ -2049,6 +3010,199 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 3,
     textTransform: "uppercase",
+  },
+  historyCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    marginBottom: 14,
+  },
+  historyHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  historyToggleButton: {
+    backgroundColor: "#111827",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  historyToggleText: {
+    color: "#86efac",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  historyEmpty: {
+    backgroundColor: "#020617",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    padding: 18,
+  },
+  historyEmptyTitle: {
+    color: "#f8fafc",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  historyEmptyText: {
+    color: "#94a3b8",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 5,
+  },
+  historyItem: {
+    backgroundColor: "#020617",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    padding: 15,
+    marginTop: 10,
+  },
+  historyItemTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  historyExercise: {
+    color: "#f8fafc",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+  historyDate: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 3,
+  },
+  historyScoreBadge: {
+    minWidth: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: "#163c2a",
+    borderWidth: 1,
+    borderColor: "#22c55e",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyScoreText: {
+    color: "#bbf7d0",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+  historyStatsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 13,
+  },
+  historyStat: {
+    flex: 1,
+    backgroundColor: "#0f172a",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: "center",
+  },
+  historyStatValue: {
+    color: "#e2e8f0",
+    fontSize: 14,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  historyStatLabel: {
+    color: "#64748b",
+    fontSize: 10,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    marginTop: 3,
+  },
+  historyTapHint: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "800",
+    textAlign: "center",
+    marginTop: 11,
+  },
+  historyDetails: {
+    backgroundColor: "#0f172a",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    padding: 14,
+    marginTop: 12,
+  },
+  historyDetailsLabel: {
+    color: "#86efac",
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  historyDetailsText: {
+    color: "#cbd5e1",
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 12,
+  },
+  historyRepDetail: {
+    backgroundColor: "#020617",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    padding: 12,
+    marginTop: 8,
+  },
+  historyRepTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  historyRepTitle: {
+    color: "#f8fafc",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  historyRepScore: {
+    color: "#86efac",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  historyRepNote: {
+    color: "#94a3b8",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 6,
+  },
+  historyMoreText: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: 13,
+  },
+  clearHistoryButton: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#7f1d1d",
+    backgroundColor: "#2a1014",
+    paddingVertical: 11,
+    alignItems: "center",
+    marginTop: 14,
+  },
+  clearHistoryText: {
+    color: "#fca5a5",
+    fontSize: 13,
+    fontWeight: "900",
   },
   card: {
     backgroundColor: "#0f172a",
