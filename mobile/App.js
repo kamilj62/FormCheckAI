@@ -973,6 +973,27 @@ const loadPendingVideos = async (setter) => {
   setter(existing);
 };
 
+const EXERCISE_CORRECTION_OPTIONS = [
+  "squat_back",
+  "squat_front",
+  "overhead_squat",
+  "deadlift",
+  "bench_press",
+  "strict_press",
+  "push_press",
+  "thruster",
+  "clean",
+  "clean_and_jerk",
+  "split_jerk",
+  "snatch",
+  "pull_up",
+  "push_up",
+  "handstand_push_up",
+  "bar_muscle_up",
+  "ring_muscle_up",
+  "burpee",
+];
+
 const saveAnalysisHistory = async (
   analysis,
   workoutLoad = "",
@@ -986,7 +1007,12 @@ const saveAnalysisHistory = async (
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       profile_id: profileId,
-      exercise_label: analysis.exercise_label,
+      exercise_label:
+        analysis.confirmed_exercise || analysis.exercise_label,
+      predicted_exercise:
+        analysis.predicted_exercise || analysis.exercise_label,
+      confirmed_exercise:
+        analysis.confirmed_exercise || null,
       confidence: analysis.confidence,
       load_value:
         workoutLoad !== "" && Number.isFinite(numericLoad)
@@ -1004,8 +1030,10 @@ const saveAnalysisHistory = async (
     const updated = [item, ...existing].slice(0, 100);
 
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    return item;
   } catch (err) {
     console.log("SAVE HISTORY ERROR:", err);
+    return null;
   }
 };
 
@@ -1027,6 +1055,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
+  const [exerciseCorrectionOpen, setExerciseCorrectionOpen] = useState(false);
+  const [currentHistoryId, setCurrentHistoryId] = useState(null);
   const [pendingVideos, setPendingVideos] = useState([]);
   const [analysisHistory, setAnalysisHistory] = useState([]);
   const [historyExpanded, setHistoryExpanded] = useState(false);
@@ -1385,6 +1415,51 @@ export default function App() {
     }, 2000);
   };
 
+  const correctDetectedExercise = async (correctedExercise) => {
+    if (!result) return;
+
+    const predictedExercise =
+      result.predicted_exercise || result.exercise_label;
+
+    const updatedResult = {
+      ...result,
+      exercise_label: correctedExercise,
+      predicted_exercise: predictedExercise,
+      confirmed_exercise: correctedExercise,
+    };
+
+    setResult(updatedResult);
+    setExerciseCorrectionOpen(false);
+    setSelectedZone(null);
+
+    try {
+      const existing =
+        JSON.parse(await AsyncStorage.getItem(HISTORY_KEY)) || [];
+
+      const updatedHistory = existing.map((entry) => {
+        if (entry.id !== currentHistoryId) return entry;
+
+        return {
+          ...entry,
+          exercise_label: correctedExercise,
+          predicted_exercise:
+            entry.predicted_exercise || predictedExercise,
+          confirmed_exercise: correctedExercise,
+        };
+      });
+
+      await AsyncStorage.setItem(
+        HISTORY_KEY,
+        JSON.stringify(updatedHistory),
+      );
+
+      setAnalysisHistory(updatedHistory);
+    } catch (err) {
+      console.log("EXERCISE CORRECTION ERROR:", err);
+      Alert.alert("Exercise correction could not be saved");
+    }
+  };
+
   const analyzeVideo = async () => {
   if (!video) {
     Alert.alert("Pick a video first");
@@ -1418,6 +1493,8 @@ export default function App() {
 
       const analysisResult = {
         ...data,
+        predicted_exercise: data.exercise_label,
+        confirmed_exercise: null,
         phase_images: data.phase_images || {},
       };
 
@@ -1427,12 +1504,15 @@ export default function App() {
         setOverlayUrl(fullUrl(analysisResult.overlay_video_url));
       }
 
-      await saveAnalysisHistory(
+      const savedHistoryItem = await saveAnalysisHistory(
         analysisResult,
         exerciseLoad,
         exerciseLoadUnit,
         profile.id,
       );
+
+      setCurrentHistoryId(savedHistoryItem?.id || null);
+      setExerciseCorrectionOpen(false);
 
       await loadAnalysisHistory(setAnalysisHistory);
 
