@@ -11,5 +11,3 @@ python-multipart
 boto3
 celery
 redis
-
-ultralytics==8.4.102
