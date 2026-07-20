@@ -1053,6 +1053,7 @@ export default function App() {
   const [video, setVideo] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [reanalysisLoading, setReanalysisLoading] = useState(false);
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [exerciseCorrectionOpen, setExerciseCorrectionOpen] = useState(false);
@@ -1416,23 +1417,51 @@ export default function App() {
   };
 
   const correctDetectedExercise = async (correctedExercise) => {
-    if (!result) return;
+    if (!result || !video || reanalysisLoading) return;
 
     const predictedExercise =
-      result.predicted_exercise || result.exercise_label;
+      result.predicted_exercise ||
+      result.debug?.predicted_exercise ||
+      result.exercise_label;
 
-    const updatedResult = {
-      ...result,
-      exercise_label: correctedExercise,
-      predicted_exercise: predictedExercise,
-      confirmed_exercise: correctedExercise,
-    };
-
-    setResult(updatedResult);
+    setReanalysisLoading(true);
     setExerciseCorrectionOpen(false);
     setSelectedZone(null);
+    setOverlayUrl(null);
 
     try {
+      const res = await fetch(`${API_URL}/analyze`, {
+        method: "POST",
+        body: await buildFormData({
+          exercise_label: correctedExercise,
+        }),
+      });
+
+      const data = await res.json();
+
+      console.log("CORRECTED REANALYSIS RESPONSE:", data);
+
+      if (!res.ok) {
+        throw new Error(
+          data?.detail ||
+          data?.message ||
+          "Corrected exercise reanalysis failed",
+        );
+      }
+
+      const reanalyzedResult = {
+        ...data,
+        predicted_exercise: predictedExercise,
+        confirmed_exercise: correctedExercise,
+        phase_images: data.phase_images || {},
+      };
+
+      setResult(reanalyzedResult);
+
+      if (reanalyzedResult.overlay_video_url) {
+        setOverlayUrl(fullUrl(reanalyzedResult.overlay_video_url));
+      }
+
       const existing =
         JSON.parse(await AsyncStorage.getItem(HISTORY_KEY)) || [];
 
@@ -1441,6 +1470,12 @@ export default function App() {
 
         return {
           ...entry,
+          ...reanalyzedResult,
+          id: entry.id,
+          createdAt: entry.createdAt,
+          profile_id: entry.profile_id,
+          load_value: entry.load_value,
+          load_unit: entry.load_unit,
           exercise_label: correctedExercise,
           predicted_exercise:
             entry.predicted_exercise || predictedExercise,
@@ -1455,8 +1490,15 @@ export default function App() {
 
       setAnalysisHistory(updatedHistory);
     } catch (err) {
-      console.log("EXERCISE CORRECTION ERROR:", err);
-      Alert.alert("Exercise correction could not be saved");
+      console.log("CORRECTED REANALYSIS ERROR:", err);
+
+      Alert.alert(
+        "Reanalysis failed",
+        err.message ||
+          "The corrected exercise could not be analyzed.",
+      );
+    } finally {
+      setReanalysisLoading(false);
     }
   };
 
@@ -2368,6 +2410,88 @@ export default function App() {
                 <Text style={styles.confidenceText}>
                   Confidence {Math.round(Number(result.confidence || 0) * 100)}%
                 </Text>
+
+                  {result.confirmed_exercise && (
+                    <Text style={styles.correctedExerciseText}>
+                      AI originally predicted{" "}
+                      {formatLabel(
+                        result.predicted_exercise ||
+                        result.debug?.predicted_exercise ||
+                        result.exercise_label,
+                      )}
+                    </Text>
+                  )}
+
+                  <TouchableOpacity
+                    style={[
+                      styles.exerciseCorrectionButton,
+                      reanalysisLoading && styles.disabledButton,
+                    ]}
+                    disabled={reanalysisLoading}
+                    onPress={() =>
+                      setExerciseCorrectionOpen((current) => !current)
+                    }
+                  >
+                    {reanalysisLoading ? (
+                      <View style={styles.loadingBlock}>
+                        <ActivityIndicator color="#86efac" />
+                        <Text style={styles.exerciseCorrectionButtonText}>
+                          Reanalyzing...
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.exerciseCorrectionButtonText}>
+                        {exerciseCorrectionOpen
+                          ? "Close Exercise List"
+                          : "Wrong Exercise?"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+
+                  {exerciseCorrectionOpen && !reanalysisLoading && (
+                    <View style={styles.exerciseCorrectionPanel}>
+                      <Text style={styles.exerciseCorrectionTitle}>
+                        What exercise was this?
+                      </Text>
+
+                      <View style={styles.exerciseCorrectionGrid}>
+                        {EXERCISE_CORRECTION_OPTIONS.map((exercise) => {
+                          const isSelected =
+                            result.exercise_label === exercise;
+
+                          return (
+                            <TouchableOpacity
+                              key={exercise}
+                              style={[
+                                styles.exerciseCorrectionChoice,
+                                isSelected &&
+                                  styles.exerciseCorrectionChoiceActive,
+                              ]}
+                              disabled={isSelected}
+                              onPress={() =>
+                                correctDetectedExercise(exercise)
+                              }
+                            >
+                              <Text
+                                style={[
+                                  styles.exerciseCorrectionChoiceText,
+                                  isSelected &&
+                                    styles.exerciseCorrectionChoiceTextActive,
+                                ]}
+                              >
+                                {formatLabel(exercise)}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+
+                      <Text style={styles.exerciseCorrectionNote}>
+                        FormCheck will rerun rep detection, scoring, and
+                        coaching using the selected exercise.
+                      </Text>
+                    </View>
+                  )}
               </View>
 
               <View style={styles.insightCard}>
@@ -3044,6 +3168,73 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: "900",
     marginTop: 2,
+  },
+  correctedExerciseText: {
+    color: "#fbbf24",
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 5,
+    textAlign: "center",
+  },
+  exerciseCorrectionButton: {
+    backgroundColor: "#111827",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginTop: 12,
+  },
+  exerciseCorrectionButtonText: {
+    color: "#86efac",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  exerciseCorrectionPanel: {
+    width: "100%",
+    backgroundColor: "#020617",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    padding: 13,
+    marginTop: 12,
+  },
+  exerciseCorrectionTitle: {
+    color: "#f8fafc",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 10,
+  },
+  exerciseCorrectionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+  },
+  exerciseCorrectionChoice: {
+    backgroundColor: "#0f172a",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#26324a",
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
+  exerciseCorrectionChoiceActive: {
+    backgroundColor: "#163c2a",
+    borderColor: "#86efac",
+  },
+  exerciseCorrectionChoiceText: {
+    color: "#94a3b8",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  exerciseCorrectionChoiceTextActive: {
+    color: "#bbf7d0",
+  },
+  exerciseCorrectionNote: {
+    color: "#64748b",
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 11,
   },
   confidenceText: {
     color: "#94a3b8",

@@ -8450,7 +8450,12 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
-def analyze_video(video_path, make_visuals=True, make_overlay=True):
+def analyze_video(
+    video_path,
+    make_visuals=True,
+    make_overlay=True,
+    forced_exercise_label=None,
+):
     try:
 
         # =========================================================
@@ -9770,6 +9775,62 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             protected_conf = final_conf
             protected_reason = "explosive_muscle_up_final_recovery"
 
+        # Preserve the router prediction before applying a user-confirmed label.
+        predicted_exercise = final_label
+
+        forced_label_aliases = {
+            "back_squat": "squat_back",
+            "front_squat": "squat_front",
+            "bar_muscle_up": "muscle_up",
+            "ring_muscle_up": "muscle_up",
+        }
+
+        supported_forced_labels = {
+            "squat_back",
+            "squat_front",
+            "overhead_squat",
+            "clean",
+            "clean_and_jerk",
+            "snatch",
+            "split_jerk",
+            "deadlift",
+            "bench_press",
+            "push_press",
+            "thruster",
+            "strict_press",
+            "pull_up",
+            "handstand_push_up",
+            "push_up",
+            "burpee",
+            "muscle_up",
+        }
+
+        normalized_forced_label = None
+
+        if forced_exercise_label:
+            requested_label = (
+                str(forced_exercise_label)
+                .strip()
+                .lower()
+                .replace(" ", "_")
+                .replace("-", "_")
+            )
+
+            normalized_forced_label = forced_label_aliases.get(
+                requested_label,
+                requested_label,
+            )
+
+            if normalized_forced_label not in supported_forced_labels:
+                raise ValueError(
+                    f"Unsupported forced exercise label: {forced_exercise_label}"
+                )
+
+            final_label = normalized_forced_label
+            analysis_mode = "user_confirmed_reanalysis"
+            protected_label = final_label
+            protected_reason = "user_confirmed_exercise"
+
         if final_label in {"squat_back", "squat_front", "overhead_squat"}:
             rep_feedback, _ = analyze_squat_reps(biomech, final_label)
 
@@ -9898,6 +9959,9 @@ def analyze_video(video_path, make_visuals=True, make_overlay=True):
             "overlay_video_url": None,
             "phase_images": None,
             "debug": {
+                "predicted_exercise": predicted_exercise,
+                "forced_exercise_label": normalized_forced_label,
+                "user_confirmed": bool(normalized_forced_label),
                 "olympic_pred":    olympic_pred,
                 "olympic_conf":    round(olympic_conf, 3) if olympic_conf else None,
                 "raw_label":       raw_label,
@@ -10384,7 +10448,10 @@ async def generate_overlay(
 
 
 @app.post("/analyze")
-async def analyze(file: UploadFile = File(...)):
+async def analyze(
+    file: UploadFile = File(...),
+    exercise_label: str = Form(None),
+):
     temp_path = f"/tmp/{uuid.uuid4().hex}_{file.filename}"
     transcoded_path = None
 
@@ -10396,6 +10463,7 @@ async def analyze(file: UploadFile = File(...)):
             temp_path,
             make_visuals=True,
             make_overlay=True,
+            forced_exercise_label=exercise_label,
         )
 
         if result.get("analysis_mode") == "insufficient_data":
@@ -10405,6 +10473,7 @@ async def analyze(file: UploadFile = File(...)):
                     transcoded_path,
                     make_visuals=True,
                     make_overlay=True,
+                    forced_exercise_label=exercise_label,
                 )
                 retry_result.setdefault("debug", {})
                 retry_result["debug"]["transcoded_retry"] = True
