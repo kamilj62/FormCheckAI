@@ -1475,17 +1475,15 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                     and float(knee_angles[raw_start]) < float(threshold)
                 )
 
+                # The squat bottom must stay inside the original below-threshold
+                # segment. Searching the expanded setup/lockout window can reach
+                # the next repetition and merge two squats into one.
+                bottom = raw_start + int(
+                    np.argmax(hip_y_values[raw_start:raw_end + 1])
+                )
+
                 if starts_at_bottom:
-                    bottom = raw_start + int(
-                        np.argmax(hip_y_values[raw_start:raw_end + 1])
-                    )
                     search_start = raw_start
-                else:
-                    # Hip position is the most reliable bottom signal because
-                    # knee landmarks may be obscured by the bar and plates.
-                    bottom = search_start + int(
-                        np.argmax(hip_y_values[search_start:search_end + 1])
-                    )
 
                 bottom_hip_y = float(hip_y_values[bottom])
 
@@ -1553,13 +1551,21 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                     - int(frame_numbers[bottom])
                 )
 
+                # YOLO/MediaPipe tracking may omit a few transition frames.
+                # Twelve source-video frames still represents a meaningful
+                # front-squat phase while rejecting tiny pose fragments.
+                min_source_phase_span = 12
+
                 if initial_bottom_rep:
                     # The descent occurred before recording began, so validate
                     # only the visible bottom-to-lockout ascent.
-                    if source_ascent_span < 15:
+                    if source_ascent_span < min_source_phase_span:
                         in_rep = False
                         continue
-                elif source_descent_span < 15 or source_ascent_span < 15:
+                elif (
+                    source_descent_span < min_source_phase_span
+                    or source_ascent_span < min_source_phase_span
+                ):
                     in_rep = False
                     continue
 
@@ -8404,15 +8410,28 @@ def extract_video_biomechanics(video_path, sample_every=1):
             "models/yolov8n.pt",
             pad=int(os.getenv("YOLO_TRACKING_PAD", "220")),
             smooth_alpha=float(os.getenv("YOLO_BOX_SMOOTHING", "0.20")),
+            max_missed_frames=int(
+                os.getenv("YOLO_MAX_MISSED_FRAMES", "30")
+            ),
+            detection_confidence=float(
+                os.getenv("YOLO_TRACKING_CONF", "0.25")
+            ),
         )
         if USE_YOLO_TRACKING and YOLOTracker is not None
         else None
     )
 
+    yolo_debug_rows = []
+    yolo_debug_path = os.getenv("YOLO_DEBUG_DUMP_PATH", "").strip()
+
     with mp_pose.Pose(
         static_image_mode=False,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5,
+        min_detection_confidence=float(
+            os.getenv("MEDIAPIPE_DETECTION_CONF", "0.5")
+        ),
+        min_tracking_confidence=float(
+            os.getenv("MEDIAPIPE_TRACKING_CONF", "0.5")
+        ),
     ) as pose:
 
         while cap.isOpened():
@@ -8426,25 +8445,70 @@ def extract_video_biomechanics(video_path, sample_every=1):
 
             analysis_frame = frame
             crop_result = None
+            crop_available = True
+            target_id = None
+            crop_box = (0, 0, frame.shape[1], frame.shape[0])
 
             if USE_YOLO_TRACKING and yolo_tracker is not None:
                 crop_result = yolo_tracker.get_crop(frame)
 
-                if (
-                    crop_result is None
-                    or crop_result.crop is None
-                    or crop_result.crop.size == 0
-                ):
-                    # Do not let MediaPipe reacquire another athlete from the
-                    # full gym frame after the tracked subject disappears.
+                crop_available = bool(
+                    crop_result is not None
+                    and crop_result.crop is not None
+                    and crop_result.crop.size > 0
+                )
+
+                if crop_result is not None:
+                    target_id = crop_result.target_id
+                    crop_box = crop_result.box
+
+                if not crop_available:
+                    if yolo_debug_path:
+                        yolo_debug_rows.append({
+                            "frame": frame_idx,
+                            "crop_available": 0,
+                            "pose_available": 0,
+                            "target_id": target_id,
+                            "x1": crop_box[0],
+                            "y1": crop_box[1],
+                            "x2": crop_box[2],
+                            "y2": crop_box[3],
+                            "crop_width": 0,
+                            "crop_height": 0,
+                            "missed_frames": getattr(
+                                yolo_tracker,
+                                "missed_frames",
+                                None,
+                            ),
+                        })
                     continue
 
                 analysis_frame = crop_result.crop
 
             rgb = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
+            pose_available = bool(results.pose_landmarks)
 
-            if not results.pose_landmarks:
+            if yolo_debug_path:
+                yolo_debug_rows.append({
+                    "frame": frame_idx,
+                    "crop_available": int(crop_available),
+                    "pose_available": int(pose_available),
+                    "target_id": target_id,
+                    "x1": crop_box[0],
+                    "y1": crop_box[1],
+                    "x2": crop_box[2],
+                    "y2": crop_box[3],
+                    "crop_width": int(analysis_frame.shape[1]),
+                    "crop_height": int(analysis_frame.shape[0]),
+                    "missed_frames": (
+                        getattr(yolo_tracker, "missed_frames", None)
+                        if yolo_tracker is not None
+                        else None
+                    ),
+                })
+
+            if not pose_available:
                 continue
 
             # MediaPipe coordinates are normalized relative to the YOLO crop.
@@ -8484,8 +8548,17 @@ def extract_video_biomechanics(video_path, sample_every=1):
                 jump = (dx * dx + dy * dy) ** 0.5
                 area_ratio = area / max(subject_area, 1e-6)
 
-                if jump > 0.22 or area_ratio < 0.45 or area_ratio > 2.2:
-                    continue
+                # Full-frame subject continuity is useful without YOLO.
+                # With YOLO tracking active, the tracker already owns subject
+                # identity and normal squat motion can otherwise look like an
+                # invalid center/area jump after crop-to-frame remapping.
+                if not USE_YOLO_TRACKING:
+                    if (
+                        jump > 0.22
+                        or area_ratio < 0.45
+                        or area_ratio > 2.2
+                    ):
+                        continue
 
                 subject_center = (
                     subject_center[0] * 0.85 + center[0] * 0.15,
@@ -8542,6 +8615,22 @@ def extract_video_biomechanics(video_path, sample_every=1):
                 })
 
         print(f"BIOMECHANICS DUMP: {dump_path}")
+
+    if yolo_debug_path and yolo_debug_rows:
+        import csv
+
+        debug_path = Path(yolo_debug_path)
+        debug_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with debug_path.open("w", newline="") as debug_file:
+            writer = csv.DictWriter(
+                debug_file,
+                fieldnames=list(yolo_debug_rows[0].keys()),
+            )
+            writer.writeheader()
+            writer.writerows(yolo_debug_rows)
+
+        print(f"YOLO DEBUG DUMP: {debug_path}")
 
     return sequence, biomechanics, {
         "frames_processed": len(sequence),
@@ -9338,6 +9427,13 @@ def analyze_video(
             raw_label in {"squat", "squat_front", "squat_back", "push_press"}
             and squat_label in {"squat_back", "squat_front", "overhead_squat"}
             and bio_label in {"squat", "push_press", "deadlift"}
+            and not (
+                raw_label in {"squat", "squat_front", "squat_back"}
+                and float(base_conf or 0.0) >= 0.85
+                and bio_label == "squat"
+                and float(bio_conf or 0.0) >= 0.85
+                and _squat_confident
+            )
             and not _looks_clean_only
             and not _looks_cj
             and not _looks_split
@@ -9499,6 +9595,26 @@ def analyze_video(
             final_label = "split_jerk"
             final_conf = 0.80
             analysis_mode = "shape_override"
+
+        elif (
+            raw_label == "squat_front"
+            and float(base_conf or 0.0) >= 0.90
+            and bio_label == "squat"
+            and float(bio_conf or 0.0) >= 0.85
+            and not _truly_explosive
+            and not _strong_overhead
+            and float(olympic_conf or 0.0) < 0.75
+        ):
+            # Preserve a high-confidence front-squat prediction when the
+            # general biomechanics classifier independently confirms squat.
+            # YOLO crop geometry can shift the squat variant router toward
+            # squat_back even though the movement family remains clear.
+            final_label = "squat_front"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+            )
+            analysis_mode = "squat_raw_consensus"
 
         elif (
             _squat_confident
@@ -9883,7 +9999,10 @@ def analyze_video(
                     analysis_mode = "squat_router_protected"
 
         # Final squat recovery after Router V5 / Olympic override.
-        if clear_squat_should_hold:
+        if (
+            clear_squat_should_hold
+            and analysis_mode != "squat_raw_consensus"
+        ):
             final_label = squat_label
             final_conf = max(
                         float(squat_conf or 0.0),
@@ -10320,6 +10439,7 @@ def analyze_video(
                 "bio_conf":        round(bio_conf, 3) if bio_conf else None,
                 "bio_override":    bio_override,
                 "bio_reason":      bio_reason,
+                "biomechanics_summary": summary,
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
                 "bodyweight":      bodyweight_debug,

@@ -40,6 +40,8 @@ class YOLOTracker:
         pad=220,
         initial_target_id=None,
         smooth_alpha=0.20,
+        max_missed_frames=30,
+        detection_confidence=0.25,
     ):
         if not Path(model_path).exists():
             raise FileNotFoundError(f"YOLO model not found: {model_path}")
@@ -49,7 +51,11 @@ class YOLOTracker:
         self.target_id = initial_target_id
         self.last_box = None
         self.missed_frames = 0
-        self.max_missed_frames = 30
+        self.max_missed_frames = max(1, int(max_missed_frames))
+        self.detection_confidence = max(
+            0.01,
+            min(1.0, float(detection_confidence)),
+        )
         self.smooth_alpha = max(0.0, min(1.0, float(smooth_alpha)))
 
     def get_crop(self, frame):
