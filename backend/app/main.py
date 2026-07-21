@@ -9913,6 +9913,19 @@ def analyze_video(
                 if isinstance(router_v5_debug, dict):
                     router_v5_debug["decision"] = "clean_and_jerk_shape_rescue"
 
+            router_v5_decision = (
+                str((router_v5_debug or {}).get("decision", ""))
+                if isinstance(router_v5_debug, dict)
+                else ""
+            )
+
+            clean_rescue_active = (
+                router_v5_label == "clean"
+                and router_v5_decision == "clean_rescue_from_weak_snatch"
+                and _truly_explosive
+                and float(router_v5_conf or 0.0) >= 0.70
+            )
+
             protected_non_olympic = protected_label in {
                 "bench_press",
                 "burpee",
@@ -9927,7 +9940,11 @@ def analyze_video(
             }
             squat_should_hold = (
                 final_label in {"squat_back", "squat_front", "overhead_squat"}
-                and (float(olympic_conf or 0.0) < 0.65 or not _truly_explosive)
+                and (
+                    float(olympic_conf or 0.0) < 0.65
+                    or not _truly_explosive
+                )
+                and not clean_rescue_active
             )
 
             push_press_should_hold = (
@@ -9977,6 +9994,7 @@ def analyze_video(
                     and float(squat_conf or 0.0) >= 0.90
                     and router_v5_label in OLY_SET
                     and float(router_v5_conf or 0.0) < 0.85
+                    and not clean_rescue_active
                 ):
                     final_label = squat_label
                     final_conf = max(
@@ -9989,8 +10007,13 @@ def analyze_video(
                     final_conf = router_v5_conf
                     analysis_mode = "router_v5"
 
+                if clean_rescue_active:
+                    final_label = "clean"
+                    final_conf = float(router_v5_conf or 0.75)
+                    analysis_mode = "router_v5"
+
                 # Final squat recovery after Router V5.
-                if clear_squat_should_hold:
+                if clear_squat_should_hold and not clean_rescue_active:
                     final_label = squat_label
                     final_conf = max(
                         float(squat_conf or 0.0),
@@ -10001,6 +10024,7 @@ def analyze_video(
         # Final squat recovery after Router V5 / Olympic override.
         if (
             clear_squat_should_hold
+            and not clean_rescue_active
             and analysis_mode != "squat_raw_consensus"
         ):
             final_label = squat_label
@@ -10009,6 +10033,27 @@ def analyze_video(
                         float(base_conf or 0.0) if raw_label == squat_label else 0.0,
                     )
             analysis_mode = "squat_router_protected"
+
+        # Final authority for Router V5's verified clean rescue.
+        # This runs after every squat recovery path so a strongly explosive
+        # clean cannot be restored to squat_back afterward.
+        final_clean_rescue = (
+            locals().get("router_v5_label") == "clean"
+            and str(
+                (
+                    locals().get("router_v5_debug") or {}
+                ).get("decision", "")
+            ) == "clean_rescue_from_weak_snatch"
+            and bool(locals().get("_truly_explosive", False))
+            and float(
+                locals().get("router_v5_conf", 0.0) or 0.0
+            ) >= 0.70
+        )
+
+        if final_clean_rescue:
+            final_label = "clean"
+            final_conf = float(router_v5_conf or 0.75)
+            analysis_mode = "router_v5"
 
         # Pull-up safety: if an obvious pull-up posture was routed into a
         # low-confidence Olympic label, recover pull_up before rep analysis.
