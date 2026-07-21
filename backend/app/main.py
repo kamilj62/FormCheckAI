@@ -760,6 +760,209 @@ def smooth_coach_score(score, exercise_label=None):
     return max(0.0, min(10.0, score))
 
 
+def analyze_yolo_deadlift_reps(biomechanics):
+    """
+    Deadlift transition detector for YOLO-isolated busy scenes.
+    """
+    if not biomechanics:
+        return []
+
+    frame_numbers = np.array([
+        int(b.get("frame_number", i))
+        for i, b in enumerate(biomechanics)
+    ])
+    hip = np.array([
+        float(b.get("hip_angle", 180.0))
+        for b in biomechanics
+    ])
+    knee = np.array([
+        float(b.get("knee_angle", 180.0))
+        for b in biomechanics
+    ])
+    hip_y = np.array([
+        float(b.get("hip_y", 0.0))
+        for b in biomechanics
+    ])
+    wrist_y = np.array([
+        float(b.get("wrist_y", 0.0))
+        for b in biomechanics
+    ])
+
+    setup_hip_max = 125.0
+    setup_knee_max = 130.0
+    lockout_hip_min = 160.0
+    lockout_knee_min = 160.0
+    min_hip_extension = 35.0
+    min_knee_extension = 35.0
+    max_rep_span = 180
+    min_gap_after_lockout = 60
+
+    candidates = []
+    setup_idx = None
+
+    for i in range(len(biomechanics)):
+        is_setup = (
+            hip[i] <= setup_hip_max
+            and knee[i] <= setup_knee_max
+        )
+        is_lockout = (
+            hip[i] >= lockout_hip_min
+            and knee[i] >= lockout_knee_min
+        )
+
+        if setup_idx is None:
+            if is_setup:
+                setup_idx = i
+            continue
+
+        if (
+            is_setup
+            and hip[i] + knee[i]
+            < hip[setup_idx] + knee[setup_idx]
+        ):
+            setup_idx = i
+
+        frame_span = int(
+            frame_numbers[i] - frame_numbers[setup_idx]
+        )
+
+        if frame_span > max_rep_span:
+            setup_idx = i if is_setup else None
+            continue
+
+        if not is_lockout:
+            continue
+
+        hip_extension = hip[i] - hip[setup_idx]
+        knee_extension = knee[i] - knee[setup_idx]
+
+        if (
+            hip_extension >= min_hip_extension
+            and knee_extension >= min_knee_extension
+        ):
+            segment = slice(setup_idx, i + 1)
+
+            hip_jumps = np.abs(np.diff(hip_y[segment]))
+            wrist_jumps = np.abs(np.diff(wrist_y[segment]))
+
+            candidates.append({
+                "setup_idx": setup_idx,
+                "lockout_idx": i,
+                "max_hip_jump": (
+                    float(np.max(hip_jumps))
+                    if len(hip_jumps)
+                    else 0.0
+                ),
+                "max_wrist_jump": (
+                    float(np.max(wrist_jumps))
+                    if len(wrist_jumps)
+                    else 0.0
+                ),
+            })
+
+        setup_idx = None
+
+    accepted = []
+    last_lockout_frame = None
+
+    for candidate in candidates:
+        start_idx = candidate["setup_idx"]
+        lockout_idx = candidate["lockout_idx"]
+
+        start_frame = int(frame_numbers[start_idx])
+        lockout_frame = int(frame_numbers[lockout_idx])
+
+        corrupted = (
+            candidate["max_hip_jump"] > 0.03
+            or candidate["max_wrist_jump"] > 0.10
+        )
+
+        duplicate = (
+            last_lockout_frame is not None
+            and start_frame - last_lockout_frame
+            < min_gap_after_lockout
+        )
+
+        if corrupted or duplicate:
+            continue
+
+        span = max(1, lockout_idx - start_idx)
+
+        pull_idx = min(
+            lockout_idx,
+            start_idx + max(1, int(span * 0.30)),
+        )
+        mid_idx = min(
+            lockout_idx,
+            start_idx + max(1, int(span * 0.60)),
+        )
+
+        pose_coverage = lockout_idx - start_idx + 1
+        sparse_tracking = pose_coverage < 8
+
+        score = 7.0 if not sparse_tracking else 6.0
+
+        issues = []
+        feedback = [
+            "Deadlift repetition detected from setup to lockout."
+        ]
+
+        if sparse_tracking:
+            issues.append(
+                "Pose tracking was limited during this repetition."
+            )
+            feedback.append(
+                "Use a clearer camera angle for more detailed form scoring."
+            )
+
+        display_start_frame = start_frame
+        display_end_frame = lockout_frame
+
+        if sparse_tracking:
+            # Expand only the review window around sparse pose anchors.
+            # Detection anchors remain start_frame and lockout_frame.
+            display_start_frame = max(0, start_frame - 77)
+            display_end_frame = lockout_frame + 16
+
+        accepted.append({
+            "rep": len(accepted) + 1,
+            "start_frame": display_start_frame,
+            "pull_frame": int(frame_numbers[pull_idx]),
+            "mid_frame": int(frame_numbers[mid_idx]),
+            "finish_frame": lockout_frame,
+            "bottom_frame": start_frame,
+            "lockout_frame": lockout_frame,
+            "end_frame": display_end_frame,
+            "score": score,
+            "grade": grade_score(score),
+            "issues": issues,
+            "breakdown": {
+                "setup": "good",
+                "back": "unscored",
+                "neck": "unscored",
+                "hinge": "good",
+                "lockout": "good",
+                "knees": "unscored",
+                "bar_path": "unscored",
+                "control": (
+                    "limited_tracking"
+                    if sparse_tracking
+                    else "good"
+                ),
+            },
+            "feedback": feedback,
+            "tracking_quality": (
+                "limited"
+                if sparse_tracking
+                else "good"
+            ),
+        })
+
+        last_lockout_frame = lockout_frame
+
+    return accepted
+
+
 def analyze_deadlift_reps(biomechanics):
     hip_y = np.array([b["hip_y"] for b in biomechanics])
     torso = np.array([b["torso_angle"] for b in biomechanics])
@@ -9864,7 +10067,9 @@ def analyze_video(
             and float(olympic_conf or 0.0) < 0.80
         ):
             try:
-                yolo_deadlift_probe_reps, _ = analyze_deadlift_reps(biomech)
+                yolo_deadlift_probe_reps = analyze_yolo_deadlift_reps(
+                    biomech
+                )
                 yolo_squat_probe_reps, _ = analyze_squat_reps(
                     biomech,
                     final_label if final_label != "squat" else "squat_back",
@@ -9960,7 +10165,39 @@ def analyze_video(
             rep_feedback, _ = analyze_split_jerk_reps(biomech)
 
         elif final_label == "deadlift":
-            rep_feedback, _ = analyze_deadlift_reps(biomech)
+            if (
+                analysis_mode == "yolo_deadlift_recovery"
+                and yolo_deadlift_probe_reps
+            ):
+                rep_feedback = []
+
+                for index, rep in enumerate(yolo_deadlift_probe_reps, 1):
+                    safe_rep = dict(rep)
+                    safe_rep["rep"] = index
+                    safe_rep["score"] = 6.0
+                    safe_rep["grade"] = "Tracking Limited"
+                    safe_rep["issues"] = [
+                        "Pose tracking was not reliable enough for detailed form scoring."
+                    ]
+                    safe_rep["breakdown"] = {
+                        "setup": "detected",
+                        "back": "unscored",
+                        "neck": "unscored",
+                        "hinge": "detected",
+                        "lockout": "detected",
+                        "knees": "unscored",
+                        "bar_path": "unscored",
+                        "control": "limited_tracking",
+                    }
+                    safe_rep["feedback"] = [
+                        "Deadlift repetition detected.",
+                        "Use a clearer camera angle for detailed form feedback.",
+                    ]
+                    safe_rep["tracking_quality"] = "limited"
+
+                    rep_feedback.append(safe_rep)
+            else:
+                rep_feedback, _ = analyze_deadlift_reps(biomech)
 
         elif final_label == "bench_press":
             rep_feedback, _ = analyze_bench_press_reps(biomech)

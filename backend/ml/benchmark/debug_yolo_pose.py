@@ -101,14 +101,33 @@ def main():
                     2,
                 )
 
+            label = f"FRAME {frame_number}"
+
+            text_size, _ = cv2.getTextSize(
+                label,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.5,
+                4,
+            )
+
+            text_x = max(20, (width - text_size[0]) // 2)
+
+            cv2.rectangle(
+                frame,
+                (text_x - 15, 10),
+                (text_x + text_size[0] + 15, 65),
+                (0, 0, 0),
+                -1,
+            )
+
             cv2.putText(
                 frame,
-                f"frame={frame_number}",
-                (20, 35),
+                label,
+                (text_x, 52),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
+                1.5,
                 (255, 255, 255),
-                2,
+                4,
             )
 
             writer.write(frame)
