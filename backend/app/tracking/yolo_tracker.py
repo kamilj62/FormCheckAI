@@ -34,7 +34,13 @@ class CropResult:
 
 
 class YOLOTracker:
-    def __init__(self, model_path="models/yolov8n.pt", pad=220, initial_target_id=None):
+    def __init__(
+        self,
+        model_path="models/yolov8n.pt",
+        pad=220,
+        initial_target_id=None,
+        smooth_alpha=0.20,
+    ):
         if not Path(model_path).exists():
             raise FileNotFoundError(f"YOLO model not found: {model_path}")
 
@@ -44,6 +50,7 @@ class YOLOTracker:
         self.last_box = None
         self.missed_frames = 0
         self.max_missed_frames = 30
+        self.smooth_alpha = max(0.0, min(1.0, float(smooth_alpha)))
 
     def get_crop(self, frame):
         h, w = frame.shape[:2]
@@ -71,7 +78,29 @@ class YOLOTracker:
                 candidates.append((score, tid, x1, y1, x2, y2))
 
         if not candidates:
-            return CropResult(crop=frame, box=(0, 0, w, h), target_id=None)
+            self.missed_frames += 1
+
+            # Keep the previous athlete crop during brief detector dropouts.
+            if (
+                self.last_box is not None
+                and self.missed_frames <= self.max_missed_frames
+            ):
+                x1, y1, x2, y2 = self.last_box
+                crop = frame[y1:y2, x1:x2]
+
+                return CropResult(
+                    crop=crop,
+                    box=self.last_box,
+                    target_id=self.target_id,
+                )
+
+            # Never fall back to the full busy frame in YOLO mode.
+            # Returning no crop lets the analysis loop skip this frame.
+            return CropResult(
+                crop=None,
+                box=self.last_box or (0, 0, w, h),
+                target_id=self.target_id,
+            )
 
         candidates.sort(reverse=True)
 
@@ -123,14 +152,19 @@ class YOLOTracker:
                             best = (tid, cx1, cy1, cx2, cy2, iou, dist)
 
                     if best is not None:
-                        tid, x1, y1, x2, y2, iou, dist = best
+                        tid, bx1, by1, bx2, by2, iou, dist = best
 
                         if iou >= 0.15 or dist < 180:
                             self.target_id = tid
                             self.missed_frames = 0
+                            x1, y1, x2, y2 = bx1, by1, bx2, by2
+                        else:
+                            # No candidate is close enough to the previous
+                            # athlete. Reuse the previous crop instead of
+                            # silently switching people under the old ID.
+                            x1, y1, x2, y2 = self.last_box
                     else:
-                        _, self.target_id, x1, y1, x2, y2 = candidates[0]
-                        self.missed_frames = 0
+                        x1, y1, x2, y2 = self.last_box
                 else:
                     _, self.target_id, x1, y1, x2, y2 = candidates[0]
                     self.missed_frames = 0
@@ -139,6 +173,22 @@ class YOLOTracker:
         y1 = max(0, y1 - self.pad)
         x2 = min(w, x2 + self.pad)
         y2 = min(h, y2 + self.pad)
+
+        # Smooth crop movement and scale changes. Raw YOLO boxes can jitter,
+        # which becomes false landmark movement after coordinate remapping.
+        if self.last_box is not None:
+            alpha = self.smooth_alpha
+            lx1, ly1, lx2, ly2 = self.last_box
+
+            x1 = int(round(lx1 * (1.0 - alpha) + x1 * alpha))
+            y1 = int(round(ly1 * (1.0 - alpha) + y1 * alpha))
+            x2 = int(round(lx2 * (1.0 - alpha) + x2 * alpha))
+            y2 = int(round(ly2 * (1.0 - alpha) + y2 * alpha))
+
+            x1 = max(0, min(x1, w - 1))
+            y1 = max(0, min(y1, h - 1))
+            x2 = max(x1 + 1, min(x2, w))
+            y2 = max(y1 + 1, min(y2, h))
 
         self.last_box = (x1, y1, x2, y2)
         crop = frame[y1:y2, x1:x2]

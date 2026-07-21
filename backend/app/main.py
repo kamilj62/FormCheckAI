@@ -65,7 +65,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 # Experimental: use YOLO to isolate the foreground athlete before pose estimation.
-USE_YOLO_TRACKING = False
+USE_YOLO_TRACKING = os.getenv("USE_YOLO_TRACKING", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 try:
     from app.tracking import YOLOTracker, remap_crop_landmarks_to_full_frame
@@ -8192,7 +8197,11 @@ def extract_video_biomechanics(video_path, sample_every=1):
     subject_area = None
 
     yolo_tracker = (
-        YOLOTracker("models/yolov8n.pt", pad=220)
+        YOLOTracker(
+            "models/yolov8n.pt",
+            pad=int(os.getenv("YOLO_TRACKING_PAD", "220")),
+            smooth_alpha=float(os.getenv("YOLO_BOX_SMOOTHING", "0.20")),
+        )
         if USE_YOLO_TRACKING and YOLOTracker is not None
         else None
     )
@@ -8213,17 +8222,42 @@ def extract_video_biomechanics(video_path, sample_every=1):
                 continue
 
             analysis_frame = frame
+            crop_result = None
 
             if USE_YOLO_TRACKING and yolo_tracker is not None:
                 crop_result = yolo_tracker.get_crop(frame)
-                if crop_result and crop_result.crop is not None:
-                    analysis_frame = crop_result.crop
+
+                if (
+                    crop_result is None
+                    or crop_result.crop is None
+                    or crop_result.crop.size == 0
+                ):
+                    # Do not let MediaPipe reacquire another athlete from the
+                    # full gym frame after the tracked subject disappears.
+                    continue
+
+                analysis_frame = crop_result.crop
 
             rgb = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
             results = pose.process(rgb)
 
             if not results.pose_landmarks:
                 continue
+
+            # MediaPipe coordinates are normalized relative to the YOLO crop.
+            # Convert them back to full-frame coordinates before subject
+            # continuity checks and biomechanical feature extraction.
+            if (
+                crop_result is not None
+                and crop_result.box != (0, 0, frame.shape[1], frame.shape[0])
+                and remap_crop_landmarks_to_full_frame is not None
+            ):
+                results = remap_crop_landmarks_to_full_frame(
+                    results,
+                    crop_result.box,
+                    frame.shape[1],
+                    frame.shape[0],
+                )
 
             lm = results.pose_landmarks.landmark
             pts = [
@@ -8270,6 +8304,41 @@ def extract_video_biomechanics(video_path, sample_every=1):
             pose_frames += 1
 
     cap.release()
+
+    # Optional diagnostics for comparing full-frame and YOLO pose signals.
+    biomechanics_dump = os.getenv("BIOMECHANICS_DUMP_PATH", "").strip()
+
+    if biomechanics_dump and biomechanics:
+        import csv
+
+        dump_fields = [
+            "frame_number",
+            "pose_index",
+            "hip_y",
+            "hip_x",
+            "knee_angle",
+            "hip_angle",
+            "torso_angle",
+            "wrist_y",
+            "shoulder_y",
+            "elbow_angle",
+            "valgus_ratio",
+        ]
+
+        dump_path = Path(biomechanics_dump)
+        dump_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with dump_path.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=dump_fields)
+            writer.writeheader()
+
+            for row in biomechanics:
+                writer.writerow({
+                    key: row.get(key)
+                    for key in dump_fields
+                })
+
+        print(f"BIOMECHANICS DUMP: {dump_path}")
 
     return sequence, biomechanics, {
         "frames_processed": len(sequence),
@@ -9774,6 +9843,50 @@ def analyze_video(
             protected_label = final_label
             protected_conf = final_conf
             protected_reason = "explosive_muscle_up_final_recovery"
+
+        # ---------------------------------------------------------
+        # Experimental YOLO busy-scene deadlift recovery
+        # ---------------------------------------------------------
+        # In crowded scenes, the selected athlete's deadlift may look like
+        # repeated squats to the general routers. Compare both exercise-specific
+        # rep analyzers and rescue deadlift only when their counts strongly
+        # disagree. This remains inactive unless YOLO tracking is enabled.
+        yolo_deadlift_probe_reps = []
+        yolo_squat_probe_reps = []
+        yolo_deadlift_rescue = False
+
+        if (
+            USE_YOLO_TRACKING
+            and not forced_exercise_label
+            and final_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
+            and raw_label in {"squat", "squat_back", "squat_front"}
+            and bio_label == "squat"
+            and float(olympic_conf or 0.0) < 0.80
+        ):
+            try:
+                yolo_deadlift_probe_reps, _ = analyze_deadlift_reps(biomech)
+                yolo_squat_probe_reps, _ = analyze_squat_reps(
+                    biomech,
+                    final_label if final_label != "squat" else "squat_back",
+                )
+
+                deadlift_count = len(yolo_deadlift_probe_reps or [])
+                squat_count = len(yolo_squat_probe_reps or [])
+
+                yolo_deadlift_rescue = (
+                    1 <= deadlift_count <= 4
+                    and squat_count >= deadlift_count * 2 + 3
+                )
+
+                if yolo_deadlift_rescue:
+                    final_label = "deadlift"
+                    final_conf = max(0.86, float(final_conf or 0.0))
+                    analysis_mode = "yolo_deadlift_recovery"
+                    protected_label = "deadlift"
+                    protected_conf = final_conf
+                    protected_reason = "yolo_rep_count_deadlift_recovery"
+            except Exception as exc:
+                print(f"YOLO deadlift recovery skipped: {exc}")
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
