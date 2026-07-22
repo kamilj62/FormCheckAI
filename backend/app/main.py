@@ -2262,9 +2262,9 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         })
 
 
-    # Thruster cleanup: remove duplicate overlapping detections from the same rep.
+    # Press cleanup: remove duplicate overlapping detections from the same rep.
     # This does NOT cap reps; it only collapses overlapping windows.
-    if exercise_label == "thruster" and len(reps) > 1:
+    if exercise_label in {"push_press", "thruster"} and len(reps) > 1:
         reps = sorted(reps, key=lambda r: r.get("start_frame", 0))
         cleaned = []
         for rep in reps:
@@ -9355,6 +9355,7 @@ def analyze_video(
                 "base_conf": float(base_conf or 0.0),
                 "bio_label": bio_label,
                 "bio_conf": float(bio_conf or 0.0),
+                "squat_conf": float(squat_conf or 0.0),
                 "looks_strict": _looks_strict,
                 "looks_thruster": _looks_thruster,
                 "looks_clean_only": _looks_clean_only,
@@ -10235,6 +10236,31 @@ def analyze_video(
             protected_label = "split_jerk"
             protected_conf = final_conf
             protected_reason = "standalone_split_from_cj"
+
+        # Final push-press recovery.
+        # Some explosive push presses look like thrusters to biomechanics and
+        # clean-and-jerks to the Olympic classifier despite lacking a C&J or
+        # split-jerk event shape.
+        final_push_press_rescue = (
+            not forced_exercise_label
+            and raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.40
+            and bio_label == "squat"
+            and float(squat_conf or 0.0) < 0.60
+            and bool(_looks_thruster)
+            and not bool(_looks_cj)
+            and not bool(_looks_split)
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) < 0.85
+        )
+
+        if final_push_press_rescue:
+            final_label = "push_press"
+            final_conf = max(float(base_conf or 0.0), 0.76)
+            analysis_mode = "detailed_rep_analysis"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "push_press_from_false_cj_agreement"
 
         # Final muscle-up recovery.
         # Ring muscle-ups may look like highly explosive pull-ups to Router V6.

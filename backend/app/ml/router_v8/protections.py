@@ -227,6 +227,7 @@ def strength_protections(
     base_conf: float,
     bio_label: str | None,
     bio_conf: float,
+    squat_conf: float,
     looks_strict: bool,
     looks_thruster: bool,
     looks_clean_only: bool,
@@ -278,6 +279,7 @@ def strength_protections(
         looks_thruster
         and raw_label == "push_press"
         and bio_label == "squat"
+        and float(squat_conf or 0.0) >= 0.60
         and not looks_split
     )
 
