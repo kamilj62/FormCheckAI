@@ -9851,6 +9851,28 @@ def analyze_video(
                 )
             )
 
+            # A standalone split jerk often appears as push_press to the
+            # base/biomechanics models and clean_and_jerk to the Olympic
+            # classifier. Long split recovery evidence distinguishes it from
+            # a complete clean-and-jerk sequence.
+            if (
+                likely_standalone_split
+                and olympic_pred == "clean_and_jerk"
+                and float(olympic_conf or 0.0) >= 0.80
+                and raw_label == "push_press"
+                and bio_label == "push_press"
+                and _looks_split
+            ):
+                router_v5_label = "split_jerk"
+                router_v5_conf = max(
+                    float(router_v5_conf or 0.0),
+                    0.80,
+                )
+                if isinstance(router_v5_debug, dict):
+                    router_v5_debug["decision"] = (
+                        "standalone_split_from_cj"
+                    )
+
             if (
                 router_v5_label == "split_jerk"
                 and olympic_pred == "clean_and_jerk"
@@ -10189,6 +10211,30 @@ def analyze_video(
             protected_label = final_label
             protected_conf = final_conf
             protected_reason = "clean_and_jerk_shape_final_recovery"
+
+        # Final authority for a verified standalone split-jerk rescue.
+        # This runs after squat, bodyweight, and clean-and-jerk recovery.
+        final_split_rescue = (
+            not forced_exercise_label
+            and isinstance(locals().get("router_v5_debug"), dict)
+            and (
+                locals()
+                .get("router_v5_debug", {})
+                .get("decision")
+                == "standalone_split_from_cj"
+            )
+        )
+
+        if final_split_rescue:
+            final_label = "split_jerk"
+            final_conf = max(
+                float(locals().get("router_v5_conf", 0.0) or 0.0),
+                0.80,
+            )
+            analysis_mode = "router_v5"
+            protected_label = "split_jerk"
+            protected_conf = final_conf
+            protected_reason = "standalone_split_from_cj"
 
         # Final muscle-up recovery.
         # Ring muscle-ups may look like highly explosive pull-ups to Router V6.
