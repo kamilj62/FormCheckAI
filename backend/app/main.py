@@ -3244,10 +3244,24 @@ def find_split_jerk_phase_reps(biomechanics):
             if stable_overhead and upright:
                 finish_idx = i
 
-        finish_idx = max(
-            recovery_idx + 4,
-            min(int(finish_idx), cluster_end, n - 1),
+        finish_idx = min(
+            n - 1,
+            max(
+                recovery_idx + 4,
+                min(int(finish_idx), cluster_end, n - 1),
+            ),
         )
+
+        # Clamp every detected phase index before indexing frame_numbers.
+        # Short or sparse clips can produce phase estimates just beyond n - 1.
+        max_idx = n - 1
+        start_idx = max(0, min(int(start_idx), max_idx))
+        dip_idx = max(0, min(int(dip_idx), max_idx))
+        drive_idx = max(0, min(int(drive_idx), max_idx))
+        catch_idx = max(0, min(int(catch_idx), max_idx))
+        recovery_idx = max(0, min(int(recovery_idx), max_idx))
+        lockout_idx = max(0, min(int(lockout_idx), max_idx))
+        finish_idx = max(0, min(int(finish_idx), max_idx))
 
         rep = {
             "start_frame": int(frame_numbers[start_idx]),
@@ -10263,25 +10277,52 @@ def analyze_video(
             protected_reason = "push_press_from_false_cj_agreement"
 
         # Final muscle-up recovery.
-        # Ring muscle-ups may look like highly explosive pull-ups to Router V6.
-        # Preserve the muscle-up class when the clip has the characteristic
-        # upright/explosive transition signature and weak Olympic evidence.
-        if (
-            final_label == "pull_up"
+        # Ring muscle-ups often appear as explosive pull-ups with a squat /
+        # push-press model disagreement and weak Olympic evidence.
+        ring_muscle_up_rescue = (
+            not forced_exercise_label
+            and final_label == "pull_up"
             and router_v6_label == "pull_up"
             and raw_label == "squat"
             and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.88
+            and float(bio_conf or 0.0) >= 0.75
             and float(bodyweight_router_conf or 0.0) >= 0.97
             and float(explosive_score or 0.0) >= 90.0
+            and 0.50 <= float(wrist_overhead_ratio or 0.0) <= 0.85
             and float(olympic_conf or 0.0) < 0.70
-        ):
+        )
+
+        # Bar muscle-ups can look like front/overhead squats because the torso
+        # rises above the bar while the bodyweight router sees only pull-up.
+        bar_muscle_up_rescue = (
+            not forced_exercise_label
+            and final_label == "pull_up"
+            and router_v6_label == "pull_up"
+            and raw_label == "squat_front"
+            and bio_label == "squat_front"
+            and float(base_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.95
+            and squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.90
+            and float(bodyweight_router_conf or 0.0) >= 0.94
+            and float(explosive_score or 0.0) < 30.0
+            and 0.35 <= float(wrist_overhead_ratio or 0.0) <= 0.70
+        )
+
+        if ring_muscle_up_rescue or bar_muscle_up_rescue:
             final_label = "muscle_up"
-            final_conf = 0.86
+            final_conf = max(
+                float(bodyweight_router_conf or 0.0),
+                0.86,
+            )
             analysis_mode = "biomechanics_override"
             protected_label = final_label
             protected_conf = final_conf
-            protected_reason = "explosive_muscle_up_final_recovery"
+            protected_reason = (
+                "ring_muscle_up_final_recovery"
+                if ring_muscle_up_rescue
+                else "bar_muscle_up_final_recovery"
+            )
 
         # ---------------------------------------------------------
         # Experimental YOLO busy-scene deadlift recovery
