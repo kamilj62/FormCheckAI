@@ -1471,7 +1471,8 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 # Keep that bottom local to the opening threshold segment;
                 # otherwise the forward expansion can absorb the next squat.
                 starts_at_bottom = (
-                    raw_start == 0
+                    int(frame_numbers[raw_start])
+                    <= int(frame_numbers[0]) + 60
                     and float(knee_angles[raw_start]) < float(threshold)
                 )
 
@@ -1577,6 +1578,36 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
             if end - start < min_frames:
                 in_rep = False
                 continue
+
+            # Reject tiny YOLO/MediaPipe fragments that briefly cross the
+            # squat threshold without containing a real descent and ascent.
+            # Keep overhead squat behavior unchanged because its detector
+            # intentionally accepts shorter threshold windows.
+            if not is_overhead_squat and not is_front_squat:
+                candidate_bottom = start + int(
+                    np.argmin(knee_angles[start:end + 1])
+                )
+                descent_span = candidate_bottom - start
+                ascent_span = end - candidate_bottom
+                source_span = (
+                    int(frame_numbers[end])
+                    - int(frame_numbers[start])
+                )
+                starts_near_video_open = (
+                    int(frame_numbers[start])
+                    <= int(frame_numbers[0]) + 30
+                )
+
+                # Reject a short opening fragment when recording begins during
+                # setup or partway through a movement. Preserve genuine reps
+                # filmed from the beginning when they contain a full cycle.
+                if (
+                    descent_span < 4
+                    or ascent_span < 4
+                    or (starts_near_video_open and source_span < 30)
+                ):
+                    in_rep = False
+                    continue
 
             rep_knee = knee_angles[start:end + 1]
             rep_torso = torso_angles[start:end + 1]
@@ -8446,7 +8477,17 @@ def extract_video_biomechanics(video_path, sample_every=1):
         min_tracking_confidence=float(
             os.getenv("MEDIAPIPE_TRACKING_CONF", "0.5")
         ),
-    ) as pose:
+    ) as pose, mp_pose.Pose(
+        # Keep an independent full-frame temporal tracker for frames where
+        # YOLO has not acquired the athlete or its crop becomes unreliable.
+        static_image_mode=False,
+        min_detection_confidence=float(
+            os.getenv("MEDIAPIPE_DETECTION_CONF", "0.5")
+        ),
+        min_tracking_confidence=float(
+            os.getenv("MEDIAPIPE_TRACKING_CONF", "0.5")
+        ),
+    ) as full_frame_pose:
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -8462,6 +8503,7 @@ def extract_video_biomechanics(video_path, sample_every=1):
             crop_available = True
             target_id = None
             crop_box = (0, 0, frame.shape[1], frame.shape[0])
+            use_full_frame_pose = False
 
             if USE_YOLO_TRACKING and yolo_tracker is not None:
                 crop_result = yolo_tracker.get_crop(frame)
@@ -8477,30 +8519,45 @@ def extract_video_biomechanics(video_path, sample_every=1):
                     crop_box = crop_result.box
 
                 if not crop_available:
-                    if yolo_debug_path:
-                        yolo_debug_rows.append({
-                            "frame": frame_idx,
-                            "crop_available": 0,
-                            "pose_available": 0,
-                            "target_id": target_id,
-                            "x1": crop_box[0],
-                            "y1": crop_box[1],
-                            "x2": crop_box[2],
-                            "y2": crop_box[3],
-                            "crop_width": 0,
-                            "crop_height": 0,
-                            "missed_frames": getattr(
-                                yolo_tracker,
-                                "missed_frames",
-                                None,
-                            ),
-                        })
-                    continue
+                    # YOLO may need several frames to acquire the athlete.
+                    # Do not discard those frames; use independent full-frame
+                    # pose inference until a valid tracked crop is available.
+                    analysis_frame = frame
+                    crop_box = (
+                        0,
+                        0,
+                        frame.shape[1],
+                        frame.shape[0],
+                    )
+                    use_full_frame_pose = True
+                else:
+                    analysis_frame = crop_result.crop
 
-                analysis_frame = crop_result.crop
+                crop_area = max(
+                    1,
+                    int(analysis_frame.shape[0]) *
+                    int(analysis_frame.shape[1]),
+                )
+                frame_area = max(
+                    1,
+                    int(frame.shape[0]) *
+                    int(frame.shape[1]),
+                )
+                crop_area_ratio = crop_area / frame_area
+
+                # Once YOLO expands to nearly the full image, use independent
+                # full-frame inference instead of carrying crop-tracker state
+                # through tiny box changes near the image boundaries.
+                if crop_area_ratio >= 0.85:
+                    analysis_frame = frame
+                    use_full_frame_pose = True
 
             rgb = cv2.cvtColor(analysis_frame, cv2.COLOR_BGR2RGB)
-            results = pose.process(rgb)
+            if use_full_frame_pose:
+                results = full_frame_pose.process(rgb)
+            else:
+                results = pose.process(rgb)
+
             pose_available = bool(results.pose_landmarks)
 
             if yolo_debug_path:
@@ -8530,6 +8587,7 @@ def extract_video_biomechanics(video_path, sample_every=1):
             # continuity checks and biomechanical feature extraction.
             if (
                 crop_result is not None
+                and not use_full_frame_pose
                 and crop_result.box != (0, 0, frame.shape[1], frame.shape[0])
                 and remap_crop_landmarks_to_full_frame is not None
             ):
@@ -8539,6 +8597,52 @@ def extract_video_biomechanics(video_path, sample_every=1):
                     frame.shape[1],
                     frame.shape[0],
                 )
+
+                # MediaPipe can occasionally extrapolate crop-relative
+                # landmarks far outside the crop when tracking drifts.
+                # After remapping, reject those impossible coordinates and
+                # retry this frame using the original full image.
+                remapped_lm = results.pose_landmarks.landmark
+                core_indices = [
+                    mp_pose.PoseLandmark.LEFT_SHOULDER.value,
+                    mp_pose.PoseLandmark.RIGHT_SHOULDER.value,
+                    mp_pose.PoseLandmark.LEFT_HIP.value,
+                    mp_pose.PoseLandmark.RIGHT_HIP.value,
+                    mp_pose.PoseLandmark.LEFT_KNEE.value,
+                    mp_pose.PoseLandmark.RIGHT_KNEE.value,
+                    mp_pose.PoseLandmark.LEFT_ANKLE.value,
+                    mp_pose.PoseLandmark.RIGHT_ANKLE.value,
+                ]
+
+                remapped_core_valid = all(
+                    np.isfinite(remapped_lm[idx].x)
+                    and np.isfinite(remapped_lm[idx].y)
+                    and -0.15 <= remapped_lm[idx].x <= 1.15
+                    and -0.15 <= remapped_lm[idx].y <= 1.15
+                    for idx in core_indices
+                )
+
+                if not remapped_core_valid:
+                    full_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    fallback_results = full_frame_pose.process(full_rgb)
+
+                    if not fallback_results.pose_landmarks:
+                        continue
+
+                    fallback_lm = fallback_results.pose_landmarks.landmark
+                    fallback_core_valid = all(
+                        np.isfinite(fallback_lm[idx].x)
+                        and np.isfinite(fallback_lm[idx].y)
+                        and -0.05 <= fallback_lm[idx].x <= 1.05
+                        and -0.05 <= fallback_lm[idx].y <= 1.05
+                        and fallback_lm[idx].visibility >= 0.35
+                        for idx in core_indices
+                    )
+
+                    if not fallback_core_valid:
+                        continue
+
+                    results = fallback_results
 
             lm = results.pose_landmarks.landmark
             pts = [
@@ -9430,6 +9534,12 @@ def analyze_video(
             and bio_label in {"squat", "deadlift"}
             and explosive_score >= 60.0
             and float(olympic_conf or 0.0) < 0.70
+            and not (
+                raw_label in {"squat", "squat_front", "squat_back"}
+                and float(base_conf or 0.0) >= 0.90
+                and bio_label == "squat"
+                and float(bio_conf or 0.0) >= 0.90
+            )
             and not _looks_clean_only
             and not _looks_cj
             and not _looks_split
@@ -9447,7 +9557,6 @@ def analyze_video(
                 and float(base_conf or 0.0) >= 0.85
                 and bio_label == "squat"
                 and float(bio_conf or 0.0) >= 0.85
-                and _squat_confident
             )
             and not _looks_clean_only
             and not _looks_cj
@@ -9532,6 +9641,28 @@ def analyze_video(
         )
 
 
+        front_squat_weak_router_recovery = (
+            protected_label is None
+            and raw_label == "squat"
+            and float(base_conf or 0.0) >= 0.95
+            and bio_label == "squat"
+            and float(bio_conf or 0.0) >= 0.95
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) <= 0.65
+            and 0.25 <= wrist_overhead_ratio <= 0.55
+            and float(
+                bar_debug.get("scores", {}).get("squat_front", 0.0)
+            ) >= 0.35
+            and float(
+                bar_debug.get("scores", {}).get("overhead_squat", 0.0)
+            ) < 0.70
+        )
+
+        if front_squat_weak_router_recovery:
+            protected_label = "squat_front"
+            protected_conf = 0.80
+            protected_reason = "front_squat_weak_router_recovery"
+
         if protected_label and not strong_oly_lock:
             final_label = protected_label
             final_conf = protected_conf
@@ -9581,7 +9712,10 @@ def analyze_video(
               and not (
                   squat_label == "squat_front"
                   and float(squat_conf or 0.0) >= 0.80
-                  and float(olympic_conf or 0.0) < 0.75
+                  and raw_label == "squat"
+                  and float(base_conf or 0.0) >= 0.95
+                  and bio_label == "squat"
+                  and float(bio_conf or 0.0) >= 0.95
               )
             and (
                 raw_label in {"squat", "squat_back", "squat_front", "bench_press"}
@@ -10025,6 +10159,13 @@ def analyze_video(
                 )
             ):
                 # Hard block: clear squat should not be stolen by weak Olympic Router V5.
+                strong_explosive_snatch = (
+                    olympic_pred == "snatch"
+                    and float(olympic_conf or 0.0) >= 0.80
+                    and bool(_truly_explosive)
+                    and float(explosive_score or 0.0) >= 100.0
+                )
+
                 if (
                     raw_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
                     and squat_label in {"squat_back", "squat_front", "overhead_squat"}
@@ -10032,6 +10173,7 @@ def analyze_video(
                     and router_v5_label in OLY_SET
                     and float(router_v5_conf or 0.0) < 0.85
                     and not clean_rescue_active
+                    and not strong_explosive_snatch
                 ):
                     final_label = squat_label
                     final_conf = max(
@@ -10074,6 +10216,15 @@ def analyze_video(
         # Final authority for Router V5's verified clean rescue.
         # This runs after every squat recovery path so a strongly explosive
         # clean cannot be restored to squat_back afterward.
+        strong_front_squat_consensus = (
+            raw_label in {"squat", "squat_front"}
+            and float(base_conf or 0.0) >= 0.95
+            and bio_label in {"squat", "squat_front"}
+            and float(bio_conf or 0.0) >= 0.95
+            and squat_label == "squat_front"
+            and float(squat_conf or 0.0) >= 0.80
+        )
+
         final_clean_rescue = (
             locals().get("router_v5_label") == "clean"
             and str(
@@ -10085,12 +10236,38 @@ def analyze_video(
             and float(
                 locals().get("router_v5_conf", 0.0) or 0.0
             ) >= 0.70
+            and not strong_front_squat_consensus
         )
 
         if final_clean_rescue:
             final_label = "clean"
             final_conf = float(router_v5_conf or 0.75)
             analysis_mode = "router_v5"
+
+        # Final front-squat authority. Unanimous front-squat evidence should
+        # not be replaced by a weak snatch-to-clean rescue.
+        final_front_squat_consensus = (
+            not forced_exercise_label
+            and raw_label == "squat_front"
+            and float(base_conf or 0.0) >= 0.90
+            and bio_label == "squat_front"
+            and float(bio_conf or 0.0) >= 0.90
+            and squat_label == "squat_front"
+            and float(squat_conf or 0.0) >= 0.80
+            and float(olympic_conf or 0.0) < 0.75
+        )
+
+        if final_front_squat_consensus:
+            final_label = "squat_front"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                float(squat_conf or 0.0),
+            )
+            analysis_mode = "squat_router_protected"
+            protected_label = "squat_front"
+            protected_conf = final_conf
+            protected_reason = "front_squat_consensus_final_authority"
 
         # Pull-up safety: if an obvious pull-up posture was routed into a
         # low-confidence Olympic label, recover pull_up before rep analysis.
