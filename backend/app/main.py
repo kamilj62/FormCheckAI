@@ -82,6 +82,7 @@ from app.ml.oly_router_v5 import route_olympic_lift
 from app.ml.central_router_shadow import arbitrate_shadow
 from app.ml.family_router_shadow import classify_family_shadow
 from app.ml.press_variant_shadow import classify_press_variant_shadow
+from app.ml.hierarchical_router_shadow import classify_hierarchical_shadow
 
 from app.coaching.clean import build_clean_coaching
 
@@ -10792,6 +10793,14 @@ def analyze_video(
                     3,
                 ),
             },
+            "protected_evidence": {
+                "label": protected_label,
+                "confidence": round(
+                    float(final_conf or 0.0),
+                    3,
+                ),
+                "reason": protected_reason,
+            },
         }
 
         routing_winner = {
@@ -10836,6 +10845,12 @@ def analyze_video(
             strong_overhead=bool(_strong_overhead),
         )
 
+        hierarchical_router_shadow = classify_hierarchical_shadow(
+            family_shadow=family_router_shadow,
+            press_variant_shadow=press_variant_shadow,
+            routing_candidates=routing_candidates,
+        )
+
         return {
             "exercise_label": final_label or "unknown",
             "confidence": round(final_conf, 2),
@@ -10865,6 +10880,7 @@ def analyze_video(
                 "central_router_shadow": central_router_shadow,
                 "family_router_shadow": family_router_shadow,
                 "press_variant_shadow": press_variant_shadow,
+                "hierarchical_router_shadow": hierarchical_router_shadow,
                 "bodyweight":      bodyweight_debug,
                 "bodyweight_router_label": bodyweight_router_label,
                 "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
