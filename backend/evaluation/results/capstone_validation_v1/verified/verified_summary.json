@@ -1,0 +1,160 @@
+{
+  "included": 80,
+  "excluded": 23,
+  "correct": 50,
+  "accuracy": 0.625,
+  "per_class": {
+    "bench_press": {
+      "correct": 5,
+      "total": 12,
+      "accuracy": 0.4167
+    },
+    "clean": {
+      "correct": 0,
+      "total": 6,
+      "accuracy": 0.0
+    },
+    "clean_and_jerk": {
+      "correct": 3,
+      "total": 6,
+      "accuracy": 0.5
+    },
+    "deadlift": {
+      "correct": 7,
+      "total": 8,
+      "accuracy": 0.875
+    },
+    "handstand_push_up": {
+      "correct": 7,
+      "total": 8,
+      "accuracy": 0.875
+    },
+    "overhead_squat": {
+      "correct": 1,
+      "total": 2,
+      "accuracy": 0.5
+    },
+    "pull_up": {
+      "correct": 9,
+      "total": 12,
+      "accuracy": 0.75
+    },
+    "push_press": {
+      "correct": 2,
+      "total": 2,
+      "accuracy": 1.0
+    },
+    "push_up": {
+      "correct": 9,
+      "total": 9,
+      "accuracy": 1.0
+    },
+    "snatch": {
+      "correct": 1,
+      "total": 2,
+      "accuracy": 0.5
+    },
+    "split_jerk": {
+      "correct": 0,
+      "total": 6,
+      "accuracy": 0.0
+    },
+    "squat_back": {
+      "correct": 4,
+      "total": 4,
+      "accuracy": 1.0
+    },
+    "squat_front": {
+      "correct": 1,
+      "total": 2,
+      "accuracy": 0.5
+    },
+    "thruster": {
+      "correct": 1,
+      "total": 1,
+      "accuracy": 1.0
+    }
+  },
+  "confusions": [
+    {
+      "expected": "bench_press",
+      "predicted": "pull_up",
+      "count": 6
+    },
+    {
+      "expected": "clean",
+      "predicted": "bench_press",
+      "count": 5
+    },
+    {
+      "expected": "split_jerk",
+      "predicted": "pull_up",
+      "count": 5
+    },
+    {
+      "expected": "pull_up",
+      "predicted": "bench_press",
+      "count": 2
+    },
+    {
+      "expected": "bench_press",
+      "predicted": "Unknown",
+      "count": 1
+    },
+    {
+      "expected": "pull_up",
+      "predicted": "push_press",
+      "count": 1
+    },
+    {
+      "expected": "handstand_push_up",
+      "predicted": "Unknown",
+      "count": 1
+    },
+    {
+      "expected": "clean",
+      "predicted": "squat_back",
+      "count": 1
+    },
+    {
+      "expected": "clean_and_jerk",
+      "predicted": "squat_back",
+      "count": 1
+    },
+    {
+      "expected": "clean_and_jerk",
+      "predicted": "bench_press",
+      "count": 1
+    },
+    {
+      "expected": "clean_and_jerk",
+      "predicted": "split_jerk",
+      "count": 1
+    },
+    {
+      "expected": "split_jerk",
+      "predicted": "bench_press",
+      "count": 1
+    },
+    {
+      "expected": "snatch",
+      "predicted": "overhead_squat",
+      "count": 1
+    },
+    {
+      "expected": "deadlift",
+      "predicted": "squat_back",
+      "count": 1
+    },
+    {
+      "expected": "squat_front",
+      "predicted": "bench_press",
+      "count": 1
+    },
+    {
+      "expected": "overhead_squat",
+      "predicted": "pull_up",
+      "count": 1
+    }
+  ]
+}
