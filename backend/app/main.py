@@ -81,6 +81,7 @@ except Exception:
 from app.ml.oly_router_v5 import route_olympic_lift
 from app.ml.central_router_shadow import arbitrate_shadow
 from app.ml.family_router_shadow import classify_family_shadow
+from app.ml.press_variant_shadow import classify_press_variant_shadow
 
 from app.coaching.clean import build_clean_coaching
 
@@ -10824,6 +10825,17 @@ def analyze_video(
             strong_overhead=bool(_strong_overhead),
         )
 
+        press_variant_shadow = classify_press_variant_shadow(
+            family=family_router_shadow.get("family"),
+            biomechanics_summary=summary,
+            bodyweight_summary=bodyweight_debug,
+            routing_candidates=routing_candidates,
+            explosive_score=float(explosive_score or 0.0),
+            looks_strict=bool(_looks_strict),
+            looks_thruster=bool(_looks_thruster),
+            strong_overhead=bool(_strong_overhead),
+        )
+
         return {
             "exercise_label": final_label or "unknown",
             "confidence": round(final_conf, 2),
@@ -10852,6 +10864,7 @@ def analyze_video(
                 "routing_winner": routing_winner,
                 "central_router_shadow": central_router_shadow,
                 "family_router_shadow": family_router_shadow,
+                "press_variant_shadow": press_variant_shadow,
                 "bodyweight":      bodyweight_debug,
                 "bodyweight_router_label": bodyweight_router_label,
                 "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
