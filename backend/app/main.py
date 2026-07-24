@@ -9489,14 +9489,33 @@ def analyze_video(
         # Two independent perfect bench predictions take priority over
         # false overhead-squat/bodyweight signatures caused by the camera
         # orientation of a horizontal bench-press clip.
-        if strong_bench_evidence:
+        bench_model_consensus = (
+            raw_label == "bench_press"
+            and bio_label == "bench_press"
+            and float(base_conf or 0.0) >= 0.80
+            and float(bio_conf or 0.0) >= 0.80
+
+            # Strong back/front-squat geometry can indicate an upright movement
+            # such as a thruster or handstand push-up that the base model has
+            # incorrectly labeled as bench press.
+            and not (
+                squat_label in {"squat_back", "squat_front"}
+                and float(squat_conf or 0.0) >= 0.95
+            )
+        )
+
+        if strong_bench_evidence or bench_model_consensus:
             protected_label = "bench_press"
             protected_conf = max(
                 float(base_conf or 0.0),
                 float(bio_conf or 0.0),
                 0.95,
             )
-            protected_reason = "strong_bench_model_agreement"
+            protected_reason = (
+                "strong_bench_model_agreement"
+                if strong_bench_evidence
+                else "bench_model_consensus"
+            )
 
         elif protection.label:
             protected_label = protection.label
@@ -10277,10 +10296,16 @@ def analyze_video(
         # low-confidence Olympic label, recover pull_up before rep analysis.
         if (
             _pull_up_router_guard
-              and not (
-                  squat_label == "overhead_squat"
-                  and float(squat_conf or 0.0) >= 0.70
-              )
+            and not (
+                raw_label == "bench_press"
+                and bio_label == "bench_press"
+                and float(base_conf or 0.0) >= 0.60
+                and float(bio_conf or 0.0) >= 0.60
+            )
+            and not (
+                squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.70
+            )
             and (
                 final_label in OLY_SET
                 or (
@@ -10347,6 +10372,18 @@ def analyze_video(
             and float(router_v6_conf or 0.0) >= 0.72
             and not strong_oly_lock
             and not strong_bench_evidence
+
+            # Broad bench consensus guard.
+            # When both the base classifier and biomechanics independently
+            # identify bench press, do not let a false vertical bodyweight
+            # signature overwrite the horizontal press classification.
+            and not (
+                router_v6_label == "pull_up"
+                and raw_label == "bench_press"
+                and bio_label == "bench_press"
+                and float(base_conf or 0.0) >= 0.60
+                and float(bio_conf or 0.0) >= 0.60
+            )
 
             # Split-jerk guard: an explosive overhead Olympic movement can look
             # like a pull-up to the bodyweight router because of the long elbow
