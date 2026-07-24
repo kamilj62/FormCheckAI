@@ -79,6 +79,8 @@ except Exception:
     remap_crop_landmarks_to_full_frame = None
 
 from app.ml.oly_router_v5 import route_olympic_lift
+from app.ml.central_router_shadow import arbitrate_shadow
+from app.ml.family_router_shadow import classify_family_shadow
 
 from app.coaching.clean import build_clean_coaching
 
@@ -10753,6 +10755,75 @@ def analyze_video(
                 "error": str(e),
             }
 
+        routing_candidates = {
+            "base": {
+                "label": raw_label,
+                "confidence": round(float(base_conf or 0.0), 3),
+            },
+            "biomechanics": {
+                "label": bio_label,
+                "confidence": round(float(bio_conf or 0.0), 3),
+            },
+            "squat_router": {
+                "label": squat_label,
+                "confidence": round(float(squat_conf or 0.0), 3),
+            },
+            "olympic_router": {
+                "label": olympic_pred,
+                "confidence": round(float(olympic_conf or 0.0), 3),
+            },
+            "router_v5": {
+                "label": locals().get("router_v5_label"),
+                "confidence": round(
+                    float(locals().get("router_v5_conf", 0.0) or 0.0),
+                    3,
+                ),
+                "decision": (
+                    (locals().get("router_v5_debug") or {}).get("decision")
+                    if isinstance(locals().get("router_v5_debug"), dict)
+                    else None
+                ),
+            },
+            "bodyweight_router": {
+                "label": bodyweight_router_label,
+                "confidence": round(
+                    float(bodyweight_router_conf or 0.0),
+                    3,
+                ),
+            },
+        }
+
+        routing_winner = {
+            "label": final_label or "unknown",
+            "confidence": round(float(final_conf or 0.0), 3),
+            "mode": analysis_mode,
+            "protected_label": protected_label,
+            "reason": protected_reason,
+        }
+
+        central_router_shadow = arbitrate_shadow(
+            candidates=routing_candidates,
+            truly_explosive=bool(_truly_explosive),
+            explosive_score=float(explosive_score or 0.0),
+            looks_clean_only=bool(_looks_clean_only),
+            looks_cj=bool(_looks_cj),
+            looks_split=bool(_looks_split),
+            looks_thruster=bool(_looks_thruster),
+            strong_overhead=bool(_strong_overhead),
+            wrist_overhead_ratio=float(wrist_overhead_ratio or 0.0),
+        )
+
+        family_router_shadow = classify_family_shadow(
+            candidates=routing_candidates,
+            truly_explosive=bool(_truly_explosive),
+            explosive_score=float(explosive_score or 0.0),
+            looks_clean_only=bool(_looks_clean_only),
+            looks_cj=bool(_looks_cj),
+            looks_split=bool(_looks_split),
+            looks_thruster=bool(_looks_thruster),
+            strong_overhead=bool(_strong_overhead),
+        )
+
         return {
             "exercise_label": final_label or "unknown",
             "confidence": round(final_conf, 2),
@@ -10777,11 +10848,15 @@ def analyze_video(
                 "biomechanics_summary": summary,
                 "protected_label": protected_label,
                 "protected_reason": protected_reason,
+                "routing_candidates": routing_candidates,
+                "routing_winner": routing_winner,
+                "central_router_shadow": central_router_shadow,
+                "family_router_shadow": family_router_shadow,
                 "bodyweight":      bodyweight_debug,
                 "bodyweight_router_label": bodyweight_router_label,
                 "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
                 "router_v5":       router_v5_debug,
-                  "router_v8":       debug.get("router_v8"),
+                "router_v8":       debug.get("router_v8"),
                 "squat_label":     squat_label,
                 "squat_conf":      round(squat_conf, 3),
                 "bar_position":    bar_debug,
