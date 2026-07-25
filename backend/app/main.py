@@ -2540,6 +2540,32 @@ def find_clean_phase_reps(biomechanics):
         # Setup = earlier than catch, but not so far back it grabs prior rep finish.
         start_idx = max(0, catch_idx - max(45, n // 4))
 
+        # Require a genuine clean pull into the front rack.
+        # A standalone jerk often starts with the wrists already near shoulder
+        # height, which can otherwise create a false clean catch.
+        pull_wrist_relative = (
+            wrist_y[start_idx:catch_idx]
+            - shoulder_y[start_idx:catch_idx]
+        )
+
+        if len(pull_wrist_relative) == 0:
+            continue
+
+        has_low_pull_position = (
+            float(np.percentile(pull_wrist_relative, 75)) >= 0.08
+        )
+        wrist_rise_into_rack = (
+            float(np.max(wrist_y[start_idx:catch_idx]))
+            - float(wrist_y[catch_idx])
+        )
+        has_meaningful_wrist_rise = wrist_rise_into_rack >= 0.03
+
+        if not (
+            has_low_pull_position
+            and has_meaningful_wrist_rise
+        ):
+            continue
+
         # True extension = strongest tall position before catch.
         pre_start = max(start_idx + 1, int(start_idx + (catch_idx - start_idx) * 0.35))
         pre_end = max(pre_start + 1, catch_idx)
@@ -9485,7 +9511,9 @@ def analyze_video(
                 "base_conf": float(base_conf or 0.0),
                 "bio_label": bio_label,
                 "bio_conf": float(bio_conf or 0.0),
+                "squat_label": squat_label,
                 "squat_conf": float(squat_conf or 0.0),
+                "explosive_score": float(explosive_score or 0.0),
                 "looks_strict": _looks_strict,
                 "looks_thruster": _looks_thruster,
                 "looks_clean_only": _looks_clean_only,

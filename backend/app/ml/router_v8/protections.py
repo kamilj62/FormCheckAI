@@ -229,7 +229,9 @@ def strength_protections(
     base_conf: float,
     bio_label: str | None,
     bio_conf: float,
+    squat_label: str | None,
     squat_conf: float,
+    explosive_score: float,
     looks_strict: bool,
     looks_thruster: bool,
     looks_clean_only: bool,
@@ -264,6 +266,14 @@ def strength_protections(
         and not looks_clean_only
         and not looks_cj
         and not looks_split
+
+        # Strong overhead-squat evidence plus low explosiveness is more
+        # consistent with a controlled overhead squat than a push press.
+        and not (
+            squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.80
+            and float(explosive_score or 0.0) < 30.0
+        )
     )
 
     if push_press_pattern:
