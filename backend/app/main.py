@@ -9610,6 +9610,14 @@ def analyze_video(
         elif (
             raw_label in {"squat", "squat_front", "squat_back", "push_press"}
             and squat_label in {"squat_back", "squat_front", "overhead_squat"}
+
+            # Do not let the short-squat bench rescue overwrite strong
+            # overhead-squat router evidence.
+            and not (
+                squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.80
+            )
+
             and bio_label in {"squat", "push_press", "deadlift"}
             and not (
                 raw_label in {"squat", "squat_front", "squat_back"}
