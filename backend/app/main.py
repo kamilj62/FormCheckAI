@@ -10489,6 +10489,11 @@ def analyze_video(
             and not bool(_looks_cj)
             and olympic_pred in {"clean_and_jerk", "split_jerk"}
             and float(olympic_conf or 0.0) >= 0.80
+
+            # Preserve standalone split segments while rejecting pull-up
+            # lookalikes and complete clean-and-jerk sequences.
+            and raw_label != "push_press"
+            and float(explosive_score or 0.0) < 55.0
         )
 
         if split_shape_final_recovery:
