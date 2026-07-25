@@ -24,6 +24,7 @@ def bodyweight_protections(
     looks_handstand_push_up: bool,
     looks_muscle_up: bool,
     looks_burpee: bool,
+    credible_split_jerk: bool = False,
 ) -> ProtectionResult:
     """
     Preserve the original V7 priority order for bodyweight protections.
@@ -79,6 +80,7 @@ def bodyweight_protections(
     if (
         (looks_pull_up or push_press_pull_up_signature)
         and not strong_bench_evidence
+        and not credible_split_jerk
     ):
         return ProtectionResult(
             label="pull_up",

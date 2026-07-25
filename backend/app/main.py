@@ -9440,6 +9440,13 @@ def analyze_video(
             )
         )
 
+        credible_split_jerk = (
+            bool(effective_looks_split_for_protection)
+            and bool(run_oly_router)
+            and olympic_pred in {"clean_and_jerk", "split_jerk"}
+            and float(olympic_conf or 0.0) >= 0.80
+        )
+
         protection = apply_protections(
             bodyweight_inputs={
                 "raw_label": raw_label,
@@ -9451,6 +9458,7 @@ def analyze_video(
                 "looks_handstand_push_up": _looks_handstand_push_up,
                 "looks_muscle_up": _looks_muscle_up,
                 "looks_burpee": _looks_burpee,
+                "credible_split_jerk": credible_split_jerk,
             },
             early_strength_inputs={
                 "raw_label": raw_label,
@@ -10390,10 +10398,7 @@ def analyze_video(
             # range and sustained overhead wrist position.
             and not (
                 router_v6_label == "pull_up"
-                and bool(_looks_split)
-                and bool(run_oly_router)
-                and float(olympic_conf or 0.0) >= 0.85
-                and float(explosive_score or 0.0) >= 30.0
+                and credible_split_jerk
             )
 
             and not (
@@ -10444,6 +10449,27 @@ def analyze_video(
             protected_label = final_label
             protected_conf = final_conf
             protected_reason = "clean_and_jerk_shape_final_recovery"
+
+        # Standalone split-jerk event-shape recovery.
+        # Segmented split jerks are frequently labeled clean_and_jerk by the
+        # Olympic classifier and may be labeled squat or bench by base models.
+        # A split signature without a complete clean-and-jerk event shape is
+        # stronger evidence of a standalone split jerk.
+        split_shape_final_recovery = (
+            not forced_exercise_label
+            and bool(credible_split_jerk)
+            and not bool(_looks_cj)
+            and olympic_pred in {"clean_and_jerk", "split_jerk"}
+            and float(olympic_conf or 0.0) >= 0.80
+        )
+
+        if split_shape_final_recovery:
+            final_label = "split_jerk"
+            final_conf = max(float(olympic_conf or 0.0), 0.80)
+            analysis_mode = "router_v5"
+            protected_label = "split_jerk"
+            protected_conf = final_conf
+            protected_reason = "standalone_split_shape_recovery"
 
         # Final authority for a verified standalone split-jerk rescue.
         # This runs after squat, bodyweight, and clean-and-jerk recovery.
