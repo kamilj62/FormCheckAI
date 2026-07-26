@@ -10166,6 +10166,12 @@ def analyze_video(
                 likely_standalone_split
                 and olympic_pred == "clean_and_jerk"
                 and float(olympic_conf or 0.0) >= 0.80
+
+                # Exceptionally strong full C&J evidence should not be reduced
+                # to a standalone split jerk. Verified standalone split clips
+                # currently peak well below this threshold.
+                and float(olympic_conf or 0.0) < 0.97
+
                 and raw_label == "push_press"
                 and bio_label == "push_press"
                 and _looks_split
@@ -10626,6 +10632,26 @@ def analyze_video(
             protected_label = "split_jerk"
             protected_conf = final_conf
             protected_reason = "standalone_split_from_cj"
+
+        # Exceptionally strong full clean-and-jerk authority.
+        # This runs after split-jerk recovery because Router V5 can still
+        # reduce a complete C&J sequence to split_jerk. Verified standalone
+        # split-jerk controls remain below this Olympic confidence threshold.
+        final_high_conf_cj_authority = (
+            not forced_exercise_label
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.97
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+        )
+
+        if final_high_conf_cj_authority:
+            final_label = "clean_and_jerk"
+            final_conf = max(float(olympic_conf or 0.0), 0.97)
+            analysis_mode = "router_v5"
+            protected_label = "clean_and_jerk"
+            protected_conf = final_conf
+            protected_reason = "clean_and_jerk_high_conf_final_authority"
 
         # Final push-press recovery.
         # Some explosive push presses look like thrusters to biomechanics and
