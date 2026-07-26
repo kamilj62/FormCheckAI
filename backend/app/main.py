@@ -9687,6 +9687,14 @@ def analyze_video(
         elif (
             raw_label in {"squat", "deadlift"}
             and squat_label in {"squat_back", "squat_front", "overhead_squat"}
+
+            # Do not let the generic fast-press rescue overwrite strong
+            # front-squat router evidence.
+            and not (
+                squat_label == "squat_front"
+                and float(squat_conf or 0.0) >= 0.90
+            )
+
             and bio_label in {"squat", "deadlift"}
             and explosive_score >= 60.0
             and float(olympic_conf or 0.0) < 0.70
@@ -9716,6 +9724,14 @@ def analyze_video(
             )
 
             and bio_label in {"squat", "push_press", "deadlift"}
+
+            # Preserve strong front-squat router evidence. Very short clips can
+            # otherwise look like a horizontal press because only a few frames
+            # survive pose extraction.
+            and not (
+                squat_label == "squat_front"
+                and float(squat_conf or 0.0) >= 0.90
+            )
 
             # Preserve a clean-and-jerk sequence that appears as squat +
             # push press with front-squat catch evidence. Verified bench
@@ -10387,8 +10403,24 @@ def analyze_video(
                     final_conf = float(router_v5_conf or 0.75)
                     analysis_mode = "router_v5"
 
+                # Preserve Router V5's explicit snatch rescue when the clip
+                # has strong overhead motion and enough wrist travel to differ
+                # from a controlled overhead squat.
+                snatch_rescue_from_overhead_squat = (
+                    olympic_pred == "snatch"
+                    and str((router_v5_debug or {}).get("decision", "")) == "snatch_rescue_from_squat"
+                    and float(olympic_conf or 0.0) >= 0.74
+                    and squat_label == "overhead_squat"
+                    and float(explosive_score or 0.0) >= 40.0
+                    and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.45
+                )
+
                 # Final squat recovery after Router V5.
-                if clear_squat_should_hold and not clean_rescue_active:
+                if (
+                    clear_squat_should_hold
+                    and not clean_rescue_active
+                    and not snatch_rescue_from_overhead_squat
+                ):
                     final_label = squat_label
                     final_conf = max(
                         float(squat_conf or 0.0),
@@ -10400,6 +10432,7 @@ def analyze_video(
         if (
             clear_squat_should_hold
             and not clean_rescue_active
+            and not locals().get("snatch_rescue_from_overhead_squat", False)
             and analysis_mode != "squat_raw_consensus"
         ):
             final_label = squat_label
@@ -10408,6 +10441,28 @@ def analyze_video(
                         float(base_conf or 0.0) if raw_label == squat_label else 0.0,
                     )
             analysis_mode = "squat_router_protected"
+
+        # Final snatch authority independent of the earlier Router V5 branch.
+        # Some squat-protected clips never enter that branch even though the
+        # Olympic router explicitly reports snatch_rescue_from_squat.
+        final_snatch_rescue_from_overhead_squat = (
+            not forced_exercise_label
+            and olympic_pred == "snatch"
+            and str((router_v5_debug or {}).get("decision", ""))
+                == "snatch_rescue_from_squat"
+            and float(olympic_conf or 0.0) >= 0.74
+            and squat_label == "overhead_squat"
+            and float(explosive_score or 0.0) >= 40.0
+            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.45
+        )
+
+        if final_snatch_rescue_from_overhead_squat:
+            final_label = "snatch"
+            final_conf = float(olympic_conf or 0.75)
+            analysis_mode = "router_v5"
+            protected_label = "snatch"
+            protected_conf = final_conf
+            protected_reason = "snatch_rescue_from_overhead_squat"
 
         # Final authority for Router V5's verified clean rescue.
         # This runs after every squat recovery path so a strongly explosive
@@ -10899,6 +10954,27 @@ def analyze_video(
             protected_label = "pull_up"
             protected_conf = final_conf
             protected_reason = "pull_up_final_authority"
+
+        # Final sustained overhead-squat authority. Run after all automatic
+        # routing authorities but before user-confirmed label handling.
+        final_sustained_overhead_squat = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.80
+            and float(wrist_overhead_ratio or 0.0) >= 0.90
+            and int(bodyweight_debug.get("total_frames", 0) or 0) >= 300
+            and not _looks_cj
+            and float(olympic_conf or 0.0) <= 0.82
+        )
+
+        if final_sustained_overhead_squat:
+            final_label = "overhead_squat"
+            final_conf = float(squat_conf or 0.81)
+            analysis_mode = "detailed_rep_analysis"
+            protected_label = "overhead_squat"
+            protected_conf = final_conf
+            protected_reason = "sustained_overhead_squat_final_authority"
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
