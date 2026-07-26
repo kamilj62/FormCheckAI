@@ -1,0 +1,17 @@
+FormCheck AI Frozen Evaluation V1
+
+Manifest:
+evaluation/manifests/capstone_eval_balanced_v1.csv
+SHA-256:
+95284563a70a59d642b4eaf28cfc9eb4a0099fd4fd7c96f39fbd06da09fb0257
+
+Verified subset:
+evaluation/results/capstone_validation_v1/verified/verified_included.csv
+SHA-256:
+beed0d01db043a700a421da35112b605103d2f31e0be2889e4c710b07db16b00
+
+Rules:
+- Do not edit labels or membership.
+- Do not remove difficult clips.
+- Do not add newly collected beta data.
+- Use this set only as a release evaluation gate.
