@@ -10986,6 +10986,50 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "pull_up_final_authority"
 
+        # Recover push presses incorrectly finalized as pull-ups. Require
+        # near-perfect raw + biomechanics push-press consensus, weak Olympic
+        # evidence, and multiple reps from the dedicated push-press analyzer.
+        final_push_press_from_pull_up_probe_reps = []
+        final_push_press_from_pull_up_candidate = (
+            not forced_exercise_label
+            and final_label == "pull_up"
+            and raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.99
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.99
+            and squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.86
+            and bodyweight_router_label == "pull_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.95
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) < 0.70
+            and float(explosive_score or 0.0) < 30.0
+        )
+
+        if final_push_press_from_pull_up_candidate:
+            try:
+                (
+                    final_push_press_from_pull_up_probe_reps,
+                    _final_push_press_from_pull_up_summary,
+                ) = analyze_push_press_reps(biomech, "push_press")
+                final_push_press_from_pull_up_probe_reps = (
+                    final_push_press_from_pull_up_probe_reps or []
+                )
+            except Exception:
+                final_push_press_from_pull_up_probe_reps = []
+
+        if len(final_push_press_from_pull_up_probe_reps) >= 2:
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.90,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "push_press_analyzer_over_pull_up_authority"
+
         # Recover highly explosive push presses incorrectly finalized as
         # overhead squats. Require exact raw + biomechanics push-press
         # consensus and only moderate overhead-squat router confidence.
