@@ -10084,6 +10084,20 @@ def analyze_video(
             )
             and explosive_score > 20
             and olympic_pred != "snatch"
+
+            # Do not promote squat-consensus clean segments to split jerk when
+            # the Olympic router only weakly sees C&J and the shape detector
+            # already sees a broader clean-and-jerk sequence.
+            and not (
+                raw_label == "squat"
+                and bio_label == "squat"
+                and float(base_conf or 0.0) >= 0.95
+                and float(bio_conf or 0.0) >= 0.95
+                and olympic_pred == "clean_and_jerk"
+                and float(olympic_conf or 0.0) < 0.60
+                and bool(_looks_cj)
+                and float(wrist_overhead_ratio or 0.0) < 0.40
+            )
         ):
             final_label   = "split_jerk"
             final_conf    = 0.80
@@ -11021,6 +11035,45 @@ def analyze_video(
             protected_label = "clean"
             protected_conf = final_conf
             protected_reason = "short_explosive_clean_segment"
+
+        # Recover short clean segments extracted from clean-and-jerk clips.
+        # These may retain a weak C&J event shape despite having no overhead
+        # catch or sustained jerk phase.
+        router_v5_features = (
+            (router_v5_debug or {}).get("features", {})
+            if isinstance(router_v5_debug, dict)
+            else {}
+        )
+
+        final_segmented_clean_from_weak_cj = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and raw_label == "squat"
+            and bio_label == "squat"
+            and float(base_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.95
+            and squat_label == "squat_front"
+            and float(squat_conf or 0.0) < 0.60
+            and olympic_pred == "clean_and_jerk"
+            and 0.50 <= float(olympic_conf or 0.0) < 0.60
+            and bool(_looks_split)
+            and bool(_looks_cj)
+            and float(explosive_score or 0.0) < 60.0
+            and float(wrist_overhead_ratio or 0.0) < 0.40
+            and 80 <= int(bodyweight_debug.get("total_frames", 0) or 0) <= 130
+            and float(router_v5_features.get("catch_overhead", 1.0) or 0.0) == 0.0
+            and float(router_v5_features.get("extension_to_catch", 999.0) or 999.0) <= 8.0
+            and float(router_v5_features.get("catch_to_finish", 999.0) or 999.0) <= 70.0
+            and float(router_v5_features.get("lockout_duration", 999.0) or 999.0) <= 40.0
+        )
+
+        if final_segmented_clean_from_weak_cj:
+            final_label = "clean"
+            final_conf = 0.75
+            analysis_mode = "shape_override"
+            protected_label = "clean"
+            protected_conf = final_conf
+            protected_reason = "segmented_clean_from_weak_cj"
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
