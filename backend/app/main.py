@@ -10787,6 +10787,61 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "clean_only_shape_final_authority"
 
+        # Final pull-up authority.
+        # The bodyweight router consistently recognizes difficult pull-up clips,
+        # but bench and Olympic arbitration can overwrite that evidence later.
+        # Require agreement from Router V6 and preserve strong bench, push-press,
+        # and muscle-up decisions.
+        final_pull_up_authority = (
+            not forced_exercise_label
+            and final_label != "muscle_up"
+            and bodyweight_router_label == "pull_up"
+            and router_v6_label == "pull_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.90
+            and not bench_model_consensus
+
+            # Preserve real Olympic event shapes even when the bodyweight
+            # router incorrectly sees a vertical pull.
+            and not bool(_looks_cj)
+            and not bool(_looks_split)
+            and not bool(_looks_strict)
+
+            # A thruster-like shape with weak Olympic evidence is not reliable
+            # enough for final pull-up authority. This preserves bench and
+            # overhead-squat cases while retaining the verified pull-up gain
+            # whose Olympic confidence is stronger.
+            and not (
+                bool(_looks_thruster)
+                and float(olympic_conf or 0.0) < 0.70
+            )
+
+            # Preserve a low-motion overhead squat that the bodyweight router
+            # mistakes for a pull-up.
+            and not (
+                squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.80
+                and bool(_looks_thruster)
+                and float(explosive_score or 0.0) < 25.0
+            )
+
+            # Preserve a push press already established by its dedicated
+            # biomechanics protection. The failed pull-up lookalike has no
+            # such protection.
+            and protected_reason != "push_press_pattern_detected"
+        )
+
+        if final_pull_up_authority:
+            final_label = "pull_up"
+            final_conf = max(
+                float(bodyweight_router_conf or 0.0),
+                float(router_v6_conf or 0.0),
+                0.90,
+            )
+            analysis_mode = "router_v6_bodyweight"
+            protected_label = "pull_up"
+            protected_conf = final_conf
+            protected_reason = "pull_up_final_authority"
+
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
 
