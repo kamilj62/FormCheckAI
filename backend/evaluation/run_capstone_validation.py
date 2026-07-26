@@ -25,7 +25,7 @@ RESULT_DIR = (
     BACKEND_ROOT
     / "evaluation"
     / "results"
-    / "capstone_validation_v8"
+    / "capstone_validation_v9"
 )
 
 RAW_DIR = RESULT_DIR / "raw"
