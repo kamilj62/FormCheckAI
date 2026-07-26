@@ -11111,6 +11111,49 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "compact_clean_and_jerk_final_authority"
 
+        # Recover deadlifts incorrectly protected as back squats. Only run the
+        # dedicated analyzer when strong straight-arm, below-shoulder hinge
+        # geometry is present.
+        final_deadlift_probe_reps = []
+        final_deadlift_geometry_candidate = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "squat"
+            and bio_label == "squat"
+            and float(base_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.95
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+            and float(wrist_overhead_ratio or 0.0) < 0.02
+            and float(bodyweight_debug.get("avg_elbow", 0.0)) >= 165.0
+            and float(bodyweight_debug.get("elbow_range", 999.0)) <= 30.0
+            and float(bodyweight_debug.get("avg_torso_angle", 0.0)) >= 20.0
+            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.25
+            and float(bar_debug.get("front_rack_elbow_p25", 0.0)) >= 160.0
+            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) <= -0.10
+            and 25.0 <= float(explosive_score or 0.0) <= 55.0
+            and 100 <= int(bodyweight_debug.get("total_frames", 0) or 0) <= 220
+        )
+
+        if final_deadlift_geometry_candidate:
+            try:
+                deadlift_probe_result = analyze_deadlift_reps(biomech)
+                final_deadlift_probe_reps = (
+                    deadlift_probe_result[0]
+                    if isinstance(deadlift_probe_result, tuple)
+                    else deadlift_probe_result
+                ) or []
+            except Exception:
+                final_deadlift_probe_reps = []
+
+        if len(final_deadlift_probe_reps) >= 1:
+            final_label = "deadlift"
+            final_conf = max(float(squat_conf or 0.0), 0.90)
+            analysis_mode = "biomechanics_override"
+            protected_label = "deadlift"
+            protected_conf = final_conf
+            protected_reason = "deadlift_analyzer_disagreement_rescue"
+
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
 
