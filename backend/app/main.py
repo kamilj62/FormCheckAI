@@ -10986,6 +10986,35 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "pull_up_final_authority"
 
+        # Recover highly explosive push presses incorrectly finalized as
+        # overhead squats. Require exact raw + biomechanics push-press
+        # consensus and only moderate overhead-squat router confidence.
+        final_explosive_push_press_authority = (
+            not forced_exercise_label
+            and final_label == "overhead_squat"
+            and raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.99
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.99
+            and squat_label == "overhead_squat"
+            and 0.78 <= float(squat_conf or 0.0) <= 0.85
+            and float(explosive_score or 0.0) >= 100.0
+            and float(olympic_conf or 0.0) < 0.75
+            and float(bar_debug.get("overhead_ratio", 0.0)) >= 0.95
+        )
+
+        if final_explosive_push_press_authority:
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.90,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "explosive_push_press_consensus_final_authority"
+
         # Final sustained overhead-squat authority. Run after all automatic
         # routing authorities but before user-confirmed label handling.
         final_sustained_overhead_squat = (
