@@ -2203,7 +2203,6 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
             rep_item["end_frame"] = int(frame_numbers[lockout_idx])
 
-            rep_item["end_frame"] = int(frame_numbers[lockout_idx])
 
             # Biomechanical push press phase frames.
             # Dip = deepest knee bend.
@@ -2297,26 +2296,29 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         })
 
 
-    # Press cleanup: remove duplicate overlapping detections from the same rep.
-    # This does NOT cap reps; it only collapses overlapping windows.
-    if exercise_label in {"push_press", "thruster"} and len(reps) > 1:
+    # Preserve genuine consecutive reps while preventing a synthetic
+    # lockout/end frame from extending into the next detected dip.
+    if exercise_label == "push_press" and len(reps) > 1:
         reps = sorted(reps, key=lambda r: r.get("start_frame", 0))
-        cleaned = []
-        for rep in reps:
-            if not cleaned:
-                cleaned.append(rep)
-                continue
 
-            prev = cleaned[-1]
-            if rep.get("start_frame", 0) <= prev.get("end_frame", 0):
-                prev_len = prev.get("end_frame", 0) - prev.get("start_frame", 0)
-                rep_len = rep.get("end_frame", 0) - rep.get("start_frame", 0)
-                if rep_len > prev_len:
-                    cleaned[-1] = rep
-            else:
-                cleaned.append(rep)
+        for idx in range(len(reps) - 1):
+            current = reps[idx]
+            next_rep = reps[idx + 1]
 
-        reps = cleaned
+            current_start = int(current.get("start_frame", 0))
+            current_end = int(current.get("end_frame", current_start))
+            next_start = int(next_rep.get("start_frame", current_end + 1))
+
+            if current_end >= next_start:
+                corrected_end = max(current_start, next_start - 1)
+                current["end_frame"] = corrected_end
+
+                if isinstance(current.get("lockout_frame"), (int, float)):
+                    current["lockout_frame"] = min(
+                        int(current["lockout_frame"]),
+                        corrected_end,
+                    )
+
         for n, rep in enumerate(reps, start=1):
             rep["rep"] = n
 
