@@ -9710,6 +9710,19 @@ def analyze_video(
             )
 
             and bio_label in {"squat", "push_press", "deadlift"}
+
+            # Preserve a clean-and-jerk sequence that appears as squat +
+            # push press with front-squat catch evidence. Verified bench
+            # controls do not share this routing combination.
+            and not (
+                raw_label == "squat"
+                and bio_label == "push_press"
+                and squat_label == "squat_front"
+                and olympic_pred == "clean_and_jerk"
+                and float(olympic_conf or 0.0) >= 0.73
+                and float(explosive_score or 0.0) >= 45.0
+            )
+
             and not (
                 raw_label in {"squat", "squat_front", "squat_back"}
                 and float(base_conf or 0.0) >= 0.85
@@ -10226,6 +10239,19 @@ def analyze_video(
                 and bio_label in {"push_press", "squat", "deadlift"}
                 and short_cj_press
                 and float(olympic_conf or 0.0) < 0.90
+
+                # Preserve a C&J sequence with front-squat catch evidence.
+                # This exact routing combination is not present in the
+                # verified bench controls.
+                and not (
+                    raw_label == "squat"
+                    and bio_label == "push_press"
+                    and squat_label == "squat_front"
+                    and olympic_pred == "clean_and_jerk"
+                    and float(olympic_conf or 0.0) >= 0.73
+                    and float(explosive_score or 0.0) >= 45.0
+                )
+
                 and not _looks_clean_only
                 and not _looks_cj
             ):
