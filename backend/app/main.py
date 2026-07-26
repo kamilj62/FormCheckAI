@@ -11075,6 +11075,42 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "segmented_clean_from_weak_cj"
 
+        # Recover compact clean-and-jerk clips incorrectly protected as back
+        # squats. Require Olympic/Router V5 agreement, explosive overhead motion,
+        # and a credible late jerk phase.
+        final_compact_clean_and_jerk = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "squat"
+            and bio_label == "push_press"
+            and float(base_conf or 0.0) >= 0.70
+            and float(bio_conf or 0.0) >= 0.75
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.75
+            and str((router_v5_debug or {}).get("decision", "")) == "agreement"
+            and float(explosive_score or 0.0) >= 80.0
+            and 0.55 <= float(wrist_overhead_ratio or 0.0) <= 0.85
+            and 80 <= int(bodyweight_debug.get("total_frames", 0) or 0) <= 220
+            and float(
+                ((router_v5_debug or {}).get("features", {}))
+                .get("catch_to_finish", 0.0) or 0.0
+            ) >= 50.0
+            and float(
+                ((router_v5_debug or {}).get("features", {}))
+                .get("lockout_duration", 0.0) or 0.0
+            ) >= 40.0
+        )
+
+        if final_compact_clean_and_jerk:
+            final_label = "clean_and_jerk"
+            final_conf = float(olympic_conf or 0.75)
+            analysis_mode = "router_v5"
+            protected_label = "clean_and_jerk"
+            protected_conf = final_conf
+            protected_reason = "compact_clean_and_jerk_final_authority"
+
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
 
