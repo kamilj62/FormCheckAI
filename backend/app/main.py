@@ -1907,7 +1907,11 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         elif in_rep and k >= threshold:
             end = i
 
-            min_rep_len = 8 if exercise_label == "push_press" else 3
+            min_rep_len = (
+                8
+                if exercise_label in {"push_press", "thruster"}
+                else 3
+            )
 
             if end - start < min_rep_len:
                 in_rep = False
