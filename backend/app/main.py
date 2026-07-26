@@ -10751,6 +10751,52 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "standalone_split_from_cj"
 
+        # Recover low-explosive push presses incorrectly finalized as
+        # standalone split jerks. Require exact push-press model consensus,
+        # weak split evidence characteristics, and multiple dedicated
+        # push-press reps before overriding the split decision.
+        final_push_press_from_split_probe_reps = []
+        final_push_press_from_split_candidate = (
+            not forced_exercise_label
+            and final_label == "split_jerk"
+            and protected_reason == "standalone_split_from_cj"
+            and raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.99
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.99
+            and squat_label == "overhead_squat"
+            and 0.78 <= float(squat_conf or 0.0) <= 0.85
+            and olympic_pred == "clean_and_jerk"
+            and 0.80 <= float(olympic_conf or 0.0) <= 0.85
+            and float(explosive_score or 0.0) < 20.0
+            and 0.80 <= float(bar_debug.get("overhead_ratio", 0.0)) < 0.90
+            and int(bar_debug.get("total_frames", 0) or 0) >= 250
+        )
+
+        if final_push_press_from_split_candidate:
+            try:
+                (
+                    final_push_press_from_split_probe_reps,
+                    _final_push_press_from_split_summary,
+                ) = analyze_push_press_reps(biomech, "push_press")
+                final_push_press_from_split_probe_reps = (
+                    final_push_press_from_split_probe_reps or []
+                )
+            except Exception:
+                final_push_press_from_split_probe_reps = []
+
+        if len(final_push_press_from_split_probe_reps) >= 3:
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.90,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "push_press_analyzer_over_split_authority"
+
         # Exceptionally strong full clean-and-jerk authority.
         # This runs after split-jerk recovery because Router V5 can still
         # reduce a complete C&J sequence to split_jerk. Verified standalone
