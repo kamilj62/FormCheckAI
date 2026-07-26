@@ -10242,6 +10242,23 @@ def analyze_video(
                 and bio_label in {"push_press", "squat", "deadlift"}
                 and short_split_press
                 and float(olympic_conf or 0.0) < 0.70
+
+                # Preserve short explosive clean segments. These clips can look
+                # like split jerk to Router V5, but strong squat consensus,
+                # substantial wrist travel, and little sustained overhead motion
+                # do not match a bench press.
+                and not (
+                    raw_label == "squat"
+                    and bio_label == "squat"
+                    and float(base_conf or 0.0) >= 0.95
+                    and float(bio_conf or 0.0) >= 0.95
+                    and squat_label == "squat_back"
+                    and float(squat_conf or 0.0) >= 0.90
+                    and float(explosive_score or 0.0) >= 70.0
+                    and float(wrist_overhead_ratio or 0.0) < 0.20
+                    and int(bodyweight_debug.get("total_frames", 999) or 999) <= 60
+                )
+
                 and not _looks_clean_only
                 and not _looks_cj
             ):
@@ -10975,6 +10992,35 @@ def analyze_video(
             protected_label = "overhead_squat"
             protected_conf = final_conf
             protected_reason = "sustained_overhead_squat_final_authority"
+
+        # Recover short explosive clean segments that are protected as back
+        # squats after the false short-split bench rescue is blocked.
+        final_short_clean_segment = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "squat"
+            and bio_label == "squat"
+            and float(base_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.95
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+            and olympic_pred == "clean_and_jerk"
+            and 0.50 <= float(olympic_conf or 0.0) < 0.65
+            and bool(_looks_split)
+            and not bool(_looks_cj)
+            and float(explosive_score or 0.0) >= 80.0
+            and float(wrist_overhead_ratio or 0.0) < 0.20
+            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.35
+            and int(bodyweight_debug.get("total_frames", 999) or 999) <= 60
+        )
+
+        if final_short_clean_segment:
+            final_label = "clean"
+            final_conf = 0.75
+            analysis_mode = "shape_override"
+            protected_label = "clean"
+            protected_conf = final_conf
+            protected_reason = "short_explosive_clean_segment"
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
