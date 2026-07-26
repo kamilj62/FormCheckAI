@@ -1,0 +1,2510 @@
+{
+  "exercise_label": "split_jerk",
+  "confidence": 0.81,
+  "analysis_mode": "router_v5",
+  "rep_feedback": [
+    {
+      "start_frame": 370,
+      "dip_frame": 395,
+      "drive_frame": 407,
+      "catch_frame": 410,
+      "recovery_frame": 479,
+      "lockout_frame": 450,
+      "end_frame": 494,
+      "debug_frames": {
+        "start_idx": 368,
+        "dip_idx": 393,
+        "drive_idx": 405,
+        "catch_idx": 408,
+        "recovery_idx": 477,
+        "lockout_idx": 448,
+        "finish_idx": 492,
+        "cluster_start": 408,
+        "cluster_end": 534
+      },
+      "rep": 1,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 621,
+      "dip_frame": 648,
+      "drive_frame": 660,
+      "catch_frame": 711,
+      "recovery_frame": 770,
+      "lockout_frame": 741,
+      "end_frame": 780,
+      "debug_frames": {
+        "start_idx": 596,
+        "dip_idx": 621,
+        "drive_idx": 633,
+        "catch_idx": 636,
+        "recovery_idx": 695,
+        "lockout_idx": 666,
+        "finish_idx": 705,
+        "cluster_start": 636,
+        "cluster_end": 731
+      },
+      "rep": 2,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 994,
+      "dip_frame": 1007,
+      "drive_frame": 1009,
+      "catch_frame": 1012,
+      "recovery_frame": 1128,
+      "lockout_frame": 1068,
+      "end_frame": 1147,
+      "debug_frames": {
+        "start_idx": 906,
+        "dip_idx": 919,
+        "drive_idx": 921,
+        "catch_idx": 924,
+        "recovery_idx": 1040,
+        "lockout_idx": 980,
+        "finish_idx": 1059,
+        "cluster_start": 923,
+        "cluster_end": 1100
+      },
+      "rep": 3,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 1273,
+      "dip_frame": 1298,
+      "drive_frame": 1308,
+      "catch_frame": 1315,
+      "recovery_frame": 1362,
+      "lockout_frame": 1342,
+      "end_frame": 1372,
+      "debug_frames": {
+        "start_idx": 1185,
+        "dip_idx": 1210,
+        "drive_idx": 1220,
+        "catch_idx": 1227,
+        "recovery_idx": 1274,
+        "lockout_idx": 1254,
+        "finish_idx": 1284,
+        "cluster_start": 1227,
+        "cluster_end": 1313
+      },
+      "rep": 4,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 1397,
+      "dip_frame": 1422,
+      "drive_frame": 1486,
+      "catch_frame": 1494,
+      "recovery_frame": 1538,
+      "lockout_frame": 1519,
+      "end_frame": 1548,
+      "debug_frames": {
+        "start_idx": 1309,
+        "dip_idx": 1334,
+        "drive_idx": 1398,
+        "catch_idx": 1406,
+        "recovery_idx": 1450,
+        "lockout_idx": 1431,
+        "finish_idx": 1460,
+        "cluster_start": 1406,
+        "cluster_end": 1487
+      },
+      "rep": 5,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 1667,
+      "dip_frame": 1692,
+      "drive_frame": 1705,
+      "catch_frame": 1712,
+      "recovery_frame": 1770,
+      "lockout_frame": 1746,
+      "end_frame": 1783,
+      "debug_frames": {
+        "start_idx": 1579,
+        "dip_idx": 1604,
+        "drive_idx": 1617,
+        "catch_idx": 1624,
+        "recovery_idx": 1682,
+        "lockout_idx": 1658,
+        "finish_idx": 1695,
+        "cluster_start": 1624,
+        "cluster_end": 1731
+      },
+      "rep": 6,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 1919,
+      "dip_frame": 1944,
+      "drive_frame": 1959,
+      "catch_frame": 2010,
+      "recovery_frame": 2062,
+      "lockout_frame": 2040,
+      "end_frame": 2072,
+      "debug_frames": {
+        "start_idx": 1831,
+        "dip_idx": 1856,
+        "drive_idx": 1871,
+        "catch_idx": 1880,
+        "recovery_idx": 1932,
+        "lockout_idx": 1910,
+        "finish_idx": 1942,
+        "cluster_start": 1875,
+        "cluster_end": 1975
+      },
+      "rep": 7,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 2203,
+      "dip_frame": 2230,
+      "drive_frame": 2232,
+      "catch_frame": 2257,
+      "recovery_frame": 2317,
+      "lockout_frame": 2292,
+      "end_frame": 2325,
+      "debug_frames": {
+        "start_idx": 2065,
+        "dip_idx": 2090,
+        "drive_idx": 2092,
+        "catch_idx": 2097,
+        "recovery_idx": 2157,
+        "lockout_idx": 2132,
+        "finish_idx": 2165,
+        "cluster_start": 2097,
+        "cluster_end": 2207
+      },
+      "rep": 8,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 2534,
+      "dip_frame": 2573,
+      "drive_frame": 2575,
+      "catch_frame": 2578,
+      "recovery_frame": 2651,
+      "lockout_frame": 2620,
+      "end_frame": 2665,
+      "debug_frames": {
+        "start_idx": 2367,
+        "dip_idx": 2392,
+        "drive_idx": 2394,
+        "catch_idx": 2397,
+        "recovery_idx": 2470,
+        "lockout_idx": 2439,
+        "finish_idx": 2484,
+        "cluster_start": 2396,
+        "cluster_end": 2530
+      },
+      "rep": 9,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 2844,
+      "dip_frame": 2869,
+      "drive_frame": 2877,
+      "catch_frame": 2885,
+      "recovery_frame": 3021,
+      "lockout_frame": 2935,
+      "end_frame": 3035,
+      "debug_frames": {
+        "start_idx": 2658,
+        "dip_idx": 2683,
+        "drive_idx": 2691,
+        "catch_idx": 2699,
+        "recovery_idx": 2835,
+        "lockout_idx": 2749,
+        "finish_idx": 2849,
+        "cluster_start": 2699,
+        "cluster_end": 2857
+      },
+      "rep": 10,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 3109,
+      "dip_frame": 3134,
+      "drive_frame": 3136,
+      "catch_frame": 3139,
+      "recovery_frame": 3218,
+      "lockout_frame": 3181,
+      "end_frame": 3234,
+      "debug_frames": {
+        "start_idx": 2923,
+        "dip_idx": 2948,
+        "drive_idx": 2950,
+        "catch_idx": 2953,
+        "recovery_idx": 3032,
+        "lockout_idx": 2995,
+        "finish_idx": 3048,
+        "cluster_start": 2952,
+        "cluster_end": 3086
+      },
+      "rep": 11,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 3417,
+      "dip_frame": 3442,
+      "drive_frame": 3457,
+      "catch_frame": 3467,
+      "recovery_frame": 3533,
+      "lockout_frame": 3505,
+      "end_frame": 3548,
+      "debug_frames": {
+        "start_idx": 3230,
+        "dip_idx": 3255,
+        "drive_idx": 3270,
+        "catch_idx": 3280,
+        "recovery_idx": 3346,
+        "lockout_idx": 3318,
+        "finish_idx": 3361,
+        "cluster_start": 3280,
+        "cluster_end": 3400
+      },
+      "rep": 12,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    },
+    {
+      "start_frame": 3677,
+      "dip_frame": 3702,
+      "drive_frame": 3714,
+      "catch_frame": 3724,
+      "recovery_frame": 3797,
+      "lockout_frame": 3766,
+      "end_frame": 3813,
+      "debug_frames": {
+        "start_idx": 3490,
+        "dip_idx": 3515,
+        "drive_idx": 3527,
+        "catch_idx": 3537,
+        "recovery_idx": 3610,
+        "lockout_idx": 3579,
+        "finish_idx": 3626,
+        "cluster_start": 3537,
+        "cluster_end": 3671
+      },
+      "rep": 13,
+      "score": 9.2,
+      "grade": "Excellent",
+      "issues": [
+        "Knees may cave during the dip or catch."
+      ],
+      "breakdown": {
+        "dip": "knee_cave",
+        "drive": "good",
+        "lockout": "good",
+        "split_catch": "good",
+        "torso_stack": "good",
+        "bar_path": "good"
+      },
+      "feedback": [
+        "Drive knees out and keep a stable receiving position."
+      ],
+      "coaching": {
+        "priority": "Keep the dip straight and balanced.",
+        "sections": [
+          {
+            "title": "Dip",
+            "status": "poor",
+            "message": "Keep the dip straight and balanced."
+          },
+          {
+            "title": "Drive",
+            "status": "good",
+            "message": "Powerful leg drive."
+          },
+          {
+            "title": "Split Catch",
+            "status": "good",
+            "message": "Excellent receiving position."
+          },
+          {
+            "title": "Lockout",
+            "status": "good",
+            "message": "Strong overhead lockout."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Good stacked overhead position."
+          },
+          {
+            "title": "Bar Path",
+            "status": "good",
+            "message": "Bar stayed over mid-foot."
+          }
+        ]
+      }
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 13,
+    "avg_rep_score": 9.2,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "split_jerk",
+    "issues": [
+      {
+        "start_frame": 370,
+        "dip_frame": 395,
+        "drive_frame": 407,
+        "catch_frame": 410,
+        "recovery_frame": 479,
+        "lockout_frame": 450,
+        "end_frame": 494,
+        "debug_frames": {
+          "start_idx": 368,
+          "dip_idx": 393,
+          "drive_idx": 405,
+          "catch_idx": 408,
+          "recovery_idx": 477,
+          "lockout_idx": 448,
+          "finish_idx": 492,
+          "cluster_start": 408,
+          "cluster_end": 534
+        },
+        "rep": 1,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 621,
+        "dip_frame": 648,
+        "drive_frame": 660,
+        "catch_frame": 711,
+        "recovery_frame": 770,
+        "lockout_frame": 741,
+        "end_frame": 780,
+        "debug_frames": {
+          "start_idx": 596,
+          "dip_idx": 621,
+          "drive_idx": 633,
+          "catch_idx": 636,
+          "recovery_idx": 695,
+          "lockout_idx": 666,
+          "finish_idx": 705,
+          "cluster_start": 636,
+          "cluster_end": 731
+        },
+        "rep": 2,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 994,
+        "dip_frame": 1007,
+        "drive_frame": 1009,
+        "catch_frame": 1012,
+        "recovery_frame": 1128,
+        "lockout_frame": 1068,
+        "end_frame": 1147,
+        "debug_frames": {
+          "start_idx": 906,
+          "dip_idx": 919,
+          "drive_idx": 921,
+          "catch_idx": 924,
+          "recovery_idx": 1040,
+          "lockout_idx": 980,
+          "finish_idx": 1059,
+          "cluster_start": 923,
+          "cluster_end": 1100
+        },
+        "rep": 3,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 1273,
+        "dip_frame": 1298,
+        "drive_frame": 1308,
+        "catch_frame": 1315,
+        "recovery_frame": 1362,
+        "lockout_frame": 1342,
+        "end_frame": 1372,
+        "debug_frames": {
+          "start_idx": 1185,
+          "dip_idx": 1210,
+          "drive_idx": 1220,
+          "catch_idx": 1227,
+          "recovery_idx": 1274,
+          "lockout_idx": 1254,
+          "finish_idx": 1284,
+          "cluster_start": 1227,
+          "cluster_end": 1313
+        },
+        "rep": 4,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 1397,
+        "dip_frame": 1422,
+        "drive_frame": 1486,
+        "catch_frame": 1494,
+        "recovery_frame": 1538,
+        "lockout_frame": 1519,
+        "end_frame": 1548,
+        "debug_frames": {
+          "start_idx": 1309,
+          "dip_idx": 1334,
+          "drive_idx": 1398,
+          "catch_idx": 1406,
+          "recovery_idx": 1450,
+          "lockout_idx": 1431,
+          "finish_idx": 1460,
+          "cluster_start": 1406,
+          "cluster_end": 1487
+        },
+        "rep": 5,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 1667,
+        "dip_frame": 1692,
+        "drive_frame": 1705,
+        "catch_frame": 1712,
+        "recovery_frame": 1770,
+        "lockout_frame": 1746,
+        "end_frame": 1783,
+        "debug_frames": {
+          "start_idx": 1579,
+          "dip_idx": 1604,
+          "drive_idx": 1617,
+          "catch_idx": 1624,
+          "recovery_idx": 1682,
+          "lockout_idx": 1658,
+          "finish_idx": 1695,
+          "cluster_start": 1624,
+          "cluster_end": 1731
+        },
+        "rep": 6,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 1919,
+        "dip_frame": 1944,
+        "drive_frame": 1959,
+        "catch_frame": 2010,
+        "recovery_frame": 2062,
+        "lockout_frame": 2040,
+        "end_frame": 2072,
+        "debug_frames": {
+          "start_idx": 1831,
+          "dip_idx": 1856,
+          "drive_idx": 1871,
+          "catch_idx": 1880,
+          "recovery_idx": 1932,
+          "lockout_idx": 1910,
+          "finish_idx": 1942,
+          "cluster_start": 1875,
+          "cluster_end": 1975
+        },
+        "rep": 7,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 2203,
+        "dip_frame": 2230,
+        "drive_frame": 2232,
+        "catch_frame": 2257,
+        "recovery_frame": 2317,
+        "lockout_frame": 2292,
+        "end_frame": 2325,
+        "debug_frames": {
+          "start_idx": 2065,
+          "dip_idx": 2090,
+          "drive_idx": 2092,
+          "catch_idx": 2097,
+          "recovery_idx": 2157,
+          "lockout_idx": 2132,
+          "finish_idx": 2165,
+          "cluster_start": 2097,
+          "cluster_end": 2207
+        },
+        "rep": 8,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 2534,
+        "dip_frame": 2573,
+        "drive_frame": 2575,
+        "catch_frame": 2578,
+        "recovery_frame": 2651,
+        "lockout_frame": 2620,
+        "end_frame": 2665,
+        "debug_frames": {
+          "start_idx": 2367,
+          "dip_idx": 2392,
+          "drive_idx": 2394,
+          "catch_idx": 2397,
+          "recovery_idx": 2470,
+          "lockout_idx": 2439,
+          "finish_idx": 2484,
+          "cluster_start": 2396,
+          "cluster_end": 2530
+        },
+        "rep": 9,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 2844,
+        "dip_frame": 2869,
+        "drive_frame": 2877,
+        "catch_frame": 2885,
+        "recovery_frame": 3021,
+        "lockout_frame": 2935,
+        "end_frame": 3035,
+        "debug_frames": {
+          "start_idx": 2658,
+          "dip_idx": 2683,
+          "drive_idx": 2691,
+          "catch_idx": 2699,
+          "recovery_idx": 2835,
+          "lockout_idx": 2749,
+          "finish_idx": 2849,
+          "cluster_start": 2699,
+          "cluster_end": 2857
+        },
+        "rep": 10,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 3109,
+        "dip_frame": 3134,
+        "drive_frame": 3136,
+        "catch_frame": 3139,
+        "recovery_frame": 3218,
+        "lockout_frame": 3181,
+        "end_frame": 3234,
+        "debug_frames": {
+          "start_idx": 2923,
+          "dip_idx": 2948,
+          "drive_idx": 2950,
+          "catch_idx": 2953,
+          "recovery_idx": 3032,
+          "lockout_idx": 2995,
+          "finish_idx": 3048,
+          "cluster_start": 2952,
+          "cluster_end": 3086
+        },
+        "rep": 11,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 3417,
+        "dip_frame": 3442,
+        "drive_frame": 3457,
+        "catch_frame": 3467,
+        "recovery_frame": 3533,
+        "lockout_frame": 3505,
+        "end_frame": 3548,
+        "debug_frames": {
+          "start_idx": 3230,
+          "dip_idx": 3255,
+          "drive_idx": 3270,
+          "catch_idx": 3280,
+          "recovery_idx": 3346,
+          "lockout_idx": 3318,
+          "finish_idx": 3361,
+          "cluster_start": 3280,
+          "cluster_end": 3400
+        },
+        "rep": 12,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      },
+      {
+        "start_frame": 3677,
+        "dip_frame": 3702,
+        "drive_frame": 3714,
+        "catch_frame": 3724,
+        "recovery_frame": 3797,
+        "lockout_frame": 3766,
+        "end_frame": 3813,
+        "debug_frames": {
+          "start_idx": 3490,
+          "dip_idx": 3515,
+          "drive_idx": 3527,
+          "catch_idx": 3537,
+          "recovery_idx": 3610,
+          "lockout_idx": 3579,
+          "finish_idx": 3626,
+          "cluster_start": 3537,
+          "cluster_end": 3671
+        },
+        "rep": 13,
+        "score": 9.2,
+        "grade": "Excellent",
+        "issues": [
+          "Knees may cave during the dip or catch."
+        ],
+        "breakdown": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "good"
+        },
+        "feedback": [
+          "Drive knees out and keep a stable receiving position."
+        ],
+        "coaching": {
+          "priority": "Keep the dip straight and balanced.",
+          "sections": [
+            {
+              "title": "Dip",
+              "status": "poor",
+              "message": "Keep the dip straight and balanced."
+            },
+            {
+              "title": "Drive",
+              "status": "good",
+              "message": "Powerful leg drive."
+            },
+            {
+              "title": "Split Catch",
+              "status": "good",
+              "message": "Excellent receiving position."
+            },
+            {
+              "title": "Lockout",
+              "status": "good",
+              "message": "Strong overhead lockout."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Good stacked overhead position."
+            },
+            {
+              "title": "Bar Path",
+              "status": "good",
+              "message": "Bar stayed over mid-foot."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "debug": {
+    "predicted_exercise": "split_jerk",
+    "forced_exercise_label": null,
+    "user_confirmed": false,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.808,
+    "raw_label": "push_press",
+    "base_conf": 0.834,
+    "bio_label": "push_press",
+    "bio_conf": 0.834,
+    "bio_override": true,
+    "bio_reason": "overhead_press_detected",
+    "biomechanics_summary": {
+      "avg_knee_angle": 167.7643427422104,
+      "min_knee_angle": 6.564740637569871,
+      "max_knee_angle": 179.53015666364055,
+      "avg_hip_angle": 171.72052411990083,
+      "min_hip_angle": 3.500540242218053,
+      "max_hip_angle": 179.6047490748187,
+      "avg_torso_angle": 1.916159362406686,
+      "min_torso_angle": 0.16169874272355553,
+      "max_torso_angle": 12.179462105726088,
+      "avg_elbow_angle": 106.21786532682378,
+      "min_elbow_angle": 1.4069358540452253,
+      "max_elbow_angle": 179.30103683051306,
+      "avg_valgus_ratio": 0.8584024820289317,
+      "min_valgus_ratio": 0.5,
+      "wrist_above_shoulder_ratio": 0.7818444497953286
+    },
+    "protected_label": "split_jerk",
+    "protected_reason": "standalone_split_from_cj",
+    "routing_candidates": {
+      "base": {
+        "label": "push_press",
+        "confidence": 0.834
+      },
+      "biomechanics": {
+        "label": "push_press",
+        "confidence": 0.834
+      },
+      "squat_router": {
+        "label": "overhead_squat",
+        "confidence": 0.811
+      },
+      "olympic_router": {
+        "label": "clean_and_jerk",
+        "confidence": 0.808
+      },
+      "router_v5": {
+        "label": "split_jerk",
+        "confidence": 0.811,
+        "decision": "standalone_split_from_cj"
+      },
+      "bodyweight_router": {
+        "label": "pull_up",
+        "confidence": 1.0
+      },
+      "protected_evidence": {
+        "label": "split_jerk",
+        "confidence": 0.811,
+        "reason": "standalone_split_from_cj"
+      }
+    },
+    "routing_winner": {
+      "label": "split_jerk",
+      "confidence": 0.811,
+      "mode": "router_v5",
+      "protected_label": "split_jerk",
+      "reason": "standalone_split_from_cj"
+    },
+    "central_router_shadow": {
+      "version": "central_router_shadow_v2",
+      "label": "split_jerk",
+      "score": 1.311,
+      "margin": 0.277,
+      "runner_up": {
+        "label": "push_press",
+        "score": 1.034
+      },
+      "scores": {
+        "split_jerk": 1.311,
+        "push_press": 1.034,
+        "clean_and_jerk": 0.808
+      },
+      "evidence": {
+        "push_press": [
+          {
+            "source": "base",
+            "score": 0.417,
+            "reason": "discounted broad classifier"
+          },
+          {
+            "source": "biomechanics",
+            "score": 0.417,
+            "reason": "discounted broad biomechanics classifier"
+          },
+          {
+            "source": "broad_agreement",
+            "score": 0.2,
+            "reason": "base and biomechanics agree"
+          }
+        ],
+        "clean_and_jerk": [
+          {
+            "source": "olympic_router",
+            "score": 0.808,
+            "reason": "Olympic family eligible"
+          }
+        ],
+        "split_jerk": [
+          {
+            "source": "router_v5",
+            "score": 0.811,
+            "reason": "verified Router V5 decision: standalone_split_from_cj"
+          },
+          {
+            "source": "split_shape",
+            "score": 0.5,
+            "reason": "verified explosive split recovery"
+          }
+        ]
+      },
+      "eligibility": {
+        "squat": false,
+        "overhead_squat": false,
+        "olympic": true,
+        "push_press": false,
+        "bodyweight": false
+      },
+      "signals": {
+        "truly_explosive": true,
+        "explosive_score": 120.34,
+        "strong_olympic_event": true,
+        "v5_decision": "standalone_split_from_cj",
+        "looks_clean_only": false,
+        "looks_cj": false,
+        "looks_split": true,
+        "looks_thruster": true,
+        "strong_overhead": true,
+        "wrist_overhead_ratio": 0.782
+      }
+    },
+    "family_router_shadow": {
+      "version": "family_router_shadow_v2",
+      "family": "olympic",
+      "score": 1.827,
+      "margin": 0.766,
+      "runner_up": {
+        "family": "press",
+        "score": 1.061
+      },
+      "scores": {
+        "olympic": 1.827,
+        "press": 1.061,
+        "squat": 0.0,
+        "hinge": 0.0,
+        "bodyweight": 0.0
+      },
+      "evidence": {
+        "press": [
+          {
+            "source": "base",
+            "score": 0.292,
+            "reason": "discounted broad label: push_press"
+          },
+          {
+            "source": "biomechanics",
+            "score": 0.292,
+            "reason": "discounted broad label: push_press"
+          },
+          {
+            "source": "broad_agreement",
+            "score": 0.15,
+            "reason": "base and biomechanics agree on family"
+          },
+          {
+            "source": "press_specialist",
+            "score": 0.834,
+            "reason": "strongest press-family candidate"
+          },
+          {
+            "source": "press_agreement",
+            "score": 0.2,
+            "reason": "base and biomechanics agree on press family"
+          }
+        ],
+        "olympic": [
+          {
+            "source": "olympic_router",
+            "score": 0.566,
+            "reason": "Olympic candidate: clean_and_jerk"
+          },
+          {
+            "source": "router_v5",
+            "score": 0.811,
+            "reason": "verified V5 decision: standalone_split_from_cj"
+          },
+          {
+            "source": "verified_event",
+            "score": 0.45,
+            "reason": "verified Olympic phase decision"
+          }
+        ]
+      },
+      "signals": {
+        "truly_explosive": true,
+        "explosive_score": 120.34,
+        "looks_clean_only": false,
+        "looks_cj": false,
+        "looks_split": true,
+        "looks_thruster": true,
+        "strong_overhead": true,
+        "verified_v5_olympic": true,
+        "verified_split_jerk": true,
+        "false_pull_up_during_press": true,
+        "bodyweight_supported": false,
+        "bodyweight_clean_conflict": false,
+        "v5_decision": "standalone_split_from_cj"
+      }
+    },
+    "press_variant_shadow": {
+      "version": "press_variant_shadow_v2",
+      "eligible": false,
+      "label": null,
+      "reason": "family_not_press"
+    },
+    "hierarchical_router_shadow": {
+      "version": "hierarchical_router_shadow_v2",
+      "family": "olympic",
+      "label": "split_jerk",
+      "confidence": 0.811,
+      "source": "router_v5",
+      "reason": "phase-aware Olympic decision: standalone_split_from_cj",
+      "family_score": 1.827,
+      "family_margin": 0.766,
+      "alternatives": [
+        {
+          "label": "clean_and_jerk",
+          "confidence": 0.808,
+          "source": "olympic_router"
+        }
+      ],
+      "eligible": true
+    },
+    "bodyweight": {
+      "total_frames": 4153,
+      "wrist_above_shoulder_ratio": 0.7818444497953286,
+      "wrist_below_shoulder_ratio": 0.2181555502046713,
+      "mean_wrist_minus_shoulder_y": -0.06731507182121277,
+      "mean_hip_minus_shoulder_y": 0.22524769604206085,
+      "mean_knee_minus_hip_y": 0.1482744812965393,
+      "median_head_drop": -0.05411967635154724,
+      "avg_wrist_forward": 0.013886918313801289,
+      "wrist_y_range": 0.5239432454109192,
+      "shoulder_y_range": 0.3057769536972046,
+      "hip_y_range": 0.23764967918395996,
+      "elbow_range": 177.89410400390625,
+      "min_elbow": 1.4069358110427856,
+      "max_elbow": 179.30104064941406,
+      "avg_elbow": 106.21786499023438,
+      "avg_torso_angle": 1.9161592721939087
+    },
+    "bodyweight_router_label": "pull_up",
+    "bodyweight_router_conf": 1.0,
+    "router_v5": {
+      "raw_label": "overhead_squat",
+      "raw_confidence": 0.811,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.808,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 910,
+        "clean_catch": 920,
+        "clean_recovery": 1127,
+        "jerk_dip": 1128,
+        "jerk_drive": 1129,
+        "jerk_catch": 1227,
+        "lockout": 1725,
+        "finish": 1725
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 134.49126390095205,
+        "extension_to_catch": 10.0,
+        "catch_to_finish": 805.0,
+        "extension_height_change": 0.02400428056716919,
+        "lockout_duration": 762.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 2120,
+        "extension": 2980,
+        "lockout": 4152
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 178.68540062983186,
+        "extension_to_catch": -2980.0,
+        "catch_to_finish": 4152.0,
+        "extension_height_change": -0.09336411952972412,
+        "lockout_duration": 3247.0
+      },
+      "decision": "standalone_split_from_cj"
+    },
+    "router_v8": {
+      "version": "router_v8_hierarchical_shadow_snapshot_v1",
+      "predictions": [
+        {
+          "router": "base",
+          "label": "push_press",
+          "confidence": 0.834,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "biomechanics",
+          "label": "push_press",
+          "confidence": 0.834,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "squat",
+          "label": "overhead_squat",
+          "confidence": 0.811,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "olympic",
+          "label": "clean_and_jerk",
+          "confidence": 0.808,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "bodyweight",
+          "label": "pull_up",
+          "confidence": 1.0,
+          "reason": "",
+          "lock": false
+        }
+      ],
+      "decision": "context_lock",
+      "winning_family": "olympic",
+      "family_scores": {},
+      "scores": {},
+      "winner": "split_jerk",
+      "winner_confidence": 0.811,
+      "locks": [
+        {
+          "label": "split_jerk",
+          "confidence": 0.811,
+          "reason": "protected_evidence:standalone_split_from_cj",
+          "priority": 120
+        }
+      ],
+      "selected_lock": {
+        "label": "split_jerk",
+        "confidence": 0.811,
+        "reason": "protected_evidence:standalone_split_from_cj",
+        "priority": 120
+      },
+      "evidence": {},
+      "state": {
+        "raw_label": "push_press",
+        "raw_conf": 0.8344217538833618,
+        "bio_label": "push_press",
+        "bio_conf": 0.8344217538833618,
+        "bio_reason": "overhead_press_detected",
+        "squat_label": "overhead_squat",
+        "squat_conf": 0.811,
+        "olympic_label": "clean_and_jerk",
+        "olympic_conf": 0.808,
+        "bodyweight_label": "pull_up",
+        "bodyweight_conf": 1.0,
+        "final_label": "split_jerk",
+        "final_conf": 0.811,
+        "analysis_mode": "router_v5",
+        "protected_label": "split_jerk",
+        "protected_reason": "standalone_split_from_cj",
+        "explosive_score": 120.34003204628284,
+        "wrist_overhead": 0.7818444497953286,
+        "looks_clean": false,
+        "looks_cj": false,
+        "looks_split": true,
+        "looks_strict": false,
+        "looks_thruster": true,
+        "truly_explosive": true,
+        "bar_pos_valid": true,
+        "routing_trace": [
+          {
+            "stage": "raw_model",
+            "label": "push_press",
+            "conf": 0.834,
+            "reason": ""
+          },
+          {
+            "stage": "bio_model",
+            "label": "push_press",
+            "conf": 0.834,
+            "reason": "overhead_press_detected"
+          },
+          {
+            "stage": "squat_router",
+            "label": "overhead_squat",
+            "conf": 0.811,
+            "reason": ""
+          },
+          {
+            "stage": "olympic_router",
+            "label": "clean_and_jerk",
+            "conf": 0.808,
+            "reason": ""
+          },
+          {
+            "stage": "bodyweight_router",
+            "label": "pull_up",
+            "conf": 1.0,
+            "reason": ""
+          },
+          {
+            "stage": "final",
+            "label": "split_jerk",
+            "conf": 0.811,
+            "reason": "router_v5"
+          }
+        ],
+        "router_scores": {
+          "push_press": {
+            "score": 0.5840952277183532,
+            "sources": [
+              {
+                "source": "raw_model",
+                "score": 0.292
+              },
+              {
+                "source": "bio_model",
+                "score": 0.292
+              }
+            ]
+          },
+          "overhead_squat": {
+            "score": 1.0137500000000002,
+            "sources": [
+              {
+                "source": "squat_router",
+                "score": 0.811
+              },
+              {
+                "source": "squat_bonus",
+                "score": 0.203
+              }
+            ]
+          },
+          "clean_and_jerk": {
+            "score": 1.0908,
+            "sources": [
+              {
+                "source": "olympic_router",
+                "score": 0.808
+              },
+              {
+                "source": "olympic_explosive_bonus",
+                "score": 0.283
+              }
+            ]
+          },
+          "pull_up": {
+            "score": 1.5,
+            "sources": [
+              {
+                "source": "bodyweight_router",
+                "score": 1.0
+              },
+              {
+                "source": "bodyweight_bonus",
+                "score": 0.5
+              }
+            ]
+          }
+        },
+        "extras": {}
+      }
+    },
+    "squat_label": "overhead_squat",
+    "squat_conf": 0.811,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 1.0,
+        "squat_front": 0.5,
+        "squat_back": 0.35
+      },
+      "margin": 0.5,
+      "overhead_ratio": 0.816,
+      "elbow_elevated_ratio": 0.626,
+      "wrist_height_above_shoulder": 0.234,
+      "avg_wrist_forward": 0.014,
+      "front_rack_elbow_p25": 61.8,
+      "avg_elbow_angle_sq": 176.5,
+      "squat_frames_used": 1661,
+      "total_frames": 4153
+    },
+    "wrist_overhead": 0.782,
+    "explosive_score": 120.34,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": true,
+    "truly_explosive": true,
+    "bar_pos_valid": true,
+    "analysis_path": "router_v5",
+    "routing_trace": [
+      {
+        "stage": "raw_model",
+        "label": "push_press",
+        "conf": 0.834,
+        "reason": ""
+      },
+      {
+        "stage": "bio_model",
+        "label": "push_press",
+        "conf": 0.834,
+        "reason": "overhead_press_detected"
+      },
+      {
+        "stage": "squat_router",
+        "label": "overhead_squat",
+        "conf": 0.811,
+        "reason": ""
+      },
+      {
+        "stage": "olympic_router",
+        "label": "clean_and_jerk",
+        "conf": 0.808,
+        "reason": ""
+      },
+      {
+        "stage": "bodyweight_router",
+        "label": "pull_up",
+        "conf": 1.0,
+        "reason": ""
+      },
+      {
+        "stage": "final",
+        "label": "split_jerk",
+        "conf": 0.811,
+        "reason": "router_v5"
+      }
+    ],
+    "router_scores": {
+      "push_press": {
+        "score": 0.5840952277183532,
+        "sources": [
+          {
+            "source": "raw_model",
+            "score": 0.292
+          },
+          {
+            "source": "bio_model",
+            "score": 0.292
+          }
+        ]
+      },
+      "overhead_squat": {
+        "score": 1.0137500000000002,
+        "sources": [
+          {
+            "source": "squat_router",
+            "score": 0.811
+          },
+          {
+            "source": "squat_bonus",
+            "score": 0.203
+          }
+        ]
+      },
+      "clean_and_jerk": {
+        "score": 1.0908,
+        "sources": [
+          {
+            "source": "olympic_router",
+            "score": 0.808
+          },
+          {
+            "source": "olympic_explosive_bonus",
+            "score": 0.283
+          }
+        ]
+      },
+      "pull_up": {
+        "score": 1.5,
+        "sources": [
+          {
+            "source": "bodyweight_router",
+            "score": 1.0
+          },
+          {
+            "source": "bodyweight_bonus",
+            "score": 0.5
+          }
+        ]
+      }
+    },
+    "router_score_winner": "pull_up",
+    "router_score_value": 1.5,
+    "router_v6_label": "pull_up",
+    "router_v6_conf": 0.75,
+    "router_v6_decision": "score_winner"
+  }
+}
