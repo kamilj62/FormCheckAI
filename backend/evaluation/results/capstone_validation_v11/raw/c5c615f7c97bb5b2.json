@@ -1,0 +1,727 @@
+{
+  "exercise_label": "clean_and_jerk",
+  "confidence": 0.99,
+  "analysis_mode": "router_v5",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 15,
+      "clean_catch_frame": 87,
+      "clean_recovery_frame": 99,
+      "jerk_dip_frame": 283,
+      "jerk_drive_frame": 284,
+      "jerk_catch_frame": 285,
+      "end_frame": 330,
+      "debug_frames": {
+        "clean_catch_idx": 64,
+        "recovery_idx": 76,
+        "jerk_start": 197,
+        "jerk_dip_idx": 260,
+        "jerk_drive_idx": 261,
+        "first_overhead_idx": 254,
+        "jerk_catch_idx": 262,
+        "end_idx": 307
+      },
+      "score": 9.1,
+      "grade": "Excellent",
+      "issues": [
+        "Clean: Catch depth could be lower.",
+        "Jerk: Knees may cave during the dip or catch.",
+        "Jerk: Bar path may be drifting overhead."
+      ],
+      "breakdown": {
+        "clean": {
+          "first_pull": "good",
+          "extension": "good",
+          "turnover": "good",
+          "catch": "borderline",
+          "front_rack": "good",
+          "bar_path": "good"
+        },
+        "jerk": {
+          "dip": "knee_cave",
+          "drive": "good",
+          "lockout": "good",
+          "split_catch": "good",
+          "torso_stack": "good",
+          "bar_path": "drifting"
+        }
+      },
+      "feedback": [
+        "Receive the clean in a slightly deeper squat.",
+        "Drive knees out and keep a stable receiving position.",
+        "Drive the bar straight up and receive it stacked over midfoot."
+      ]
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 1,
+    "avg_rep_score": 9.1,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "clean_and_jerk",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 15,
+        "clean_catch_frame": 87,
+        "clean_recovery_frame": 99,
+        "jerk_dip_frame": 283,
+        "jerk_drive_frame": 284,
+        "jerk_catch_frame": 285,
+        "end_frame": 330,
+        "debug_frames": {
+          "clean_catch_idx": 64,
+          "recovery_idx": 76,
+          "jerk_start": 197,
+          "jerk_dip_idx": 260,
+          "jerk_drive_idx": 261,
+          "first_overhead_idx": 254,
+          "jerk_catch_idx": 262,
+          "end_idx": 307
+        },
+        "score": 9.1,
+        "grade": "Excellent",
+        "issues": [
+          "Clean: Catch depth could be lower.",
+          "Jerk: Knees may cave during the dip or catch.",
+          "Jerk: Bar path may be drifting overhead."
+        ],
+        "breakdown": {
+          "clean": {
+            "first_pull": "good",
+            "extension": "good",
+            "turnover": "good",
+            "catch": "borderline",
+            "front_rack": "good",
+            "bar_path": "good"
+          },
+          "jerk": {
+            "dip": "knee_cave",
+            "drive": "good",
+            "lockout": "good",
+            "split_catch": "good",
+            "torso_stack": "good",
+            "bar_path": "drifting"
+          }
+        },
+        "feedback": [
+          "Receive the clean in a slightly deeper squat.",
+          "Drive knees out and keep a stable receiving position.",
+          "Drive the bar straight up and receive it stacked over midfoot."
+        ]
+      }
+    ]
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "debug": {
+    "predicted_exercise": "clean_and_jerk",
+    "forced_exercise_label": null,
+    "user_confirmed": false,
+    "olympic_pred": "clean_and_jerk",
+    "olympic_conf": 0.992,
+    "raw_label": "push_press",
+    "base_conf": 0.646,
+    "bio_label": "push_press",
+    "bio_conf": 0.78,
+    "bio_override": true,
+    "bio_reason": "overhead_press_detected",
+    "biomechanics_summary": {
+      "avg_knee_angle": 155.01845533830829,
+      "min_knee_angle": 39.388971500823516,
+      "max_knee_angle": 178.7123351593123,
+      "avg_hip_angle": 151.0598831644246,
+      "min_hip_angle": 57.19568117329791,
+      "max_hip_angle": 179.18163397889438,
+      "avg_torso_angle": 7.0182612634610155,
+      "min_torso_angle": 0.2164764063520952,
+      "max_torso_angle": 38.39455418500386,
+      "avg_elbow_angle": 75.33498742409617,
+      "min_elbow_angle": 1.9716271378181245,
+      "max_elbow_angle": 178.92519033692503,
+      "avg_valgus_ratio": 0.8402068195573629,
+      "min_valgus_ratio": 0.5,
+      "wrist_above_shoulder_ratio": 0.5789473684210527
+    },
+    "protected_label": "clean_and_jerk",
+    "protected_reason": "clean_and_jerk_high_conf_final_authority",
+    "routing_candidates": {
+      "base": {
+        "label": "push_press",
+        "confidence": 0.646
+      },
+      "biomechanics": {
+        "label": "push_press",
+        "confidence": 0.78
+      },
+      "squat_router": {
+        "label": "squat_front",
+        "confidence": 0.714
+      },
+      "olympic_router": {
+        "label": "clean_and_jerk",
+        "confidence": 0.992
+      },
+      "router_v5": {
+        "label": "split_jerk",
+        "confidence": 0.8,
+        "decision": "fallback"
+      },
+      "bodyweight_router": {
+        "label": "pull_up",
+        "confidence": 0.922
+      },
+      "protected_evidence": {
+        "label": "clean_and_jerk",
+        "confidence": 0.992,
+        "reason": "clean_and_jerk_high_conf_final_authority"
+      }
+    },
+    "routing_winner": {
+      "label": "clean_and_jerk",
+      "confidence": 0.992,
+      "mode": "router_v5",
+      "protected_label": "clean_and_jerk",
+      "reason": "clean_and_jerk_high_conf_final_authority"
+    },
+    "central_router_shadow": {
+      "version": "central_router_shadow_v2",
+      "label": "push_press",
+      "score": 0.913,
+      "margin": 0.913,
+      "runner_up": {
+        "label": null,
+        "score": 0.0
+      },
+      "scores": {
+        "push_press": 0.913
+      },
+      "evidence": {
+        "push_press": [
+          {
+            "source": "base",
+            "score": 0.323,
+            "reason": "discounted broad classifier"
+          },
+          {
+            "source": "biomechanics",
+            "score": 0.39,
+            "reason": "discounted broad biomechanics classifier"
+          },
+          {
+            "source": "broad_agreement",
+            "score": 0.2,
+            "reason": "base and biomechanics agree"
+          }
+        ]
+      },
+      "eligibility": {
+        "squat": false,
+        "overhead_squat": false,
+        "olympic": false,
+        "push_press": false,
+        "bodyweight": false
+      },
+      "signals": {
+        "truly_explosive": false,
+        "explosive_score": 55.386,
+        "strong_olympic_event": false,
+        "v5_decision": "fallback",
+        "looks_clean_only": false,
+        "looks_cj": false,
+        "looks_split": true,
+        "looks_thruster": true,
+        "strong_overhead": true,
+        "wrist_overhead_ratio": 0.579
+      }
+    },
+    "family_router_shadow": {
+      "version": "family_router_shadow_v2",
+      "family": "press",
+      "score": 1.629,
+      "margin": 1.629,
+      "runner_up": {
+        "family": null,
+        "score": 0.0
+      },
+      "scores": {
+        "press": 1.629
+      },
+      "evidence": {
+        "press": [
+          {
+            "source": "base",
+            "score": 0.226,
+            "reason": "discounted broad label: push_press"
+          },
+          {
+            "source": "biomechanics",
+            "score": 0.273,
+            "reason": "discounted broad label: push_press"
+          },
+          {
+            "source": "broad_agreement",
+            "score": 0.15,
+            "reason": "base and biomechanics agree on family"
+          },
+          {
+            "source": "press_specialist",
+            "score": 0.78,
+            "reason": "strongest press-family candidate"
+          },
+          {
+            "source": "press_agreement",
+            "score": 0.2,
+            "reason": "base and biomechanics agree on press family"
+          }
+        ]
+      },
+      "signals": {
+        "truly_explosive": false,
+        "explosive_score": 55.386,
+        "looks_clean_only": false,
+        "looks_cj": false,
+        "looks_split": true,
+        "looks_thruster": true,
+        "strong_overhead": true,
+        "verified_v5_olympic": false,
+        "verified_split_jerk": false,
+        "false_pull_up_during_press": true,
+        "bodyweight_supported": false,
+        "bodyweight_clean_conflict": false,
+        "v5_decision": "fallback"
+      }
+    },
+    "press_variant_shadow": {
+      "version": "press_variant_shadow_v1",
+      "eligible": true,
+      "label": "push_press",
+      "score": 2.45,
+      "margin": 0.45,
+      "runner_up": {
+        "label": "thruster",
+        "score": 2.0
+      },
+      "scores": {
+        "push_press": 2.45,
+        "thruster": 2.0,
+        "bench_press": 0.0,
+        "strict_press": 0.0
+      },
+      "evidence": {
+        "bench_press": [],
+        "strict_press": [],
+        "push_press": [
+          "leg drive: knee 139.3, hip 122.0",
+          "explosive score 55.4",
+          "overhead press classifier agreement"
+        ],
+        "thruster": [
+          "deep squat: min knee 39.4, min hip 57.2",
+          "existing thruster geometry signal"
+        ]
+      },
+      "features": {
+        "avg_torso_angle": 7.018,
+        "min_knee_angle": 39.389,
+        "knee_range": 139.323,
+        "min_hip_angle": 57.196,
+        "hip_range": 121.986,
+        "shoulder_y_range": 0.219,
+        "hip_y_range": 0.183,
+        "wrist_overhead_ratio": 0.579,
+        "explosive_score": 55.386,
+        "squat_label": "squat_front",
+        "squat_confidence": 0.714,
+        "horizontal": false,
+        "non_horizontal": true,
+        "deep_squat": true,
+        "front_squat_support": false,
+        "large_vertical_travel": false,
+        "upright": true,
+        "small_leg_motion": false,
+        "moderate_leg_drive": true
+      }
+    },
+    "hierarchical_router_shadow": {
+      "version": "hierarchical_router_shadow_v2",
+      "family": "press",
+      "label": "push_press",
+      "confidence": 2.45,
+      "source": "press_variant_shadow",
+      "reason": "press family variant selection",
+      "family_score": 1.629,
+      "family_margin": 1.629,
+      "alternatives": [],
+      "eligible": true
+    },
+    "bodyweight": {
+      "total_frames": 323,
+      "wrist_above_shoulder_ratio": 0.5789473684210527,
+      "wrist_below_shoulder_ratio": 0.42105263157894735,
+      "mean_wrist_minus_shoulder_y": -0.003428473835811019,
+      "mean_hip_minus_shoulder_y": 0.13433074951171875,
+      "mean_knee_minus_hip_y": 0.09443780779838562,
+      "median_head_drop": -0.05380219221115112,
+      "avg_wrist_forward": 0.021859565749764442,
+      "wrist_y_range": 0.4000549912452698,
+      "shoulder_y_range": 0.21934592723846436,
+      "hip_y_range": 0.1827080249786377,
+      "elbow_range": 176.95355224609375,
+      "min_elbow": 1.971627116203308,
+      "max_elbow": 178.92518615722656,
+      "avg_elbow": 75.33499145507812,
+      "avg_torso_angle": 7.018261432647705
+    },
+    "bodyweight_router_label": "pull_up",
+    "bodyweight_router_conf": 0.922,
+    "router_v5": {
+      "raw_label": "split_jerk",
+      "raw_confidence": 0.8,
+      "olympic_label": "clean_and_jerk",
+      "olympic_confidence": 0.992,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "clean_extension": 54,
+        "clean_catch": 64,
+        "clean_recovery": 84,
+        "jerk_dip": 253,
+        "jerk_drive": 254,
+        "jerk_catch": 255,
+        "lockout": 303,
+        "finish": 303
+      },
+      "features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 1.0,
+        "catch_depth": 161.4700097944488,
+        "extension_to_catch": 10.0,
+        "catch_to_finish": 239.0,
+        "extension_height_change": -0.0007197260856628418,
+        "lockout_duration": 139.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 241,
+        "extension": 276,
+        "lockout": 322
+      },
+      "split_features": {
+        "has_overhead": 1.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 92.7730152218182,
+        "extension_to_catch": -276.0,
+        "catch_to_finish": 322.0,
+        "extension_height_change": 0.0033333301544189453,
+        "lockout_duration": 187.0
+      },
+      "decision": "fallback"
+    },
+    "router_v8": {
+      "version": "router_v8_hierarchical_shadow_snapshot_v1",
+      "predictions": [
+        {
+          "router": "base",
+          "label": "push_press",
+          "confidence": 0.646,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "biomechanics",
+          "label": "push_press",
+          "confidence": 0.78,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "squat",
+          "label": "squat_front",
+          "confidence": 0.714,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "olympic",
+          "label": "clean_and_jerk",
+          "confidence": 0.992,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "bodyweight",
+          "label": "pull_up",
+          "confidence": 0.922,
+          "reason": "",
+          "lock": false
+        }
+      ],
+      "decision": "context_lock",
+      "winning_family": "olympic",
+      "family_scores": {},
+      "scores": {},
+      "winner": "clean_and_jerk",
+      "winner_confidence": 0.992,
+      "locks": [
+        {
+          "label": "clean_and_jerk",
+          "confidence": 0.992,
+          "reason": "protected_evidence:clean_and_jerk_high_conf_final_authority",
+          "priority": 120
+        }
+      ],
+      "selected_lock": {
+        "label": "clean_and_jerk",
+        "confidence": 0.992,
+        "reason": "protected_evidence:clean_and_jerk_high_conf_final_authority",
+        "priority": 120
+      },
+      "evidence": {},
+      "state": {
+        "raw_label": "push_press",
+        "raw_conf": 0.646405816078186,
+        "bio_label": "push_press",
+        "bio_conf": 0.78,
+        "bio_reason": "overhead_press_detected",
+        "squat_label": "squat_front",
+        "squat_conf": 0.714,
+        "olympic_label": "clean_and_jerk",
+        "olympic_conf": 0.992,
+        "bodyweight_label": "pull_up",
+        "bodyweight_conf": 0.9225,
+        "final_label": "clean_and_jerk",
+        "final_conf": 0.992,
+        "analysis_mode": "router_v5",
+        "protected_label": "clean_and_jerk",
+        "protected_reason": "clean_and_jerk_high_conf_final_authority",
+        "explosive_score": 55.38601799143295,
+        "wrist_overhead": 0.5789473684210527,
+        "looks_clean": false,
+        "looks_cj": false,
+        "looks_split": true,
+        "looks_strict": false,
+        "looks_thruster": true,
+        "truly_explosive": false,
+        "bar_pos_valid": true,
+        "routing_trace": [
+          {
+            "stage": "raw_model",
+            "label": "push_press",
+            "conf": 0.646,
+            "reason": ""
+          },
+          {
+            "stage": "bio_model",
+            "label": "push_press",
+            "conf": 0.78,
+            "reason": "overhead_press_detected"
+          },
+          {
+            "stage": "squat_router",
+            "label": "squat_front",
+            "conf": 0.714,
+            "reason": ""
+          },
+          {
+            "stage": "olympic_router",
+            "label": "clean_and_jerk",
+            "conf": 0.992,
+            "reason": ""
+          },
+          {
+            "stage": "bodyweight_router",
+            "label": "pull_up",
+            "conf": 0.922,
+            "reason": ""
+          },
+          {
+            "stage": "final",
+            "label": "clean_and_jerk",
+            "conf": 0.992,
+            "reason": "router_v5"
+          }
+        ],
+        "router_scores": {
+          "push_press": {
+            "score": 1.426405816078186,
+            "sources": [
+              {
+                "source": "raw_model",
+                "score": 0.646
+              },
+              {
+                "source": "bio_model",
+                "score": 0.78
+              }
+            ]
+          },
+          "squat_front": {
+            "score": 0.8925,
+            "sources": [
+              {
+                "source": "squat_router",
+                "score": 0.714
+              },
+              {
+                "source": "squat_bonus",
+                "score": 0.178
+              }
+            ]
+          },
+          "clean_and_jerk": {
+            "score": 0.992,
+            "sources": [
+              {
+                "source": "olympic_router",
+                "score": 0.992
+              }
+            ]
+          },
+          "pull_up": {
+            "score": 1.38375,
+            "sources": [
+              {
+                "source": "bodyweight_router",
+                "score": 0.922
+              },
+              {
+                "source": "bodyweight_bonus",
+                "score": 0.461
+              }
+            ]
+          }
+        },
+        "extras": {}
+      }
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.714,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.2,
+        "squat_front": 0.5,
+        "squat_back": 0.35
+      },
+      "margin": 0.15,
+      "overhead_ratio": 0.535,
+      "elbow_elevated_ratio": 0.186,
+      "wrist_height_above_shoulder": 0.085,
+      "avg_wrist_forward": 0.019,
+      "front_rack_elbow_p25": 65.1,
+      "avg_elbow_angle_sq": 173.2,
+      "squat_frames_used": 129,
+      "total_frames": 323
+    },
+    "wrist_overhead": 0.579,
+    "explosive_score": 55.39,
+    "run_oly_router": true,
+    "looks_split": true,
+    "looks_clean": false,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": true,
+    "squat_confident": false,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "router_v5",
+    "routing_trace": [
+      {
+        "stage": "raw_model",
+        "label": "push_press",
+        "conf": 0.646,
+        "reason": ""
+      },
+      {
+        "stage": "bio_model",
+        "label": "push_press",
+        "conf": 0.78,
+        "reason": "overhead_press_detected"
+      },
+      {
+        "stage": "squat_router",
+        "label": "squat_front",
+        "conf": 0.714,
+        "reason": ""
+      },
+      {
+        "stage": "olympic_router",
+        "label": "clean_and_jerk",
+        "conf": 0.992,
+        "reason": ""
+      },
+      {
+        "stage": "bodyweight_router",
+        "label": "pull_up",
+        "conf": 0.922,
+        "reason": ""
+      },
+      {
+        "stage": "final",
+        "label": "clean_and_jerk",
+        "conf": 0.992,
+        "reason": "router_v5"
+      }
+    ],
+    "router_scores": {
+      "push_press": {
+        "score": 1.426405816078186,
+        "sources": [
+          {
+            "source": "raw_model",
+            "score": 0.646
+          },
+          {
+            "source": "bio_model",
+            "score": 0.78
+          }
+        ]
+      },
+      "squat_front": {
+        "score": 0.8925,
+        "sources": [
+          {
+            "source": "squat_router",
+            "score": 0.714
+          },
+          {
+            "source": "squat_bonus",
+            "score": 0.178
+          }
+        ]
+      },
+      "clean_and_jerk": {
+        "score": 0.992,
+        "sources": [
+          {
+            "source": "olympic_router",
+            "score": 0.992
+          }
+        ]
+      },
+      "pull_up": {
+        "score": 1.38375,
+        "sources": [
+          {
+            "source": "bodyweight_router",
+            "score": 0.922
+          },
+          {
+            "source": "bodyweight_bonus",
+            "score": 0.461
+          }
+        ]
+      }
+    },
+    "router_score_winner": "push_press",
+    "router_score_value": 1.426,
+    "router_v6_label": "push_press",
+    "router_v6_conf": 0.713,
+    "router_v6_decision": "score_winner"
+  }
+}
