@@ -2466,6 +2466,16 @@ def find_clean_phase_reps(biomechanics):
     if n < 10:
         return []
 
+    # Temporary detector audit. Logging only; no behavior changes.
+    import os
+    clean_audit = os.getenv("CLEAN_DETECTOR_AUDIT", "0") == "1"
+
+    def audit(message):
+        if clean_audit:
+            print(f"[CLEAN_AUDIT] {message}", flush=True)
+
+    audit(f"begin frames={n}")
+
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
@@ -2492,7 +2502,10 @@ def find_clean_phase_reps(biomechanics):
 
     idxs = np.where(front_rack)[0]
 
+    audit(f"front_rack_frames={len(idxs)}")
+
     if len(idxs) == 0:
+        audit("REJECT no_front_rack_frames")
         return []
 
     # Cluster front-rack frames into distinct catches.
@@ -2512,14 +2525,34 @@ def find_clean_phase_reps(biomechanics):
     if len(current) >= 3:
         clusters.append(current)
 
+    # Short segmented clips can contain the clean catch before frame 60.
+    # Use a proportional cutoff, and reject only clusters that finish
+    # entirely inside the startup region.
+    startup_cutoff = max(12, int(n * 0.18))
+
+    audit(
+        f"clusters={len(clusters)} "
+        f"startup_cutoff={startup_cutoff}"
+    )
+
     reps = []
 
-    for cluster in clusters:
+    for cluster_number, cluster in enumerate(clusters, start=1):
         cluster_start = cluster[0]
         cluster_end = cluster[-1]
 
+        audit(
+            f"cluster={cluster_number} "
+            f"range={cluster_start}-{cluster_end} "
+            f"length={len(cluster)}"
+        )
+
         # Ignore startup false positives before the lift actually begins.
-        if cluster_start < max(60, int(n * 0.18)):
+        if cluster_end < startup_cutoff:
+            audit(
+                f"cluster={cluster_number} "
+                f"REJECT startup_window"
+            )
             continue
 
         # Require a real extension shortly before the catch.
@@ -2528,7 +2561,22 @@ def find_clean_phase_reps(biomechanics):
         pre_ext_end = max(pre_ext_start + 1, cluster_start)
 
         ext_score = hip[pre_ext_start:pre_ext_end] + knee[pre_ext_start:pre_ext_end]
-        if len(ext_score) == 0 or float(np.max(ext_score)) < 300:
+        max_extension = (
+            float(np.max(ext_score))
+            if len(ext_score)
+            else float("nan")
+        )
+
+        audit(
+            f"cluster={cluster_number} "
+            f"max_extension={max_extension:.4f}"
+        )
+
+        if len(ext_score) == 0 or max_extension < 300:
+            audit(
+                f"cluster={cluster_number} "
+                f"REJECT extension_threshold"
+            )
             continue
 
         # Catch = lowest hip in the first receiving part of this rack cluster.
@@ -2549,21 +2597,44 @@ def find_clean_phase_reps(biomechanics):
         )
 
         if len(pull_wrist_relative) == 0:
+            audit(
+                f"cluster={cluster_number} "
+                f"REJECT empty_pull_window"
+            )
             continue
 
-        has_low_pull_position = (
-            float(np.percentile(pull_wrist_relative, 75)) >= 0.08
+        pull_relative_p75 = float(
+            np.percentile(pull_wrist_relative, 75)
         )
+        has_low_pull_position = pull_relative_p75 >= 0.08
+
         wrist_rise_into_rack = (
             float(np.max(wrist_y[start_idx:catch_idx]))
             - float(wrist_y[catch_idx])
         )
         has_meaningful_wrist_rise = wrist_rise_into_rack >= 0.03
 
-        if not (
-            has_low_pull_position
-            and has_meaningful_wrist_rise
-        ):
+        audit(
+            f"cluster={cluster_number} "
+            f"start={start_idx} catch={catch_idx} "
+            f"pull_p75={pull_relative_p75:.4f} "
+            f"wrist_rise={wrist_rise_into_rack:.4f} "
+            f"low_pull_ok={has_low_pull_position} "
+            f"rise_ok={has_meaningful_wrist_rise}"
+        )
+
+        if not has_low_pull_position:
+            audit(
+                f"cluster={cluster_number} "
+                f"REJECT low_pull_threshold"
+            )
+            continue
+
+        if not has_meaningful_wrist_rise:
+            audit(
+                f"cluster={cluster_number} "
+                f"REJECT wrist_rise_threshold"
+            )
             continue
 
         # True extension = strongest tall position before catch.
@@ -2609,8 +2680,13 @@ def find_clean_phase_reps(biomechanics):
         if reps and rep["catch_frame"] - reps[-1]["catch_frame"] < 150:
             continue
 
+        audit(
+            f"cluster={cluster_number} "
+            f"ACCEPT catch_frame={rep.get('catch_frame')}"
+        )
         reps.append(rep)
 
+    audit(f"accepted_reps={len(reps)}")
     return reps
 
 
@@ -9208,6 +9284,21 @@ def analyze_video(
             router_v6_label = router_score_winner
             router_v6_conf = min(0.99, max(0.01, router_score_value / 2.0))
             router_v6_decision = "score_winner"
+        # A short deadlift can create a false front-rack/clean event when the
+        # hands pass near shoulder height. Preserve clean evidence generally,
+        # but do not let a weak snatch prediction suppress independent raw
+        # deadlift setup evidence.
+        clean_shape_blocks_deadlift = (
+            bool(_looks_clean_only)
+            and not (
+                raw_label == "deadlift"
+                and float(base_conf or 0.0) >= 0.40
+                and olympic_pred == "snatch"
+                and float(olympic_conf or 0.0) < 0.70
+                and float(explosive_score or 0.0) <= 75.0
+            )
+        )
+
         _deadlift_setup_geometry = (
             squat_label == "squat_back"
             and wrist_overhead_ratio < 0.12
@@ -9215,7 +9306,7 @@ def analyze_video(
             and float(bar_debug.get("front_rack_elbow_p25", 0.0)) > 145.0
             and float(bar_debug.get("overhead_ratio", 0.0)) < 0.05
             and float(bar_debug.get("avg_wrist_forward", 1.0)) < 0.03
-            and not _looks_clean_only
+            and not clean_shape_blocks_deadlift
             and not _looks_cj
             and not _looks_split
             and not _looks_strict
@@ -10285,9 +10376,9 @@ def analyze_video(
         # clean cannot be restored to squat_back afterward.
         strong_front_squat_consensus = (
             raw_label in {"squat", "squat_front"}
-            and float(base_conf or 0.0) >= 0.95
+            and float(base_conf or 0.0) >= 0.90
             and bio_label in {"squat", "squat_front"}
-            and float(bio_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.90
             and squat_label == "squat_front"
             and float(squat_conf or 0.0) >= 0.80
         )
@@ -10654,6 +10745,47 @@ def analyze_video(
                     protected_reason = "yolo_rep_count_deadlift_recovery"
             except Exception as exc:
                 print(f"YOLO deadlift recovery skipped: {exc}")
+
+        # Last automatic-routing authority for a verified clean-only shape.
+        # This runs after Router V5, Router V6, Olympic recoveries, muscle-up
+        # recovery, and optional YOLO deadlift recovery. User-confirmed labels
+        # are still applied afterward.
+        final_clean_shape_authority = (
+            not forced_exercise_label
+            and bool(_looks_clean_only)
+            and not bool(_looks_cj)
+            and not bool(_looks_split)
+            and not strong_front_squat_consensus
+            and not (
+                raw_label == "bench_press"
+                and bio_label == "bench_press"
+                and float(base_conf or 0.0) >= 0.80
+                and float(bio_conf or 0.0) >= 0.80
+            )
+            and (
+                (
+                    olympic_pred == "clean_and_jerk"
+                    and float(olympic_conf or 0.0) >= 0.62
+                )
+                or (
+                    locals().get("router_v5_label") == "clean"
+                    and str(
+                        (locals().get("router_v5_debug") or {}).get(
+                            "decision",
+                            "",
+                        )
+                    ) == "clean_rescue_from_weak_snatch"
+                )
+            )
+        )
+
+        if final_clean_shape_authority:
+            final_label = "clean"
+            final_conf = 0.75
+            analysis_mode = "shape_override"
+            protected_label = "clean"
+            protected_conf = final_conf
+            protected_reason = "clean_only_shape_final_authority"
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
