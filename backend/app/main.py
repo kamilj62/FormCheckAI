@@ -9650,7 +9650,18 @@ def analyze_video(
                 else "bench_model_consensus"
             )
 
-        elif protection.label:
+        elif (
+            protection.label
+            and not (
+                protection.label == "pull_up"
+                and olympic_pred == "snatch"
+                and float(olympic_conf or 0.0) >= 0.60
+                and raw_label == "squat"
+                and bio_label == "push_press"
+                and float(explosive_score or 0.0) >= 50.0
+                and float(router_v6_conf or 0.0) < 0.75
+            )
+        ):
             protected_label = protection.label
             protected_conf = protection.confidence
             protected_reason = protection.reason
@@ -10403,10 +10414,25 @@ def analyze_video(
             ):
                 # Hard block: clear squat should not be stolen by weak Olympic Router V5.
                 strong_explosive_snatch = (
-                    olympic_pred == "snatch"
-                    and float(olympic_conf or 0.0) >= 0.80
-                    and bool(_truly_explosive)
-                    and float(explosive_score or 0.0) >= 100.0
+                    (
+                        olympic_pred == "snatch"
+                        and float(olympic_conf or 0.0) >= 0.80
+                        and bool(_truly_explosive)
+                        and float(explosive_score or 0.0) >= 100.0
+                    )
+                    or (
+                        # Short real-time snatch signature discovered by the
+                        # untouched holdout. The deep catch resembles a back
+                        # squat, while biomechanics resembles a push press.
+                        olympic_pred == "snatch"
+                        and float(olympic_conf or 0.0) >= 0.60
+                        and raw_label == "squat"
+                        and bio_label == "push_press"
+                        and squat_label == "squat_back"
+                        and float(squat_conf or 0.0) >= 0.90
+                        and float(explosive_score or 0.0) >= 50.0
+                        and float(router_v6_conf or 0.0) < 0.75
+                    )
                 )
 
                 if (
@@ -10574,6 +10600,17 @@ def analyze_video(
                 )
             )
             and float(final_conf or 0.0) < 0.95
+
+            # Preserve a short explosive snatch that can resemble a vertical
+            # bodyweight pull because of the rapid floor-to-overhead motion.
+            and not (
+                olympic_pred == "snatch"
+                and float(olympic_conf or 0.0) >= 0.60
+                and raw_label == "squat"
+                and bio_label == "push_press"
+                and float(explosive_score or 0.0) >= 50.0
+                and float(router_v6_conf or 0.0) < 0.75
+            )
         ):
             final_label = "pull_up"
             final_conf = 0.86
@@ -11012,6 +11049,19 @@ def analyze_video(
                 and float(squat_conf or 0.0) >= 0.80
                 and bool(_looks_thruster)
                 and float(explosive_score or 0.0) < 25.0
+            )
+
+            # Preserve short explosive snatches that the bodyweight router
+            # mistakes for vertical pull-ups. Require a narrow routing signature:
+            # squat base, push-press biomechanics, explicit snatch prediction,
+            # high explosiveness, and only weak Router V6 pull-up confidence.
+            and not (
+                olympic_pred == "snatch"
+                and float(olympic_conf or 0.0) >= 0.60
+                and raw_label == "squat"
+                and bio_label == "push_press"
+                and float(explosive_score or 0.0) >= 50.0
+                and float(router_v6_conf or 0.0) < 0.75
             )
 
             # Preserve a push press already established by its dedicated
