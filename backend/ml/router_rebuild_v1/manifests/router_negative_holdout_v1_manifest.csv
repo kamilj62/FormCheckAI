@@ -1,0 +1,7 @@
+path,filename,folder,reviewed_label,olympic_gate_label,source_id,split,include,canonical_content_sha256
+/Users/josephkamil/Desktop/Capstone/bench press/bench press_50.mp4,bench press_50.mp4,bench_press,bench_press,non_olympic,negative_holdout_bench_press_bench press_50,holdout,yes,e083cdb12d809c6176fb3da596ed382ed58e070fe57b0cd454e50ac2a9e1ba5b
+/Users/josephkamil/Desktop/Capstone/bench press/bench press_51.mp4,bench press_51.mp4,bench_press,bench_press,non_olympic,negative_holdout_bench_press_bench press_51,holdout,yes,e6fab9c1577cb0e07fa992dad9f1be790ea6f95f9d9ad026708af2fcc4327378
+/Users/josephkamil/Desktop/Capstone/bench press/bench press_52.mp4,bench press_52.mp4,bench_press,bench_press,non_olympic,negative_holdout_bench_press_bench press_52,holdout,yes,5040c6f6d64785d7e69439f821ea1fd6c4c4440c04745fcbc15627ba0af925a0
+/Users/josephkamil/Desktop/Capstone/pull Up/pull up_19.mp4,pull up_19.mp4,pull_up,pull_up,non_olympic,negative_holdout_pull_up_pull up_19,holdout,yes,f2c5cd69253e0015e0e5eb5047e50cfc8362753d176aed293587a91e7bb0d65b
+/Users/josephkamil/Desktop/Capstone/pull Up/pull up_20.mp4,pull up_20.mp4,pull_up,pull_up,non_olympic,negative_holdout_pull_up_pull up_20,holdout,yes,29463a69d7a851a0ea2aba1f8808f430869724b54f481c1f99bca7c3c9d7a157
+/Users/josephkamil/Desktop/Capstone/pull Up/pull up_21.mp4,pull up_21.mp4,pull_up,pull_up,non_olympic,negative_holdout_pull_up_pull up_21,holdout,yes,8422812b4a4db42e4b89523c535c0e4b7db20d53ae4873203f2ac7e3698c2c33

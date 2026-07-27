@@ -186,6 +186,23 @@ try:
 except Exception as e:
     print("OLY ROUTER V4 NOT LOADED:", e)
 
+# Candidate-only Olympic gate shadow.
+# This model is evaluated for debug output only and does not affect routing.
+OLYMPIC_GATE_HARDNEG_MODEL = None
+OLYMPIC_GATE_HARDNEG_THRESHOLD = 0.50
+
+try:
+    _olympic_gate_bundle = joblib.load(
+        MODEL_DIR / "candidates" / "olympic_gate_hardneg_v1.joblib"
+    )
+    OLYMPIC_GATE_HARDNEG_MODEL = (
+        _olympic_gate_bundle.get("model")
+        if isinstance(_olympic_gate_bundle, dict)
+        else _olympic_gate_bundle
+    )
+except Exception as e:
+    print("OLYMPIC GATE HARDNEG NOT LOADED:", e)
+
 OLY_ROUTER_V7_MODEL = None
 try:
     OLY_ROUTER_V7_MODEL = joblib.load(MODEL_DIR / "candidates" / "oly_router_v7.joblib")
@@ -9137,6 +9154,12 @@ def analyze_video(
 
         olympic_pred, olympic_conf = None, 0.0
 
+        # Candidate-only shadow gate. These values are exposed in debug but
+        # never modify run_oly_router, olympic_pred, final_label, or confidence.
+        olympic_gate_hardneg_probability = None
+        olympic_gate_hardneg_prediction = None
+        olympic_gate_hardneg_error = None
+
         wrist_overhead_ratio = float(np.mean([
             1 if b.get("wrist_y", 1.0) < b.get("shoulder_y", 0.0) else 0
             for b in biomech
@@ -9153,6 +9176,55 @@ def analyze_video(
             OLY_ROUTER_MODEL is not None
             and (wrist_overhead_ratio > 0.12 or explosive_score > 12)
         )
+
+        if OLYMPIC_GATE_HARDNEG_MODEL is not None:
+            try:
+                gate_features = build_movement_video_features(
+                    biomech
+                ).reshape(1, -1)
+
+                if hasattr(
+                    OLYMPIC_GATE_HARDNEG_MODEL,
+                    "n_features_in_",
+                ):
+                    expected_features = int(
+                        OLYMPIC_GATE_HARDNEG_MODEL.n_features_in_
+                    )
+
+                    if gate_features.shape[1] != expected_features:
+                        raise ValueError(
+                            "Olympic gate feature mismatch: "
+                            f"got {gate_features.shape[1]}, "
+                            f"expected {expected_features}"
+                        )
+
+                gate_probabilities = (
+                    OLYMPIC_GATE_HARDNEG_MODEL.predict_proba(
+                        gate_features
+                    )[0]
+                )
+                gate_classes = list(
+                    OLYMPIC_GATE_HARDNEG_MODEL.classes_
+                )
+
+                if "olympic" not in gate_classes:
+                    raise ValueError(
+                        f"Missing olympic class: {gate_classes}"
+                    )
+
+                olympic_gate_hardneg_probability = float(
+                    gate_probabilities[
+                        gate_classes.index("olympic")
+                    ]
+                )
+                olympic_gate_hardneg_prediction = (
+                    "olympic"
+                    if olympic_gate_hardneg_probability
+                    >= OLYMPIC_GATE_HARDNEG_THRESHOLD
+                    else "non_olympic"
+                )
+            except Exception as e:
+                olympic_gate_hardneg_error = str(e)
 
         if run_oly_router:
             if USE_OLY_ROUTER_V4 and OLY_ROUTER_V4_MODEL is not None:
@@ -11638,6 +11710,23 @@ def analyze_video(
                 "user_confirmed": bool(normalized_forced_label),
                 "olympic_pred":    olympic_pred,
                 "olympic_conf":    round(olympic_conf, 3) if olympic_conf else None,
+                "olympic_gate_hardneg_probability": (
+                    round(
+                        float(olympic_gate_hardneg_probability),
+                        6,
+                    )
+                    if olympic_gate_hardneg_probability is not None
+                    else None
+                ),
+                "olympic_gate_hardneg_prediction": (
+                    olympic_gate_hardneg_prediction
+                ),
+                "olympic_gate_hardneg_threshold": (
+                    OLYMPIC_GATE_HARDNEG_THRESHOLD
+                ),
+                "olympic_gate_hardneg_error": (
+                    olympic_gate_hardneg_error
+                ),
                 "raw_label":       raw_label,
                 "base_conf":       round(base_conf, 3),
                 "bio_label":       bio_label,

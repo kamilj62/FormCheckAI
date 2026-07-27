@@ -1,0 +1,24 @@
+{
+  "model": "app/models/candidates/olympic_gate_hardneg_v1.joblib",
+  "selected_threshold": 0.5,
+  "selection_basis": "Frozen holdout comparison: 12 unseen snatch clips and 5 successfully extracted unseen non-Olympic clips",
+  "holdout_results": {
+    "positive_snatch_clips": 12,
+    "positive_recall": 1.0,
+    "negative_clips": 5,
+    "negative_rejection": 1.0,
+    "combined_accuracy": 1.0,
+    "false_negatives": 0,
+    "false_positives": 0,
+    "lowest_positive_probability": 0.569923,
+    "highest_negative_probability": 0.480801,
+    "probability_margin": 0.089122
+  },
+  "status": "candidate_only_not_production",
+  "limitations": [
+    "Positive holdout contains only snatch clips",
+    "Negative holdout contains only bench press and pull-up clips",
+    "One bench-press holdout clip failed pose extraction",
+    "No untouched push-press, squat, or overhead-squat negatives were evaluated"
+  ]
+}
