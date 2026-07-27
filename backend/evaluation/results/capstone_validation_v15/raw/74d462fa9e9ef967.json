@@ -1,0 +1,1370 @@
+{
+  "exercise_label": "squat_front",
+  "confidence": 0.97,
+  "analysis_mode": "detailed_rep_analysis",
+  "rep_feedback": [
+    {
+      "rep": 1,
+      "start_frame": 60,
+      "descent_frame": 71,
+      "bottom_frame": 80,
+      "ascent_frame": 88,
+      "end_frame": 98,
+      "score": 5.0,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably.",
+        "Elbows are dropping slightly in the front rack.",
+        "Bar may be drifting forward out of the rack."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected",
+        "front_rack": "borderline",
+        "bar_position": "borderline",
+        "elbow_height_delta": 0.105,
+        "wrist_drop_delta": 0.148,
+        "rack_forward_shift": 0.096
+      },
+      "feedback": [
+        "Drive knees out over your toes.",
+        "Drive elbows higher to keep the bar secure.",
+        "Keep the bar close to your throat and elbows pointed forward."
+      ],
+      "coaching": {
+        "priority": "Drive knees out over your toes.",
+        "sections": [
+          {
+            "title": "Depth",
+            "status": "good",
+            "message": "Good squat depth."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Strong torso position."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out over your toes."
+          },
+          {
+            "title": "Heels",
+            "status": "good",
+            "message": "Good foot pressure."
+          },
+          {
+            "title": "Neck",
+            "status": "good",
+            "message": "Good neutral head position."
+          },
+          {
+            "title": "Front Rack",
+            "status": "warning",
+            "message": "Drive elbows higher to keep the bar secure."
+          },
+          {
+            "title": "Bar Position",
+            "status": "warning",
+            "message": "Keep the bar close to your throat and elbows pointed forward."
+          }
+        ]
+      }
+    },
+    {
+      "rep": 2,
+      "start_frame": 118,
+      "descent_frame": 129,
+      "bottom_frame": 139,
+      "ascent_frame": 147,
+      "end_frame": 157,
+      "score": 5.0,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably.",
+        "Elbows are dropping slightly in the front rack.",
+        "Bar may be drifting forward out of the rack."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected",
+        "front_rack": "borderline",
+        "bar_position": "borderline",
+        "elbow_height_delta": 0.102,
+        "wrist_drop_delta": 0.146,
+        "rack_forward_shift": 0.097
+      },
+      "feedback": [
+        "Drive knees out over your toes.",
+        "Drive elbows higher to keep the bar secure.",
+        "Keep the bar close to your throat and elbows pointed forward."
+      ],
+      "coaching": {
+        "priority": "Drive knees out over your toes.",
+        "sections": [
+          {
+            "title": "Depth",
+            "status": "good",
+            "message": "Good squat depth."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Strong torso position."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out over your toes."
+          },
+          {
+            "title": "Heels",
+            "status": "good",
+            "message": "Good foot pressure."
+          },
+          {
+            "title": "Neck",
+            "status": "good",
+            "message": "Good neutral head position."
+          },
+          {
+            "title": "Front Rack",
+            "status": "warning",
+            "message": "Drive elbows higher to keep the bar secure."
+          },
+          {
+            "title": "Bar Position",
+            "status": "warning",
+            "message": "Keep the bar close to your throat and elbows pointed forward."
+          }
+        ]
+      }
+    },
+    {
+      "rep": 3,
+      "start_frame": 182,
+      "descent_frame": 192,
+      "bottom_frame": 201,
+      "ascent_frame": 208,
+      "end_frame": 218,
+      "score": 5.0,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably.",
+        "Elbows are dropping slightly in the front rack.",
+        "Bar may be drifting forward out of the rack."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected",
+        "front_rack": "borderline",
+        "bar_position": "borderline",
+        "elbow_height_delta": 0.1,
+        "wrist_drop_delta": 0.142,
+        "rack_forward_shift": 0.102
+      },
+      "feedback": [
+        "Drive knees out over your toes.",
+        "Drive elbows higher to keep the bar secure.",
+        "Keep the bar close to your throat and elbows pointed forward."
+      ],
+      "coaching": {
+        "priority": "Drive knees out over your toes.",
+        "sections": [
+          {
+            "title": "Depth",
+            "status": "good",
+            "message": "Good squat depth."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Strong torso position."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out over your toes."
+          },
+          {
+            "title": "Heels",
+            "status": "good",
+            "message": "Good foot pressure."
+          },
+          {
+            "title": "Neck",
+            "status": "good",
+            "message": "Good neutral head position."
+          },
+          {
+            "title": "Front Rack",
+            "status": "warning",
+            "message": "Drive elbows higher to keep the bar secure."
+          },
+          {
+            "title": "Bar Position",
+            "status": "warning",
+            "message": "Keep the bar close to your throat and elbows pointed forward."
+          }
+        ]
+      }
+    },
+    {
+      "rep": 4,
+      "start_frame": 240,
+      "descent_frame": 251,
+      "bottom_frame": 260,
+      "ascent_frame": 267,
+      "end_frame": 277,
+      "score": 5.0,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably.",
+        "Elbows are dropping slightly in the front rack.",
+        "Bar may be drifting forward out of the rack."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected",
+        "front_rack": "borderline",
+        "bar_position": "borderline",
+        "elbow_height_delta": 0.103,
+        "wrist_drop_delta": 0.162,
+        "rack_forward_shift": 0.1
+      },
+      "feedback": [
+        "Drive knees out over your toes.",
+        "Drive elbows higher to keep the bar secure.",
+        "Keep the bar close to your throat and elbows pointed forward."
+      ],
+      "coaching": {
+        "priority": "Drive knees out over your toes.",
+        "sections": [
+          {
+            "title": "Depth",
+            "status": "good",
+            "message": "Good squat depth."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Strong torso position."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out over your toes."
+          },
+          {
+            "title": "Heels",
+            "status": "good",
+            "message": "Good foot pressure."
+          },
+          {
+            "title": "Neck",
+            "status": "good",
+            "message": "Good neutral head position."
+          },
+          {
+            "title": "Front Rack",
+            "status": "warning",
+            "message": "Drive elbows higher to keep the bar secure."
+          },
+          {
+            "title": "Bar Position",
+            "status": "warning",
+            "message": "Keep the bar close to your throat and elbows pointed forward."
+          }
+        ]
+      }
+    },
+    {
+      "rep": 5,
+      "start_frame": 297,
+      "descent_frame": 306,
+      "bottom_frame": 315,
+      "ascent_frame": 322,
+      "end_frame": 331,
+      "score": 5.0,
+      "grade": "Needs Work",
+      "issues": [
+        "Knees cave inward noticeably.",
+        "Elbows are dropping slightly in the front rack.",
+        "Bar may be drifting forward out of the rack."
+      ],
+      "breakdown": {
+        "depth": "good",
+        "torso": "good",
+        "knees": "poor",
+        "heels": "good",
+        "neck": "good",
+        "butt_wink": "not_detected",
+        "front_rack": "borderline",
+        "bar_position": "borderline",
+        "elbow_height_delta": 0.108,
+        "wrist_drop_delta": 0.139,
+        "rack_forward_shift": 0.078
+      },
+      "feedback": [
+        "Drive knees out over your toes.",
+        "Drive elbows higher to keep the bar secure.",
+        "Keep the bar close to your throat and elbows pointed forward."
+      ],
+      "coaching": {
+        "priority": "Drive knees out over your toes.",
+        "sections": [
+          {
+            "title": "Depth",
+            "status": "good",
+            "message": "Good squat depth."
+          },
+          {
+            "title": "Torso",
+            "status": "good",
+            "message": "Strong torso position."
+          },
+          {
+            "title": "Knees",
+            "status": "poor",
+            "message": "Drive knees out over your toes."
+          },
+          {
+            "title": "Heels",
+            "status": "good",
+            "message": "Good foot pressure."
+          },
+          {
+            "title": "Neck",
+            "status": "good",
+            "message": "Good neutral head position."
+          },
+          {
+            "title": "Front Rack",
+            "status": "warning",
+            "message": "Drive elbows higher to keep the bar secure."
+          },
+          {
+            "title": "Bar Position",
+            "status": "warning",
+            "message": "Keep the bar close to your throat and elbows pointed forward."
+          }
+        ]
+      }
+    }
+  ],
+  "set_summary": {
+    "detected_reps": 5,
+    "avg_rep_score": 5.0,
+    "best_rep": 1,
+    "worst_rep": 1,
+    "trend": "Form appears consistent across the set."
+  },
+  "coaching_zones": {
+    "zones": [],
+    "exercise_label": "squat_front",
+    "issues": [
+      {
+        "rep": 1,
+        "start_frame": 60,
+        "descent_frame": 71,
+        "bottom_frame": 80,
+        "ascent_frame": 88,
+        "end_frame": 98,
+        "score": 5.0,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably.",
+          "Elbows are dropping slightly in the front rack.",
+          "Bar may be drifting forward out of the rack."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "borderline",
+          "bar_position": "borderline",
+          "elbow_height_delta": 0.105,
+          "wrist_drop_delta": 0.148,
+          "rack_forward_shift": 0.096
+        },
+        "feedback": [
+          "Drive knees out over your toes.",
+          "Drive elbows higher to keep the bar secure.",
+          "Keep the bar close to your throat and elbows pointed forward."
+        ],
+        "coaching": {
+          "priority": "Drive knees out over your toes.",
+          "sections": [
+            {
+              "title": "Depth",
+              "status": "good",
+              "message": "Good squat depth."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Strong torso position."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out over your toes."
+            },
+            {
+              "title": "Heels",
+              "status": "good",
+              "message": "Good foot pressure."
+            },
+            {
+              "title": "Neck",
+              "status": "good",
+              "message": "Good neutral head position."
+            },
+            {
+              "title": "Front Rack",
+              "status": "warning",
+              "message": "Drive elbows higher to keep the bar secure."
+            },
+            {
+              "title": "Bar Position",
+              "status": "warning",
+              "message": "Keep the bar close to your throat and elbows pointed forward."
+            }
+          ]
+        }
+      },
+      {
+        "rep": 2,
+        "start_frame": 118,
+        "descent_frame": 129,
+        "bottom_frame": 139,
+        "ascent_frame": 147,
+        "end_frame": 157,
+        "score": 5.0,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably.",
+          "Elbows are dropping slightly in the front rack.",
+          "Bar may be drifting forward out of the rack."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "borderline",
+          "bar_position": "borderline",
+          "elbow_height_delta": 0.102,
+          "wrist_drop_delta": 0.146,
+          "rack_forward_shift": 0.097
+        },
+        "feedback": [
+          "Drive knees out over your toes.",
+          "Drive elbows higher to keep the bar secure.",
+          "Keep the bar close to your throat and elbows pointed forward."
+        ],
+        "coaching": {
+          "priority": "Drive knees out over your toes.",
+          "sections": [
+            {
+              "title": "Depth",
+              "status": "good",
+              "message": "Good squat depth."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Strong torso position."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out over your toes."
+            },
+            {
+              "title": "Heels",
+              "status": "good",
+              "message": "Good foot pressure."
+            },
+            {
+              "title": "Neck",
+              "status": "good",
+              "message": "Good neutral head position."
+            },
+            {
+              "title": "Front Rack",
+              "status": "warning",
+              "message": "Drive elbows higher to keep the bar secure."
+            },
+            {
+              "title": "Bar Position",
+              "status": "warning",
+              "message": "Keep the bar close to your throat and elbows pointed forward."
+            }
+          ]
+        }
+      },
+      {
+        "rep": 3,
+        "start_frame": 182,
+        "descent_frame": 192,
+        "bottom_frame": 201,
+        "ascent_frame": 208,
+        "end_frame": 218,
+        "score": 5.0,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably.",
+          "Elbows are dropping slightly in the front rack.",
+          "Bar may be drifting forward out of the rack."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "borderline",
+          "bar_position": "borderline",
+          "elbow_height_delta": 0.1,
+          "wrist_drop_delta": 0.142,
+          "rack_forward_shift": 0.102
+        },
+        "feedback": [
+          "Drive knees out over your toes.",
+          "Drive elbows higher to keep the bar secure.",
+          "Keep the bar close to your throat and elbows pointed forward."
+        ],
+        "coaching": {
+          "priority": "Drive knees out over your toes.",
+          "sections": [
+            {
+              "title": "Depth",
+              "status": "good",
+              "message": "Good squat depth."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Strong torso position."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out over your toes."
+            },
+            {
+              "title": "Heels",
+              "status": "good",
+              "message": "Good foot pressure."
+            },
+            {
+              "title": "Neck",
+              "status": "good",
+              "message": "Good neutral head position."
+            },
+            {
+              "title": "Front Rack",
+              "status": "warning",
+              "message": "Drive elbows higher to keep the bar secure."
+            },
+            {
+              "title": "Bar Position",
+              "status": "warning",
+              "message": "Keep the bar close to your throat and elbows pointed forward."
+            }
+          ]
+        }
+      },
+      {
+        "rep": 4,
+        "start_frame": 240,
+        "descent_frame": 251,
+        "bottom_frame": 260,
+        "ascent_frame": 267,
+        "end_frame": 277,
+        "score": 5.0,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably.",
+          "Elbows are dropping slightly in the front rack.",
+          "Bar may be drifting forward out of the rack."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "borderline",
+          "bar_position": "borderline",
+          "elbow_height_delta": 0.103,
+          "wrist_drop_delta": 0.162,
+          "rack_forward_shift": 0.1
+        },
+        "feedback": [
+          "Drive knees out over your toes.",
+          "Drive elbows higher to keep the bar secure.",
+          "Keep the bar close to your throat and elbows pointed forward."
+        ],
+        "coaching": {
+          "priority": "Drive knees out over your toes.",
+          "sections": [
+            {
+              "title": "Depth",
+              "status": "good",
+              "message": "Good squat depth."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Strong torso position."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out over your toes."
+            },
+            {
+              "title": "Heels",
+              "status": "good",
+              "message": "Good foot pressure."
+            },
+            {
+              "title": "Neck",
+              "status": "good",
+              "message": "Good neutral head position."
+            },
+            {
+              "title": "Front Rack",
+              "status": "warning",
+              "message": "Drive elbows higher to keep the bar secure."
+            },
+            {
+              "title": "Bar Position",
+              "status": "warning",
+              "message": "Keep the bar close to your throat and elbows pointed forward."
+            }
+          ]
+        }
+      },
+      {
+        "rep": 5,
+        "start_frame": 297,
+        "descent_frame": 306,
+        "bottom_frame": 315,
+        "ascent_frame": 322,
+        "end_frame": 331,
+        "score": 5.0,
+        "grade": "Needs Work",
+        "issues": [
+          "Knees cave inward noticeably.",
+          "Elbows are dropping slightly in the front rack.",
+          "Bar may be drifting forward out of the rack."
+        ],
+        "breakdown": {
+          "depth": "good",
+          "torso": "good",
+          "knees": "poor",
+          "heels": "good",
+          "neck": "good",
+          "butt_wink": "not_detected",
+          "front_rack": "borderline",
+          "bar_position": "borderline",
+          "elbow_height_delta": 0.108,
+          "wrist_drop_delta": 0.139,
+          "rack_forward_shift": 0.078
+        },
+        "feedback": [
+          "Drive knees out over your toes.",
+          "Drive elbows higher to keep the bar secure.",
+          "Keep the bar close to your throat and elbows pointed forward."
+        ],
+        "coaching": {
+          "priority": "Drive knees out over your toes.",
+          "sections": [
+            {
+              "title": "Depth",
+              "status": "good",
+              "message": "Good squat depth."
+            },
+            {
+              "title": "Torso",
+              "status": "good",
+              "message": "Strong torso position."
+            },
+            {
+              "title": "Knees",
+              "status": "poor",
+              "message": "Drive knees out over your toes."
+            },
+            {
+              "title": "Heels",
+              "status": "good",
+              "message": "Good foot pressure."
+            },
+            {
+              "title": "Neck",
+              "status": "good",
+              "message": "Good neutral head position."
+            },
+            {
+              "title": "Front Rack",
+              "status": "warning",
+              "message": "Drive elbows higher to keep the bar secure."
+            },
+            {
+              "title": "Bar Position",
+              "status": "warning",
+              "message": "Keep the bar close to your throat and elbows pointed forward."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "debug": {
+    "predicted_exercise": "squat_front",
+    "forced_exercise_label": null,
+    "user_confirmed": false,
+    "olympic_pred": "snatch",
+    "olympic_conf": 0.692,
+    "raw_label": "squat",
+    "base_conf": 0.896,
+    "bio_label": "squat",
+    "bio_conf": 0.896,
+    "bio_override": true,
+    "bio_reason": "squat_pattern_detected",
+    "biomechanics_summary": {
+      "avg_knee_angle": 130.0966744040572,
+      "min_knee_angle": 43.633604353065145,
+      "max_knee_angle": 179.3163614162365,
+      "avg_hip_angle": 130.30496263868073,
+      "min_hip_angle": 44.02359825412906,
+      "max_hip_angle": 179.5831283253023,
+      "avg_torso_angle": 13.968631042873323,
+      "min_torso_angle": 0.9856433149558179,
+      "max_torso_angle": 27.688425413968535,
+      "avg_elbow_angle": 139.75981415398184,
+      "min_elbow_angle": 51.876879404324306,
+      "max_elbow_angle": 178.68406652776284,
+      "avg_valgus_ratio": 0.8880997645495685,
+      "min_valgus_ratio": 0.5,
+      "wrist_above_shoulder_ratio": 0.0
+    },
+    "protected_label": null,
+    "protected_reason": null,
+    "routing_candidates": {
+      "base": {
+        "label": "squat",
+        "confidence": 0.896
+      },
+      "biomechanics": {
+        "label": "squat",
+        "confidence": 0.896
+      },
+      "squat_router": {
+        "label": "squat_front",
+        "confidence": 0.97
+      },
+      "olympic_router": {
+        "label": "snatch",
+        "confidence": 0.692
+      },
+      "router_v5": {
+        "label": "squat_front",
+        "confidence": 0.97,
+        "decision": "fallback"
+      },
+      "bodyweight_router": {
+        "label": "push_up",
+        "confidence": 0.722
+      },
+      "protected_evidence": {
+        "label": null,
+        "confidence": 0.97,
+        "reason": null
+      }
+    },
+    "routing_winner": {
+      "label": "squat_front",
+      "confidence": 0.97,
+      "mode": "detailed_rep_analysis",
+      "protected_label": null,
+      "reason": null
+    },
+    "central_router_shadow": {
+      "version": "central_router_shadow_v2",
+      "label": "squat_front",
+      "score": 1.32,
+      "margin": 0.224,
+      "runner_up": {
+        "label": "squat",
+        "score": 1.096
+      },
+      "scores": {
+        "squat_front": 1.32,
+        "squat": 1.096
+      },
+      "evidence": {
+        "squat": [
+          {
+            "source": "base",
+            "score": 0.448,
+            "reason": "discounted broad classifier"
+          },
+          {
+            "source": "biomechanics",
+            "score": 0.448,
+            "reason": "discounted broad biomechanics classifier"
+          },
+          {
+            "source": "broad_agreement",
+            "score": 0.2,
+            "reason": "base and biomechanics agree"
+          }
+        ],
+        "squat_front": [
+          {
+            "source": "squat_router",
+            "score": 0.97,
+            "reason": "squat family eligible"
+          },
+          {
+            "source": "squat_family_agreement",
+            "score": 0.35,
+            "reason": "broad squat evidence supports specialized variant"
+          }
+        ]
+      },
+      "eligibility": {
+        "squat": true,
+        "overhead_squat": false,
+        "olympic": false,
+        "push_press": false,
+        "bodyweight": false
+      },
+      "signals": {
+        "truly_explosive": false,
+        "explosive_score": 16.723,
+        "strong_olympic_event": false,
+        "v5_decision": "fallback",
+        "looks_clean_only": true,
+        "looks_cj": false,
+        "looks_split": false,
+        "looks_thruster": false,
+        "strong_overhead": false,
+        "wrist_overhead_ratio": 0.0
+      }
+    },
+    "family_router_shadow": {
+      "version": "family_router_shadow_v2",
+      "family": "squat",
+      "score": 2.087,
+      "margin": 2.087,
+      "runner_up": {
+        "family": null,
+        "score": 0.0
+      },
+      "scores": {
+        "squat": 2.087
+      },
+      "evidence": {
+        "squat": [
+          {
+            "source": "base",
+            "score": 0.314,
+            "reason": "discounted broad label: squat"
+          },
+          {
+            "source": "biomechanics",
+            "score": 0.314,
+            "reason": "discounted broad label: squat"
+          },
+          {
+            "source": "broad_agreement",
+            "score": 0.15,
+            "reason": "base and biomechanics agree on family"
+          },
+          {
+            "source": "squat_router",
+            "score": 0.97,
+            "reason": "specialized squat variant: squat_front"
+          },
+          {
+            "source": "router_v5",
+            "score": 0.339,
+            "reason": "V5 squat support: squat_front"
+          }
+        ]
+      },
+      "signals": {
+        "truly_explosive": false,
+        "explosive_score": 16.723,
+        "looks_clean_only": true,
+        "looks_cj": false,
+        "looks_split": false,
+        "looks_thruster": false,
+        "strong_overhead": false,
+        "verified_v5_olympic": false,
+        "verified_split_jerk": false,
+        "false_pull_up_during_press": false,
+        "bodyweight_supported": false,
+        "bodyweight_clean_conflict": false,
+        "v5_decision": "fallback"
+      }
+    },
+    "press_variant_shadow": {
+      "version": "press_variant_shadow_v2",
+      "eligible": false,
+      "label": null,
+      "reason": "family_not_press"
+    },
+    "hierarchical_router_shadow": {
+      "version": "hierarchical_router_shadow_v2",
+      "family": "squat",
+      "label": "squat_front",
+      "confidence": 0.97,
+      "source": "squat_router",
+      "reason": "specialized squat variant",
+      "family_score": 2.087,
+      "family_margin": 2.087,
+      "alternatives": [
+        {
+          "label": "squat_front",
+          "confidence": 0.97,
+          "source": "router_v5",
+          "decision": "fallback"
+        }
+      ],
+      "eligible": true
+    },
+    "bodyweight": {
+      "total_frames": 331,
+      "wrist_above_shoulder_ratio": 0.0,
+      "wrist_below_shoulder_ratio": 1.0,
+      "mean_wrist_minus_shoulder_y": 0.14097203314304352,
+      "mean_hip_minus_shoulder_y": 0.19600507616996765,
+      "mean_knee_minus_hip_y": 0.10373704880475998,
+      "median_head_drop": -0.08099576830863953,
+      "avg_wrist_forward": 0.05577264353632927,
+      "wrist_y_range": 0.13573473691940308,
+      "shoulder_y_range": 0.32874372601509094,
+      "hip_y_range": 0.25623369216918945,
+      "elbow_range": 126.80718994140625,
+      "min_elbow": 51.87688064575195,
+      "max_elbow": 178.68406677246094,
+      "avg_elbow": 139.7598114013672,
+      "avg_torso_angle": 13.968631744384766
+    },
+    "bodyweight_router_label": "push_up",
+    "bodyweight_router_conf": 0.722,
+    "router_v5": {
+      "raw_label": "squat_front",
+      "raw_confidence": 0.97,
+      "olympic_label": "snatch",
+      "olympic_confidence": 0.692,
+      "router": "v5_scaffold",
+      "events": {
+        "setup": 0,
+        "first_pull": 27,
+        "extension": 60,
+        "catch": 81,
+        "lockout": 330,
+        "finish": 330
+      },
+      "features": {
+        "has_overhead": 0.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 48.67929673526061,
+        "extension_to_catch": 21.0,
+        "catch_to_finish": 249.0,
+        "extension_height_change": 0.22989493608474731,
+        "lockout_duration": 0.0
+      },
+      "split_events": {
+        "setup": 0,
+        "bottom": 81,
+        "extension": 142,
+        "lockout": 330
+      },
+      "split_features": {
+        "has_overhead": 0.0,
+        "catch_overhead": 0.0,
+        "catch_depth": 173.54931729287205,
+        "extension_to_catch": -142.0,
+        "catch_to_finish": 330.0,
+        "extension_height_change": -0.1831432580947876,
+        "lockout_duration": 0.0
+      },
+      "decision": "fallback"
+    },
+    "router_v8": {
+      "version": "router_v8_hierarchical_shadow_snapshot_v1",
+      "predictions": [
+        {
+          "router": "base",
+          "label": "squat",
+          "confidence": 0.896,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "biomechanics",
+          "label": "squat",
+          "confidence": 0.896,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "squat",
+          "label": "squat_front",
+          "confidence": 0.97,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "olympic",
+          "label": "snatch",
+          "confidence": 0.692,
+          "reason": "",
+          "lock": false
+        },
+        {
+          "router": "bodyweight",
+          "label": "push_up",
+          "confidence": 0.722,
+          "reason": "",
+          "lock": false
+        }
+      ],
+      "decision": "family_then_subtype",
+      "winning_family": "squat",
+      "family_scores": {
+        "squat": 6.471,
+        "olympic": 0.778,
+        "bodyweight": 0.347
+      },
+      "scores": {
+        "squat_front": 5.298,
+        "squat": 1.173,
+        "snatch": 0.778,
+        "push_up": 0.347
+      },
+      "winner": "squat_back",
+      "winner_confidence": 0.125,
+      "locks": [],
+      "selected_lock": null,
+      "evidence": {
+        "squat": [
+          {
+            "router": "base",
+            "confidence": 0.896,
+            "weight": 1.0,
+            "effective_score": 0.896,
+            "reason": ""
+          },
+          {
+            "router": "biomechanics",
+            "confidence": 0.896,
+            "weight": 0.95,
+            "effective_score": 0.128,
+            "reason": ""
+          }
+        ],
+        "squat_front": [
+          {
+            "router": "squat",
+            "confidence": 0.97,
+            "weight": 0.9,
+            "effective_score": 1.048,
+            "reason": ""
+          }
+        ],
+        "snatch": [
+          {
+            "router": "olympic",
+            "confidence": 0.692,
+            "weight": 0.9,
+            "effective_score": 0.778,
+            "reason": ""
+          }
+        ],
+        "push_up": [
+          {
+            "router": "bodyweight",
+            "confidence": 0.722,
+            "weight": 0.8,
+            "effective_score": 0.347,
+            "reason": ""
+          }
+        ]
+      },
+      "state": {
+        "raw_label": "squat",
+        "raw_conf": 0.8955112099647522,
+        "bio_label": "squat",
+        "bio_conf": 0.8955112099647522,
+        "bio_reason": "squat_pattern_detected",
+        "squat_label": "squat_front",
+        "squat_conf": 0.97,
+        "olympic_label": "snatch",
+        "olympic_conf": 0.692,
+        "bodyweight_label": "push_up",
+        "bodyweight_conf": 0.7218835978835978,
+        "final_label": "squat_front",
+        "final_conf": 0.97,
+        "analysis_mode": "detailed_rep_analysis",
+        "protected_label": null,
+        "protected_reason": null,
+        "explosive_score": 16.723284437155257,
+        "wrist_overhead": 0.0,
+        "looks_clean": true,
+        "looks_cj": false,
+        "looks_split": false,
+        "looks_strict": false,
+        "looks_thruster": false,
+        "truly_explosive": false,
+        "bar_pos_valid": true,
+        "routing_trace": [
+          {
+            "stage": "raw_model",
+            "label": "squat",
+            "conf": 0.896,
+            "reason": ""
+          },
+          {
+            "stage": "bio_model",
+            "label": "squat",
+            "conf": 0.896,
+            "reason": "squat_pattern_detected"
+          },
+          {
+            "stage": "squat_router",
+            "label": "squat_front",
+            "conf": 0.97,
+            "reason": ""
+          },
+          {
+            "stage": "olympic_router",
+            "label": "snatch",
+            "conf": 0.692,
+            "reason": ""
+          },
+          {
+            "stage": "bodyweight_router",
+            "label": "push_up",
+            "conf": 0.722,
+            "reason": ""
+          },
+          {
+            "stage": "final",
+            "label": "squat_front",
+            "conf": 0.97,
+            "reason": "detailed_rep_analysis"
+          }
+        ],
+        "router_scores": {
+          "squat": {
+            "score": 1.7910224199295044,
+            "sources": [
+              {
+                "source": "raw_model",
+                "score": 0.896
+              },
+              {
+                "source": "bio_model",
+                "score": 0.896
+              }
+            ]
+          },
+          "squat_front": {
+            "score": 1.2125,
+            "sources": [
+              {
+                "source": "squat_router",
+                "score": 0.97
+              },
+              {
+                "source": "squat_bonus",
+                "score": 0.242
+              }
+            ]
+          },
+          "snatch": {
+            "score": 0.692,
+            "sources": [
+              {
+                "source": "olympic_router",
+                "score": 0.692
+              }
+            ]
+          },
+          "push_up": {
+            "score": 1.0828253968253967,
+            "sources": [
+              {
+                "source": "bodyweight_router",
+                "score": 0.722
+              },
+              {
+                "source": "bodyweight_bonus",
+                "score": 0.361
+              }
+            ]
+          }
+        },
+        "extras": {}
+      }
+    },
+    "squat_label": "squat_front",
+    "squat_conf": 0.97,
+    "bar_position": {
+      "scores": {
+        "overhead_squat": 0.0,
+        "squat_front": 0.8,
+        "squat_back": 0.15
+      },
+      "margin": 0.65,
+      "overhead_ratio": 0.0,
+      "elbow_elevated_ratio": 0.0,
+      "wrist_height_above_shoulder": -0.01,
+      "avg_wrist_forward": 0.094,
+      "front_rack_elbow_p25": 95.8,
+      "avg_elbow_angle_sq": 128.9,
+      "squat_frames_used": 133,
+      "total_frames": 331
+    },
+    "wrist_overhead": 0.0,
+    "explosive_score": 16.72,
+    "run_oly_router": true,
+    "looks_split": false,
+    "looks_clean": true,
+    "looks_cj": false,
+    "looks_strict": false,
+    "looks_thruster": false,
+    "squat_confident": true,
+    "truly_explosive": false,
+    "bar_pos_valid": true,
+    "analysis_path": "detailed_rep_analysis",
+    "routing_trace": [
+      {
+        "stage": "raw_model",
+        "label": "squat",
+        "conf": 0.896,
+        "reason": ""
+      },
+      {
+        "stage": "bio_model",
+        "label": "squat",
+        "conf": 0.896,
+        "reason": "squat_pattern_detected"
+      },
+      {
+        "stage": "squat_router",
+        "label": "squat_front",
+        "conf": 0.97,
+        "reason": ""
+      },
+      {
+        "stage": "olympic_router",
+        "label": "snatch",
+        "conf": 0.692,
+        "reason": ""
+      },
+      {
+        "stage": "bodyweight_router",
+        "label": "push_up",
+        "conf": 0.722,
+        "reason": ""
+      },
+      {
+        "stage": "final",
+        "label": "squat_front",
+        "conf": 0.97,
+        "reason": "detailed_rep_analysis"
+      }
+    ],
+    "router_scores": {
+      "squat": {
+        "score": 1.7910224199295044,
+        "sources": [
+          {
+            "source": "raw_model",
+            "score": 0.896
+          },
+          {
+            "source": "bio_model",
+            "score": 0.896
+          }
+        ]
+      },
+      "squat_front": {
+        "score": 1.2125,
+        "sources": [
+          {
+            "source": "squat_router",
+            "score": 0.97
+          },
+          {
+            "source": "squat_bonus",
+            "score": 0.242
+          }
+        ]
+      },
+      "snatch": {
+        "score": 0.692,
+        "sources": [
+          {
+            "source": "olympic_router",
+            "score": 0.692
+          }
+        ]
+      },
+      "push_up": {
+        "score": 1.0828253968253967,
+        "sources": [
+          {
+            "source": "bodyweight_router",
+            "score": 0.722
+          },
+          {
+            "source": "bodyweight_bonus",
+            "score": 0.361
+          }
+        ]
+      }
+    },
+    "router_score_winner": "squat",
+    "router_score_value": 1.791,
+    "router_v6_label": "squat",
+    "router_v6_conf": 0.896,
+    "router_v6_decision": "score_winner"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "exercise_label": "Unknown",
+  "confidence": 0.0,
+  "analysis_mode": "insufficient_data",
+  "rep_feedback": [],
+  "set_summary": {
+    "detected_reps": 0,
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "worst_rep": null,
+    "trend": "No clear reps detected."
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "debug": {
+    "frames_processed": 9,
+    "transcoded_retry": true,
+    "original_frames_processed": 0
+  }
+}
