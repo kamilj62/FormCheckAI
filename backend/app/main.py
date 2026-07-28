@@ -3633,110 +3633,333 @@ def analyze_split_jerk_reps(biomechanics):
     lockout_idx = max(catch_idx + 1, min(lockout_idx, end_idx))
     finish_idx = max(lockout_idx + 1, min(finish_idx, end_idx))
 
-    wrist_above_ratio = float(np.mean(wrist_y < shoulder_y))
-    max_elbow = float(np.percentile(elbow, 90))
-    torso_stack = float(np.percentile(torso, 80))
-    min_knee = float(np.percentile(knee, 10))
-    min_valgus = float(np.percentile(np.clip(valgus, 0.5, 1.5), 15))
-    bar_drift = float(
-        np.percentile(wrist_x, 90) - np.percentile(wrist_x, 10)
-    )
+    def score_rep_window(
+        window_start,
+        window_end,
+        dip_index=None,
+    ):
+        window_start = max(0, int(window_start))
+        window_end = min(len(biomechanics) - 1, int(window_end))
 
-    issues = []
-    feedback = []
+        if window_end <= window_start:
+            window_end = min(
+                len(biomechanics) - 1,
+                window_start + 1,
+            )
 
-    breakdown = {
-        "dip": "good",
-        "drive": "good",
-        "lockout": "good",
-        "split_catch": "good",
-        "torso_stack": "good",
-        "bar_path": "good",
-    }
+        rep_slice = slice(window_start, window_end + 1)
 
-    if wrist_above_ratio < 0.50:
-        breakdown["lockout"] = "incomplete"
-        issues.append("Overhead position is not held long enough.")
-        feedback.append("Catch and stabilize the bar overhead.")
+        rep_wrist_y = wrist_y[rep_slice]
+        rep_shoulder_y = shoulder_y[rep_slice]
+        rep_elbow = elbow[rep_slice]
+        rep_torso = torso[rep_slice]
+        rep_knee = knee[rep_slice]
+        rep_valgus = valgus[rep_slice]
+        rep_wrist_x = wrist_x[rep_slice]
 
-    if max_elbow < 155:
-        breakdown["lockout"] = "soft"
-        issues.append("Overhead lockout could be stronger.")
-        feedback.append("Punch the bar overhead and finish with straight arms.")
+        wrist_above_ratio = float(
+            np.mean(rep_wrist_y < rep_shoulder_y)
+        )
+        max_elbow = float(
+            np.percentile(rep_elbow, 90)
+        )
+        torso_stack = float(
+            np.percentile(rep_torso, 80)
+        )
+        min_knee = float(
+            np.percentile(rep_knee, 10)
+        )
+        # Valgus is assessed only around the jerk dip.
+        # The later split stance naturally changes leg spacing and
+        # should not be interpreted as knee cave.
+        if dip_index is not None:
+            dip_index = max(
+                window_start,
+                min(int(dip_index), window_end),
+            )
+            dip_local = dip_index - window_start
+            dip_radius = 6
 
-    if min_knee > 160:
-        breakdown["split_catch"] = "shallow"
-        issues.append("Split catch may be too shallow.")
-        feedback.append("Drop under the bar into a stronger split position.")
+            valgus_start = max(
+                0,
+                dip_local - dip_radius,
+            )
+            valgus_end = min(
+                len(rep_valgus),
+                dip_local + dip_radius + 1,
+            )
 
-    if torso_stack > 20:
-        breakdown["torso_stack"] = "leaning"
-        issues.append("Torso is leaning during the catch.")
-        feedback.append("Keep ribs stacked and torso vertical under the bar.")
+            valgus_sample = rep_valgus[
+                valgus_start:valgus_end
+            ]
+        else:
+            valgus_sample = rep_valgus
 
-    if min_valgus < 0.70:
-        breakdown["dip"] = "knee_cave"
-        issues.append("Knees may cave during the dip or catch.")
-        feedback.append("Drive knees out and keep a stable receiving position.")
+        min_valgus = float(
+            np.percentile(
+                np.clip(valgus_sample, 0.5, 1.5),
+                15,
+            )
+        )
+        bar_drift = float(
+            np.percentile(rep_wrist_x, 90)
+            - np.percentile(rep_wrist_x, 10)
+        )
 
-    if bar_drift > 0.08:
-        breakdown["bar_path"] = "drifting"
-        issues.append("Bar path may be drifting overhead.")
-        feedback.append("Drive the bar straight up and receive it stacked over midfoot.")
+        rep_issues = []
+        rep_feedback = []
 
-    score = 10.0
+        rep_breakdown = {
+            "dip": "good",
+            "drive": "good",
+            "lockout": "good",
+            "split_catch": "good",
+            "torso_stack": "good",
+            "bar_path": "good",
+            "metrics": {
+                "wrist_above_ratio": round(
+                    wrist_above_ratio,
+                    3,
+                ),
+                "max_elbow": round(max_elbow, 1),
+                "torso_stack": round(torso_stack, 1),
+                "min_knee": round(min_knee, 1),
+                "min_valgus": round(min_valgus, 3),
+                "bar_drift": round(bar_drift, 3),
+            },
+        }
 
-    penalties = {
-        "dip": {"good": 0.0, "knee_cave": 1.0},
-        "drive": {"good": 0.0},
-        "lockout": {"good": 0.0, "soft": 0.8, "incomplete": 1.4},
-        "split_catch": {"good": 0.0, "shallow": 0.8},
-        "torso_stack": {"good": 0.0, "leaning": 0.8},
-        "bar_path": {"good": 0.0, "drifting": 0.8},
-    }
+        if wrist_above_ratio < 0.50:
+            rep_breakdown["lockout"] = "incomplete"
+            rep_issues.append(
+                "Overhead position is not held long enough."
+            )
+            rep_feedback.append(
+                "Catch and stabilize the bar overhead."
+            )
 
-    for key, value in breakdown.items():
-        score -= penalties.get(key, {}).get(value, 0.0)
+        if max_elbow < 155:
+            rep_breakdown["lockout"] = "soft"
+            rep_issues.append(
+                "Overhead lockout could be stronger."
+            )
+            rep_feedback.append(
+                "Punch the bar overhead and finish "
+                "with straight arms."
+            )
 
-    score = round(max(1.0, min(10.0, score)), 1)
+        if min_knee > 160:
+            rep_breakdown["split_catch"] = "shallow"
+            rep_issues.append(
+                "Split catch may be too shallow."
+            )
+            rep_feedback.append(
+                "Drop under the bar into a stronger "
+                "split position."
+            )
 
-    if issues:
-        score = min(score + 0.5, 9.2)
-    else:
-        score = max(score, 9.0)
-        feedback = ["Good split jerk rep. Strong overhead position and recovery."]
+        if torso_stack > 20:
+            rep_breakdown["torso_stack"] = "leaning"
+            rep_issues.append(
+                "Torso is leaning during the catch."
+            )
+            rep_feedback.append(
+                "Keep ribs stacked and torso vertical "
+                "under the bar."
+            )
+
+        # Keep min_valgus in metrics for diagnostics only.
+        # The current ratio uses knee width divided by ankle
+        # width and is unreliable during split-stance movement.
+        # Do not grade split jerk knee cave from this signal.
+
+        if bar_drift > 0.08:
+            rep_breakdown["bar_path"] = "drifting"
+            rep_issues.append(
+                "Bar path may be drifting overhead."
+            )
+            rep_feedback.append(
+                "Drive the bar straight up and receive "
+                "it stacked over midfoot."
+            )
+
+        rep_score = 10.0
+
+        penalties = {
+            "dip": {
+                "good": 0.0,
+            },
+            "drive": {
+                "good": 0.0,
+            },
+            "lockout": {
+                "good": 0.0,
+                "soft": 0.8,
+                "incomplete": 1.4,
+            },
+            "split_catch": {
+                "good": 0.0,
+                "shallow": 0.8,
+            },
+            "torso_stack": {
+                "good": 0.0,
+                "leaning": 0.8,
+            },
+            "bar_path": {
+                "good": 0.0,
+                "drifting": 0.8,
+            },
+        }
+
+        for key, value in rep_breakdown.items():
+            if key == "metrics":
+                continue
+
+            rep_score -= penalties.get(
+                key,
+                {},
+            ).get(value, 0.0)
+
+        rep_score = round(
+            max(1.0, min(10.0, rep_score)),
+            1,
+        )
+
+        if rep_issues:
+            rep_score = min(rep_score + 0.5, 9.2)
+        else:
+            rep_score = max(rep_score, 9.0)
+            rep_feedback = [
+                "Good split jerk rep. Strong overhead "
+                "position and recovery."
+            ]
+
+        return (
+            rep_score,
+            rep_issues,
+            rep_breakdown,
+            rep_feedback,
+        )
 
     if phase_reps:
         reps = []
+
         for i, frames in enumerate(phase_reps):
+            start_frame = int(
+                frames.get(
+                    "start_frame",
+                    frame_numbers[0],
+                )
+            )
+            end_frame = int(
+                frames.get(
+                    "end_frame",
+                    frames.get(
+                        "recovery_frame",
+                        frame_numbers[-1],
+                    ),
+                )
+            )
+
+            rep_start_idx = int(
+                np.searchsorted(
+                    frame_numbers,
+                    start_frame,
+                    side="left",
+                )
+            )
+            rep_end_idx = int(
+                np.searchsorted(
+                    frame_numbers,
+                    end_frame,
+                    side="right",
+                )
+                - 1
+            )
+
+            dip_frame = int(
+                frames.get(
+                    "dip_frame",
+                    start_frame,
+                )
+            )
+
+            rep_dip_idx = int(
+                np.searchsorted(
+                    frame_numbers,
+                    dip_frame,
+                    side="left",
+                )
+            )
+
+            (
+                rep_score,
+                rep_issues,
+                rep_breakdown,
+                rep_feedback,
+            ) = score_rep_window(
+                rep_start_idx,
+                rep_end_idx,
+                dip_index=rep_dip_idx,
+            )
+
             rep = {
                 **frames,
                 "rep": i + 1,
-                "score": score,
-                "grade": grade_score(score),
-                "issues": issues,
-                "breakdown": breakdown,
-                "feedback": feedback,
+                "score": rep_score,
+                "grade": grade_score(rep_score),
+                "issues": rep_issues,
+                "breakdown": rep_breakdown,
+                "feedback": rep_feedback,
             }
-            rep["coaching"] = build_split_jerk_coaching(rep)
+
+            rep["coaching"] = build_split_jerk_coaching(
+                rep
+            )
             reps.append(rep)
+
     else:
+        (
+            rep_score,
+            rep_issues,
+            rep_breakdown,
+            rep_feedback,
+        ) = score_rep_window(
+            start_idx,
+            finish_idx,
+            dip_index=dip_idx,
+        )
+
         reps = [{
             "rep": 1,
-            "start_frame": int(frame_numbers[start_idx]),
-            "dip_frame": int(frame_numbers[dip_idx]),
-            "drive_frame": int(frame_numbers[drive_idx]),
-            "catch_frame": int(frame_numbers[catch_idx]),
-            "lockout_frame": int(frame_numbers[lockout_idx]),
-            "end_frame": int(frame_numbers[finish_idx]),
-            "score": score,
-            "grade": grade_score(score),
-            "issues": issues,
-            "breakdown": breakdown,
-            "feedback": feedback,
+            "start_frame": int(
+                frame_numbers[start_idx]
+            ),
+            "dip_frame": int(
+                frame_numbers[dip_idx]
+            ),
+            "drive_frame": int(
+                frame_numbers[drive_idx]
+            ),
+            "catch_frame": int(
+                frame_numbers[catch_idx]
+            ),
+            "lockout_frame": int(
+                frame_numbers[lockout_idx]
+            ),
+            "end_frame": int(
+                frame_numbers[finish_idx]
+            ),
+            "score": rep_score,
+            "grade": grade_score(rep_score),
+            "issues": rep_issues,
+            "breakdown": rep_breakdown,
+            "feedback": rep_feedback,
         }]
 
-        reps[0]["coaching"] = build_split_jerk_coaching(reps[0])
+        reps[0]["coaching"] = (
+            build_split_jerk_coaching(reps[0])
+        )
 
     return reps, build_set_summary(reps)
 
