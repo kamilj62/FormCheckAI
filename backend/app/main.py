@@ -44,6 +44,9 @@ import tensorflow as tf
 import joblib
 from app.movement.event_detector import detect_movement_events
 from app.feature_engine.movement_video_features import build_movement_video_features
+from app.feature_engine.movement_video_features_v4 import (
+    build_movement_video_features_v4,
+)
 
 from app.ml.router_v8.protections import apply_protections
 
@@ -202,6 +205,32 @@ try:
     )
 except Exception as e:
     print("OLYMPIC GATE HARDNEG NOT LOADED:", e)
+
+# Candidate-only temporal Stage 2 router shadow.
+# This model is evaluated for debug output only.
+OLYMPIC_STAGE2_TEMPORAL_MODEL = None
+OLYMPIC_STAGE2_TEMPORAL_FEATURE_NAMES = None
+
+try:
+    _olympic_stage2_temporal_bundle = joblib.load(
+        MODEL_DIR
+        / "candidates"
+        / "olympic_router_stage2_v7_grouped_cj.joblib"
+    )
+
+    if isinstance(_olympic_stage2_temporal_bundle, dict):
+        OLYMPIC_STAGE2_TEMPORAL_MODEL = (
+            _olympic_stage2_temporal_bundle.get("model")
+        )
+        OLYMPIC_STAGE2_TEMPORAL_FEATURE_NAMES = (
+            _olympic_stage2_temporal_bundle.get("feature_names")
+        )
+    else:
+        OLYMPIC_STAGE2_TEMPORAL_MODEL = (
+            _olympic_stage2_temporal_bundle
+        )
+except Exception as e:
+    print("OLYMPIC STAGE2 TEMPORAL NOT LOADED:", e)
 
 OLY_ROUTER_V7_MODEL = None
 try:
@@ -9160,6 +9189,11 @@ def analyze_video(
         olympic_gate_hardneg_prediction = None
         olympic_gate_hardneg_error = None
 
+        olympic_stage2_temporal_label = None
+        olympic_stage2_temporal_confidence = None
+        olympic_stage2_temporal_probabilities = None
+        olympic_stage2_temporal_error = None
+
         wrist_overhead_ratio = float(np.mean([
             1 if b.get("wrist_y", 1.0) < b.get("shoulder_y", 0.0) else 0
             for b in biomech
@@ -9225,6 +9259,61 @@ def analyze_video(
                 )
             except Exception as e:
                 olympic_gate_hardneg_error = str(e)
+
+        if OLYMPIC_STAGE2_TEMPORAL_MODEL is not None:
+            try:
+                temporal_features = (
+                    build_movement_video_features_v4(
+                        biomech
+                    ).reshape(1, -1)
+                )
+
+                if hasattr(
+                    OLYMPIC_STAGE2_TEMPORAL_MODEL,
+                    "n_features_in_",
+                ):
+                    expected_features = int(
+                        OLYMPIC_STAGE2_TEMPORAL_MODEL.n_features_in_
+                    )
+
+                    if (
+                        temporal_features.shape[1]
+                        != expected_features
+                    ):
+                        raise ValueError(
+                            "Olympic Stage 2 temporal feature mismatch: "
+                            f"got {temporal_features.shape[1]}, "
+                            f"expected {expected_features}"
+                        )
+
+                temporal_probabilities = (
+                    OLYMPIC_STAGE2_TEMPORAL_MODEL.predict_proba(
+                        temporal_features
+                    )[0]
+                )
+                temporal_classes = list(
+                    OLYMPIC_STAGE2_TEMPORAL_MODEL.classes_
+                )
+
+                temporal_best_index = int(
+                    np.argmax(temporal_probabilities)
+                )
+
+                olympic_stage2_temporal_label = str(
+                    temporal_classes[temporal_best_index]
+                )
+                olympic_stage2_temporal_confidence = float(
+                    temporal_probabilities[temporal_best_index]
+                )
+                olympic_stage2_temporal_probabilities = {
+                    str(label): float(probability)
+                    for label, probability in zip(
+                        temporal_classes,
+                        temporal_probabilities,
+                    )
+                }
+            except Exception as e:
+                olympic_stage2_temporal_error = str(e)
 
         if run_oly_router:
             if USE_OLY_ROUTER_V4 and OLY_ROUTER_V4_MODEL is not None:
@@ -11726,6 +11815,35 @@ def analyze_video(
                 ),
                 "olympic_gate_hardneg_error": (
                     olympic_gate_hardneg_error
+                ),
+                "olympic_stage2_temporal_label": (
+                    olympic_stage2_temporal_label
+                ),
+                "olympic_stage2_temporal_confidence": (
+                    round(
+                        float(
+                            olympic_stage2_temporal_confidence
+                        ),
+                        6,
+                    )
+                    if olympic_stage2_temporal_confidence
+                    is not None
+                    else None
+                ),
+                "olympic_stage2_temporal_probabilities": (
+                    {
+                        label: round(float(probability), 6)
+                        for label, probability in (
+                            olympic_stage2_temporal_probabilities
+                            or {}
+                        ).items()
+                    }
+                    if olympic_stage2_temporal_probabilities
+                    is not None
+                    else None
+                ),
+                "olympic_stage2_temporal_error": (
+                    olympic_stage2_temporal_error
                 ),
                 "raw_label":       raw_label,
                 "base_conf":       round(base_conf, 3),
