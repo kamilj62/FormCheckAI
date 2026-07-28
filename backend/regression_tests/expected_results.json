@@ -149,6 +149,10 @@
       "dip",
       "drive",
       "lockout"
+    ],
+    "expect_per_rep_metrics": true,
+    "forbid_issue_substrings": [
+      "knee cave"
     ]
   },
   "pull_up.mov": {
