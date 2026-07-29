@@ -9310,6 +9310,26 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_biomechanics_movement(
+    raw_label,
+    base_conf,
+    biomechanics,
+):
+    """Summarize biomechanics and run the rule-based classifier."""
+    summary = summarize_biomechanics(biomechanics)
+
+    bio_label, bio_conf, bio_override, bio_reason = (
+        classify_with_biomechanics(
+            raw_label,
+            base_conf,
+            summary,
+            len(biomechanics),
+        )
+    )
+
+    return summary, bio_label, bio_conf, bio_override, bio_reason
+
+
 def predict_base_movement(seq):
     """Run the base movement classifier with safe fallback values."""
     raw_label = "unknown"
@@ -9381,12 +9401,16 @@ def analyze_video(
         final_conf = 0.0
         rep_feedback = []
 
-        summary = summarize_biomechanics(biomech)
-        bio_label, bio_conf, bio_override, bio_reason = classify_with_biomechanics(
+        (
+            summary,
+            bio_label,
+            bio_conf,
+            bio_override,
+            bio_reason,
+        ) = predict_biomechanics_movement(
             raw_label,
             base_conf,
-            summary,
-            len(biomech),
+            biomech,
         )
 
         # =========================================================
