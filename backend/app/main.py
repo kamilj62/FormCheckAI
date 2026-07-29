@@ -10582,6 +10582,139 @@ def build_pushup_shape_flags(
 
     return looks_push_up, looks_handstand_push_up
 
+
+def build_dynamic_bodyweight_shape_flags(bodyweight_debug):
+    """Build muscle-up and burpee geometry signals."""
+
+    looks_muscle_up = (
+        int(bodyweight_debug.get("total_frames", 0) or 0) >= 250
+        and 0.45
+        <= float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        <= 0.70
+        and -0.08
+        <= float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= 0.03
+        and 0.10
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.20
+        and 0.04
+        <= float(
+            bodyweight_debug.get(
+                "mean_knee_minus_hip_y",
+                0.0,
+            )
+        )
+        <= 0.10
+        and 20.0
+        <= float(
+            bodyweight_debug.get(
+                "avg_torso_angle",
+                180.0,
+            )
+        )
+        <= 40.0
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.08
+        and float(
+            bodyweight_debug.get(
+                "elbow_range",
+                0.0,
+            )
+        )
+        >= 120.0
+    )
+
+    looks_burpee = (
+        int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
+        and float(
+            bodyweight_debug.get(
+                "wrist_below_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.70
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                0.0,
+            )
+        )
+        >= 0.05
+        and -0.02
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.22
+        and 40.0
+        <= float(
+            bodyweight_debug.get(
+                "avg_torso_angle",
+                0.0,
+            )
+        )
+        <= 90.0
+        and float(
+            bodyweight_debug.get(
+                "elbow_range",
+                0.0,
+            )
+        )
+        >= 120.0
+        and float(
+            bodyweight_debug.get(
+                "wrist_y_range",
+                0.0,
+            )
+        )
+        >= 0.50
+        and float(
+            bodyweight_debug.get(
+                "shoulder_y_range",
+                0.0,
+            )
+        )
+        >= 0.35
+        and float(
+            bodyweight_debug.get(
+                "hip_y_range",
+                0.0,
+            )
+        )
+        >= 0.30
+        and float(
+            bodyweight_debug.get(
+                "median_head_drop",
+                0.0,
+            )
+        )
+        <= 0.04
+    )
+
+    return looks_muscle_up, looks_burpee
+
 def analyze_video(
     video_path,
     make_visuals=True,
@@ -10931,27 +11064,11 @@ def analyze_video(
             and not _pull_up_press_guard
             and not _pull_up_bench_guard
         )
-        _looks_muscle_up = (
-            int(bodyweight_debug.get("total_frames", 0) or 0) >= 250
-            and 0.45 <= float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) <= 0.70
-            and -0.08 <= float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= 0.03
-            and 0.10 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.20
-            and 0.04 <= float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) <= 0.10
-            and 20.0 <= float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 40.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-        )
-        _looks_burpee = (
-            int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
-            and float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.70
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.05
-            and -0.02 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.22
-            and 40.0 <= float(bodyweight_debug.get("avg_torso_angle", 0.0)) <= 90.0
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.50
-            and float(bodyweight_debug.get("shoulder_y_range", 0.0)) >= 0.35
-            and float(bodyweight_debug.get("hip_y_range", 0.0)) >= 0.30
-            and float(bodyweight_debug.get("median_head_drop", 0.0)) <= 0.04
+        (
+            _looks_muscle_up,
+            _looks_burpee,
+        ) = build_dynamic_bodyweight_shape_flags(
+            bodyweight_debug
         )
 
         protected_label = None
