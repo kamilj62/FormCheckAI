@@ -9310,6 +9310,20 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def build_insufficient_data_response(frames_processed):
+    """Return the standard response when too few pose frames are available."""
+    return {
+        "exercise_label": "Unknown",
+        "confidence": 0.0,
+        "analysis_mode": "insufficient_data",
+        "rep_feedback": [],
+        "set_summary": build_set_summary([]),
+        "overlay_video_url": None,
+        "phase_images": None,
+        "debug": {"frames_processed": frames_processed},
+    }
+
+
 def analyze_video(
     video_path,
     make_visuals=True,
@@ -9329,16 +9343,7 @@ def analyze_video(
         print_debug_report("INPUT_VIDEO", biomechanics)
 
         if len(sequence) < 10:
-            return {
-                "exercise_label": "Unknown",
-                "confidence": 0.0,
-                "analysis_mode": "insufficient_data",
-                "rep_feedback": [],
-                "set_summary": build_set_summary([]),
-                "overlay_video_url": None,
-                "phase_images": None,
-                "debug": {"frames_processed": len(sequence)},
-            }
+            return build_insufficient_data_response(len(sequence))
 
         # =========================================================
         # 2. FEATURE ENGINE
