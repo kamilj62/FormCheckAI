@@ -10715,6 +10715,489 @@ def build_dynamic_bodyweight_shape_flags(bodyweight_debug):
 
     return looks_muscle_up, looks_burpee
 
+
+def build_pullup_shape_flags(
+    *,
+    raw_label,
+    bio_label,
+    squat_label,
+    olympic_conf,
+    bodyweight_debug,
+    looks_split,
+    looks_strict,
+):
+    """Build pull-up geometry signals and routing guards."""
+
+    pull_up_overhead_squat_guard = (
+        squat_label == "overhead_squat"
+        and int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
+        and float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        >= 0.30
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                -1.0,
+            )
+        )
+        > -0.17
+    )
+
+    short_cropped_pull_up = (
+        int(bodyweight_debug.get("total_frames", 0) or 0) <= 25
+        and float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.90
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= -0.15
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.08
+        and float(
+            bodyweight_debug.get(
+                "elbow_range",
+                0.0,
+            )
+        )
+        >= 70.0
+    )
+
+    very_short_pull_up = (
+        int(bodyweight_debug.get("total_frames", 0) or 0) <= 15
+        and float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.60
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= -0.10
+        and 0.18
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.35
+        and float(
+            bodyweight_debug.get(
+                "median_head_drop",
+                1.0,
+            )
+        )
+        <= -0.05
+        and float(
+            bodyweight_debug.get(
+                "avg_torso_angle",
+                180.0,
+            )
+        )
+        <= 20.0
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.12
+    )
+
+    tight_vertical_pull_up = (
+        float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.40
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= -0.01
+        and -0.02
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.32
+        and float(
+            bodyweight_debug.get(
+                "avg_torso_angle",
+                180.0,
+            )
+        )
+        <= 95.0
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.08
+        and float(
+            bodyweight_debug.get(
+                "median_head_drop",
+                1.0,
+            )
+        )
+        <= 0.02
+        and float(
+            bodyweight_debug.get(
+                "elbow_range",
+                0.0,
+            )
+        )
+        >= 120.0
+        and float(
+            bodyweight_debug.get(
+                "min_elbow",
+                180.0,
+            )
+        )
+        <= 45.0
+    )
+
+    static_cropped_pull_up = (
+        float(
+            bodyweight_debug.get(
+                "wrist_below_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.70
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                0.0,
+            )
+        )
+        >= 0.25
+        and 0.25
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.36
+        and float(
+            bodyweight_debug.get(
+                "mean_knee_minus_hip_y",
+                0.0,
+            )
+        )
+        >= 0.18
+        and float(
+            bodyweight_debug.get(
+                "median_head_drop",
+                1.0,
+            )
+        )
+        <= -0.03
+        and float(
+            bodyweight_debug.get(
+                "avg_torso_angle",
+                180.0,
+            )
+        )
+        <= 15.0
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.09
+        and float(
+            bodyweight_debug.get(
+                "shoulder_y_range",
+                1.0,
+            )
+        )
+        <= 0.06
+        and float(
+            bodyweight_debug.get(
+                "hip_y_range",
+                1.0,
+            )
+        )
+        <= 0.07
+        and float(
+            bodyweight_debug.get(
+                "min_elbow",
+                0.0,
+            )
+        )
+        >= 140.0
+    )
+
+    long_bar_pull_up = (
+        int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
+        and float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.80
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= -0.18
+        and 0.25
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.45
+        and float(
+            bodyweight_debug.get(
+                "avg_torso_angle",
+                180.0,
+            )
+        )
+        <= 25.0
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.08
+        and float(
+            bodyweight_debug.get(
+                "elbow_range",
+                0.0,
+            )
+        )
+        >= 70.0
+        and float(
+            bodyweight_debug.get(
+                "min_elbow",
+                180.0,
+            )
+        )
+        <= 95.0
+    )
+
+    pull_up_posture_signature = (
+        float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.65
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= -0.08
+        and 0.09
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.40
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.13
+        and not looks_split
+    )
+
+    pull_up_router_guard = (
+        raw_label == "push_press"
+        and bio_label == "push_press"
+        and float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        >= 0.65
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                1.0,
+            )
+        )
+        <= -0.08
+        and 0.09
+        <= float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        <= 0.40
+        and float(
+            bodyweight_debug.get(
+                "avg_wrist_forward",
+                1.0,
+            )
+        )
+        <= 0.13
+        and float(olympic_conf or 0.0) < 0.85
+    )
+
+    pull_up_press_guard = (
+        raw_label == "push_press"
+        and not pull_up_posture_signature
+        and (
+            bio_label == "push_press"
+            or looks_strict
+            or looks_split
+        )
+    )
+
+    pull_up_bench_guard = (
+        raw_label == "bench_press"
+        and float(
+            bodyweight_debug.get(
+                "wrist_above_shoulder_ratio",
+                0.0,
+            )
+        )
+        < 0.35
+        and float(
+            bodyweight_debug.get(
+                "mean_wrist_minus_shoulder_y",
+                0.0,
+            )
+        )
+        > 0.02
+        and float(
+            bodyweight_debug.get(
+                "mean_hip_minus_shoulder_y",
+                0.0,
+            )
+        )
+        < 0.18
+        and float(
+            bodyweight_debug.get(
+                "median_head_drop",
+                0.0,
+            )
+        )
+        >= 0.03
+    )
+
+    looks_pull_up = (
+        (
+            (
+                float(
+                    bodyweight_debug.get(
+                        "wrist_above_shoulder_ratio",
+                        0.0,
+                    )
+                )
+                >= 0.50
+                and float(
+                    bodyweight_debug.get(
+                        "mean_wrist_minus_shoulder_y",
+                        1.0,
+                    )
+                )
+                <= -0.08
+                and 0.09
+                <= float(
+                    bodyweight_debug.get(
+                        "mean_hip_minus_shoulder_y",
+                        0.0,
+                    )
+                )
+                <= 0.40
+                and float(
+                    bodyweight_debug.get(
+                        "mean_knee_minus_hip_y",
+                        0.0,
+                    )
+                )
+                >= 0.045
+                and float(
+                    bodyweight_debug.get(
+                        "avg_torso_angle",
+                        180.0,
+                    )
+                )
+                <= 85.0
+                and float(
+                    bodyweight_debug.get(
+                        "avg_wrist_forward",
+                        1.0,
+                    )
+                )
+                <= 0.13
+                and float(
+                    bodyweight_debug.get(
+                        "elbow_range",
+                        0.0,
+                    )
+                )
+                >= 45.0
+                and float(
+                    bodyweight_debug.get(
+                        "min_elbow",
+                        180.0,
+                    )
+                )
+                <= 95.0
+            )
+            or short_cropped_pull_up
+            or very_short_pull_up
+            or tight_vertical_pull_up
+            or static_cropped_pull_up
+            or long_bar_pull_up
+        )
+        and not pull_up_overhead_squat_guard
+        and not pull_up_press_guard
+        and not pull_up_bench_guard
+    )
+
+    return looks_pull_up, pull_up_router_guard
+
 def analyze_video(
     video_path,
     make_visuals=True,
@@ -10954,116 +11437,19 @@ def analyze_video(
             bodyweight_debug=bodyweight_debug,
         )
 
-        _pull_up_overhead_squat_guard = (
-            squat_label == "overhead_squat"
-            and int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
-            and float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) >= 0.30
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", -1.0)) > -0.17
-        )
-        _short_cropped_pull_up = (
-            int(bodyweight_debug.get("total_frames", 0) or 0) <= 25
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.90
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.15
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 70.0
-        )
-        _very_short_pull_up = (
-            int(bodyweight_debug.get("total_frames", 0) or 0) <= 15
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.60
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-            and 0.18 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.35
-            and float(bodyweight_debug.get("median_head_drop", 1.0)) <= -0.05
-            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 20.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.12
-        )
-        _tight_vertical_pull_up = (
-            float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.40
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.01
-            and -0.02 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.32
-            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 95.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
-            and float(bodyweight_debug.get("median_head_drop", 1.0)) <= 0.02
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
-        )
-        _static_cropped_pull_up = (
-            float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.70
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) >= 0.25
-            and 0.25 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.36
-            and float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) >= 0.18
-            and float(bodyweight_debug.get("median_head_drop", 1.0)) <= -0.03
-            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 15.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.09
-            and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.06
-            and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.07
-            and float(bodyweight_debug.get("min_elbow", 0.0)) >= 140.0
-        )
-        _long_bar_pull_up = (
-            int(bodyweight_debug.get("total_frames", 0) or 0) >= 120
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.80
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.18
-            and 0.25 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.45
-            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 25.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.08
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 70.0
-            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 95.0
-        )
-        _pull_up_posture_signature = (
-            float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.65
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
-            and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
-            and not _looks_split
+        (
+            _looks_pull_up,
+            _pull_up_router_guard,
+        ) = build_pullup_shape_flags(
+            raw_label=raw_label,
+            bio_label=bio_label,
+            squat_label=squat_label,
+            olympic_conf=olympic_conf,
+            bodyweight_debug=bodyweight_debug,
+            looks_split=_looks_split,
+            looks_strict=_looks_strict,
         )
 
-        _pull_up_router_guard = (
-            raw_label == "push_press"
-            and bio_label == "push_press"
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.65
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
-            and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
-            and float(olympic_conf or 0.0) < 0.85
-        )
-
-        _pull_up_press_guard = (
-            raw_label == "push_press"
-            and not _pull_up_posture_signature
-            and (
-                bio_label == "push_press"
-                or _looks_strict
-                or _looks_split
-            )
-        )
-        _pull_up_bench_guard = (
-            raw_label == "bench_press"
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) < 0.35
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 0.0)) > 0.02
-            and float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) < 0.18
-            and float(bodyweight_debug.get("median_head_drop", 0.0)) >= 0.03
-        )
-        _looks_pull_up = (
-            (
-                (
-                    float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.50
-                    and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
-                    and 0.09 <= float(bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)) <= 0.40
-                    and float(bodyweight_debug.get("mean_knee_minus_hip_y", 0.0)) >= 0.045
-                    and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 85.0
-                    and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.13
-                    and float(bodyweight_debug.get("elbow_range", 0.0)) >= 45.0
-                    and float(bodyweight_debug.get("min_elbow", 180.0)) <= 95.0
-                )
-                or _short_cropped_pull_up
-                or _very_short_pull_up
-                or _tight_vertical_pull_up
-                or _static_cropped_pull_up
-                or _long_bar_pull_up
-            )
-            and not _pull_up_overhead_squat_guard
-            and not _pull_up_press_guard
-            and not _pull_up_bench_guard
-        )
         (
             _looks_muscle_up,
             _looks_burpee,
