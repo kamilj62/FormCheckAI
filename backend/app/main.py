@@ -9310,6 +9310,43 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_squat_variant(seq_base, biomechanics):
+    """Run the squat router and bar-position refinement."""
+    squat_label = None
+    squat_conf = 0.0
+
+    if SQUAT_ROUTER_MODEL is not None:
+        squat_probs = SQUAT_ROUTER_MODEL.predict(
+            np.expand_dims(seq_base, axis=0),
+            verbose=0,
+        )[0]
+
+        squat_idx = int(np.argmax(squat_probs))
+        squat_label = SQUAT_ROUTER_LABELS.get(squat_idx)
+        squat_conf = float(squat_probs[squat_idx])
+
+    bar_label, bar_conf, bar_debug = classify_squat_by_bar_position(
+        biomechanics
+    )
+
+    bar_pos_valid = (
+        bar_debug.get("front_rack_elbow_p25", 0) >= 20
+    )
+
+    if bar_conf >= 0.60 and bar_pos_valid:
+        squat_label = bar_label
+        squat_conf = bar_conf
+
+    return (
+        squat_label,
+        squat_conf,
+        bar_label,
+        bar_conf,
+        bar_debug,
+        bar_pos_valid,
+    )
+
+
 def predict_biomechanics_movement(
     raw_label,
     base_conf,
@@ -9414,28 +9451,19 @@ def analyze_video(
         )
 
         # =========================================================
-        # 3. SQUAT ROUTER (always runs — bar position via elbow geometry)
+        # 3. SQUAT ROUTER
         # =========================================================
-        squat_label = None
-        squat_conf  = 0.0
-
-        if SQUAT_ROUTER_MODEL is not None:
-            squat_probs = SQUAT_ROUTER_MODEL.predict(
-                np.expand_dims(seq_base, axis=0), verbose=0
-            )[0]
-            squat_idx   = int(np.argmax(squat_probs))
-            squat_label = SQUAT_ROUTER_LABELS.get(squat_idx)
-            squat_conf  = float(squat_probs[squat_idx])
-
-        # Bar-position override: use wrist/elbow geometry to distinguish
-        # front squat, back squat, and overhead squat more reliably.
-        # Only apply if elbow angles are physiologically plausible (≥20°).
-        # Values below 20° indicate MediaPipe misread the landmarks (occlusion/angle).
-        bar_label, bar_conf, bar_debug = classify_squat_by_bar_position(biomech)
-        _bar_pos_valid = bar_debug.get("front_rack_elbow_p25", 0) >= 20
-        if bar_conf >= 0.60 and _bar_pos_valid:
-            squat_label = bar_label
-            squat_conf  = bar_conf
+        (
+            squat_label,
+            squat_conf,
+            bar_label,
+            bar_conf,
+            bar_debug,
+            _bar_pos_valid,
+        ) = predict_squat_variant(
+            seq_base,
+            biomech,
+        )
 
         # =========================================================
         # 4. OLYMPIC ROUTER (runs when movement has overhead/explosive signal)
