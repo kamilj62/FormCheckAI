@@ -9310,6 +9310,25 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_base_movement(seq):
+    """Run the base movement classifier with safe fallback values."""
+    raw_label = "unknown"
+    base_conf = 0.0
+
+    try:
+        base_probs = MODEL.predict_proba(seq)
+        base_idx = int(np.argmax(base_probs))
+
+        if base_idx < len(CLASS_NAMES):
+            raw_label = CLASS_NAMES[base_idx]
+            base_conf = float(base_probs[base_idx])
+
+    except Exception as e:
+        print("BASE MODEL FAILED:", e)
+
+    return raw_label, base_conf
+
+
 def build_insufficient_data_response(frames_processed):
     """Return the standard response when too few pose frames are available."""
     return {
@@ -9355,22 +9374,12 @@ def analyze_video(
         biomech = biomechanics
 
         # =========================================================
-        # SAFETY DEFAULTS (CRITICAL FIX)
+        # SAFETY DEFAULTS
         # =========================================================
-        raw_label = "unknown"
-        base_conf = 0.0
+        raw_label, base_conf = predict_base_movement(seq)
         final_label = None
         final_conf = 0.0
         rep_feedback = []
-
-        try:
-            base_probs = MODEL.predict_proba(seq)
-            base_idx = int(np.argmax(base_probs))
-            if base_idx < len(CLASS_NAMES):
-                raw_label = CLASS_NAMES[base_idx]
-                base_conf = float(base_probs[base_idx])
-        except Exception as e:
-            print("BASE MODEL FAILED:", e)
 
         summary = summarize_biomechanics(biomech)
         bio_label, bio_conf, bio_override, bio_reason = classify_with_biomechanics(
