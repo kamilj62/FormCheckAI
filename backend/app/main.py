@@ -9310,6 +9310,44 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def build_core_routing_flags(
+    *,
+    squat_label,
+    squat_conf,
+    explosive_score,
+    wrist_overhead_ratio,
+    bar_label,
+    bar_conf,
+    bar_pos_valid,
+):
+    """Build the core flags shared by movement arbitration rules."""
+    squat_confident = (
+        squat_label is not None
+        and float(squat_conf or 0.0) >= 0.75
+    )
+
+    truly_explosive = (
+        float(explosive_score or 0.0) > 80.0
+    )
+
+    strong_overhead = (
+        float(wrist_overhead_ratio or 0.0) >= 0.50
+    )
+
+    bar_says_overhead_squat = (
+        bar_label == "overhead_squat"
+        and float(bar_conf or 0.0) >= 0.60
+        and bool(bar_pos_valid)
+    )
+
+    return (
+        squat_confident,
+        truly_explosive,
+        strong_overhead,
+        bar_says_overhead_squat,
+    )
+
+
 def detect_strength_movement_shapes(biomechanics):
     """Run the existing strength and Olympic movement shape detectors."""
     return (
@@ -9944,13 +9982,19 @@ def analyze_video(
         #   wrist_overhead > 0.50 → strong overhead (C&J ~0.72, front squat ~0.15)
         #   bar_elbow_p25 < 20    → invalid MediaPipe read (occlusion/angle)
 
-        _squat_confident  = squat_label is not None and squat_conf >= 0.75
-        _truly_explosive  = explosive_score > 80
-        _strong_overhead  = wrist_overhead_ratio >= 0.50
-        _bar_says_ohs     = (
-            bar_label == "overhead_squat"
-            and bar_conf >= 0.60
-            and _bar_pos_valid  # set in step 3
+        (
+            _squat_confident,
+            _truly_explosive,
+            _strong_overhead,
+            _bar_says_ohs,
+        ) = build_core_routing_flags(
+            squat_label=squat_label,
+            squat_conf=squat_conf,
+            explosive_score=explosive_score,
+            wrist_overhead_ratio=wrist_overhead_ratio,
+            bar_label=bar_label,
+            bar_conf=bar_conf,
+            bar_pos_valid=_bar_pos_valid,
         )
         (
             _looks_clean_only,
