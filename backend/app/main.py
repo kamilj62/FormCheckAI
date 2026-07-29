@@ -9310,6 +9310,200 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def build_final_analysis_response(
+    *,
+    final_label,
+    final_conf,
+    analysis_mode,
+    rep_feedback,
+    predicted_exercise,
+    normalized_forced_label,
+    olympic_pred,
+    olympic_conf,
+    olympic_gate_hardneg_probability,
+    olympic_gate_hardneg_prediction,
+    olympic_gate_hardneg_error,
+    olympic_stage2_temporal_label,
+    olympic_stage2_temporal_confidence,
+    olympic_stage2_temporal_probabilities,
+    olympic_stage2_temporal_error,
+    raw_label,
+    base_conf,
+    bio_label,
+    bio_conf,
+    bio_override,
+    bio_reason,
+    summary,
+    protected_label,
+    protected_reason,
+    routing_candidates,
+    routing_winner,
+    central_router_shadow,
+    family_router_shadow,
+    press_variant_shadow,
+    hierarchical_router_shadow,
+    bodyweight_debug,
+    bodyweight_router_label,
+    bodyweight_router_conf,
+    router_v5_debug,
+    router_v8_debug,
+    squat_label,
+    squat_conf,
+    bar_debug,
+    wrist_overhead_ratio,
+    explosive_score,
+    run_oly_router,
+    looks_split,
+    looks_clean,
+    looks_cj,
+    looks_strict,
+    looks_thruster,
+    squat_confident,
+    truly_explosive,
+    bar_pos_valid,
+    routing_trace,
+    router_scores,
+    router_score_winner,
+    router_score_value,
+    router_v6_label,
+    router_v6_conf,
+    router_v6_decision,
+):
+    """Build the public analysis result and router diagnostics."""
+    resolved_label = final_label or "unknown"
+
+    return {
+        "exercise_label": resolved_label,
+        "confidence": round(final_conf, 2),
+        "analysis_mode": analysis_mode,
+        "rep_feedback": rep_feedback,
+        "set_summary": build_set_summary(rep_feedback),
+        "coaching_zones": build_coaching_zones(
+            resolved_label,
+            rep_feedback,
+        ),
+        "overlay_video_url": None,
+        "phase_images": None,
+        "debug": {
+            "predicted_exercise": predicted_exercise,
+            "forced_exercise_label": normalized_forced_label,
+            "user_confirmed": bool(normalized_forced_label),
+            "olympic_pred": olympic_pred,
+            "olympic_conf": (
+                round(olympic_conf, 3)
+                if olympic_conf
+                else None
+            ),
+            "olympic_gate_hardneg_probability": (
+                round(
+                    float(olympic_gate_hardneg_probability),
+                    6,
+                )
+                if olympic_gate_hardneg_probability is not None
+                else None
+            ),
+            "olympic_gate_hardneg_prediction": (
+                olympic_gate_hardneg_prediction
+            ),
+            "olympic_gate_hardneg_threshold": (
+                OLYMPIC_GATE_HARDNEG_THRESHOLD
+            ),
+            "olympic_gate_hardneg_error": (
+                olympic_gate_hardneg_error
+            ),
+            "olympic_stage2_temporal_label": (
+                olympic_stage2_temporal_label
+            ),
+            "olympic_stage2_temporal_confidence": (
+                round(
+                    float(
+                        olympic_stage2_temporal_confidence
+                    ),
+                    6,
+                )
+                if olympic_stage2_temporal_confidence
+                is not None
+                else None
+            ),
+            "olympic_stage2_temporal_probabilities": (
+                {
+                    label: round(float(probability), 6)
+                    for label, probability in (
+                        olympic_stage2_temporal_probabilities
+                        or {}
+                    ).items()
+                }
+                if olympic_stage2_temporal_probabilities
+                is not None
+                else None
+            ),
+            "olympic_stage2_temporal_error": (
+                olympic_stage2_temporal_error
+            ),
+            "raw_label": raw_label,
+            "base_conf": round(base_conf, 3),
+            "bio_label": bio_label,
+            "bio_conf": (
+                round(bio_conf, 3)
+                if bio_conf
+                else None
+            ),
+            "bio_override": bio_override,
+            "bio_reason": bio_reason,
+            "biomechanics_summary": summary,
+            "protected_label": protected_label,
+            "protected_reason": protected_reason,
+            "routing_candidates": routing_candidates,
+            "routing_winner": routing_winner,
+            "central_router_shadow": central_router_shadow,
+            "family_router_shadow": family_router_shadow,
+            "press_variant_shadow": press_variant_shadow,
+            "hierarchical_router_shadow": (
+                hierarchical_router_shadow
+            ),
+            "bodyweight": bodyweight_debug,
+            "bodyweight_router_label": bodyweight_router_label,
+            "bodyweight_router_conf": round(
+                float(bodyweight_router_conf or 0.0),
+                3,
+            ),
+            "router_v5": router_v5_debug,
+            "router_v8": router_v8_debug,
+            "squat_label": squat_label,
+            "squat_conf": round(squat_conf, 3),
+            "bar_position": bar_debug,
+            "wrist_overhead": round(
+                wrist_overhead_ratio,
+                3,
+            ),
+            "explosive_score": round(explosive_score, 2),
+            "run_oly_router": run_oly_router,
+            "looks_split": looks_split,
+            "looks_clean": looks_clean,
+            "looks_cj": looks_cj,
+            "looks_strict": looks_strict,
+            "looks_thruster": looks_thruster,
+            "squat_confident": squat_confident,
+            "truly_explosive": truly_explosive,
+            "bar_pos_valid": bar_pos_valid,
+            "analysis_path": analysis_mode,
+            "routing_trace": routing_trace,
+            "router_scores": router_scores,
+            "router_score_winner": router_score_winner,
+            "router_score_value": round(
+                float(router_score_value or 0.0),
+                3,
+            ),
+            "router_v6_label": router_v6_label,
+            "router_v6_conf": round(
+                float(router_v6_conf or 0.0),
+                3,
+            ),
+            "router_v6_decision": router_v6_decision,
+        },
+    }
+
+
 def run_movement_protections(
     *,
     raw_label,
@@ -12531,111 +12725,80 @@ def analyze_video(
             routing_candidates=routing_candidates,
         )
 
-        return {
-            "exercise_label": final_label or "unknown",
-            "confidence": round(final_conf, 2),
-            "analysis_mode": analysis_mode,
-            "rep_feedback": rep_feedback,
-            "set_summary": build_set_summary(rep_feedback),
-            "coaching_zones": build_coaching_zones(final_label or "unknown", rep_feedback),
-            "overlay_video_url": None,
-            "phase_images": None,
-            "debug": {
-                "predicted_exercise": predicted_exercise,
-                "forced_exercise_label": normalized_forced_label,
-                "user_confirmed": bool(normalized_forced_label),
-                "olympic_pred":    olympic_pred,
-                "olympic_conf":    round(olympic_conf, 3) if olympic_conf else None,
-                "olympic_gate_hardneg_probability": (
-                    round(
-                        float(olympic_gate_hardneg_probability),
-                        6,
-                    )
-                    if olympic_gate_hardneg_probability is not None
-                    else None
-                ),
-                "olympic_gate_hardneg_prediction": (
-                    olympic_gate_hardneg_prediction
-                ),
-                "olympic_gate_hardneg_threshold": (
-                    OLYMPIC_GATE_HARDNEG_THRESHOLD
-                ),
-                "olympic_gate_hardneg_error": (
-                    olympic_gate_hardneg_error
-                ),
-                "olympic_stage2_temporal_label": (
-                    olympic_stage2_temporal_label
-                ),
-                "olympic_stage2_temporal_confidence": (
-                    round(
-                        float(
-                            olympic_stage2_temporal_confidence
-                        ),
-                        6,
-                    )
-                    if olympic_stage2_temporal_confidence
-                    is not None
-                    else None
-                ),
-                "olympic_stage2_temporal_probabilities": (
-                    {
-                        label: round(float(probability), 6)
-                        for label, probability in (
-                            olympic_stage2_temporal_probabilities
-                            or {}
-                        ).items()
-                    }
-                    if olympic_stage2_temporal_probabilities
-                    is not None
-                    else None
-                ),
-                "olympic_stage2_temporal_error": (
-                    olympic_stage2_temporal_error
-                ),
-                "raw_label":       raw_label,
-                "base_conf":       round(base_conf, 3),
-                "bio_label":       bio_label,
-                "bio_conf":        round(bio_conf, 3) if bio_conf else None,
-                "bio_override":    bio_override,
-                "bio_reason":      bio_reason,
-                "biomechanics_summary": summary,
-                "protected_label": protected_label,
-                "protected_reason": protected_reason,
-                "routing_candidates": routing_candidates,
-                "routing_winner": routing_winner,
-                "central_router_shadow": central_router_shadow,
-                "family_router_shadow": family_router_shadow,
-                "press_variant_shadow": press_variant_shadow,
-                "hierarchical_router_shadow": hierarchical_router_shadow,
-                "bodyweight":      bodyweight_debug,
-                "bodyweight_router_label": bodyweight_router_label,
-                "bodyweight_router_conf": round(float(bodyweight_router_conf or 0.0), 3),
-                "router_v5":       router_v5_debug,
-                "router_v8":       debug.get("router_v8"),
-                "squat_label":     squat_label,
-                "squat_conf":      round(squat_conf, 3),
-                "bar_position":    bar_debug,
-                "wrist_overhead":  round(wrist_overhead_ratio, 3),
-                "explosive_score": round(explosive_score, 2),
-                "run_oly_router":  run_oly_router,
-                "looks_split":     _looks_split,
-                "looks_clean":     _looks_clean_only,
-                "looks_cj":        _looks_cj,
-                "looks_strict":    _looks_strict,
-                "looks_thruster":  _looks_thruster,
-                "squat_confident": _squat_confident,
-                "truly_explosive": _truly_explosive,
-                "bar_pos_valid":   _bar_pos_valid,
-                "analysis_path":   analysis_mode,
-                "routing_trace":   routing_trace,
-                "router_scores":   router_scores,
-                "router_score_winner": router_score_winner,
-                "router_score_value": round(float(router_score_value or 0.0), 3),
-                "router_v6_label": router_v6_label,
-                "router_v6_conf": round(float(router_v6_conf or 0.0), 3),
-                "router_v6_decision": router_v6_decision,
-            },
-        }
+        return build_final_analysis_response(
+            final_label=final_label,
+            final_conf=final_conf,
+            analysis_mode=analysis_mode,
+            rep_feedback=rep_feedback,
+            predicted_exercise=predicted_exercise,
+            normalized_forced_label=normalized_forced_label,
+            olympic_pred=olympic_pred,
+            olympic_conf=olympic_conf,
+            olympic_gate_hardneg_probability=(
+                olympic_gate_hardneg_probability
+            ),
+            olympic_gate_hardneg_prediction=(
+                olympic_gate_hardneg_prediction
+            ),
+            olympic_gate_hardneg_error=(
+                olympic_gate_hardneg_error
+            ),
+            olympic_stage2_temporal_label=(
+                olympic_stage2_temporal_label
+            ),
+            olympic_stage2_temporal_confidence=(
+                olympic_stage2_temporal_confidence
+            ),
+            olympic_stage2_temporal_probabilities=(
+                olympic_stage2_temporal_probabilities
+            ),
+            olympic_stage2_temporal_error=(
+                olympic_stage2_temporal_error
+            ),
+            raw_label=raw_label,
+            base_conf=base_conf,
+            bio_label=bio_label,
+            bio_conf=bio_conf,
+            bio_override=bio_override,
+            bio_reason=bio_reason,
+            summary=summary,
+            protected_label=protected_label,
+            protected_reason=protected_reason,
+            routing_candidates=routing_candidates,
+            routing_winner=routing_winner,
+            central_router_shadow=central_router_shadow,
+            family_router_shadow=family_router_shadow,
+            press_variant_shadow=press_variant_shadow,
+            hierarchical_router_shadow=(
+                hierarchical_router_shadow
+            ),
+            bodyweight_debug=bodyweight_debug,
+            bodyweight_router_label=bodyweight_router_label,
+            bodyweight_router_conf=bodyweight_router_conf,
+            router_v5_debug=router_v5_debug,
+            router_v8_debug=debug.get("router_v8"),
+            squat_label=squat_label,
+            squat_conf=squat_conf,
+            bar_debug=bar_debug,
+            wrist_overhead_ratio=wrist_overhead_ratio,
+            explosive_score=explosive_score,
+            run_oly_router=run_oly_router,
+            looks_split=_looks_split,
+            looks_clean=_looks_clean_only,
+            looks_cj=_looks_cj,
+            looks_strict=_looks_strict,
+            looks_thruster=_looks_thruster,
+            squat_confident=_squat_confident,
+            truly_explosive=_truly_explosive,
+            bar_pos_valid=_bar_pos_valid,
+            routing_trace=routing_trace,
+            router_scores=router_scores,
+            router_score_winner=router_score_winner,
+            router_score_value=router_score_value,
+            router_v6_label=router_v6_label,
+            router_v6_conf=router_v6_conf,
+            router_v6_decision=router_v6_decision,
+        )
 
     except Exception as e:
         import traceback
