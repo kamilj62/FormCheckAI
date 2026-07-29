@@ -9310,6 +9310,51 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def build_split_protection_flags(
+    *,
+    looks_split,
+    looks_thruster,
+    raw_label,
+    bio_label,
+    olympic_pred,
+    olympic_conf,
+    run_oly_router,
+    bodyweight_debug,
+    bar_debug,
+):
+    """Build split-jerk flags used by the protection layer."""
+    effective_looks_split = (
+        bool(looks_split)
+        and not (
+            bool(looks_thruster)
+            and raw_label in {"bench_press", "push_press"}
+            and bio_label in {"bench_press", "squat", "push_press"}
+            and float(olympic_conf or 0.0) < 0.65
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) < 0.35
+            and float(
+                bar_debug.get("overhead_ratio", 0.0)
+            ) < 0.35
+        )
+    )
+
+    credible_split_jerk = (
+        effective_looks_split
+        and bool(run_oly_router)
+        and olympic_pred in {
+            "clean_and_jerk",
+            "split_jerk",
+        }
+        and float(olympic_conf or 0.0) >= 0.80
+    )
+
+    return effective_looks_split, credible_split_jerk
+
+
 def build_router_score_flags(
     *,
     raw_label,
@@ -10356,25 +10401,19 @@ def analyze_video(
         protected_conf = 0.0
         protected_reason = None
 
-        effective_looks_split_for_protection = (
-            _looks_split
-            and not (
-                _looks_thruster
-                and raw_label in {"bench_press", "push_press"}
-                and bio_label in {"bench_press", "squat", "push_press"}
-                and float(olympic_conf or 0.0) < 0.65
-                and float(
-                    bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)
-                ) < 0.35
-                and float(bar_debug.get("overhead_ratio", 0.0)) < 0.35
-            )
-        )
-
-        credible_split_jerk = (
-            bool(effective_looks_split_for_protection)
-            and bool(run_oly_router)
-            and olympic_pred in {"clean_and_jerk", "split_jerk"}
-            and float(olympic_conf or 0.0) >= 0.80
+        (
+            effective_looks_split_for_protection,
+            credible_split_jerk,
+        ) = build_split_protection_flags(
+            looks_split=_looks_split,
+            looks_thruster=_looks_thruster,
+            raw_label=raw_label,
+            bio_label=bio_label,
+            olympic_pred=olympic_pred,
+            olympic_conf=olympic_conf,
+            run_oly_router=run_oly_router,
+            bodyweight_debug=bodyweight_debug,
+            bar_debug=bar_debug,
         )
 
         protection = apply_protections(
