@@ -9310,6 +9310,90 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def populate_router_scores(
+    add_router_score,
+    *,
+    raw_label,
+    base_conf,
+    bio_label,
+    bio_conf,
+    squat_label,
+    squat_conf,
+    olympic_pred,
+    olympic_conf,
+    bodyweight_router_label,
+    bodyweight_router_conf,
+    bodyweight_high_conf,
+    truly_explosive,
+):
+    """Populate audit scores without changing routing decisions."""
+    raw_weight = 0.35 if bodyweight_high_conf else 1.0
+    bio_weight = 0.35 if bodyweight_high_conf else 1.0
+
+    add_router_score(
+        raw_label,
+        float(base_conf or 0.0) * raw_weight,
+        "raw_model",
+    )
+    add_router_score(
+        bio_label,
+        float(bio_conf or 0.0) * bio_weight,
+        "bio_model",
+    )
+    add_router_score(
+        squat_label,
+        squat_conf,
+        "squat_router",
+    )
+    add_router_score(
+        olympic_pred,
+        olympic_conf,
+        "olympic_router",
+    )
+    add_router_score(
+        bodyweight_router_label,
+        bodyweight_router_conf,
+        "bodyweight_router",
+    )
+
+    if bodyweight_router_label in {
+        "push_up",
+        "pull_up",
+        "handstand_push_up",
+    }:
+        add_router_score(
+            bodyweight_router_label,
+            float(bodyweight_router_conf or 0.0) * 0.50,
+            "bodyweight_bonus",
+        )
+
+    if squat_label in {
+        "squat_back",
+        "squat_front",
+        "overhead_squat",
+    }:
+        add_router_score(
+            squat_label,
+            float(squat_conf or 0.0) * 0.25,
+            "squat_bonus",
+        )
+
+    if (
+        olympic_pred in {
+            "snatch",
+            "clean",
+            "clean_and_jerk",
+            "split_jerk",
+        }
+        and truly_explosive
+    ):
+        add_router_score(
+            olympic_pred,
+            float(olympic_conf or 0.0) * 0.35,
+            "olympic_explosive_bonus",
+        )
+
+
 def finalize_router_scores(router_scores):
     """Select the audit score winner and derive the Router V6 confidence."""
     router_score_winner = None
@@ -9883,24 +9967,21 @@ def analyze_video(
             and not strong_bench_evidence
         )
 
-        raw_weight = 0.35 if bodyweight_high_conf else 1.0
-        bio_weight = 0.35 if bodyweight_high_conf else 1.0
-
-        add_router_score(raw_label, float(base_conf or 0.0) * raw_weight, "raw_model")
-        add_router_score(bio_label, float(bio_conf or 0.0) * bio_weight, "bio_model")
-        add_router_score(squat_label, squat_conf, "squat_router")
-        add_router_score(olympic_pred, olympic_conf, "olympic_router")
-        add_router_score(bodyweight_router_label, bodyweight_router_conf, "bodyweight_router")
-
-        # Strong movement-family bonuses. These are audit-only for now.
-        if bodyweight_router_label in {"push_up", "pull_up", "handstand_push_up"}:
-            add_router_score(bodyweight_router_label, float(bodyweight_router_conf or 0.0) * 0.50, "bodyweight_bonus")
-
-        if squat_label in {"squat_back", "squat_front", "overhead_squat"}:
-            add_router_score(squat_label, float(squat_conf or 0.0) * 0.25, "squat_bonus")
-
-        if olympic_pred in OLY_SET and _truly_explosive:
-            add_router_score(olympic_pred, float(olympic_conf or 0.0) * 0.35, "olympic_explosive_bonus")
+        populate_router_scores(
+            add_router_score,
+            raw_label=raw_label,
+            base_conf=base_conf,
+            bio_label=bio_label,
+            bio_conf=bio_conf,
+            squat_label=squat_label,
+            squat_conf=squat_conf,
+            olympic_pred=olympic_pred,
+            olympic_conf=olympic_conf,
+            bodyweight_router_label=bodyweight_router_label,
+            bodyweight_router_conf=bodyweight_router_conf,
+            bodyweight_high_conf=bodyweight_high_conf,
+            truly_explosive=_truly_explosive,
+        )
 
         (
             router_score_winner,
