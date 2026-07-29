@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from collections import defaultdict
 import argparse
 import csv
@@ -15,6 +16,7 @@ IGNORE_PARTS = {
     "_Removed_Datasets",
     "FormCheck_Phase_Audit",
     "__pycache__",
+    ".venv",
 }
 
 PROTECTED_ROOTS = [
@@ -131,23 +133,39 @@ def is_protected(row):
 
 def scan():
     videos = []
-    for p in ROOT.rglob("*"):
-        if is_ignored(p):
-            continue
-        if p.suffix.lower() not in VIDEO_EXTS:
-            continue
-        try:
-            st = p.stat()
-        except Exception:
-            continue
-        videos.append({
-            "path": str(p),
-            "name": p.name,
-            "size": st.st_size,
-            "parent": p.parent.name,
-            "label": label_for(p),
-            "trusted": is_trusted(p),
-        })
+
+    for root, dirs, filenames in os.walk(ROOT):
+        root_path = Path(root)
+
+        # Prune ignored folders before os.walk enters them.
+        dirs[:] = [
+            name
+            for name in dirs
+            if name not in IGNORE_PARTS
+            and name != ".git"
+            and not name.startswith(".venv")
+        ]
+
+        for filename in filenames:
+            p = root_path / filename
+
+            if p.suffix.lower() not in VIDEO_EXTS:
+                continue
+
+            try:
+                st = p.stat()
+            except Exception:
+                continue
+
+            videos.append({
+                "path": str(p),
+                "name": p.name,
+                "size": st.st_size,
+                "parent": p.parent.name,
+                "label": label_for(p),
+                "trusted": is_trusted(p),
+            })
+
     return videos
 
 def choose_canonical(rows):
