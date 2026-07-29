@@ -9310,6 +9310,26 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_bodyweight_movement(biomechanics):
+    """Build bodyweight features and run the bodyweight router."""
+    bodyweight_debug = build_bodyweight_features(
+        biomechanics
+    )
+
+    (
+        bodyweight_router_label,
+        bodyweight_router_conf,
+        bodyweight_router_features,
+    ) = predict_bodyweight_router(biomechanics)
+
+    return (
+        bodyweight_debug,
+        bodyweight_router_label,
+        bodyweight_router_conf,
+        bodyweight_router_features,
+    )
+
+
 def populate_router_scores(
     add_router_score,
     *,
@@ -9926,8 +9946,12 @@ def analyze_video(
         _looks_split      = looks_like_split_jerk(biomech)
         _looks_strict     = looks_like_strict_press(biomech)
         _looks_thruster   = looks_like_thruster(biomech)
-        bodyweight_debug = build_bodyweight_features(biomech)
-        bodyweight_router_label, bodyweight_router_conf, _bodyweight_router_features = predict_bodyweight_router(biomech)
+        (
+            bodyweight_debug,
+            bodyweight_router_label,
+            bodyweight_router_conf,
+            _bodyweight_router_features,
+        ) = predict_bodyweight_movement(biomech)
 
         (
             routing_trace,
