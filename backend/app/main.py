@@ -9310,6 +9310,65 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def initialize_router_audit(
+    *,
+    raw_label,
+    base_conf,
+    bio_label,
+    bio_conf,
+    bio_reason,
+    squat_label,
+    squat_conf,
+    olympic_pred,
+    olympic_conf,
+    bodyweight_router_label,
+    bodyweight_router_conf,
+):
+    """Initialize routing trace and score accumulation for audit/debug."""
+    routing_trace = []
+
+    def trace_route(stage, label=None, conf=None, reason=None):
+        routing_trace.append({
+            "stage": stage,
+            "label": str(label if label is not None else ""),
+            "conf": round(float(conf or 0.0), 3),
+            "reason": str(reason or ""),
+        })
+
+    trace_route("raw_model", raw_label, base_conf)
+    trace_route("bio_model", bio_label, bio_conf, bio_reason)
+    trace_route("squat_router", squat_label, squat_conf)
+    trace_route("olympic_router", olympic_pred, olympic_conf)
+    trace_route(
+        "bodyweight_router",
+        bodyweight_router_label,
+        bodyweight_router_conf,
+    )
+
+    router_scores = {}
+
+    def add_router_score(label, score, source):
+        if not label:
+            return
+
+        label = str(label)
+        score = float(score or 0.0)
+
+        if label not in router_scores:
+            router_scores[label] = {
+                "score": 0.0,
+                "sources": [],
+            }
+
+        router_scores[label]["score"] += score
+        router_scores[label]["sources"].append({
+            "source": source,
+            "score": round(score, 3),
+        })
+
+    return routing_trace, router_scores, trace_route, add_router_score
+
+
 def predict_olympic_movement(biomechanics, run_router):
     """Run the active Olympic movement router."""
     olympic_pred = None
@@ -9747,39 +9806,24 @@ def analyze_video(
         bodyweight_debug = build_bodyweight_features(biomech)
         bodyweight_router_label, bodyweight_router_conf, _bodyweight_router_features = predict_bodyweight_router(biomech)
 
-        routing_trace = []
-
-        def trace_route(stage, label=None, conf=None, reason=None):
-            routing_trace.append({
-                "stage": stage,
-                "label": str(label if label is not None else ""),
-                "conf": round(float(conf or 0.0), 3),
-                "reason": str(reason or ""),
-            })
-
-        trace_route("raw_model", raw_label, base_conf)
-        trace_route("bio_model", bio_label, bio_conf, bio_reason)
-        trace_route("squat_router", squat_label, squat_conf)
-        trace_route("olympic_router", olympic_pred, olympic_conf)
-        trace_route("bodyweight_router", bodyweight_router_label, bodyweight_router_conf)
-
-        router_scores = {}
-
-        def add_router_score(label, score, source):
-            if not label:
-                return
-            label = str(label)
-            score = float(score or 0.0)
-            if label not in router_scores:
-                router_scores[label] = {
-                    "score": 0.0,
-                    "sources": []
-                }
-            router_scores[label]["score"] += score
-            router_scores[label]["sources"].append({
-                "source": source,
-                "score": round(score, 3)
-            })
+        (
+            routing_trace,
+            router_scores,
+            trace_route,
+            add_router_score,
+        ) = initialize_router_audit(
+            raw_label=raw_label,
+            base_conf=base_conf,
+            bio_label=bio_label,
+            bio_conf=bio_conf,
+            bio_reason=bio_reason,
+            squat_label=squat_label,
+            squat_conf=squat_conf,
+            olympic_pred=olympic_pred,
+            olympic_conf=olympic_conf,
+            bodyweight_router_label=bodyweight_router_label,
+            bodyweight_router_conf=bodyweight_router_conf,
+        )
 
         # Two independent high-confidence bench predictions should not be
         # weakened or overridden by a false bodyweight-router prediction.
