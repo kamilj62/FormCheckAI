@@ -9310,6 +9310,45 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def finalize_router_scores(router_scores):
+    """Select the audit score winner and derive the Router V6 confidence."""
+    router_score_winner = None
+    router_score_value = 0.0
+    router_v6_label = None
+    router_v6_conf = 0.0
+    router_v6_decision = "no_scores"
+
+    if router_scores:
+        router_score_winner, score_info = max(
+            router_scores.items(),
+            key=lambda item: float(
+                item[1].get("score", 0.0)
+            ),
+        )
+
+        router_score_value = float(
+            score_info.get("score", 0.0)
+        )
+
+        router_v6_label = router_score_winner
+        router_v6_conf = min(
+            0.99,
+            max(
+                0.01,
+                router_score_value / 2.0,
+            ),
+        )
+        router_v6_decision = "score_winner"
+
+    return (
+        router_score_winner,
+        router_score_value,
+        router_v6_label,
+        router_v6_conf,
+        router_v6_decision,
+    )
+
+
 def initialize_router_audit(
     *,
     raw_label,
@@ -9863,22 +9902,13 @@ def analyze_video(
         if olympic_pred in OLY_SET and _truly_explosive:
             add_router_score(olympic_pred, float(olympic_conf or 0.0) * 0.35, "olympic_explosive_bonus")
 
-        router_score_winner = None
-        router_score_value = 0.0
-        router_v6_label = None
-        router_v6_conf = 0.0
-        router_v6_decision = "no_scores"
-
-        if router_scores:
-            router_score_winner, _router_score_info = max(
-                router_scores.items(),
-                key=lambda kv: float(kv[1].get("score", 0.0))
-            )
-            router_score_value = float(_router_score_info.get("score", 0.0))
-
-            router_v6_label = router_score_winner
-            router_v6_conf = min(0.99, max(0.01, router_score_value / 2.0))
-            router_v6_decision = "score_winner"
+        (
+            router_score_winner,
+            router_score_value,
+            router_v6_label,
+            router_v6_conf,
+            router_v6_decision,
+        ) = finalize_router_scores(router_scores)
         # A short deadlift can create a false front-rack/clean event when the
         # hands pass near shoulder height. Preserve clean evidence generally,
         # but do not let a weak snatch prediction suppress independent raw
