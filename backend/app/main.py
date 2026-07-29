@@ -9310,6 +9310,38 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def build_router_score_flags(
+    *,
+    raw_label,
+    base_conf,
+    bio_label,
+    bio_conf,
+    looks_thruster,
+    bodyweight_router_label,
+    bodyweight_router_conf,
+):
+    """Build flags used to weight the audit router scores."""
+    strong_bench_evidence = (
+        raw_label == "bench_press"
+        and float(base_conf or 0.0) >= 0.95
+        and bio_label == "bench_press"
+        and float(bio_conf or 0.0) >= 0.95
+        and not bool(looks_thruster)
+    )
+
+    bodyweight_high_conf = (
+        bodyweight_router_label in {
+            "push_up",
+            "pull_up",
+            "handstand_push_up",
+        }
+        and float(bodyweight_router_conf or 0.0) >= 0.95
+        and not strong_bench_evidence
+    )
+
+    return strong_bench_evidence, bodyweight_high_conf
+
+
 def build_core_routing_flags(
     *,
     squat_label,
@@ -10029,23 +10061,17 @@ def analyze_video(
             bodyweight_router_conf=bodyweight_router_conf,
         )
 
-        # Two independent high-confidence bench predictions should not be
-        # weakened or overridden by a false bodyweight-router prediction.
-        strong_bench_evidence = (
-            raw_label == "bench_press"
-            and float(base_conf or 0.0) >= 0.95
-            and bio_label == "bench_press"
-            and float(bio_conf or 0.0) >= 0.95
-
-            # Do not let camera-angle bench agreement override a clear
-            # squat-to-overhead thruster movement.
-            and not bool(_looks_thruster)
-        )
-
-        bodyweight_high_conf = (
-            bodyweight_router_label in {"push_up", "pull_up", "handstand_push_up"}
-            and float(bodyweight_router_conf or 0.0) >= 0.95
-            and not strong_bench_evidence
+        (
+            strong_bench_evidence,
+            bodyweight_high_conf,
+        ) = build_router_score_flags(
+            raw_label=raw_label,
+            base_conf=base_conf,
+            bio_label=bio_label,
+            bio_conf=bio_conf,
+            looks_thruster=_looks_thruster,
+            bodyweight_router_label=bodyweight_router_label,
+            bodyweight_router_conf=bodyweight_router_conf,
         )
 
         populate_router_scores(
