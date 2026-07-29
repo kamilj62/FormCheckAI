@@ -9310,6 +9310,49 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_olympic_movement(biomechanics, run_router):
+    """Run the active Olympic movement router."""
+    olympic_pred = None
+    olympic_conf = 0.0
+
+    if not run_router:
+        return olympic_pred, olympic_conf
+
+    if USE_OLY_ROUTER_V4 and OLY_ROUTER_V4_MODEL is not None:
+        active_model = OLY_ROUTER_V4_MODEL
+        encoder = None
+        router_features = build_movement_video_features(
+            biomechanics
+        ).reshape(1, -1)
+    else:
+        active_model = OLY_ROUTER_MODEL
+        encoder = OLY_ROUTER_ENCODER
+        router_features = build_oly_router_v2_features(
+            biomechanics
+        ).reshape(1, -1)
+
+    if hasattr(active_model, "n_features_in_"):
+        router_features = router_features[
+            :,
+            :active_model.n_features_in_,
+        ]
+
+    probabilities = active_model.predict_proba(
+        router_features
+    )[0]
+
+    best_index = int(np.argmax(probabilities))
+    raw_olympic_label = active_model.classes_[best_index]
+
+    olympic_pred = decode_olympic_label(
+        raw_olympic_label,
+        encoder,
+    )
+    olympic_conf = float(probabilities[best_index])
+
+    return olympic_pred, olympic_conf
+
+
 def predict_olympic_temporal_stage2(biomechanics):
     """Run the audit-only Olympic temporal Stage 2 model."""
     label = None
@@ -9670,24 +9713,10 @@ def analyze_video(
             olympic_stage2_temporal_error,
         ) = predict_olympic_temporal_stage2(biomech)
 
-        if run_oly_router:
-            if USE_OLY_ROUTER_V4 and OLY_ROUTER_V4_MODEL is not None:
-                active_model = OLY_ROUTER_V4_MODEL
-                encoder      = None
-                rf_features  = build_movement_video_features(biomech).reshape(1, -1)
-            else:
-                active_model = OLY_ROUTER_MODEL
-                encoder      = OLY_ROUTER_ENCODER
-                rf_features  = build_oly_router_v2_features(biomech).reshape(1, -1)
-
-            if hasattr(active_model, "n_features_in_"):
-                rf_features = rf_features[:, :active_model.n_features_in_]
-
-            probs_oly   = active_model.predict_proba(rf_features)[0]
-            idx         = int(np.argmax(probs_oly))
-            raw_olympic = active_model.classes_[idx]
-            olympic_pred = decode_olympic_label(raw_olympic, encoder)
-            olympic_conf = float(probs_oly[idx])
+        olympic_pred, olympic_conf = predict_olympic_movement(
+            biomech,
+            run_oly_router,
+        )
 
         # =========================================================
         # 5. ARBITRATION — who wins?
