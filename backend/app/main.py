@@ -9310,6 +9310,68 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_olympic_hardneg_gate(biomechanics):
+    """Run the audit-only Olympic versus non-Olympic shadow gate."""
+    probability = None
+    prediction = None
+    error = None
+
+    if OLYMPIC_GATE_HARDNEG_MODEL is None:
+        return probability, prediction, error
+
+    try:
+        gate_features = build_movement_video_features(
+            biomechanics
+        ).reshape(1, -1)
+
+        if hasattr(
+            OLYMPIC_GATE_HARDNEG_MODEL,
+            "n_features_in_",
+        ):
+            expected_features = int(
+                OLYMPIC_GATE_HARDNEG_MODEL.n_features_in_
+            )
+
+            if gate_features.shape[1] != expected_features:
+                raise ValueError(
+                    "Olympic gate feature mismatch: "
+                    f"got {gate_features.shape[1]}, "
+                    f"expected {expected_features}"
+                )
+
+        gate_probabilities = (
+            OLYMPIC_GATE_HARDNEG_MODEL.predict_proba(
+                gate_features
+            )[0]
+        )
+
+        gate_classes = list(
+            OLYMPIC_GATE_HARDNEG_MODEL.classes_
+        )
+
+        if "olympic" not in gate_classes:
+            raise ValueError(
+                f"Missing olympic class: {gate_classes}"
+            )
+
+        probability = float(
+            gate_probabilities[
+                gate_classes.index("olympic")
+            ]
+        )
+
+        prediction = (
+            "olympic"
+            if probability >= OLYMPIC_GATE_HARDNEG_THRESHOLD
+            else "non_olympic"
+        )
+
+    except Exception as exc:
+        error = str(exc)
+
+    return probability, prediction, error
+
+
 def build_olympic_routing_signals(biomechanics):
     """Calculate the signals used to decide whether to run the Olympic router."""
     wrist_overhead_ratio = float(np.mean([
@@ -9534,54 +9596,11 @@ def analyze_video(
             run_oly_router,
         ) = build_olympic_routing_signals(biomech)
 
-        if OLYMPIC_GATE_HARDNEG_MODEL is not None:
-            try:
-                gate_features = build_movement_video_features(
-                    biomech
-                ).reshape(1, -1)
-
-                if hasattr(
-                    OLYMPIC_GATE_HARDNEG_MODEL,
-                    "n_features_in_",
-                ):
-                    expected_features = int(
-                        OLYMPIC_GATE_HARDNEG_MODEL.n_features_in_
-                    )
-
-                    if gate_features.shape[1] != expected_features:
-                        raise ValueError(
-                            "Olympic gate feature mismatch: "
-                            f"got {gate_features.shape[1]}, "
-                            f"expected {expected_features}"
-                        )
-
-                gate_probabilities = (
-                    OLYMPIC_GATE_HARDNEG_MODEL.predict_proba(
-                        gate_features
-                    )[0]
-                )
-                gate_classes = list(
-                    OLYMPIC_GATE_HARDNEG_MODEL.classes_
-                )
-
-                if "olympic" not in gate_classes:
-                    raise ValueError(
-                        f"Missing olympic class: {gate_classes}"
-                    )
-
-                olympic_gate_hardneg_probability = float(
-                    gate_probabilities[
-                        gate_classes.index("olympic")
-                    ]
-                )
-                olympic_gate_hardneg_prediction = (
-                    "olympic"
-                    if olympic_gate_hardneg_probability
-                    >= OLYMPIC_GATE_HARDNEG_THRESHOLD
-                    else "non_olympic"
-                )
-            except Exception as e:
-                olympic_gate_hardneg_error = str(e)
+        (
+            olympic_gate_hardneg_probability,
+            olympic_gate_hardneg_prediction,
+            olympic_gate_hardneg_error,
+        ) = predict_olympic_hardneg_gate(biomech)
 
         if OLYMPIC_STAGE2_TEMPORAL_MODEL is not None:
             try:
