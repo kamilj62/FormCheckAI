@@ -10212,6 +10212,103 @@ def build_insufficient_data_response(frames_processed):
     }
 
 
+
+def build_setup_protection_flags(
+    *,
+    raw_label,
+    base_conf,
+    bio_label,
+    squat_label,
+    olympic_pred,
+    olympic_conf,
+    explosive_score,
+    wrist_overhead_ratio,
+    bar_debug,
+    looks_clean_only,
+    looks_cj,
+    looks_split,
+    looks_strict,
+    looks_thruster,
+):
+    """Build deadlift and short-bench setup protection signals."""
+
+    clean_shape_blocks_deadlift = (
+        bool(looks_clean_only)
+        and not (
+            raw_label == "deadlift"
+            and float(base_conf or 0.0) >= 0.40
+            and olympic_pred == "snatch"
+            and float(olympic_conf or 0.0) < 0.70
+            and float(explosive_score or 0.0) <= 75.0
+        )
+    )
+
+    deadlift_setup_geometry = (
+        squat_label == "squat_back"
+        and wrist_overhead_ratio < 0.12
+        and float(bar_debug.get("avg_elbow_angle_sq", 0.0)) > 150.0
+        and float(bar_debug.get("front_rack_elbow_p25", 0.0)) > 145.0
+        and float(bar_debug.get("overhead_ratio", 0.0)) < 0.05
+        and float(bar_debug.get("avg_wrist_forward", 1.0)) < 0.03
+        and not clean_shape_blocks_deadlift
+        and not looks_cj
+        and not looks_split
+        and not looks_strict
+        and not looks_thruster
+    )
+
+    deadlift_low_speed_setup = (
+        deadlift_setup_geometry
+        and raw_label in {"squat", "bench_press"}
+        and explosive_score <= 30.0
+        and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.08
+    )
+
+    deadlift_upright_setup = (
+        deadlift_setup_geometry
+        and raw_label in {"bench_press", "deadlift", "squat", "squat_front"}
+        and explosive_score <= 70.0
+        and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) > -0.09
+    )
+
+    deadlift_raw_pull_setup = (
+        deadlift_setup_geometry
+        and raw_label == "deadlift"
+        and wrist_overhead_ratio < 0.02
+        and explosive_score <= 75.0
+    )
+
+    short_low_camera_bench_setup = (
+        raw_label == "squat"
+        and squat_label == "squat_back"
+        and int(bar_debug.get("squat_frames_used", 999) or 999) <= 35
+        and explosive_score > 45.0
+        and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.18
+        and float(olympic_conf or 0.0) < 0.80
+    )
+
+    short_overhead_bench_setup = (
+        squat_label == "overhead_squat"
+        and raw_label in {"deadlift", "push_press", "squat"}
+        and bio_label in {"push_press", "squat", "deadlift"}
+        and int(bar_debug.get("squat_frames_used", 999) or 999) <= 45
+        and int(bar_debug.get("total_frames", 999) or 999) <= 110
+        and float(olympic_conf or 0.0) < 0.80
+        and not looks_clean_only
+        and not looks_cj
+    )
+
+    return (
+        clean_shape_blocks_deadlift,
+        deadlift_setup_geometry,
+        deadlift_low_speed_setup,
+        deadlift_upright_setup,
+        deadlift_raw_pull_setup,
+        short_low_camera_bench_setup,
+        short_overhead_bench_setup,
+    )
+
+
 def analyze_video(
     video_path,
     make_visuals=True,
@@ -10417,70 +10514,31 @@ def analyze_video(
             router_v6_conf,
             router_v6_decision,
         ) = finalize_router_scores(router_scores)
-        # A short deadlift can create a false front-rack/clean event when the
-        # hands pass near shoulder height. Preserve clean evidence generally,
-        # but do not let a weak snatch prediction suppress independent raw
-        # deadlift setup evidence.
-        clean_shape_blocks_deadlift = (
-            bool(_looks_clean_only)
-            and not (
-                raw_label == "deadlift"
-                and float(base_conf or 0.0) >= 0.40
-                and olympic_pred == "snatch"
-                and float(olympic_conf or 0.0) < 0.70
-                and float(explosive_score or 0.0) <= 75.0
-            )
+        (
+            clean_shape_blocks_deadlift,
+            _deadlift_setup_geometry,
+            _deadlift_low_speed_setup,
+            _deadlift_upright_setup,
+            _deadlift_raw_pull_setup,
+            _short_low_camera_bench_setup,
+            _short_overhead_bench_setup,
+        ) = build_setup_protection_flags(
+            raw_label=raw_label,
+            base_conf=base_conf,
+            bio_label=bio_label,
+            squat_label=squat_label,
+            olympic_pred=olympic_pred,
+            olympic_conf=olympic_conf,
+            explosive_score=explosive_score,
+            wrist_overhead_ratio=wrist_overhead_ratio,
+            bar_debug=bar_debug,
+            looks_clean_only=_looks_clean_only,
+            looks_cj=_looks_cj,
+            looks_split=_looks_split,
+            looks_strict=_looks_strict,
+            looks_thruster=_looks_thruster,
         )
 
-        _deadlift_setup_geometry = (
-            squat_label == "squat_back"
-            and wrist_overhead_ratio < 0.12
-            and float(bar_debug.get("avg_elbow_angle_sq", 0.0)) > 150.0
-            and float(bar_debug.get("front_rack_elbow_p25", 0.0)) > 145.0
-            and float(bar_debug.get("overhead_ratio", 0.0)) < 0.05
-            and float(bar_debug.get("avg_wrist_forward", 1.0)) < 0.03
-            and not clean_shape_blocks_deadlift
-            and not _looks_cj
-            and not _looks_split
-            and not _looks_strict
-            and not _looks_thruster
-        )
-        _deadlift_low_speed_setup = (
-            _deadlift_setup_geometry
-            and raw_label in {"squat", "bench_press"}
-            and explosive_score <= 30.0
-            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.08
-        )
-        _deadlift_upright_setup = (
-            _deadlift_setup_geometry
-            and raw_label in {"bench_press", "deadlift", "squat", "squat_front"}
-            and explosive_score <= 70.0
-            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) > -0.09
-        )
-        _deadlift_raw_pull_setup = (
-            _deadlift_setup_geometry
-            and raw_label == "deadlift"
-            and wrist_overhead_ratio < 0.02
-            and explosive_score <= 75.0
-        )
-        _short_low_camera_bench_setup = (
-            raw_label == "squat"
-            and squat_label == "squat_back"
-            and int(bar_debug.get("squat_frames_used", 999) or 999) <= 35
-            and explosive_score > 45.0
-            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) < -0.18
-            and float(olympic_conf or 0.0) < 0.80
-        )
-        _short_overhead_bench_setup = (
-            squat_label == "overhead_squat"
-            and raw_label in {"deadlift", "push_press", "squat"}
-            and bio_label in {"push_press", "squat", "deadlift"}
-            and int(bar_debug.get("squat_frames_used", 999) or 999) <= 45
-            and int(bar_debug.get("total_frames", 999) or 999) <= 110
-            and float(olympic_conf or 0.0) < 0.80
-            and not _looks_clean_only
-            and not _looks_cj
-        )
         _looks_push_up = (
             (
                 float(bodyweight_debug.get("wrist_below_shoulder_ratio", 0.0)) >= 0.75
