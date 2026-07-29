@@ -9310,6 +9310,49 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def build_olympic_routing_signals(biomechanics):
+    """Calculate the signals used to decide whether to run the Olympic router."""
+    wrist_overhead_ratio = float(np.mean([
+        1
+        if frame.get("wrist_y", 1.0)
+        < frame.get("shoulder_y", 0.0)
+        else 0
+        for frame in biomechanics
+    ]))
+
+    if len(biomechanics) > 1:
+        hip_vel = float(np.max(np.abs(np.diff([
+            frame["hip_y"]
+            for frame in biomechanics
+        ]))))
+
+        knee_vel = float(np.max(np.abs(np.diff([
+            frame["knee_angle"]
+            for frame in biomechanics
+        ]))))
+    else:
+        hip_vel = 0.0
+        knee_vel = 0.0
+
+    explosive_score = hip_vel + knee_vel
+
+    run_oly_router = (
+        OLY_ROUTER_MODEL is not None
+        and (
+            wrist_overhead_ratio > 0.12
+            or explosive_score > 12
+        )
+    )
+
+    return (
+        wrist_overhead_ratio,
+        hip_vel,
+        knee_vel,
+        explosive_score,
+        run_oly_router,
+    )
+
+
 def predict_squat_variant(seq_base, biomechanics):
     """Run the squat router and bar-position refinement."""
     squat_label = None
@@ -9483,22 +9526,13 @@ def analyze_video(
         olympic_stage2_temporal_probabilities = None
         olympic_stage2_temporal_error = None
 
-        wrist_overhead_ratio = float(np.mean([
-            1 if b.get("wrist_y", 1.0) < b.get("shoulder_y", 0.0) else 0
-            for b in biomech
-        ]))
-
-        hip_vel  = float(np.max(np.abs(np.diff([b["hip_y"] for b in biomech])))) if len(biomech) > 1 else 0.0
-        knee_vel = float(np.max(np.abs(np.diff([b["knee_angle"] for b in biomech])))) if len(biomech) > 1 else 0.0
-        explosive_score = hip_vel + knee_vel
-
-        # Gate: only run Olympic router if there is genuine overhead OR explosive signal.
-        # Lower threshold than before so Olympic lifts aren't missed when camera angle
-        # makes the bar look lower than it is.
-        run_oly_router = (
-            OLY_ROUTER_MODEL is not None
-            and (wrist_overhead_ratio > 0.12 or explosive_score > 12)
-        )
+        (
+            wrist_overhead_ratio,
+            hip_vel,
+            knee_vel,
+            explosive_score,
+            run_oly_router,
+        ) = build_olympic_routing_signals(biomech)
 
         if OLYMPIC_GATE_HARDNEG_MODEL is not None:
             try:
