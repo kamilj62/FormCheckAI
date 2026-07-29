@@ -9310,6 +9310,17 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def detect_strength_movement_shapes(biomechanics):
+    """Run the existing strength and Olympic movement shape detectors."""
+    return (
+        looks_like_clean_only(biomechanics),
+        looks_like_clean_and_jerk(biomechanics),
+        looks_like_split_jerk(biomechanics),
+        looks_like_strict_press(biomechanics),
+        looks_like_thruster(biomechanics),
+    )
+
+
 def predict_bodyweight_movement(biomechanics):
     """Build bodyweight features and run the bodyweight router."""
     bodyweight_debug = build_bodyweight_features(
@@ -9941,11 +9952,13 @@ def analyze_video(
             and bar_conf >= 0.60
             and _bar_pos_valid  # set in step 3
         )
-        _looks_clean_only = looks_like_clean_only(biomech)
-        _looks_cj         = looks_like_clean_and_jerk(biomech)
-        _looks_split      = looks_like_split_jerk(biomech)
-        _looks_strict     = looks_like_strict_press(biomech)
-        _looks_thruster   = looks_like_thruster(biomech)
+        (
+            _looks_clean_only,
+            _looks_cj,
+            _looks_split,
+            _looks_strict,
+            _looks_thruster,
+        ) = detect_strength_movement_shapes(biomech)
         (
             bodyweight_debug,
             bodyweight_router_label,
