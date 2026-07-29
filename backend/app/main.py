@@ -9310,6 +9310,67 @@ def print_debug_report(label, biomech):
     print("=============================================\n")
 
 
+def predict_olympic_temporal_stage2(biomechanics):
+    """Run the audit-only Olympic temporal Stage 2 model."""
+    label = None
+    confidence = None
+    probabilities_by_label = None
+    error = None
+
+    if OLYMPIC_STAGE2_TEMPORAL_MODEL is None:
+        return label, confidence, probabilities_by_label, error
+
+    try:
+        temporal_features = build_movement_video_features_v4(
+            biomechanics
+        ).reshape(1, -1)
+
+        if hasattr(
+            OLYMPIC_STAGE2_TEMPORAL_MODEL,
+            "n_features_in_",
+        ):
+            expected_features = int(
+                OLYMPIC_STAGE2_TEMPORAL_MODEL.n_features_in_
+            )
+
+            if temporal_features.shape[1] != expected_features:
+                raise ValueError(
+                    "Olympic Stage 2 temporal feature mismatch: "
+                    f"got {temporal_features.shape[1]}, "
+                    f"expected {expected_features}"
+                )
+
+        temporal_probabilities = (
+            OLYMPIC_STAGE2_TEMPORAL_MODEL.predict_proba(
+                temporal_features
+            )[0]
+        )
+
+        temporal_classes = list(
+            OLYMPIC_STAGE2_TEMPORAL_MODEL.classes_
+        )
+
+        best_index = int(np.argmax(temporal_probabilities))
+
+        label = str(temporal_classes[best_index])
+        confidence = float(
+            temporal_probabilities[best_index]
+        )
+
+        probabilities_by_label = {
+            str(class_label): float(probability)
+            for class_label, probability in zip(
+                temporal_classes,
+                temporal_probabilities,
+            )
+        }
+
+    except Exception as exc:
+        error = str(exc)
+
+    return label, confidence, probabilities_by_label, error
+
+
 def predict_olympic_hardneg_gate(biomechanics):
     """Run the audit-only Olympic versus non-Olympic shadow gate."""
     probability = None
@@ -9602,60 +9663,12 @@ def analyze_video(
             olympic_gate_hardneg_error,
         ) = predict_olympic_hardneg_gate(biomech)
 
-        if OLYMPIC_STAGE2_TEMPORAL_MODEL is not None:
-            try:
-                temporal_features = (
-                    build_movement_video_features_v4(
-                        biomech
-                    ).reshape(1, -1)
-                )
-
-                if hasattr(
-                    OLYMPIC_STAGE2_TEMPORAL_MODEL,
-                    "n_features_in_",
-                ):
-                    expected_features = int(
-                        OLYMPIC_STAGE2_TEMPORAL_MODEL.n_features_in_
-                    )
-
-                    if (
-                        temporal_features.shape[1]
-                        != expected_features
-                    ):
-                        raise ValueError(
-                            "Olympic Stage 2 temporal feature mismatch: "
-                            f"got {temporal_features.shape[1]}, "
-                            f"expected {expected_features}"
-                        )
-
-                temporal_probabilities = (
-                    OLYMPIC_STAGE2_TEMPORAL_MODEL.predict_proba(
-                        temporal_features
-                    )[0]
-                )
-                temporal_classes = list(
-                    OLYMPIC_STAGE2_TEMPORAL_MODEL.classes_
-                )
-
-                temporal_best_index = int(
-                    np.argmax(temporal_probabilities)
-                )
-
-                olympic_stage2_temporal_label = str(
-                    temporal_classes[temporal_best_index]
-                )
-                olympic_stage2_temporal_confidence = float(
-                    temporal_probabilities[temporal_best_index]
-                )
-                olympic_stage2_temporal_probabilities = {
-                    str(label): float(probability)
-                    for label, probability in zip(
-                        temporal_classes,
-                        temporal_probabilities,
-                    )
-                }
-            except Exception as e:
-                olympic_stage2_temporal_error = str(e)
+        (
+            olympic_stage2_temporal_label,
+            olympic_stage2_temporal_confidence,
+            olympic_stage2_temporal_probabilities,
+            olympic_stage2_temporal_error,
+        ) = predict_olympic_temporal_stage2(biomech)
 
         if run_oly_router:
             if USE_OLY_ROUTER_V4 and OLY_ROUTER_V4_MODEL is not None:
