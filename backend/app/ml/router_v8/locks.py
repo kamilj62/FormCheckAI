@@ -86,9 +86,16 @@ def get_locks(state: RouterState) -> list[dict]:
     # ==========================================================
     # This does not use state.final_label. It uses the explicit protection
     # detector and its reason as another Router V8 evidence source.
+    weak_bench_pattern_lock = (
+        state.protected_label == "bench_press"
+        and state.protected_reason == "bench_pattern_detected"
+        and state.raw_label != "bench_press"
+    )
+
     if (
         state.protected_label in SUPPORTED_LABELS
         and state.protected_reason
+        and not weak_bench_pattern_lock
     ):
         protected_conf = max(
             float(state.final_conf or 0.0),

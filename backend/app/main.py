@@ -10212,7 +10212,6 @@ def build_insufficient_data_response(frames_processed):
     }
 
 
-
 def build_setup_protection_flags(
     *,
     raw_label,
@@ -10307,7 +10306,6 @@ def build_setup_protection_flags(
         short_low_camera_bench_setup,
         short_overhead_bench_setup,
     )
-
 
 
 def build_pushup_shape_flags(
@@ -11198,6 +11196,7 @@ def build_pullup_shape_flags(
 
     return looks_pull_up, pull_up_router_guard
 
+
 def analyze_video(
     video_path,
     make_visuals=True,
@@ -11333,6 +11332,26 @@ def analyze_video(
             bar_label=bar_label,
             bar_conf=bar_conf,
             bar_pos_valid=_bar_pos_valid,
+        )
+
+        _squat_knee_range = (
+            float(summary.get("max_knee_angle", 0.0))
+            - float(summary.get("min_knee_angle", 0.0))
+        )
+
+        _squat_hip_range = (
+            float(summary.get("max_hip_angle", 0.0))
+            - float(summary.get("min_hip_angle", 0.0))
+        )
+
+        _has_real_squat_motion = bool(
+            _squat_knee_range >= 25.0
+            or _squat_hip_range >= 15.0
+        )
+
+        _squat_confident = bool(
+            _squat_confident
+            and _has_real_squat_motion
         )
         (
             _looks_clean_only,
@@ -12029,6 +12048,7 @@ def analyze_video(
         elif (
             squat_label
             and squat_conf >= 0.55
+            and _has_real_squat_motion
             and bio_label not in {"push_up", "pull_up", "handstand_push_up"}
             and not (
                 raw_label == "push_press"
@@ -12968,6 +12988,30 @@ def analyze_video(
             protected_label = "pull_up"
             protected_conf = final_conf
             protected_reason = "pull_up_final_authority"
+
+        # Recover controlled strict presses that the base and biomechanics
+        # classifiers both call push press. Require explicit strict-press shape,
+        # very low explosiveness, and minimal knee/hip movement.
+        final_strict_press_rescue = (
+            not forced_exercise_label
+            and final_label == "push_press"
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and bool(_looks_strict)
+            and not bool(_looks_split)
+            and not bool(_looks_thruster)
+            and float(explosive_score or 0.0) < 15.0
+            and float(_squat_knee_range or 0.0) < 20.0
+            and float(_squat_hip_range or 0.0) < 12.0
+        )
+
+        if final_strict_press_rescue:
+            final_label = "strict_press"
+            final_conf = max(0.86, float(final_conf or 0.0))
+            analysis_mode = "shape_override"
+            protected_label = "strict_press"
+            protected_conf = final_conf
+            protected_reason = "strict_press_low_leg_drive_final_authority"
 
         # Recover push presses incorrectly finalized as pull-ups. Require
         # near-perfect raw + biomechanics push-press consensus, weak Olympic
