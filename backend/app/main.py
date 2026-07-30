@@ -10251,10 +10251,19 @@ def build_setup_protection_flags(
         and float(bar_debug.get("overhead_ratio", 0.0)) < 0.05
         and float(bar_debug.get("avg_wrist_forward", 1.0)) < 0.03
 
-        # Deadlifts keep the arms nearly straight through the pull.
-        # This blocks curl clips that mimic setup-only bar geometry.
-        and float(bodyweight_debug.get("avg_elbow", 0.0)) >= 160.0
-        and float(bodyweight_debug.get("elbow_range", 999.0)) <= 40.0
+        # Deadlifts normally keep the arms straight. Some valid clips have
+        # noisy elbow landmarks, so also allow clear whole-body pull motion.
+        # Curls with setup-like bar geometry usually have neither signal.
+        and (
+            (
+                float(bodyweight_debug.get("avg_elbow", 0.0)) >= 160.0
+                and float(bodyweight_debug.get("elbow_range", 999.0)) <= 40.0
+            )
+            or (
+                float(bodyweight_debug.get("shoulder_y_range", 0.0)) >= 0.08
+                and float(bodyweight_debug.get("hip_y_range", 0.0)) >= 0.08
+            )
+        )
 
         and not clean_shape_blocks_deadlift
         and not looks_cj
