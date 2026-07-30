@@ -9516,6 +9516,8 @@ def run_movement_protections(
     explosive_score,
     bar_debug,
     bodyweight_debug,
+    bodyweight_router_label,
+    bodyweight_router_conf,
     strong_bench_evidence,
     short_overhead_bench_setup,
     pull_up_router_guard,
@@ -9540,6 +9542,8 @@ def run_movement_protections(
             "raw_label": raw_label,
             "squat_label": squat_label,
             "bodyweight_debug": bodyweight_debug,
+            "bodyweight_router_label": bodyweight_router_label,
+            "bodyweight_router_conf": float(bodyweight_router_conf or 0.0),
             "strong_bench_evidence": strong_bench_evidence,
             "looks_push_up": looks_push_up,
             "looks_pull_up": looks_pull_up,
@@ -11523,6 +11527,8 @@ def analyze_video(
             explosive_score=explosive_score,
             bar_debug=bar_debug,
             bodyweight_debug=bodyweight_debug,
+            bodyweight_router_label=bodyweight_router_label,
+            bodyweight_router_conf=bodyweight_router_conf,
             strong_bench_evidence=strong_bench_evidence,
             short_overhead_bench_setup=_short_overhead_bench_setup,
             pull_up_router_guard=_pull_up_router_guard,
@@ -13051,6 +13057,39 @@ def analyze_video(
             protected_label = "clean"
             protected_conf = final_conf
             protected_reason = "clean_only_shape_final_authority"
+
+        # Final push-up authority.
+        # Recover horizontal bodyweight pressing clips that both bodyweight
+        # routers identify as push-ups but late clean/Olympic arbitration steals.
+        # Preserve real clean/C&J event shapes and overhead movements.
+        final_push_up_authority = (
+            not forced_exercise_label
+            and final_label in {"clean", "clean_and_jerk"}
+            and bodyweight_router_label == "push_up"
+            and router_v6_label == "push_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.85
+            and float(router_v6_conf or 0.0) >= 0.64
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) < 0.10
+            and not bool(_looks_cj)
+            and not bool(_looks_split)
+        )
+
+        if final_push_up_authority:
+            final_label = "push_up"
+            final_conf = max(
+                float(bodyweight_router_conf or 0.0),
+                float(router_v6_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "router_v6_bodyweight"
+            protected_label = "push_up"
+            protected_conf = final_conf
+            protected_reason = "push_up_final_authority"
 
         # Final pull-up authority.
         # The bodyweight router consistently recognizes difficult pull-up clips,

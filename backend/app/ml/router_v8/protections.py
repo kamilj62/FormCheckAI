@@ -18,6 +18,8 @@ def bodyweight_protections(
     raw_label: str | None,
     squat_label: str | None,
     bodyweight_debug: dict[str, Any],
+    bodyweight_router_label: str | None = None,
+    bodyweight_router_conf: float = 0.0,
     strong_bench_evidence: bool = False,
     looks_push_up: bool = False,
     looks_pull_up: bool,
@@ -88,11 +90,35 @@ def bodyweight_protections(
             reason="pull_up_bodyweight_pattern",
         )
 
-    if looks_push_up:
+    specialized_hspu_router_guard = (
+        bodyweight_router_label == "handstand_push_up"
+        and float(bodyweight_router_conf or 0.0) >= 0.50
+        and float(
+            bodyweight_debug.get("avg_torso_angle", 0.0)
+        ) >= 120.0
+        and float(
+            bodyweight_debug.get("min_elbow", 0.0)
+        ) >= 90.0
+        and float(
+            bodyweight_debug.get("wrist_y_range", 1.0)
+        ) <= 0.05
+    )
+
+    if looks_push_up and not specialized_hspu_router_guard:
         return ProtectionResult(
             label="push_up",
             confidence=0.86,
             reason="push_up_bodyweight_pattern",
+        )
+
+    if specialized_hspu_router_guard:
+        return ProtectionResult(
+            label="handstand_push_up",
+            confidence=max(
+                float(bodyweight_router_conf or 0.0),
+                0.86,
+            ),
+            reason="handstand_push_up_router_geometry_guard",
         )
 
     return ProtectionResult()
