@@ -1,0 +1,2 @@
+path,filename,folder,reviewed_label,olympic_gate_label,source_id,split,include,canonical_content_sha256
+/Users/josephkamil/Desktop/Capstone/OverheadSquats- Correct2.mov,OverheadSquats- Correct2.mov,overhead_squat,overhead_squat,non_olympic,overhead_squat_holdout_correct2,holdout,yes,cb5f5809e28ecef65f8992aac7b084a3044a053f10ce3de59a431837fff7e6e3

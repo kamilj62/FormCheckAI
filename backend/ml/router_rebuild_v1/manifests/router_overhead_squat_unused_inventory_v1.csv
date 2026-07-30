@@ -1,0 +1,14 @@
+filename,path,size_mb,status,content_sha256
+OverHeadSquat2.mov,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/overhead_squat/OverHeadSquat2.mov,13.272,already_used,
+OverheadSquat- correct4.mov,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/OverheadSquat- correct4.mov,88.353,already_used,
+OverheadSquat- correct5.mov,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/OverheadSquat- correct5.mov,95.686,already_used,
+OverheadSquat_one_rep_720p.mp4,/Users/josephkamil/Desktop/Capstone/OverheadSquat_one_rep_720p.mp4,0.569,already_used,
+OverheadSquats- correct3.mov,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/OverheadSquats- correct3.mov,94.333,already_used,
+overhead_squat_crossfit_01.mov,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/overhead_squat/overhead_squat_crossfit_01.mov,63.416,already_used,
+overhead_squat_good_01.mov,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/overhead_squat/overhead_squat_good_01.mov,23.752,already_used,
+OverheadSquat- Correct.mov,/Users/josephkamil/Desktop/Capstone/OverheadSquat- Correct.mov,23.752,duplicate_of_used,f2c109a8d90d297a5eada2d7a8ff00283c1f1c47d3cf961c3ca2882b3c892a36
+OverheadSquat- correct4.mov,/Users/josephkamil/Desktop/Capstone/OverheadSquat- correct4.mov,88.353,duplicate_of_used,af12257e55589eb48f87e52dda701969a1b2cf502aa78fb08c186c04643ee791
+OverheadSquat- correct5.mov,/Users/josephkamil/Desktop/Capstone/OverheadSquat- correct5.mov,95.686,duplicate_of_used,dd29adb85f11f4b72597f53384934f4c1e045f5db4a1b40ea313be8babd61887
+OverheadSquats- correct3.mov,/Users/josephkamil/Desktop/Capstone/OverheadSquats- correct3.mov,94.333,duplicate_of_used,b143735771d0b7a39609c227b3533374ae60ec10a5007962bedca4e5022e00e8
+OverheadSquats- correct3.mov,/Users/josephkamil/Desktop/Capstone/data/raw/overhead_squat/correct/OverheadSquats- correct3.mov,94.333,duplicate_of_used,b143735771d0b7a39609c227b3533374ae60ec10a5007962bedca4e5022e00e8
+OverheadSquats- Correct2.mov,/Users/josephkamil/Desktop/Capstone/OverheadSquats- Correct2.mov,80.896,frozen_holdout,
