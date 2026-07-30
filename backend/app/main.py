@@ -12491,6 +12491,35 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "snatch_rescue_from_overhead_squat"
 
+        # Recover snatches that are protected as back squats despite direct
+        # Olympic-router snatch evidence and a full explosive overhead pull.
+        final_snatch_motion_rescue = (
+            not forced_exercise_label
+            and olympic_pred == "snatch"
+            and float(olympic_conf or 0.0) >= 0.60
+            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.50
+            and float(
+                bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)
+            ) >= 0.20
+            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 150.0
+            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 30.0
+            and float(_squat_hip_range or 0.0) >= 110.0
+            and final_label in {
+                "squat_back",
+                "squat_front",
+                "overhead_squat",
+                "squat",
+            }
+        )
+
+        if final_snatch_motion_rescue:
+            final_label = "snatch"
+            final_conf = max(float(olympic_conf or 0.0), 0.70)
+            analysis_mode = "router_v5"
+            protected_label = "snatch"
+            protected_conf = final_conf
+            protected_reason = "snatch_motion_final_authority"
+
         # Final authority for Router V5's verified clean rescue.
         # This runs after every squat recovery path so a strongly explosive
         # clean cannot be restored to squat_back afterward.
@@ -12546,6 +12575,33 @@ def analyze_video(
             protected_label = "squat_front"
             protected_conf = final_conf
             protected_reason = "front_squat_consensus_final_authority"
+
+        # Recover back squats that the squat-variant model calls front squat
+        # despite weak and internally inconsistent front-rack geometry.
+        weak_front_rack_back_squat = (
+            not forced_exercise_label
+            and final_label == "squat_front"
+            and squat_label == "squat_front"
+            and raw_label in {"squat", "push_press"}
+            and bio_label in {"squat", "push_press"}
+            and float(
+                bar_debug.get("front_rack_elbow_p25", 180.0)
+            ) < 70.0
+            and float(
+                bar_debug.get("avg_elbow_angle_sq", 180.0)
+            ) < 130.0
+            and float(
+                bar_debug.get("overhead_ratio", 1.0)
+            ) < 0.65
+        )
+
+        if weak_front_rack_back_squat:
+            final_label = "squat_back"
+            final_conf = max(float(squat_conf or 0.0), 0.86)
+            analysis_mode = "squat_router_protected"
+            protected_label = "squat_back"
+            protected_conf = final_conf
+            protected_reason = "weak_front_rack_back_squat_recovery"
 
         # Pull-up safety: if an obvious pull-up posture was routed into a
         # low-confidence Olympic label, recover pull_up before rep analysis.
@@ -12719,6 +12775,18 @@ def analyze_video(
             and not bool(_looks_cj)
             and olympic_pred in {"clean_and_jerk", "split_jerk"}
             and float(olympic_conf or 0.0) >= 0.80
+
+            # Preserve unanimous bench evidence. A generic split-shape signal
+            # must not overwrite agreement from the base, biomechanics, and
+            # Router V6 bench classifiers.
+            and not (
+                raw_label == "bench_press"
+                and bio_label == "bench_press"
+                and float(base_conf or 0.0) >= 0.90
+                and float(bio_conf or 0.0) >= 0.90
+                and router_v6_label == "bench_press"
+                and float(router_v6_conf or 0.0) >= 0.90
+            )
 
             # Preserve standalone split segments while rejecting pull-up
             # lookalikes and complete clean-and-jerk sequences.
@@ -13000,7 +13068,21 @@ def analyze_video(
             # Preserve real Olympic event shapes even when the bodyweight
             # router incorrectly sees a vertical pull.
             and not bool(_looks_cj)
-            and not bool(_looks_split)
+
+            # Pull-up clips frequently trigger the generic split-shape detector.
+            # Permit that overlap only when both bodyweight routers strongly agree,
+            # the squat router sees an overhead posture, and the movement is far
+            # less explosive than a real split jerk.
+            and not (
+                bool(_looks_split)
+                and not (
+                    squat_label == "overhead_squat"
+                    and float(bodyweight_router_conf or 0.0) >= 0.99
+                    and float(router_v6_conf or 0.0) >= 0.74
+                    and float(explosive_score or 0.0) < 20.0
+                )
+            )
+
             and not bool(_looks_strict)
 
             # A thruster-like shape with weak Olympic evidence is not reliable
@@ -13274,13 +13356,34 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "compact_clean_and_jerk_final_authority"
 
-        # Recover deadlifts incorrectly protected as back squats. Only run the
-        # dedicated analyzer when strong straight-arm, below-shoulder hinge
-        # geometry is present.
+        # Recover deadlifts incorrectly protected as back squats or bench
+        # presses. Always require the dedicated deadlift analyzer to confirm
+        # at least one valid rep before changing the final label.
         final_deadlift_probe_reps = []
-        final_deadlift_geometry_candidate = (
-            not forced_exercise_label
-            and final_label == "squat_back"
+
+        try:
+            final_deadlift_summary = summarize_biomechanics(biomech) or {}
+        except Exception:
+            final_deadlift_summary = {}
+
+        final_deadlift_knee_range = max(
+            0.0,
+            float(final_deadlift_summary.get("max_knee_angle", 0.0) or 0.0)
+            - float(final_deadlift_summary.get("min_knee_angle", 0.0) or 0.0),
+        )
+        final_deadlift_hip_range = max(
+            0.0,
+            float(final_deadlift_summary.get("max_hip_angle", 0.0) or 0.0)
+            - float(final_deadlift_summary.get("min_hip_angle", 0.0) or 0.0),
+        )
+        final_deadlift_torso_range = max(
+            0.0,
+            float(final_deadlift_summary.get("max_torso_angle", 0.0) or 0.0)
+            - float(final_deadlift_summary.get("min_torso_angle", 0.0) or 0.0),
+        )
+
+        squat_to_deadlift_geometry = (
+            final_label == "squat_back"
             and raw_label == "squat"
             and bio_label == "squat"
             and float(base_conf or 0.0) >= 0.95
@@ -13293,9 +13396,43 @@ def analyze_video(
             and float(bodyweight_debug.get("avg_torso_angle", 0.0)) >= 20.0
             and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.25
             and float(bar_debug.get("front_rack_elbow_p25", 0.0)) >= 160.0
-            and float(bar_debug.get("wrist_height_above_shoulder", 0.0)) <= -0.10
+            and float(
+                bar_debug.get("wrist_height_above_shoulder", 0.0)
+            ) <= -0.10
             and 25.0 <= float(explosive_score or 0.0) <= 55.0
-            and 100 <= int(bodyweight_debug.get("total_frames", 0) or 0) <= 220
+            and 100 <= int(
+                bodyweight_debug.get("total_frames", 0) or 0
+            ) <= 220
+        )
+
+        # A deadlift filmed from an unusual angle can receive unanimous bench
+        # votes. Recover only a highly specific straight-arm hinge signature:
+        # nearly fixed elbows plus substantial knee, hip, and torso articulation.
+        bench_to_deadlift_geometry = (
+            final_label == "bench_press"
+            and raw_label == "bench_press"
+            and bio_label == "bench_press"
+            and router_v6_label == "bench_press"
+            and float(base_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.95
+            and float(router_v6_conf or 0.0) >= 0.95
+            and float(bodyweight_debug.get("elbow_range", 999.0)) <= 20.0
+            and float(bodyweight_debug.get("min_elbow", 0.0)) >= 155.0
+            and float(bodyweight_debug.get("avg_elbow", 0.0)) >= 165.0
+            and float(
+                bodyweight_debug.get("avg_torso_angle", 999.0)
+            ) <= 30.0
+            and final_deadlift_knee_range >= 80.0
+            and final_deadlift_hip_range >= 80.0
+            and final_deadlift_torso_range >= 25.0
+        )
+
+        final_deadlift_geometry_candidate = (
+            not forced_exercise_label
+            and (
+                squat_to_deadlift_geometry
+                or bench_to_deadlift_geometry
+            )
         )
 
         if final_deadlift_geometry_candidate:
@@ -13311,11 +13448,20 @@ def analyze_video(
 
         if len(final_deadlift_probe_reps) >= 1:
             final_label = "deadlift"
-            final_conf = max(float(squat_conf or 0.0), 0.90)
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                float(squat_conf or 0.0),
+                0.90,
+            )
             analysis_mode = "biomechanics_override"
             protected_label = "deadlift"
             protected_conf = final_conf
-            protected_reason = "deadlift_analyzer_disagreement_rescue"
+            protected_reason = (
+                "straight_arm_hinge_deadlift_recovery"
+                if bench_to_deadlift_geometry
+                else "deadlift_analyzer_disagreement_rescue"
+            )
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
