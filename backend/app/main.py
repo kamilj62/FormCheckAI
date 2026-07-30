@@ -10223,6 +10223,7 @@ def build_setup_protection_flags(
     explosive_score,
     wrist_overhead_ratio,
     bar_debug,
+    bodyweight_debug,
     looks_clean_only,
     looks_cj,
     looks_split,
@@ -10249,6 +10250,12 @@ def build_setup_protection_flags(
         and float(bar_debug.get("front_rack_elbow_p25", 0.0)) > 145.0
         and float(bar_debug.get("overhead_ratio", 0.0)) < 0.05
         and float(bar_debug.get("avg_wrist_forward", 1.0)) < 0.03
+
+        # Deadlifts keep the arms nearly straight through the pull.
+        # This blocks curl clips that mimic setup-only bar geometry.
+        and float(bodyweight_debug.get("avg_elbow", 0.0)) >= 160.0
+        and float(bodyweight_debug.get("elbow_range", 999.0)) <= 40.0
+
         and not clean_shape_blocks_deadlift
         and not looks_cj
         and not looks_split
@@ -11440,6 +11447,7 @@ def analyze_video(
             explosive_score=explosive_score,
             wrist_overhead_ratio=wrist_overhead_ratio,
             bar_debug=bar_debug,
+            bodyweight_debug=bodyweight_debug,
             looks_clean_only=_looks_clean_only,
             looks_cj=_looks_cj,
             looks_split=_looks_split,
@@ -11614,6 +11622,13 @@ def analyze_video(
 
             and bio_label in {"squat", "deadlift"}
             and explosive_score >= 60.0
+
+            # A genuine horizontal press rescue should keep the torso platform
+            # relatively stable. Large shoulder/hip travel is typical of noisy
+            # upright curl clips rather than bench press.
+            and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.20
+            and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.20
+
             and float(olympic_conf or 0.0) < 0.70
             and not (
                 raw_label in {"squat", "squat_front", "squat_back"}
@@ -12168,6 +12183,21 @@ def analyze_video(
                 float(split_features.get("lockout_duration", 0.0) or 0.0) <= 90.0
                 and float(split_features.get("catch_to_finish", 0.0) or 0.0) <= 120.0
             )
+
+            # Upright curls can be misread as short Olympic press segments.
+            # A bench press has a substantially more horizontal torso and a
+            # much smaller hip-to-shoulder vertical separation.
+            upright_curl_signature = (
+                float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 15.0
+                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 80.0
+                and float(bodyweight_debug.get("avg_wrist_forward", 0.0)) >= 0.08
+                and float(
+                    bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)
+                ) >= 0.20
+                and float(
+                    bodyweight_debug.get("wrist_above_shoulder_ratio", 1.0)
+                ) < 0.10
+            )
             if (
                 router_v5_label == "split_jerk"
                 and raw_label in {"squat", "deadlift"}
@@ -12193,6 +12223,7 @@ def analyze_video(
 
                 and not _looks_clean_only
                 and not _looks_cj
+                and not upright_curl_signature
             ):
                 router_v5_label = "bench_press"
                 router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
@@ -12225,6 +12256,7 @@ def analyze_video(
 
                 and not _looks_clean_only
                 and not _looks_cj
+                and not upright_curl_signature
             ):
                 router_v5_label = "bench_press"
                 router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
@@ -12361,6 +12393,28 @@ def analyze_video(
                     final_label = router_v5_label
                     final_conf = router_v5_conf
                     analysis_mode = "router_v5"
+
+                # Reject upright curl clips that Router V5 mistakes for an
+                # Olympic lift. Genuine Olympic controls should have at least
+                # one credible clean, C&J, or split-jerk shape signature.
+                if (
+                    upright_curl_signature
+                    and final_label in OLY_SET
+                    and not _looks_clean_only
+                    and not _looks_cj
+                    and not _looks_split
+                ):
+                    final_label = "unknown"
+                    final_conf = 0.50
+                    analysis_mode = "insufficient_signal"
+                    protected_label = None
+                    protected_conf = None
+                    protected_reason = None
+
+                    if isinstance(router_v5_debug, dict):
+                        router_v5_debug["decision"] = (
+                            "rejected_upright_curl_signature"
+                        )
 
                 if clean_rescue_active:
                     final_label = "clean"
