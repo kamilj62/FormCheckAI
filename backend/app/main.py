@@ -11803,6 +11803,87 @@ def analyze_video(
             protected_conf = 0.80
             protected_reason = "front_squat_weak_router_recovery"
 
+        # Reject an early biomechanics pull-up protection when the clip has
+        # the validated shape of a long barbell squat or overhead Olympic lift.
+        # This runs before protected_label is copied into final_label.
+        early_pull_up_long_squat_collision = (
+            protected_label == "pull_up"
+            and squat_label in {
+                "squat_back",
+                "squat_front",
+                "overhead_squat",
+            }
+            and float(squat_conf or 0.0) >= 0.75
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.70
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 250
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) >= 0.27
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.18
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) >= 0.85
+        )
+
+        early_pull_up_long_overhead_collision = (
+            protected_label == "pull_up"
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.87
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 300
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    999.0,
+                )
+            ) <= 0.11
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    999.0,
+                )
+            ) <= 0.10
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) >= 0.20
+            and (
+                raw_label == "push_press"
+                or bio_label == "push_press"
+            )
+        )
+
+        if (
+            early_pull_up_long_squat_collision
+            or early_pull_up_long_overhead_collision
+        ):
+            protected_label = None
+            protected_conf = 0.0
+            protected_reason = None
+
         if protected_label and not strong_oly_lock:
             final_label = protected_label
             final_conf = protected_conf
@@ -12687,6 +12768,79 @@ def analyze_video(
         # ---------------- ROUTER V6 FINAL BODYWEIGHT ARBITRATION ----------------
         # Runs AFTER legacy routing, BEFORE rep analysis.
         # This avoids editing the fragile if/elif router chain.
+        # Prevent the pull-up router from stealing long barbell movements.
+        # These signatures were validated against the Router Challenge pull-up
+        # set and UIndy external squat, push-press, and jerk demonstrations.
+        pull_up_long_squat_barbell_collision = (
+            router_v6_label == "pull_up"
+            and squat_label in {
+                "squat_back",
+                "squat_front",
+                "overhead_squat",
+            }
+            and float(squat_conf or 0.0) >= 0.75
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.70
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 250
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) >= 0.27
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.18
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) >= 0.85
+        )
+
+        pull_up_long_overhead_barbell_collision = (
+            router_v6_label == "pull_up"
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.87
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 300
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    999.0,
+                )
+            ) <= 0.11
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    999.0,
+                )
+            ) <= 0.10
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) >= 0.20
+            and (
+                raw_label == "push_press"
+                or bio_label == "push_press"
+            )
+        )
+
         router_v6_bodyweight_allowed = (
             not (
                 protected_reason == "strict_press_pattern_detected"
@@ -12700,6 +12854,8 @@ def analyze_video(
             and float(router_v6_conf or 0.0) >= 0.72
             and not strong_oly_lock
             and not strong_bench_evidence
+            and not pull_up_long_squat_barbell_collision
+            and not pull_up_long_overhead_barbell_collision
 
             # Broad bench consensus guard.
             # When both the base classifier and biomechanics independently
@@ -13746,6 +13902,8 @@ def analyze_video(
             and router_v6_label == "pull_up"
             and float(bodyweight_router_conf or 0.0) >= 0.90
             and not bench_model_consensus
+            and not pull_up_long_squat_barbell_collision
+            and not pull_up_long_overhead_barbell_collision
 
             # Preserve real Olympic event shapes even when the bodyweight
             # router incorrectly sees a vertical pull.
@@ -13815,6 +13973,108 @@ def analyze_video(
             protected_label = "pull_up"
             protected_conf = final_conf
             protected_reason = "pull_up_final_authority"
+
+        # Recover controlled push presses incorrectly finalized as
+        # clean-and-jerk. Require dedicated push-press biomechanics,
+        # minimal lower-body travel, low explosiveness, and no complete
+        # clean-and-jerk event shape.
+        final_controlled_push_press_recovery = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.75
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.85
+            and not bool(_looks_cj)
+            and not bool(_looks_split)
+            and float(explosive_score or 0.0) < 15.0
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    999.0,
+                )
+            ) <= 0.10
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    999.0,
+                )
+            ) <= 0.09
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) >= 0.85
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 250
+        )
+
+        if final_controlled_push_press_recovery:
+            final_label = "push_press"
+            final_conf = max(float(bio_conf or 0.0), 0.78)
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "controlled_push_press_final_recovery"
+
+        # Recover a controlled overhead squat incorrectly finalized as
+        # clean-and-jerk. Require explicit overhead-squat router evidence,
+        # sustained overhead arms, low explosiveness, and no Olympic event
+        # shape.
+        final_controlled_overhead_squat_recovery = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.80
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and float(base_conf or 0.0) >= 0.95
+            and float(bio_conf or 0.0) >= 0.95
+            and olympic_pred == "clean_and_jerk"
+            and 0.75 <= float(olympic_conf or 0.0) <= 0.85
+            and not bool(_looks_cj)
+            and not bool(_looks_split)
+            and float(explosive_score or 0.0) < 30.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) >= 0.85
+            and float(
+                bodyweight_debug.get(
+                    "avg_elbow",
+                    0.0,
+                )
+            ) >= 150.0
+            and float(
+                bodyweight_debug.get(
+                    "min_elbow",
+                    0.0,
+                )
+            ) >= 30.0
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 200
+        )
+
+        if final_controlled_overhead_squat_recovery:
+            final_label = "overhead_squat"
+            final_conf = max(float(squat_conf or 0.0), 0.81)
+            analysis_mode = "detailed_rep_analysis"
+            protected_label = "overhead_squat"
+            protected_conf = final_conf
+            protected_reason = "controlled_overhead_squat_final_recovery"
 
         # Recover controlled strict presses that the base and biomechanics
         # classifiers both call push press. Require explicit strict-press shape,
