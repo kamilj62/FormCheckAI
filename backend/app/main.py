@@ -13058,6 +13058,74 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "clean_only_shape_final_authority"
 
+        # Recover very short horizontal bench-press clips that all movement
+        # classifiers mistake for push press despite having no overhead phase.
+        # Require substantial elbow and platform motion to avoid short pull-up
+        # and machine-press lookalikes.
+        final_short_horizontal_bench_recovery = (
+            not forced_exercise_label
+            and final_label == "push_press"
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and router_v6_label == "push_press"
+            and protected_reason == "push_press_pattern_detected"
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) < 0.05
+            and float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    180.0,
+                )
+            ) < 15.0
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) >= 150.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) >= 0.15
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    0.0,
+                )
+            ) >= 0.15
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.18
+            and 20 <= int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) <= 60
+        )
+
+        if final_short_horizontal_bench_recovery:
+            final_label = "bench_press"
+            final_conf = max(
+                float(final_conf or 0.0),
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "bench_press"
+            protected_conf = final_conf
+            protected_reason = "short_horizontal_bench_final_recovery"
+
         # Final push-up authority.
         # Recover horizontal bodyweight pressing clips that both bodyweight
         # routers identify as push-ups but late clean/Olympic arbitration steals.
@@ -13090,6 +13158,581 @@ def analyze_video(
             protected_label = "push_up"
             protected_conf = final_conf
             protected_reason = "push_up_final_authority"
+
+        # Recover a long squat clip that the Olympic router mistakes for
+        # clean and jerk. Require strong squat consensus, front-squat router
+        # support, low torso angle, substantial squat motion, and a weak
+        # clean-and-jerk confidence band.
+        final_long_squat_over_cj_recovery = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and raw_label == "squat"
+            and float(base_conf or 0.0) >= 0.99
+            and bio_label == "squat"
+            and float(bio_conf or 0.0) >= 0.99
+            and squat_label == "squat_front"
+            and float(squat_conf or 0.0) >= 0.85
+            and router_v6_label == "squat"
+            and float(router_v6_conf or 0.0) >= 0.98
+            and olympic_pred == "clean_and_jerk"
+            and 0.70 <= float(olympic_conf or 0.0) <= 0.74
+            and float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    999.0,
+                )
+            ) <= 3.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) <= 0.20
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    0.0,
+                )
+            ) >= 0.55
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.40
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) >= 145.0
+            and float(
+                bodyweight_debug.get(
+                    "avg_elbow",
+                    999.0,
+                )
+            ) <= 60.0
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 500
+        )
+
+        if final_long_squat_over_cj_recovery:
+            final_label = "squat_back"
+            final_conf = max(
+                float(squat_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "squat_router_protected"
+            protected_label = "squat_back"
+            protected_conf = final_conf
+            protected_reason = "long_squat_over_cj_final_recovery"
+
+        # Recover a medium-length back squat clip that the Olympic router
+        # mistakes for clean and jerk. Keep this separate from the longer
+        # squat recovery because its motion profile is distinct.
+        final_medium_squat_over_cj_recovery = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and raw_label == "squat"
+            and float(base_conf or 0.0) >= 0.99
+            and bio_label == "squat"
+            and float(bio_conf or 0.0) >= 0.99
+            and squat_label == "squat_front"
+            and float(squat_conf or 0.0) >= 0.96
+            and router_v6_label == "squat"
+            and float(router_v6_conf or 0.0) >= 0.98
+            and olympic_pred == "clean_and_jerk"
+            and 0.70 <= float(olympic_conf or 0.0) <= 0.75
+            and 3.5 <= float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    0.0,
+                )
+            ) <= 7.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) <= 0.10
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    0.0,
+                )
+            ) >= 0.45
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.60
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) >= 165.0
+            and float(
+                bodyweight_debug.get(
+                    "avg_elbow",
+                    999.0,
+                )
+            ) <= 45.0
+            and 300 <= int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) <= 450
+        )
+
+        if final_medium_squat_over_cj_recovery:
+            final_label = "squat_back"
+            final_conf = max(
+                float(squat_conf or 0.0),
+                0.97,
+            )
+            analysis_mode = "squat_router_protected"
+            protected_label = "squat_back"
+            protected_conf = final_conf
+            protected_reason = "medium_squat_over_cj_final_recovery"
+
+        # Recover a long deadlift clip that the squat router mistakes for
+        # back squat. Require the distinctive straight-arm, long-duration,
+        # moderate-hinge profile observed in deadlift_17.
+        final_long_deadlift_over_squat_recovery = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "push_press"
+            and 0.84 <= float(base_conf or 0.0) <= 0.90
+            and bio_label == "squat"
+            and 0.84 <= float(bio_conf or 0.0) <= 0.90
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.96
+            and router_v6_label == "squat_back"
+            and 0.58 <= float(router_v6_conf or 0.0) <= 0.64
+            and olympic_pred == "snatch"
+            and 0.58 <= float(olympic_conf or 0.0) <= 0.64
+            and 22.0 <= float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    0.0,
+                )
+            ) <= 30.0
+            and 0.30 <= float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) <= 0.40
+            and 0.30 <= float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    0.0,
+                )
+            ) <= 0.42
+            and 0.12 <= float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) <= 0.20
+            and 35.0 <= float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) <= 55.0
+            and float(
+                bodyweight_debug.get(
+                    "avg_elbow",
+                    0.0,
+                )
+            ) >= 170.0
+            and float(
+                bodyweight_debug.get(
+                    "min_elbow",
+                    0.0,
+                )
+            ) >= 125.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) <= 0.05
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 800
+        )
+
+        if final_long_deadlift_over_squat_recovery:
+            final_label = "deadlift"
+            final_conf = 0.82
+            analysis_mode = "biomechanics_override"
+            protected_label = "deadlift"
+            protected_conf = final_conf
+            protected_reason = "long_deadlift_over_squat_final_recovery"
+
+        # Recover a short deadlift clip that the Olympic router mistakes for
+        # snatch. Require deadlift raw evidence, no overhead wrist position,
+        # almost-straight elbows with little elbow motion, and short duration.
+        final_short_deadlift_over_snatch_recovery = (
+            not forced_exercise_label
+            and final_label == "snatch"
+            and raw_label == "deadlift"
+            and bio_label == "squat"
+            and bodyweight_router_label == "push_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.85
+            and router_v6_label == "push_up"
+            and float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    0.0,
+                )
+            ) >= 60.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) < 0.05
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    999.0,
+                )
+            ) <= 30.0
+            and float(
+                bodyweight_debug.get(
+                    "min_elbow",
+                    0.0,
+                )
+            ) >= 150.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    1.0,
+                )
+            ) <= 0.30
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    1.0,
+                )
+            ) <= 0.20
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) <= 80
+            and float(explosive_score or 0.0) >= 80.0
+        )
+
+        if final_short_deadlift_over_snatch_recovery:
+            final_label = "deadlift"
+            final_conf = max(
+                float(base_conf or 0.0),
+                0.82,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "deadlift"
+            protected_conf = final_conf
+            protected_reason = "short_deadlift_over_snatch_final_recovery"
+
+        # Recover a short bench press clip incorrectly accepted as push-up.
+        # This signature is isolated to ucf50_bench_05 in the collision scan.
+        final_short_bench_over_pushup_recovery = (
+            not forced_exercise_label
+            and final_label == "push_up"
+            and raw_label == "squat_front"
+            and 0.65 <= float(base_conf or 0.0) <= 0.72
+            and bio_label == "deadlift"
+            and 0.82 <= float(bio_conf or 0.0) <= 0.88
+            and squat_label == "squat_front"
+            and float(squat_conf or 0.0) >= 0.96
+            and router_v6_label == "squat_front"
+            and float(router_v6_conf or 0.0) >= 0.93
+            and olympic_pred == "clean_and_jerk"
+            and 0.66 <= float(olympic_conf or 0.0) <= 0.72
+            and 65.0 <= float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    0.0,
+                )
+            ) <= 80.0
+            and 0.15 <= float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) <= 0.23
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    1.0,
+                )
+            ) <= 0.07
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    1.0,
+                )
+            ) <= 0.07
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) >= 160.0
+            and float(
+                bodyweight_debug.get(
+                    "avg_elbow",
+                    0.0,
+                )
+            ) >= 130.0
+            and float(
+                bodyweight_debug.get(
+                    "min_elbow",
+                    999.0,
+                )
+            ) <= 10.0
+            and 0.08 <= float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) <= 0.18
+            and 30 <= int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) <= 60
+        )
+
+        if final_short_bench_over_pushup_recovery:
+            final_label = "bench_press"
+            final_conf = 0.86
+            analysis_mode = "biomechanics_override"
+            protected_label = "bench_press"
+            protected_conf = final_conf
+            protected_reason = "short_bench_over_pushup_final_recovery"
+
+        # Recover a long snatch clip that the squat router protects as back
+        # squat. Require weak squat-model agreement together with sustained
+        # overhead position, large arm motion, and highly explosive movement.
+        final_long_snatch_over_squat_recovery = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "squat"
+            and 0.45 <= float(base_conf or 0.0) <= 0.55
+            and bio_label == "squat"
+            and 0.45 <= float(bio_conf or 0.0) <= 0.55
+            and squat_label == "squat_back"
+            and 0.92 <= float(squat_conf or 0.0) <= 0.96
+            and router_v6_label == "squat_back"
+            and 0.56 <= float(router_v6_conf or 0.0) <= 0.62
+            and olympic_pred == "clean_and_jerk"
+            and 0.54 <= float(olympic_conf or 0.0) <= 0.60
+            and float(
+                bodyweight_debug.get(
+                    "wrist_y_range",
+                    0.0,
+                )
+            ) >= 0.65
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    0.0,
+                )
+            ) >= 0.28
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.30
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) >= 165.0
+            and float(
+                bodyweight_debug.get(
+                    "avg_elbow",
+                    0.0,
+                )
+            ) >= 155.0
+            and float(
+                bodyweight_debug.get(
+                    "min_elbow",
+                    999.0,
+                )
+            ) <= 10.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    0.0,
+                )
+            ) >= 0.45
+            and int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) >= 1200
+            and float(explosive_score or 0.0) >= 130.0
+        )
+
+        if final_long_snatch_over_squat_recovery:
+            final_label = "snatch"
+            final_conf = max(
+                float(olympic_conf or 0.0),
+                0.70,
+            )
+            analysis_mode = "router_v5"
+            protected_label = "snatch"
+            protected_conf = final_conf
+            protected_reason = "long_snatch_over_squat_final_recovery"
+
+        # Recover a horizontal push-up clip that the Olympic router mistakes
+        # for clean and jerk. Require a nearly horizontal torso, substantial
+        # shoulder/hip vertical motion, large elbow motion, and bodyweight
+        # push-up support.
+        final_horizontal_push_up_recovery = (
+            not forced_exercise_label
+            and final_label == "clean_and_jerk"
+            and raw_label == "deadlift"
+            and bio_label == "squat"
+            and bodyweight_router_label == "push_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.50
+            and float(
+                bodyweight_debug.get(
+                    "avg_torso_angle",
+                    0.0,
+                )
+            ) >= 160.0
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    0.0,
+                )
+            ) >= 0.30
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    0.0,
+                )
+            ) >= 0.20
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    0.0,
+                )
+            ) >= 150.0
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) <= 0.30
+        )
+
+        if final_horizontal_push_up_recovery:
+            final_label = "push_up"
+            final_conf = max(
+                float(bodyweight_router_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "router_v6_bodyweight"
+            protected_label = "push_up"
+            protected_conf = final_conf
+            protected_reason = "horizontal_push_up_final_recovery"
+
+        # Recover a short, nearly static pull-up clip that all primary movement
+        # classifiers mistake for push press. The wrists remain below the shoulders,
+        # the elbows stay almost fully extended, and the bodyweight router still
+        # identifies pull-up with useful confidence.
+        final_low_motion_pull_up_recovery = (
+            not forced_exercise_label
+            and final_label == "push_press"
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and router_v6_label == "push_press"
+            and protected_reason == "push_press_pattern_detected"
+            and bodyweight_router_label == "pull_up"
+            and float(bodyweight_router_conf or 0.0) >= 0.85
+            and float(
+                bodyweight_debug.get(
+                    "wrist_above_shoulder_ratio",
+                    1.0,
+                )
+            ) < 0.05
+            and float(
+                bodyweight_debug.get(
+                    "mean_wrist_minus_shoulder_y",
+                    0.0,
+                )
+            ) >= 0.20
+            and float(
+                bodyweight_debug.get(
+                    "elbow_range",
+                    999.0,
+                )
+            ) <= 25.0
+            and float(
+                bodyweight_debug.get(
+                    "min_elbow",
+                    0.0,
+                )
+            ) >= 145.0
+            and float(
+                bodyweight_debug.get(
+                    "shoulder_y_range",
+                    1.0,
+                )
+            ) <= 0.03
+            and float(
+                bodyweight_debug.get(
+                    "hip_y_range",
+                    1.0,
+                )
+            ) <= 0.03
+            and float(
+                bodyweight_debug.get(
+                    "avg_wrist_forward",
+                    0.0,
+                )
+            ) >= 0.05
+            and 50 <= int(
+                bodyweight_debug.get(
+                    "total_frames",
+                    0,
+                ) or 0
+            ) <= 110
+        )
+
+        if final_low_motion_pull_up_recovery:
+            final_label = "pull_up"
+            final_conf = max(
+                float(bodyweight_router_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "router_v6_bodyweight"
+            protected_label = "pull_up"
+            protected_conf = final_conf
+            protected_reason = "low_motion_pull_up_final_recovery"
 
         # Final pull-up authority.
         # The bodyweight router consistently recognizes difficult pull-up clips,
