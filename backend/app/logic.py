@@ -47,14 +47,9 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     # BENCH PRESS fallback:
     # Use this only when the model did NOT predict bench,
     # but biomechanics still look like a bench press.
-    if (
-        elbow_range >= 20
-        and hip_range < 35
-        and knee_range < 35
-        and torso_range < 30
-        and wrist_ratio < 0.70
-    ):
-        return "bench_press", max(confidence, 0.80), True, "bench_pattern_detected"
+    # Disabled: this broad fallback misclassifies curls and chest-fly movements
+    # as bench press. Real bench predictions are still preserved above by
+    # trusted_model_bench_press.
 
     # PUSH PRESS:
     # Needs overhead position AND knee dip/drive.

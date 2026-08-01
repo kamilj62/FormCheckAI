@@ -13,7 +13,7 @@ FEATURE_NAMES = [
     "min_knee_time_pct", "min_hip_time_pct",
     "max_wrist_motion", "mean_wrist_motion", "max_hip_motion", "mean_hip_motion",
     "overhead_near_bottom", "late_overhead_flag", "early_min_knee", "late_min_knee",
-] + [f"pad_{i}" for i in range(80 - 53)]
+] + [f"pad_{i}" for i in range(80 - 54)]
 
 
 def f(x, default=0.0):

@@ -1,0 +1,6 @@
+filename,reviewed_label,path,original_probability,original_prediction,hardneg_probability,hardneg_prediction
+bench press_51.mp4,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_51.mp4,0.3380208588082056,non_olympic,0.33758906366510155,non_olympic
+bench press_52.mp4,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_52.mp4,0.5238329396292515,olympic,0.4808010879670174,olympic
+pull up_19.mp4,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_19.mp4,0.3033387133697907,non_olympic,0.29256424606329523,non_olympic
+pull up_20.mp4,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_20.mp4,0.15492626306812135,non_olympic,0.11476262153508388,non_olympic
+pull up_21.mp4,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_21.mp4,0.2845764085619676,non_olympic,0.23568573390012823,non_olympic

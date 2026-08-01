@@ -150,7 +150,59 @@ for filename, checks in expected.items():
             ]
             coaching_ok = len(missing_sections) == 0
 
-    analysis_ok = all([rep_list_ok, zones_ok, summary_ok, mode_ok, breakdown_ok, coaching_ok])
+    # Optional per-rep validation for analyzers that must grade
+    # every segmented rep independently.
+    expect_per_rep_metrics = checks.get(
+        "expect_per_rep_metrics",
+        False,
+    )
+
+    per_rep_metrics_ok = True
+
+    if expect_per_rep_metrics:
+        per_rep_metrics_ok = bool(reps) and all(
+            isinstance(
+                (rep.get("breakdown") or {}).get("metrics"),
+                dict,
+            )
+            for rep in reps
+        )
+
+    forbidden_issue_substrings = [
+        str(value).lower()
+        for value in checks.get(
+            "forbid_issue_substrings",
+            [],
+        )
+    ]
+
+    forbidden_issues_found = []
+
+    for rep in reps:
+        for issue in rep.get("issues") or []:
+            issue_text = str(issue)
+
+            for forbidden in forbidden_issue_substrings:
+                if forbidden in issue_text.lower():
+                    forbidden_issues_found.append(
+                        {
+                            "rep": rep.get("rep"),
+                            "issue": issue_text,
+                        }
+                    )
+
+    forbidden_issues_ok = not forbidden_issues_found
+
+    analysis_ok = all([
+        rep_list_ok,
+        zones_ok,
+        summary_ok,
+        mode_ok,
+        breakdown_ok,
+        coaching_ok,
+        per_rep_metrics_ok,
+        forbidden_issues_ok,
+    ])
 
     if analysis_ok:
         coaching_note = f"  coaching={len(coaching.get('sections', []))} sections" if coaching else ""
@@ -169,6 +221,19 @@ for filename, checks in expected.items():
             else:
                 print(f"     coaching sections missing: {missing_sections}")
                 print(f"     got sections: {[s.get('title') for s in coaching.get('sections', [])]}")
+
+        if not per_rep_metrics_ok:
+            print(
+                "     one or more reps missing "
+                "breakdown.metrics"
+            )
+
+        if not forbidden_issues_ok:
+            print(
+                "     forbidden rep issues found: "
+                f"{forbidden_issues_found}"
+            )
+
         fail_stage("analysis")
 
     # ── Stage 3: /generate_visuals ────────────────────────────────────────────

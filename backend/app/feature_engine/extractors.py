@@ -1,3 +1,20 @@
+import numpy as np
+
+
+def angle(a, b, c):
+    """Return the angle ABC in degrees."""
+    a = np.asarray(a, dtype=np.float32)
+    b = np.asarray(b, dtype=np.float32)
+    c = np.asarray(c, dtype=np.float32)
+
+    ba = a - b
+    bc = c - b
+
+    denom = np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-6
+    cos_val = np.dot(ba, bc) / denom
+    cos_val = np.clip(cos_val, -1.0, 1.0)
+
+    return float(np.degrees(np.arccos(cos_val)))
 import mediapipe as mp
 
 mp_pose = mp.solutions.pose

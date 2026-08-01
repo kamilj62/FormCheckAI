@@ -1,0 +1,13 @@
+filename,reviewed_label,path,original_gate_probability,original_gate_prediction,hardneg_gate_probability,hardneg_gate_prediction
+9xQp2sldyts.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts.mp4,0.8020045252796568,olympic,0.8072961296566877,olympic
+9xQp2sldyts_angle1.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts_angle1.mp4,0.8711042256162933,olympic,0.8655492109384081,olympic
+9xQp2sldyts_angle2.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts_angle2.mp4,0.873021240401877,olympic,0.8610522481840877,olympic
+9xQp2sldyts_angle3.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts_angle3.mp4,0.9052943071535404,olympic,0.9424403318331982,olympic
+9xQp2sldyts_angle4.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts_angle4.mp4,0.9619391687173308,olympic,0.9705632913605907,olympic
+S94-jdNctRU.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/S94-jdNctRU.mp4,0.8028868537272751,olympic,0.7872494442746888,olympic
+UBc5N_-xdqo.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/UBc5N_-xdqo.mp4,0.8343545177535321,olympic,0.8240652848561975,olympic
+UBc5N_-xdqo_normal.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/UBc5N_-xdqo_normal.mp4,0.5572316323405259,olympic,0.5699228959372511,olympic
+WyHEC1YUj0U.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/WyHEC1YUj0U.mp4,0.9575236731787193,olympic,0.9625205654473549,olympic
+ap_VXMoLklQ.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/ap_VXMoLklQ.mp4,0.6313474743483101,olympic,0.6268631607954047,olympic
+ap_VXMoLklQ_normal.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/ap_VXMoLklQ_normal.mp4,0.8963004598373339,olympic,0.8842070823094387,olympic
+g2bbwIIryHY.mp4,snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/g2bbwIIryHY.mp4,0.9329450683275202,olympic,0.9292412161729385,olympic
