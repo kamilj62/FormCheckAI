@@ -11680,6 +11680,18 @@ def analyze_video(
                 and float(squat_conf or 0.0) >= 0.90
             )
 
+            # Do not convert a strong, upright, low-explosive squat into bench
+            # press. This catches front-rack squats that the squat router may
+            # incorrectly classify as squat_back.
+            and not (
+                squat_label in {"squat_back", "squat_front", "overhead_squat"}
+                and float(squat_conf or 0.0) >= 0.90
+                and float(explosive_score or 0.0) < 30.0
+                and float(bodyweight_debug.get("avg_torso_angle", 90.0)) <= 25.0
+                and float(bodyweight_debug.get("shoulder_y_range", 0.0)) >= 0.20
+                and float(bodyweight_debug.get("hip_y_range", 0.0)) >= 0.18
+            )
+
             # Preserve a clean-and-jerk sequence that appears as squat +
             # push press with front-squat catch evidence. Verified bench
             # controls do not share this routing combination.
@@ -12470,12 +12482,46 @@ def analyze_video(
                     )
                 )
 
+                controlled_squat_from_press = (
+                    raw_label == "push_press"
+                    and bio_label == "push_press"
+                    and squat_label in {
+                        "squat_back",
+                        "squat_front",
+                        "overhead_squat",
+                    }
+                    and float(squat_conf or 0.0) >= 0.90
+                    and float(explosive_score or 0.0) < 30.0
+                    and int(bar_debug.get("squat_frames_used", 0) or 0) >= 45
+                    and float(
+                        bodyweight_debug.get("avg_torso_angle", 90.0)
+                    ) <= 25.0
+                    and float(
+                        bodyweight_debug.get("shoulder_y_range", 0.0)
+                    ) >= 0.20
+                    and float(
+                        bodyweight_debug.get("hip_y_range", 0.0)
+                    ) >= 0.18
+                )
+
                 if (
-                    raw_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
-                    and squat_label in {"squat_back", "squat_front", "overhead_squat"}
+                    (
+                        raw_label in {
+                            "squat",
+                            "squat_back",
+                            "squat_front",
+                            "overhead_squat",
+                        }
+                        or controlled_squat_from_press
+                    )
+                    and squat_label in {
+                        "squat_back",
+                        "squat_front",
+                        "overhead_squat",
+                    }
                     and float(squat_conf or 0.0) >= 0.90
                     and router_v5_label in OLY_SET
-                    and float(router_v5_conf or 0.0) < 0.85
+                    and float(router_v5_conf or 0.0) <= 0.85
                     and not clean_rescue_active
                     and not strong_explosive_snatch
                 ):
@@ -12619,6 +12665,16 @@ def analyze_video(
             and float(squat_conf or 0.0) >= 0.80
         )
 
+        # Prevent late clean-shape recovery from stealing a controlled,
+        # high-confidence back squat. The non-explosive requirement preserves
+        # recovery of real cleans that initially attract the squat router.
+        strong_back_squat_consensus = (
+            raw_label in {"squat", "squat_back"}
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.95
+            and not bool(_truly_explosive)
+        )
+
         final_clean_rescue = (
             locals().get("router_v5_label") == "clean"
             and str(
@@ -12663,6 +12719,45 @@ def analyze_video(
             protected_conf = final_conf
             protected_reason = "front_squat_consensus_final_authority"
 
+        # Recover controlled front-rack squats that the squat router labels
+        # squat_back. Require exact press-model agreement, strong squat evidence,
+        # low explosiveness, and a very strong front-rack geometry signature.
+        final_front_squat_from_rack_geometry = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "push_press"
+            and bio_label == "push_press"
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+            and float(explosive_score or 0.0) < 30.0
+            and float(
+                (bar_debug.get("scores") or {}).get("squat_front", 0.0)
+            ) >= 0.55
+            and float(
+                (bar_debug.get("scores") or {}).get("squat_back", 0.0)
+            ) <= 0.20
+            and float(
+                bar_debug.get("front_rack_elbow_p25", 999.0)
+            ) <= 40.0
+            and float(
+                bar_debug.get("avg_elbow_angle_sq", 999.0)
+            ) <= 60.0
+            and int(
+                bar_debug.get("squat_frames_used", 0) or 0
+            ) >= 45
+        )
+
+        if final_front_squat_from_rack_geometry:
+            final_label = "squat_front"
+            final_conf = max(float(squat_conf or 0.0), 0.90)
+            analysis_mode = "squat_router_protected"
+            protected_label = "squat_front"
+            protected_conf = final_conf
+            protected_reason = "front_squat_rack_geometry_recovery"
+
+        # Recover controlled front-rack squats that the squat router labels
+        # squat_back. Require exact press-model agreement, strong squat evidence,
+        # low explosiveness, and a very strong front-rack geometry signature.
         # Recover back squats that the squat-variant model calls front squat
         # despite weak and internally inconsistent front-rack geometry.
         weak_front_rack_back_squat = (
@@ -13183,6 +13278,7 @@ def analyze_video(
             and not bool(_looks_cj)
             and not bool(_looks_split)
             and not strong_front_squat_consensus
+            and not strong_back_squat_consensus
             and not (
                 raw_label == "bench_press"
                 and bio_label == "bench_press"
