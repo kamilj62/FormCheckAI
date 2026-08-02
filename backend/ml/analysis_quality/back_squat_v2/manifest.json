@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "exercise": "squat_back",
+  "description": "Manually labeled back-squat coaching-quality benchmark.",
+  "fault_labels": [
+    "shallow_depth",
+    "torso_collapse",
+    "knee_valgus",
+    "heel_lift",
+    "neck_position"
+  ],
+  "videos": []
+}
