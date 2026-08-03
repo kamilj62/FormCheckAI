@@ -86,6 +86,7 @@ from app.ml.central_router_shadow import arbitrate_shadow
 from app.ml.family_router_shadow import classify_family_shadow
 from app.ml.press_variant_shadow import classify_press_variant_shadow
 from app.ml.hierarchical_router_shadow import classify_hierarchical_shadow
+from ml.analysis_quality.fitness_aqa_squat.forward_lean_runtime import evaluate_forward_lean_shadow
 
 from app.coaching.clean import build_clean_coaching
 
@@ -9489,6 +9490,7 @@ def build_final_analysis_response(
     family_router_shadow,
     press_variant_shadow,
     hierarchical_router_shadow,
+    forward_lean_shadow,
     bodyweight_debug,
     bodyweight_router_label,
     bodyweight_router_conf,
@@ -9608,6 +9610,7 @@ def build_final_analysis_response(
             "hierarchical_router_shadow": (
                 hierarchical_router_shadow
             ),
+            "forward_lean_shadow": forward_lean_shadow,
             "bodyweight": bodyweight_debug,
             "bodyweight_router_label": bodyweight_router_label,
             "bodyweight_router_conf": round(
@@ -14713,8 +14716,23 @@ def analyze_video(
             protected_label = final_label
             protected_reason = "user_confirmed_exercise"
 
+        forward_lean_shadow = {
+            "mode": "shadow_only",
+            "status": "not_applicable",
+            "exercise_label": final_label,
+            "reps": [],
+        }
+
         if final_label in {"squat_back", "squat_front", "overhead_squat"}:
             rep_feedback, _ = analyze_squat_reps(biomech, final_label)
+
+            if final_label == "squat_back":
+                forward_lean_shadow = evaluate_forward_lean_shadow(
+                    sequence=sequence,
+                    biomechanics=biomech,
+                    reps=rep_feedback,
+                    exercise_label=final_label,
+                )
 
         elif final_label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomech)
@@ -15004,6 +15022,7 @@ def analyze_video(
             hierarchical_router_shadow=(
                 hierarchical_router_shadow
             ),
+            forward_lean_shadow=forward_lean_shadow,
             bodyweight_debug=bodyweight_debug,
             bodyweight_router_label=bodyweight_router_label,
             bodyweight_router_conf=bodyweight_router_conf,
