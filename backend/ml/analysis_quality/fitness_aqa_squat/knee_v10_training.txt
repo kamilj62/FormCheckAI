@@ -1,0 +1,93 @@
+Train shape: (546, 761)
+Validation shape: (115, 761)
+Test shape: (122, 761)
+
+Selected validation thresholds
+forward: {'threshold': 0.36500000000000005, 'precision': 0.696969696969697, 'recall': 0.9324324324324325, 'f1': 0.7976878612716763}
+inward: {'threshold': 0.28, 'precision': 0.5, 'recall': 0.25, 'f1': 0.3333333333333333}
+
+======================================================================
+VALIDATION
+======================================================================
+
+Forward validation
+threshold: 0.365
+precision: 0.697
+recall: 0.9324
+F1: 0.7977
+ROC-AUC: 0.7225
+average precision: 0.8226
+MAE: 0.2664
+R2: 0.1438
+confusion matrix:
+[[11 30]
+ [ 5 69]]
+
+Inward validation
+threshold: 0.28
+precision: 0.5
+recall: 0.25
+F1: 0.3333
+ROC-AUC: 0.7233
+average precision: 0.2777
+MAE: 0.1618
+R2: 0.0639
+confusion matrix:
+[[100   3]
+ [  9   3]]
+
+Joint state confusion
+[[11 29  0  0]
+ [ 5 55  0  3]
+ [ 0  1  0  0]
+ [ 0  8  0  3]]
+false_forward_on_neither: 0.725
+false_forward_on_inward_only: 1.0
+correct_neither_state: 0.275
+correct_forward_only_state: 0.873
+correct_inward_only_state: 0.0
+correct_both_state: 0.2727
+
+======================================================================
+EXPLORATORY TEST
+======================================================================
+
+Forward test
+threshold: 0.365
+precision: 0.5943
+recall: 0.875
+F1: 0.7079
+ROC-AUC: 0.6733
+average precision: 0.7844
+MAE: 0.2864
+R2: 0.1087
+confusion matrix:
+[[ 7 43]
+ [ 9 63]]
+
+Inward test
+threshold: 0.28
+precision: 0.5714
+recall: 0.2353
+F1: 0.3333
+ROC-AUC: 0.7339
+average precision: 0.4526
+MAE: 0.1571
+R2: 0.1263
+confusion matrix:
+[[102   3]
+ [ 13   4]]
+
+Joint state confusion
+[[ 7 38  0  0]
+ [ 9 48  0  3]
+ [ 0  4  0  1]
+ [ 0  9  0  3]]
+false_forward_on_neither: 0.8444
+false_forward_on_inward_only: 1.0
+correct_neither_state: 0.1556
+correct_forward_only_state: 0.8
+correct_inward_only_state: 0.0
+correct_both_state: 0.25
+
+Saved model: ml/analysis_quality/fitness_aqa_squat/models/knee_complete_rep_v10.joblib

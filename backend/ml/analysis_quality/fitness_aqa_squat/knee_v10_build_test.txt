@@ -1,0 +1,11 @@
+Split: test
+Output: ml/analysis_quality/fitness_aqa_squat/knee_v10_rep_test.jsonl
+Rows: 122
+Feature count: 761
+Phase points: 29
+States at 0.5: {'neither': 45, 'forward_only': 60, 'both': 12, 'inward_only': 5}
+Forward target mean: 0.4875
+Inward target mean: 0.0946
+Rejected missing: 0
+Rejected geometry: 0
+Metadata: ml/analysis_quality/fitness_aqa_squat/knee_v10_rep_test_metadata.json

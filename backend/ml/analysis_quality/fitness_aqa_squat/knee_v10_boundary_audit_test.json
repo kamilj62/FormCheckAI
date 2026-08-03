@@ -1,0 +1,912 @@
+{
+  "version": "v10_production_boundary_audit",
+  "split": "test",
+  "phase_point_counts": {
+    "setup": 4,
+    "descent": 8,
+    "bottom": 5,
+    "ascent": 8,
+    "finish": 4
+  },
+  "total_resampled_points": 29,
+  "videos": 245,
+  "chunks_examined": 260,
+  "videos_with_reps": 14,
+  "detected_reps": 14,
+  "state_counts_at_0_5": {
+    "forward_only": 5,
+    "inward_only": 3,
+    "neither": 6
+  },
+  "rejection_counts": {
+    "descent_span_lt_4": 104,
+    "opening_pose_artifact": 6,
+    "ascent_span_lt_4": 50,
+    "threshold_window_lt_5": 298,
+    "chunk_too_short": 27
+  },
+  "reps": [
+    {
+      "start_index": 15,
+      "bottom_index": 22,
+      "end_index": 31,
+      "start_frame": 90,
+      "bottom_frame": 132,
+      "end_frame": 192,
+      "sampled_rows": 17,
+      "descent_rows": 8,
+      "ascent_rows": 10,
+      "source_span": 102,
+      "source_descent_span": 42,
+      "source_ascent_span": 60,
+      "threshold": 138.5016201255753,
+      "bottom_knee": 68.9255295951496,
+      "video_id": "49052_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          15.0,
+          15.583333333333334,
+          16.166666666666668,
+          16.75
+        ],
+        "descent": [
+          15.0,
+          16.0,
+          17.0,
+          18.0,
+          19.0,
+          20.0,
+          21.0,
+          22.0
+        ],
+        "bottom": [
+          20.95,
+          21.55,
+          22.15,
+          22.75,
+          23.35
+        ],
+        "ascent": [
+          22.0,
+          23.285714285714285,
+          24.571428571428573,
+          25.857142857142858,
+          27.142857142857142,
+          28.42857142857143,
+          29.714285714285715,
+          31.0
+        ],
+        "finish": [
+          28.75,
+          29.5,
+          30.25,
+          31.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 1.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 7,
+      "bottom_index": 12,
+      "end_index": 20,
+      "start_frame": 42,
+      "bottom_frame": 72,
+      "end_frame": 120,
+      "sampled_rows": 14,
+      "descent_rows": 6,
+      "ascent_rows": 9,
+      "source_span": 78,
+      "source_descent_span": 30,
+      "source_ascent_span": 48,
+      "threshold": 102.91256194879622,
+      "bottom_knee": 69.58831087292145,
+      "video_id": "46367_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          7.0,
+          7.416666666666667,
+          7.833333333333333,
+          8.25
+        ],
+        "descent": [
+          7.0,
+          7.714285714285714,
+          8.428571428571429,
+          9.142857142857142,
+          9.857142857142858,
+          10.571428571428571,
+          11.285714285714285,
+          12.0
+        ],
+        "bottom": [
+          11.25,
+          11.7375,
+          12.225,
+          12.712499999999999,
+          13.2
+        ],
+        "ascent": [
+          12.0,
+          13.142857142857142,
+          14.285714285714285,
+          15.428571428571429,
+          16.57142857142857,
+          17.714285714285715,
+          18.857142857142858,
+          20.0
+        ],
+        "finish": [
+          18.0,
+          18.666666666666668,
+          19.333333333333332,
+          20.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.5555555555555556
+    },
+    {
+      "start_index": 11,
+      "bottom_index": 15,
+      "end_index": 19,
+      "start_frame": 66,
+      "bottom_frame": 90,
+      "end_frame": 114,
+      "sampled_rows": 9,
+      "descent_rows": 5,
+      "ascent_rows": 5,
+      "source_span": 48,
+      "source_descent_span": 24,
+      "source_ascent_span": 24,
+      "threshold": 91.21597917966764,
+      "bottom_knee": 55.29614578140051,
+      "video_id": "49143_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          11.0,
+          11.333333333333334,
+          11.666666666666666,
+          12.0
+        ],
+        "descent": [
+          11.0,
+          11.571428571428571,
+          12.142857142857142,
+          12.714285714285714,
+          13.285714285714285,
+          13.857142857142858,
+          14.428571428571429,
+          15.0
+        ],
+        "bottom": [
+          14.4,
+          14.7,
+          15.0,
+          15.3,
+          15.6
+        ],
+        "ascent": [
+          15.0,
+          15.571428571428571,
+          16.142857142857142,
+          16.714285714285715,
+          17.285714285714285,
+          17.857142857142858,
+          18.428571428571427,
+          19.0
+        ],
+        "finish": [
+          18.0,
+          18.333333333333332,
+          18.666666666666668,
+          19.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 6,
+      "bottom_index": 12,
+      "end_index": 17,
+      "start_frame": 36,
+      "bottom_frame": 72,
+      "end_frame": 102,
+      "sampled_rows": 12,
+      "descent_rows": 7,
+      "ascent_rows": 6,
+      "source_span": 66,
+      "source_descent_span": 36,
+      "source_ascent_span": 30,
+      "threshold": 148.1976027907069,
+      "bottom_knee": 34.15075345005325,
+      "video_id": "46669_2",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "descent": [
+          6.0,
+          6.857142857142857,
+          7.714285714285714,
+          8.571428571428571,
+          9.428571428571429,
+          10.285714285714285,
+          11.142857142857142,
+          12.0
+        ],
+        "bottom": [
+          11.1,
+          11.5125,
+          11.925,
+          12.3375,
+          12.75
+        ],
+        "ascent": [
+          12.0,
+          12.714285714285714,
+          13.428571428571429,
+          14.142857142857142,
+          14.857142857142858,
+          15.571428571428571,
+          16.285714285714285,
+          17.0
+        ],
+        "finish": [
+          15.75,
+          16.166666666666668,
+          16.583333333333332,
+          17.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 17,
+      "bottom_index": 21,
+      "end_index": 31,
+      "start_frame": 102,
+      "bottom_frame": 126,
+      "end_frame": 186,
+      "sampled_rows": 15,
+      "descent_rows": 5,
+      "ascent_rows": 11,
+      "source_span": 84,
+      "source_descent_span": 24,
+      "source_ascent_span": 60,
+      "threshold": 151.0701871899673,
+      "bottom_knee": 124.30143963444043,
+      "video_id": "47107_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          17.0,
+          17.333333333333332,
+          17.666666666666668,
+          18.0
+        ],
+        "descent": [
+          17.0,
+          17.571428571428573,
+          18.142857142857142,
+          18.714285714285715,
+          19.285714285714285,
+          19.857142857142858,
+          20.428571428571427,
+          21.0
+        ],
+        "bottom": [
+          20.4,
+          20.924999999999997,
+          21.45,
+          21.975,
+          22.5
+        ],
+        "ascent": [
+          21.0,
+          22.428571428571427,
+          23.857142857142858,
+          25.285714285714285,
+          26.714285714285715,
+          28.142857142857142,
+          29.57142857142857,
+          31.0
+        ],
+        "finish": [
+          28.5,
+          29.333333333333332,
+          30.166666666666668,
+          31.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 1.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 5,
+      "bottom_index": 10,
+      "end_index": 16,
+      "start_frame": 30,
+      "bottom_frame": 60,
+      "end_frame": 96,
+      "sampled_rows": 12,
+      "descent_rows": 6,
+      "ascent_rows": 7,
+      "source_span": 66,
+      "source_descent_span": 30,
+      "source_ascent_span": 36,
+      "threshold": 137.2137438266651,
+      "bottom_knee": 24.67940636581876,
+      "video_id": "36900_2",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          5.0,
+          5.416666666666667,
+          5.833333333333333,
+          6.25
+        ],
+        "descent": [
+          5.0,
+          5.714285714285714,
+          6.428571428571429,
+          7.142857142857142,
+          7.857142857142858,
+          8.571428571428571,
+          9.285714285714285,
+          10.0
+        ],
+        "bottom": [
+          9.25,
+          9.6625,
+          10.075,
+          10.4875,
+          10.9
+        ],
+        "ascent": [
+          10.0,
+          10.857142857142858,
+          11.714285714285714,
+          12.571428571428571,
+          13.428571428571429,
+          14.285714285714285,
+          15.142857142857142,
+          16.0
+        ],
+        "finish": [
+          14.5,
+          15.0,
+          15.5,
+          16.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.7142857142857143
+    },
+    {
+      "start_index": 9,
+      "bottom_index": 16,
+      "end_index": 22,
+      "start_frame": 60,
+      "bottom_frame": 114,
+      "end_frame": 156,
+      "sampled_rows": 14,
+      "descent_rows": 8,
+      "ascent_rows": 7,
+      "source_span": 96,
+      "source_descent_span": 54,
+      "source_ascent_span": 42,
+      "threshold": 139.05347102136616,
+      "bottom_knee": 51.92343305211821,
+      "video_id": "33425_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          9.0,
+          9.583333333333334,
+          10.166666666666666,
+          10.75
+        ],
+        "descent": [
+          9.0,
+          10.0,
+          11.0,
+          12.0,
+          13.0,
+          14.0,
+          15.0,
+          16.0
+        ],
+        "bottom": [
+          14.95,
+          15.4375,
+          15.924999999999999,
+          16.412499999999998,
+          16.9
+        ],
+        "ascent": [
+          16.0,
+          16.857142857142858,
+          17.714285714285715,
+          18.57142857142857,
+          19.428571428571427,
+          20.285714285714285,
+          21.142857142857142,
+          22.0
+        ],
+        "finish": [
+          20.5,
+          21.0,
+          21.5,
+          22.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 1.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 13,
+      "bottom_index": 19,
+      "end_index": 23,
+      "start_frame": 78,
+      "bottom_frame": 114,
+      "end_frame": 138,
+      "sampled_rows": 11,
+      "descent_rows": 7,
+      "ascent_rows": 5,
+      "source_span": 60,
+      "source_descent_span": 36,
+      "source_ascent_span": 24,
+      "threshold": 102.55212563590278,
+      "bottom_knee": 78.72998176097421,
+      "video_id": "36835_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          13.0,
+          13.5,
+          14.0,
+          14.5
+        ],
+        "descent": [
+          13.0,
+          13.857142857142858,
+          14.714285714285714,
+          15.571428571428571,
+          16.428571428571427,
+          17.285714285714285,
+          18.142857142857142,
+          19.0
+        ],
+        "bottom": [
+          18.1,
+          18.475,
+          18.85,
+          19.225,
+          19.6
+        ],
+        "ascent": [
+          19.0,
+          19.571428571428573,
+          20.142857142857142,
+          20.714285714285715,
+          21.285714285714285,
+          21.857142857142858,
+          22.428571428571427,
+          23.0
+        ],
+        "finish": [
+          22.0,
+          22.333333333333332,
+          22.666666666666668,
+          23.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 1.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 11,
+      "bottom_index": 15,
+      "end_index": 19,
+      "start_frame": 66,
+      "bottom_frame": 90,
+      "end_frame": 114,
+      "sampled_rows": 9,
+      "descent_rows": 5,
+      "ascent_rows": 5,
+      "source_span": 48,
+      "source_descent_span": 24,
+      "source_ascent_span": 24,
+      "threshold": 118.46332016254186,
+      "bottom_knee": 98.49437981577874,
+      "video_id": "36974_2",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          11.0,
+          11.333333333333334,
+          11.666666666666666,
+          12.0
+        ],
+        "descent": [
+          11.0,
+          11.571428571428571,
+          12.142857142857142,
+          12.714285714285714,
+          13.285714285714285,
+          13.857142857142858,
+          14.428571428571429,
+          15.0
+        ],
+        "bottom": [
+          14.4,
+          14.7,
+          15.0,
+          15.3,
+          15.6
+        ],
+        "ascent": [
+          15.0,
+          15.571428571428571,
+          16.142857142857142,
+          16.714285714285715,
+          17.285714285714285,
+          17.857142857142858,
+          18.428571428571427,
+          19.0
+        ],
+        "finish": [
+          18.0,
+          18.333333333333332,
+          18.666666666666668,
+          19.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 7,
+      "bottom_index": 12,
+      "end_index": 16,
+      "start_frame": 42,
+      "bottom_frame": 72,
+      "end_frame": 102,
+      "sampled_rows": 10,
+      "descent_rows": 6,
+      "ascent_rows": 5,
+      "source_span": 60,
+      "source_descent_span": 30,
+      "source_ascent_span": 30,
+      "threshold": 114.47093672264292,
+      "bottom_knee": 63.319214662501295,
+      "video_id": "47681_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          7.0,
+          7.416666666666667,
+          7.833333333333333,
+          8.25
+        ],
+        "descent": [
+          7.0,
+          7.714285714285714,
+          8.428571428571429,
+          9.142857142857142,
+          9.857142857142858,
+          10.571428571428571,
+          11.285714285714285,
+          12.0
+        ],
+        "bottom": [
+          11.25,
+          11.5875,
+          11.925,
+          12.2625,
+          12.6
+        ],
+        "ascent": [
+          12.0,
+          12.571428571428571,
+          13.142857142857142,
+          13.714285714285714,
+          14.285714285714285,
+          14.857142857142858,
+          15.428571428571429,
+          16.0
+        ],
+        "finish": [
+          15.0,
+          15.333333333333334,
+          15.666666666666666,
+          16.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 7,
+      "bottom_index": 11,
+      "end_index": 15,
+      "start_frame": 42,
+      "bottom_frame": 66,
+      "end_frame": 90,
+      "sampled_rows": 9,
+      "descent_rows": 5,
+      "ascent_rows": 5,
+      "source_span": 48,
+      "source_descent_span": 24,
+      "source_ascent_span": 24,
+      "threshold": 78.71219176128199,
+      "bottom_knee": 49.5944080801087,
+      "video_id": "48687_3",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          7.0,
+          7.333333333333333,
+          7.666666666666667,
+          8.0
+        ],
+        "descent": [
+          7.0,
+          7.571428571428571,
+          8.142857142857142,
+          8.714285714285714,
+          9.285714285714285,
+          9.857142857142858,
+          10.428571428571429,
+          11.0
+        ],
+        "bottom": [
+          10.4,
+          10.7,
+          11.0,
+          11.3,
+          11.6
+        ],
+        "ascent": [
+          11.0,
+          11.571428571428571,
+          12.142857142857142,
+          12.714285714285714,
+          13.285714285714285,
+          13.857142857142858,
+          14.428571428571429,
+          15.0
+        ],
+        "finish": [
+          14.0,
+          14.333333333333334,
+          14.666666666666666,
+          15.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 1.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 9,
+      "bottom_index": 14,
+      "end_index": 21,
+      "start_frame": 54,
+      "bottom_frame": 84,
+      "end_frame": 126,
+      "sampled_rows": 13,
+      "descent_rows": 6,
+      "ascent_rows": 8,
+      "source_span": 72,
+      "source_descent_span": 30,
+      "source_ascent_span": 42,
+      "threshold": 121.71322383831996,
+      "bottom_knee": 79.51394280738994,
+      "video_id": "36679_5",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          9.0,
+          9.416666666666666,
+          9.833333333333334,
+          10.25
+        ],
+        "descent": [
+          9.0,
+          9.714285714285714,
+          10.428571428571429,
+          11.142857142857142,
+          11.857142857142858,
+          12.571428571428571,
+          13.285714285714285,
+          14.0
+        ],
+        "bottom": [
+          13.25,
+          13.7,
+          14.15,
+          14.600000000000001,
+          15.05
+        ],
+        "ascent": [
+          14.0,
+          15.0,
+          16.0,
+          17.0,
+          18.0,
+          19.0,
+          20.0,
+          21.0
+        ],
+        "finish": [
+          19.25,
+          19.833333333333332,
+          20.416666666666668,
+          21.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.75
+    },
+    {
+      "start_index": 4,
+      "bottom_index": 9,
+      "end_index": 13,
+      "start_frame": 24,
+      "bottom_frame": 54,
+      "end_frame": 78,
+      "sampled_rows": 10,
+      "descent_rows": 6,
+      "ascent_rows": 5,
+      "source_span": 54,
+      "source_descent_span": 30,
+      "source_ascent_span": 24,
+      "threshold": 95.95675002518138,
+      "bottom_knee": 54.892464254503444,
+      "video_id": "32907_3",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          4.0,
+          4.416666666666667,
+          4.833333333333333,
+          5.25
+        ],
+        "descent": [
+          4.0,
+          4.714285714285714,
+          5.428571428571429,
+          6.142857142857142,
+          6.857142857142858,
+          7.571428571428571,
+          8.285714285714285,
+          9.0
+        ],
+        "bottom": [
+          8.25,
+          8.5875,
+          8.925,
+          9.2625,
+          9.6
+        ],
+        "ascent": [
+          9.0,
+          9.571428571428571,
+          10.142857142857142,
+          10.714285714285714,
+          11.285714285714285,
+          11.857142857142858,
+          12.428571428571429,
+          13.0
+        ],
+        "finish": [
+          12.0,
+          12.333333333333334,
+          12.666666666666666,
+          13.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.4
+    },
+    {
+      "start_index": 9,
+      "bottom_index": 13,
+      "end_index": 18,
+      "start_frame": 54,
+      "bottom_frame": 78,
+      "end_frame": 108,
+      "sampled_rows": 10,
+      "descent_rows": 5,
+      "ascent_rows": 6,
+      "source_span": 54,
+      "source_descent_span": 24,
+      "source_ascent_span": 30,
+      "threshold": 114.83628710144895,
+      "bottom_knee": 91.36082789053782,
+      "video_id": "48410_4",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          9.0,
+          9.333333333333334,
+          9.666666666666666,
+          10.0
+        ],
+        "descent": [
+          9.0,
+          9.571428571428571,
+          10.142857142857142,
+          10.714285714285714,
+          11.285714285714285,
+          11.857142857142858,
+          12.428571428571429,
+          13.0
+        ],
+        "bottom": [
+          12.4,
+          12.7375,
+          13.075,
+          13.4125,
+          13.75
+        ],
+        "ascent": [
+          13.0,
+          13.714285714285714,
+          14.428571428571429,
+          15.142857142857142,
+          15.857142857142858,
+          16.571428571428573,
+          17.285714285714285,
+          18.0
+        ],
+        "finish": [
+          16.75,
+          17.166666666666668,
+          17.583333333333332,
+          18.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    }
+  ]
+}

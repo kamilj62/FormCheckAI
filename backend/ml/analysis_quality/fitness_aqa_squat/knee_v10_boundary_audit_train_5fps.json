@@ -1,0 +1,344 @@
+{
+  "version": "v10_production_boundary_audit",
+  "split": "train",
+  "phase_point_counts": {
+    "setup": 4,
+    "descent": 8,
+    "bottom": 5,
+    "ascent": 8,
+    "finish": 4
+  },
+  "total_resampled_points": 29,
+  "videos": 100,
+  "chunks_examined": 102,
+  "videos_with_reps": 5,
+  "detected_reps": 5,
+  "state_counts_at_0_5": {
+    "neither": 3,
+    "both": 1,
+    "forward_only": 1
+  },
+  "rejection_counts": {
+    "threshold_window_lt_5": 122,
+    "descent_span_lt_4": 47,
+    "ascent_span_lt_4": 24,
+    "chunk_too_short": 7
+  },
+  "reps": [
+    {
+      "start_index": 4,
+      "bottom_index": 9,
+      "end_index": 13,
+      "start_frame": 24,
+      "bottom_frame": 54,
+      "end_frame": 78,
+      "sampled_rows": 10,
+      "descent_rows": 6,
+      "ascent_rows": 5,
+      "source_span": 54,
+      "source_descent_span": 30,
+      "source_ascent_span": 24,
+      "threshold": 79.51765887979715,
+      "bottom_knee": 48.94498587064135,
+      "video_id": "50435_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          4.0,
+          4.416666666666667,
+          4.833333333333333,
+          5.25
+        ],
+        "descent": [
+          4.0,
+          4.714285714285714,
+          5.428571428571429,
+          6.142857142857142,
+          6.857142857142858,
+          7.571428571428571,
+          8.285714285714285,
+          9.0
+        ],
+        "bottom": [
+          8.25,
+          8.5875,
+          8.925,
+          9.2625,
+          9.6
+        ],
+        "ascent": [
+          9.0,
+          9.571428571428571,
+          10.142857142857142,
+          10.714285714285714,
+          11.285714285714285,
+          11.857142857142858,
+          12.428571428571429,
+          13.0
+        ],
+        "finish": [
+          12.0,
+          12.333333333333334,
+          12.666666666666666,
+          13.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 3,
+      "bottom_index": 8,
+      "end_index": 14,
+      "start_frame": 18,
+      "bottom_frame": 48,
+      "end_frame": 84,
+      "sampled_rows": 12,
+      "descent_rows": 6,
+      "ascent_rows": 7,
+      "source_span": 66,
+      "source_descent_span": 30,
+      "source_ascent_span": 36,
+      "threshold": 136.61841939917787,
+      "bottom_knee": 76.9439664012094,
+      "video_id": "47519_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          3.0,
+          3.4166666666666665,
+          3.8333333333333335,
+          4.25
+        ],
+        "descent": [
+          3.0,
+          3.7142857142857144,
+          4.428571428571429,
+          5.142857142857142,
+          5.857142857142858,
+          6.571428571428571,
+          7.285714285714286,
+          8.0
+        ],
+        "bottom": [
+          7.25,
+          7.6625,
+          8.075,
+          8.4875,
+          8.9
+        ],
+        "ascent": [
+          8.0,
+          8.857142857142858,
+          9.714285714285714,
+          10.571428571428571,
+          11.428571428571429,
+          12.285714285714285,
+          13.142857142857142,
+          14.0
+        ],
+        "finish": [
+          12.5,
+          13.0,
+          13.5,
+          14.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.2857142857142857,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 17,
+      "bottom_index": 22,
+      "end_index": 31,
+      "start_frame": 102,
+      "bottom_frame": 144,
+      "end_frame": 204,
+      "sampled_rows": 15,
+      "descent_rows": 6,
+      "ascent_rows": 10,
+      "source_span": 102,
+      "source_descent_span": 42,
+      "source_ascent_span": 60,
+      "threshold": 157.48437348358527,
+      "bottom_knee": 41.183415669467216,
+      "video_id": "48853_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          17.0,
+          17.416666666666668,
+          17.833333333333332,
+          18.25
+        ],
+        "descent": [
+          17.0,
+          17.714285714285715,
+          18.428571428571427,
+          19.142857142857142,
+          19.857142857142858,
+          20.571428571428573,
+          21.285714285714285,
+          22.0
+        ],
+        "bottom": [
+          21.25,
+          21.775,
+          22.3,
+          22.825000000000003,
+          23.35
+        ],
+        "ascent": [
+          22.0,
+          23.285714285714285,
+          24.571428571428573,
+          25.857142857142858,
+          27.142857142857142,
+          28.42857142857143,
+          29.714285714285715,
+          31.0
+        ],
+        "finish": [
+          28.75,
+          29.5,
+          30.25,
+          31.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.6,
+      "ascent_inward_fraction": 0.6
+    },
+    {
+      "start_index": 9,
+      "bottom_index": 13,
+      "end_index": 17,
+      "start_frame": 54,
+      "bottom_frame": 78,
+      "end_frame": 102,
+      "sampled_rows": 9,
+      "descent_rows": 5,
+      "ascent_rows": 5,
+      "source_span": 48,
+      "source_descent_span": 24,
+      "source_ascent_span": 24,
+      "threshold": 103.55729620143843,
+      "bottom_knee": 81.71789493848128,
+      "video_id": "46626_4",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          9.0,
+          9.333333333333334,
+          9.666666666666666,
+          10.0
+        ],
+        "descent": [
+          9.0,
+          9.571428571428571,
+          10.142857142857142,
+          10.714285714285714,
+          11.285714285714285,
+          11.857142857142858,
+          12.428571428571429,
+          13.0
+        ],
+        "bottom": [
+          12.4,
+          12.7,
+          13.0,
+          13.3,
+          13.6
+        ],
+        "ascent": [
+          13.0,
+          13.571428571428571,
+          14.142857142857142,
+          14.714285714285714,
+          15.285714285714285,
+          15.857142857142858,
+          16.428571428571427,
+          17.0
+        ],
+        "finish": [
+          16.0,
+          16.333333333333332,
+          16.666666666666668,
+          17.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 0.0,
+      "ascent_inward_fraction": 0.0
+    },
+    {
+      "start_index": 10,
+      "bottom_index": 15,
+      "end_index": 19,
+      "start_frame": 60,
+      "bottom_frame": 114,
+      "end_frame": 138,
+      "sampled_rows": 10,
+      "descent_rows": 6,
+      "ascent_rows": 5,
+      "source_span": 78,
+      "source_descent_span": 54,
+      "source_ascent_span": 24,
+      "threshold": 149.2522193704481,
+      "bottom_knee": 128.7761952140767,
+      "video_id": "33676_1",
+      "chunk_index": 1,
+      "rep_index": 1,
+      "phase_positions": {
+        "setup": [
+          10.0,
+          10.416666666666666,
+          10.833333333333334,
+          11.25
+        ],
+        "descent": [
+          10.0,
+          10.714285714285714,
+          11.428571428571429,
+          12.142857142857142,
+          12.857142857142858,
+          13.571428571428571,
+          14.285714285714285,
+          15.0
+        ],
+        "bottom": [
+          14.25,
+          14.5875,
+          14.925,
+          15.2625,
+          15.6
+        ],
+        "ascent": [
+          15.0,
+          15.571428571428571,
+          16.142857142857142,
+          16.714285714285715,
+          17.285714285714285,
+          17.857142857142858,
+          18.428571428571427,
+          19.0
+        ],
+        "finish": [
+          18.0,
+          18.333333333333332,
+          18.666666666666668,
+          19.0
+        ]
+      },
+      "resampled_point_count": 29,
+      "ascent_forward_fraction": 1.0,
+      "ascent_inward_fraction": 0.0
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+============================================================================
+TRAIN
+============================================================================
+videos: 100
+chunks examined: 102
+videos with reps: 5
+detected reps: 5
+fixed points per rep: 29
+states at 0.5: {'neither': 3, 'both': 1, 'forward_only': 1}
+sampled rows: {'count': 5, 'min': 9.0, 'p10': 9.4, 'median': 10.0, 'p90': 13.8, 'max': 15.0}
+source span: {'count': 5, 'min': 48.0, 'p10': 50.4, 'median': 66.0, 'p90': 92.4, 'max': 102.0}
+source descent span: {'count': 5, 'min': 24.0, 'p10': 26.4, 'median': 30.0, 'p90': 49.2, 'max': 54.0}
+source ascent span: {'count': 5, 'min': 24.0, 'p10': 24.0, 'median': 24.0, 'p90': 50.4, 'max': 60.0}
+bottom knee: {'count': 5, 'min': 41.183, 'p10': 44.288, 'median': 76.944, 'p90': 109.953, 'max': 128.776}
+forward ascent fractions: {'count': 5, 'min': 0.0, 'p10': 0.0, 'median': 0.286, 'p90': 0.84, 'max': 1.0}
+inward ascent fractions: {'count': 5, 'min': 0.0, 'p10': 0.0, 'median': 0.0, 'p90': 0.36, 'max': 0.6}
+
+Rejections:
+threshold_window_lt_5 122
+descent_span_lt_4 47
+ascent_span_lt_4 24
+chunk_too_short 7
+
+Saved: ml/analysis_quality/fitness_aqa_squat/knee_v10_boundary_audit_train_5fps.json

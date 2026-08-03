@@ -1,0 +1,27 @@
+============================================================================
+TRAIN
+============================================================================
+videos: 100
+chunks examined: 101
+videos with reps: 37
+detected reps: 37
+fixed points per rep: 29
+states at 0.5: {'neither': 24, 'forward_only': 9, 'both': 3, 'inward_only': 1}
+sampled rows: {'count': 37, 'min': 10.0, 'p10': 12.0, 'median': 14.0, 'p90': 19.0, 'max': 28.0}
+source span: {'count': 37, 'min': 30.0, 'p10': 33.0, 'median': 39.0, 'p90': 61.2, 'max': 102.0}
+source descent span: {'count': 37, 'min': 12.0, 'p10': 12.0, 'median': 15.0, 'p90': 30.0, 'max': 45.0}
+source ascent span: {'count': 37, 'min': 12.0, 'p10': 15.0, 'median': 21.0, 'p90': 37.2, 'max': 57.0}
+bottom knee: {'count': 37, 'min': 2.533, 'p10': 39.197, 'median': 58.344, 'p90': 81.612, 'max': 92.188}
+forward ascent fractions: {'count': 37, 'min': 0.0, 'p10': 0.0, 'median': 0.0, 'p90': 1.0, 'max': 1.0}
+inward ascent fractions: {'count': 37, 'min': 0.0, 'p10': 0.0, 'median': 0.0, 'p90': 0.372, 'max': 0.688}
+
+Rejections:
+threshold_window_lt_5 166
+descent_span_lt_4 43
+opening_source_span_lt_30 19
+source_span_lt_20 16
+ascent_span_lt_4 16
+opening_pose_artifact 3
+chunk_too_short 1
+
+Saved: ml/analysis_quality/fitness_aqa_squat/knee_v10_boundary_audit_train_10fps.json
