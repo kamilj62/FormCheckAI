@@ -1,0 +1,23 @@
+{
+  "train": {
+    "records": 1135,
+    "knees_forward_positive": 776,
+    "knees_inward_positive": 162,
+    "shallow_labeled": 435,
+    "shallow_positive_video": 334
+  },
+  "validation": {
+    "records": 243,
+    "knees_forward_positive": 167,
+    "knees_inward_positive": 34,
+    "shallow_labeled": 93,
+    "shallow_positive_video": 71
+  },
+  "test": {
+    "records": 245,
+    "knees_forward_positive": 166,
+    "knees_inward_positive": 36,
+    "shallow_labeled": 95,
+    "shallow_positive_video": 73
+  }
+}

@@ -474,6 +474,13 @@ def extract_features_and_biomechanics(results):
 
         "wrist_x": safe_float(wrist_mid[0]),
 
+        # Camera-view reliability signals. In a side view, paired left/right
+        # landmarks overlap horizontally, making the valgus ratio unreliable.
+        "shoulder_width_x": safe_float(abs(left_shoulder[0] - right_shoulder[0])),
+        "hip_width_x": safe_float(abs(left_hip[0] - right_hip[0])),
+        "knee_width_x": safe_float(abs(left_knee[0] - right_knee[0])),
+        "ankle_width_x": safe_float(abs(left_ankle[0] - right_ankle[0])),
+
         "shoulder_hip_distance": safe_float(np.linalg.norm(shoulder_mid - hip_mid)),
         "hip_knee_distance": safe_float(np.linalg.norm(hip_mid - knee_mid)),
         "wrist_shoulder_distance": safe_float(np.linalg.norm(wrist_mid - shoulder_mid)),
@@ -1399,6 +1406,41 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
     wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
     shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
 
+    shoulder_widths = np.array([
+        b.get("shoulder_width_x", 0.0) for b in biomechanics
+    ])
+    hip_widths = np.array([
+        b.get("hip_width_x", 0.0) for b in biomechanics
+    ])
+    knee_widths = np.array([
+        b.get("knee_width_x", 0.0) for b in biomechanics
+    ])
+    ankle_widths = np.array([
+        b.get("ankle_width_x", 0.0) for b in biomechanics
+    ])
+    torso_lengths = np.array([
+        b.get("shoulder_hip_distance", 0.0) for b in biomechanics
+    ])
+
+    # Determine camera-view reliability once for the entire clip. Camera
+    # orientation should not switch between individual reps because of
+    # temporary landmark noise.
+    valid_torso_lengths = np.maximum(torso_lengths, 1e-4)
+
+    # Use a lower robust percentile because standing transitions and occasional
+    # landmark swaps can temporarily inflate apparent left/right body width.
+    clip_shoulder_width_ratio = float(
+        np.percentile(shoulder_widths / valid_torso_lengths, 25)
+    )
+    clip_hip_width_ratio = float(
+        np.percentile(hip_widths / valid_torso_lengths, 25)
+    )
+
+    clip_side_view_valgus_unreliable = (
+        clip_shoulder_width_ratio <= 0.10
+        and clip_hip_width_ratio <= 0.12
+    )
+
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
@@ -1651,11 +1693,45 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 # Reject a short opening fragment when recording begins during
                 # setup or partway through a movement. Preserve genuine reps
                 # filmed from the beginning when they contain a full cycle.
-                if (
-                    descent_span < 4
-                    or ascent_span < 4
-                    or (starts_near_video_open and source_span < 30)
-                ):
+                opening_candidate_knee = knee_angles[start:end + 1]
+                opening_candidate_torso = torso_angles[start:end + 1]
+
+                opening_pose_artifact = (
+                    starts_near_video_open
+                    and (
+                        float(
+                            np.percentile(
+                                np.clip(opening_candidate_knee, 45, 180),
+                                20,
+                            )
+                        ) <= 45.5
+                        or float(
+                            np.percentile(
+                                np.clip(opening_candidate_torso, 0, 90),
+                                75,
+                            )
+                        ) >= 89.5
+                    )
+                )
+
+                rejection_reasons = []
+
+                if descent_span < 4:
+                    rejection_reasons.append("descent_span_lt_4")
+
+                if ascent_span < 4:
+                    rejection_reasons.append("ascent_span_lt_4")
+
+                if source_span < 20:
+                    rejection_reasons.append("source_span_lt_20")
+
+                if starts_near_video_open and source_span < 30:
+                    rejection_reasons.append("opening_source_span_lt_30")
+
+                if opening_pose_artifact:
+                    rejection_reasons.append("opening_pose_artifact")
+
+                if rejection_reasons:
                     in_rep = False
                     continue
 
@@ -1672,6 +1748,12 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
             rep_shoulder_y = shoulder_y[start:end + 1]
             rep_wrist_x = wrist_x[start:end + 1]
             rep_shoulder_x = shoulder_x[start:end + 1]
+
+            rep_shoulder_width = shoulder_widths[start:end + 1]
+            rep_hip_width = hip_widths[start:end + 1]
+            rep_knee_width = knee_widths[start:end + 1]
+            rep_ankle_width = ankle_widths[start:end + 1]
+            rep_torso_length = torso_lengths[start:end + 1]
 
             if not is_front_squat:
                 bottom = start + int(np.argmin(rep_knee))
@@ -1695,6 +1777,21 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
             max_heel_lift = float(np.percentile(clean_heel, 90))
             neck_drop_score = float(np.percentile(clean_head_drop, 85))
             neck_forward_score = float(np.percentile(clean_head_forward, 85))
+
+            safe_torso_length = np.maximum(rep_torso_length, 1e-4)
+
+            shoulder_width_ratio = float(
+                np.percentile(rep_shoulder_width / safe_torso_length, 50)
+            )
+            hip_width_ratio = float(
+                np.percentile(rep_hip_width / safe_torso_length, 50)
+            )
+            knee_width_ratio = float(
+                np.percentile(rep_knee_width / safe_torso_length, 50)
+            )
+            ankle_width_ratio = float(
+                np.percentile(rep_ankle_width / safe_torso_length, 50)
+            )
 
             issues = []
             feedback = []
@@ -1722,9 +1819,12 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                     issues.append("Chest is collapsing forward in the front squat.")
                     feedback.append("Stay upright and keep elbows high through the bottom.")
             else:
-                if torso_score <= 60:
+                # Calibrated from manually reviewed back-squat clips:
+                # correct reps measured roughly 25–33 degrees, while the
+                # forward-lean fault clip measured roughly 35–50 degrees.
+                if torso_score <= 34:
                     torso_grade = "good"
-                elif torso_score <= 75:
+                elif torso_score <= 42:
                     torso_grade = "borderline"
                     issues.append("Chest/shoulders are starting to fall forward.")
                     feedback.append("Stay braced and keep your chest proud.")
@@ -1735,7 +1835,15 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                         "Keep your chest up, upper back tight, and shoulders stacked over the bar."
                     )
 
-            if valgus_score < 0.85:
+            side_view_valgus_unreliable = (
+                clip_side_view_valgus_unreliable
+            )
+
+            if side_view_valgus_unreliable:
+                # Left/right landmarks overlap in side-view footage, so the
+                # 2D valgus ratio cannot reliably assess knee tracking.
+                knees_grade = "not_assessed"
+            elif valgus_score < 0.85:
                 knees_grade = "poor"
                 issues.append("Knees cave inward noticeably.")
                 feedback.append("Drive knees out over your toes.")
@@ -1880,6 +1988,19 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 "grade": grade_score(score),
                 "issues": issues,
                 "breakdown": breakdown,
+                "measurements": {
+                    "depth_knee_p20": round(min_knee, 3),
+                    "torso_p75": round(torso_score, 3),
+                    "valgus_p25": round(valgus_score, 3),
+                    "heel_lift_p90": round(max_heel_lift, 4),
+                    "neck_drop_p85": round(neck_drop_score, 4),
+                    "neck_forward_p85": round(neck_forward_score, 4),
+                    "shoulder_width_ratio": round(shoulder_width_ratio, 4),
+                    "hip_width_ratio": round(hip_width_ratio, 4),
+                    "knee_width_ratio": round(knee_width_ratio, 4),
+                    "ankle_width_ratio": round(ankle_width_ratio, 4),
+                    "valgus_reliable": not side_view_valgus_unreliable,
+                },
                 "feedback": feedback,
             }
 
@@ -9026,6 +9147,33 @@ def extract_video_biomechanics(video_path, sample_every=1):
                     results = fallback_results
 
             lm = results.pose_landmarks.landmark
+
+            # Reject impossible MediaPipe coordinates before they initialize or
+            # update subject continuity. A corrupted opening pose can otherwise
+            # place the tracked subject far outside the image and cause nearly
+            # every subsequent valid frame to fail the center-jump guard.
+            continuity_core_indices = [
+                mp_pose.PoseLandmark.LEFT_SHOULDER.value,
+                mp_pose.PoseLandmark.RIGHT_SHOULDER.value,
+                mp_pose.PoseLandmark.LEFT_HIP.value,
+                mp_pose.PoseLandmark.RIGHT_HIP.value,
+                mp_pose.PoseLandmark.LEFT_KNEE.value,
+                mp_pose.PoseLandmark.RIGHT_KNEE.value,
+                mp_pose.PoseLandmark.LEFT_ANKLE.value,
+                mp_pose.PoseLandmark.RIGHT_ANKLE.value,
+            ]
+
+            continuity_core_valid = all(
+                np.isfinite(lm[idx].x)
+                and np.isfinite(lm[idx].y)
+                and -0.15 <= lm[idx].x <= 1.15
+                and -0.15 <= lm[idx].y <= 1.15
+                for idx in continuity_core_indices
+            )
+
+            if not continuity_core_valid:
+                continue
+
             pts = [
                 lm[mp_pose.PoseLandmark.LEFT_SHOULDER.value],
                 lm[mp_pose.PoseLandmark.RIGHT_SHOULDER.value],
@@ -9052,11 +9200,10 @@ def extract_video_biomechanics(video_path, sample_every=1):
                 # identity and normal squat motion can otherwise look like an
                 # invalid center/area jump after crop-to-frame remapping.
                 if not USE_YOLO_TRACKING:
-                    if (
-                        jump > 0.22
-                        or area_ratio < 0.45
-                        or area_ratio > 2.2
-                    ):
+                    # Shoulder/hip bounding-box area is unstable in side-view
+                    # squats as the torso folds and the shoulders overlap.
+                    # Reject only an implausibly large subject-center jump.
+                    if jump > 0.35:
                         continue
 
                 subject_center = (
@@ -12306,6 +12453,13 @@ def analyze_video(
                     bodyweight_debug.get("wrist_above_shoulder_ratio", 1.0)
                 ) < 0.10
             )
+
+            strong_squat_consensus_for_bench_rescue = (
+                raw_label in {"squat", "squat_back", "squat_front"}
+                and bio_label == "squat"
+                and squat_label in {"squat_back", "squat_front"}
+                and float(squat_conf or 0.0) >= 0.95
+            )
             if (
                 router_v5_label == "split_jerk"
                 and raw_label in {"squat", "deadlift"}
@@ -12332,6 +12486,7 @@ def analyze_video(
                 and not _looks_clean_only
                 and not _looks_cj
                 and not upright_curl_signature
+                and not strong_squat_consensus_for_bench_rescue
             ):
                 router_v5_label = "bench_press"
                 router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
@@ -12365,6 +12520,7 @@ def analyze_video(
                 and not _looks_clean_only
                 and not _looks_cj
                 and not upright_curl_signature
+                and not strong_squat_consensus_for_bench_rescue
             ):
                 router_v5_label = "bench_press"
                 router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)

@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+
+# Generated pose/features
+*.jsonl
+
+# Generated model artifacts
+models/
+*.joblib
+*.pkl
+*.keras
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Generated analysis outputs
+knee_video_analysis.json
+knee_inward_positive_test.json
+knee_model_results.txt
+knee_v2_results.txt
+
+# Local manifests contain absolute machine paths
+manifest.json
+unified_manifest.json
+train_manifest.json
+validation_manifest.json
+test_manifest.json
