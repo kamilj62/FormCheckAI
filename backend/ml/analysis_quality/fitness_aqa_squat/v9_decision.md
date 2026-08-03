@@ -115,3 +115,65 @@ Threshold 0.52 is retained as the conservative experimental forward threshold.
 - Do not integrate V9 into production-facing coaching yet.
 - Evaluate V9 on real gym clips and manually inspect false positives and false
   negatives before another model revision.
+
+## Real-clip shadow evaluation
+
+### Knee-valgus control
+
+Video:
+
+`Back Squat- knee valgus_gold.mp4`
+
+Results:
+
+- Pose rows: 196
+- Complete reps detected: 2
+- Forward scores: 0.2405 and 0.2766
+- Forward warnings at threshold 0.52: 0
+
+V9 correctly avoided confusing the detected valgus repetitions with a
+forward-knee fault. However, production analysis previously found nine
+repetitions, so V9 rep coverage was poor.
+
+### Forward-lean positive control
+
+Video:
+
+`Back squats- forward lean.mov`
+
+The original MOV had decoding/indexing problems and was converted to a
+constant-frame-rate MP4.
+
+Results with the training detector settings:
+
+- Pose rows: 100
+- Complete reps detected: 0
+- Main rejection: bottom_not_deep_enough
+
+Curve inspection showed that a valid squat occurred around frames 168-204,
+but the 5 FPS extraction provided only two descent rows and four ascent rows.
+
+A shadow-only minimum-phase override of two rows detected one repetition:
+
+- Frames: 168 -> 180 -> 204
+- Sampled rows: 7
+- Descent rows: 2
+- Ascent rows: 4
+- Forward score: 0.3776
+- Forward warning at threshold 0.52: no
+
+This is a false negative on a known forward-lean example. It is also outside
+the V9 training distribution, which required at least four sampled rows in
+each phase and at least nine rows per repetition.
+
+## Final V9 shadow decision
+
+- Do not lower the forward threshold below 0.52.
+- Do not deploy the V9 forward model.
+- Do not deploy the V9 inward model.
+- Do not replace production rep detection with the V9 detector.
+- Retain V9 as research evidence that complete-rep context is useful, but the
+  current 5 FPS sampling and variable-length phase representation are not
+  robust to fast real-world repetitions.
+- A future model should use production rep boundaries and fixed-length
+  phase resampling rather than minimum sampled-row requirements.
