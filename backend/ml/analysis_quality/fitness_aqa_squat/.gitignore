@@ -57,3 +57,13 @@ knee_interval_v8_results.txt
 v8_score_by_type_audit.txt
 v8_type_threshold_results.txt
 v8_type_threshold_evaluation.json
+knee_v9_rep_*.jsonl
+knee_v9_rep_*_metadata.json
+knee_v9_raw_pose_rep_audit_*.json
+knee_v9_raw_pose_rep_audit_*.txt
+knee_v9_phase_label_audit_*.json
+knee_v9_phase_label_audit_*.txt
+knee_rep_v9_*_predictions.jsonl
+knee_rep_v9_results.txt
+knee_v9_constrained_thresholds.json
+knee_v9_constrained_thresholds.txt
