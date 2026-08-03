@@ -31,3 +31,5 @@ knee_joint_v4_results.txt
 knee_joint_v5_results.txt
 v2_feature_separation_report.json
 v2_feature_separation_results.txt
+knee_interval_v6_results.txt
+knee_interval_v6_test_predictions.jsonl
