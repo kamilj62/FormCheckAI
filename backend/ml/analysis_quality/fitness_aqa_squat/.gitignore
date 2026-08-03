@@ -29,3 +29,5 @@ test_manifest.json
 knee_forward_v3_results.txt
 knee_joint_v4_results.txt
 knee_joint_v5_results.txt
+v2_feature_separation_report.json
+v2_feature_separation_results.txt
