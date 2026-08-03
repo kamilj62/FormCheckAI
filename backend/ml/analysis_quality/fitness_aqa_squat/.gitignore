@@ -48,3 +48,12 @@ v6_xz_view_audit_results.txt
 v6_xz_view_audit_*.json
 v6_hard_negative_sheets/
 v6_pose_diagnostic_sheets/
+knee_v8_phase_*.jsonl
+knee_v8_phase_*_metadata.json
+knee_v8_masked_*.jsonl
+knee_v8_masked_*_metadata.json
+knee_interval_v8_*_predictions.jsonl
+knee_interval_v8_results.txt
+v8_score_by_type_audit.txt
+v8_type_threshold_results.txt
+v8_type_threshold_evaluation.json
