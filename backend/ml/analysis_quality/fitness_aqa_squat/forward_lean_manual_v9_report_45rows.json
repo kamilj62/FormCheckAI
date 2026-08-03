@@ -1,0 +1,262 @@
+{
+  "version": "forward_lean_manual_v9_extratrees_v1",
+  "status": "shadow_only",
+  "test_split_used": false,
+  "threshold": 0.5,
+  "feature_count": 709,
+  "train_rows": 45,
+  "validation_rows": 15,
+  "train": {
+    "accuracy": 1.0,
+    "balanced_accuracy": 1.0,
+    "roc_auc": 1.0,
+    "confusion_matrix": [
+      [
+        24,
+        0
+      ],
+      [
+        0,
+        21
+      ]
+    ],
+    "per_class": {
+      "clear": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 24
+      },
+      "excessive_forward_lean": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 21
+      }
+    },
+    "classification_report": {
+      "clear": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 24.0
+      },
+      "excessive_forward_lean": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 21.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 45.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 45.0
+      }
+    }
+  },
+  "validation": {
+    "accuracy": 0.7333333333333333,
+    "balanced_accuracy": 0.6944444444444444,
+    "roc_auc": 0.8333333333333334,
+    "confusion_matrix": [
+      [
+        3,
+        3
+      ],
+      [
+        1,
+        8
+      ]
+    ],
+    "per_class": {
+      "clear": {
+        "precision": 0.75,
+        "recall": 0.5,
+        "f1": 0.6,
+        "support": 6
+      },
+      "excessive_forward_lean": {
+        "precision": 0.7272727272727273,
+        "recall": 0.8888888888888888,
+        "f1": 0.8,
+        "support": 9
+      }
+    },
+    "classification_report": {
+      "clear": {
+        "precision": 0.75,
+        "recall": 0.5,
+        "f1-score": 0.6,
+        "support": 6.0
+      },
+      "excessive_forward_lean": {
+        "precision": 0.7272727272727273,
+        "recall": 0.8888888888888888,
+        "f1-score": 0.8,
+        "support": 9.0
+      },
+      "accuracy": 0.7333333333333333,
+      "macro avg": {
+        "precision": 0.7386363636363636,
+        "recall": 0.6944444444444444,
+        "f1-score": 0.7,
+        "support": 15.0
+      },
+      "weighted avg": {
+        "precision": 0.7363636363636364,
+        "recall": 0.7333333333333333,
+        "f1-score": 0.7200000000000001,
+        "support": 15.0
+      }
+    }
+  },
+  "majority_baseline": {
+    "predicted_class": 0,
+    "balanced_accuracy": 0.5
+  },
+  "validation_predictions": [
+    {
+      "candidate_number": 61,
+      "video_id": "46725_1",
+      "review_label": "clear",
+      "review_confidence": "high",
+      "score": 0.4782162353836783,
+      "prediction": "clear",
+      "correct": true
+    },
+    {
+      "candidate_number": 62,
+      "video_id": "36808_1",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.47954363822222296,
+      "prediction": "clear",
+      "correct": false
+    },
+    {
+      "candidate_number": 63,
+      "video_id": "33868_1",
+      "review_label": "clear",
+      "review_confidence": "high",
+      "score": 0.5454090308886844,
+      "prediction": "excessive_forward_lean",
+      "correct": false
+    },
+    {
+      "candidate_number": 64,
+      "video_id": "50214_1",
+      "review_label": "clear",
+      "review_confidence": "high",
+      "score": 0.6811119805589856,
+      "prediction": "excessive_forward_lean",
+      "correct": false
+    },
+    {
+      "candidate_number": 65,
+      "video_id": "46217_1",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.6844366541291486,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 68,
+      "video_id": "47487_2",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.5672510940914335,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 69,
+      "video_id": "47672_4",
+      "review_label": "clear",
+      "review_confidence": "medium",
+      "score": 0.3112052075041335,
+      "prediction": "clear",
+      "correct": true
+    },
+    {
+      "candidate_number": 71,
+      "video_id": "49891_1",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.5673499948356291,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 72,
+      "video_id": "50300_2",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.5526306713348952,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 73,
+      "video_id": "50400_2",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.6754190131864425,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 74,
+      "video_id": "49125_1",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.5832328649097658,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 76,
+      "video_id": "46810_8",
+      "review_label": "clear",
+      "review_confidence": "medium",
+      "score": 0.5189418857649782,
+      "prediction": "excessive_forward_lean",
+      "correct": false
+    },
+    {
+      "candidate_number": 77,
+      "video_id": "48439_3",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.6131552169837492,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 78,
+      "video_id": "49372_10",
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.7128717307467208,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 79,
+      "video_id": "46093_1",
+      "review_label": "clear",
+      "review_confidence": "medium",
+      "score": 0.344805416799047,
+      "prediction": "clear",
+      "correct": true
+    }
+  ]
+}

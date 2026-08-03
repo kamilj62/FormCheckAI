@@ -1,0 +1,36 @@
+{
+  "version": "forward_lean_manual_v9_v1",
+  "source_features": "knee_v9_rep",
+  "feature_count": 709,
+  "label_mapping": {
+    "clear": 0,
+    "excessive_forward_lean": 1
+  },
+  "excluded_labels": [
+    "uncertain",
+    "unusable"
+  ],
+  "test_split_used": false,
+  "train": {
+    "rows": 40,
+    "labels": {
+      "excessive_forward_lean": 21,
+      "clear": 19
+    },
+    "confidence": {
+      "medium": 26,
+      "high": 14
+    }
+  },
+  "validation": {
+    "rows": 15,
+    "labels": {
+      "clear": 6,
+      "excessive_forward_lean": 9
+    },
+    "confidence": {
+      "high": 8,
+      "medium": 7
+    }
+  }
+}
