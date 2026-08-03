@@ -67,3 +67,5 @@ knee_rep_v9_*_predictions.jsonl
 knee_rep_v9_results.txt
 knee_v9_constrained_thresholds.json
 knee_v9_constrained_thresholds.txt
+knee_v9_rep_audit_*.json
+knee_v9_rep_audit_*.txt
