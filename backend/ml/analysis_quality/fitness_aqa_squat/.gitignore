@@ -41,3 +41,10 @@ v6_xz_view_audit_results.txt
 v6_xz_view_audit_*.json
 v6_hard_negative_sheets/
 v6_pose_diagnostic_sheets/
+annotation_consistency_*.json
+v6_false_forward_feature_audit.json
+v6_false_forward_feature_audit.txt
+v6_xz_view_audit_results.txt
+v6_xz_view_audit_*.json
+v6_hard_negative_sheets/
+v6_pose_diagnostic_sheets/
