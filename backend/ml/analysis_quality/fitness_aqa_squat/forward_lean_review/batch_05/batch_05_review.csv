@@ -1,0 +1,13 @@
+candidate_number,split,candidate_group,video_id,video_path,rep_index,start_frame,bottom_frame,end_frame,ranking_score,review_label,review_confidence,review_notes
+49,train,low,47717_1,/Users/josephkamil/Desktop/Capstone/videos/videos/47717_1.mp4,0,54,96,126,15.33570303916931,unusable,high,Rear-quarter view does not show sagittal torso motion reliably.
+50,train,low,47243_15,/Users/josephkamil/Desktop/Capstone/videos/videos/47243_15.mp4,0,12,36,66,15.10275287628174,unusable,high,Mostly rear view; forward torso displacement cannot be judged.
+51,train,low,50438_3,/Users/josephkamil/Desktop/Capstone/videos/videos/50438_3.mp4,0,6,36,60,14.1116543546319,unusable,high,Rear view prevents reliable torso-angle assessment.
+52,train,low,47018_1,/Users/josephkamil/Desktop/Capstone/videos/videos/47018_1.mp4,0,36,72,114,13.849457943439484,clear,medium,Usable side-quarter view; torso appears stable through bottom and ascent.
+53,train,low,32995_3,/Users/josephkamil/Desktop/Capstone/videos/videos/32995_3.mp4,0,36,108,162,12.633182072639464,excessive_forward_lean,medium,Torso appears markedly inclined and remains forward during ascent.
+54,train,low,46984_2,/Users/josephkamil/Desktop/Capstone/videos/videos/46984_2.mp4,0,12,180,354,12.594178009033204,unusable,high,Rear view and unusually long detected interval make the sample unsuitable.
+55,train,low,49712_1,/Users/josephkamil/Desktop/Capstone/videos/videos/49712_1.mp4,0,24,60,102,12.421244764328003,unusable,high,Rear-quarter framing does not support confident sagittal assessment.
+56,train,low,48537_1,/Users/josephkamil/Desktop/Capstone/videos/videos/48537_1.mp4,0,6,48,138,12.094554924964905,excessive_forward_lean,medium,Pronounced torso inclination persists from bottom into ascent.
+57,train,low,46865_1,/Users/josephkamil/Desktop/Capstone/videos/videos/46865_1.mp4,0,6,30,66,11.990276828408241,excessive_forward_lean,medium,Forward torso position appears excessive through the sticking region.
+58,train,low,37908_2,/Users/josephkamil/Desktop/Capstone/videos/videos/37908_2.mp4,0,0,60,108,11.757409870624542,unusable,high,Rear view prevents dependable forward-lean judgment.
+59,train,low,36730_1,/Users/josephkamil/Desktop/Capstone/videos/videos/36730_1.mp4,0,48,78,144,9.242462587356568,unusable,high,Rear view does not expose the torso-hip relationship.
+60,train,low,46252_1,/Users/josephkamil/Desktop/Capstone/videos/videos/46252_1.mp4,0,0,60,126,7.825956761837006,unusable,high,Mostly rear view; sagittal movement is not visible enough.

@@ -1,0 +1,13 @@
+candidate_number,split,candidate_group,video_id,video_path,rep_index,start_frame,bottom_frame,end_frame,ranking_score,review_label,review_confidence,review_notes
+25,train,high,36309_3,/Users/josephkamil/Desktop/Capstone/videos/videos/36309_3.mp4,0,12,60,90,31.476043224334717,clear,medium,Torso inclination appears controlled and recovers without obvious chest collapse.
+26,train,high,46667_4,/Users/josephkamil/Desktop/Capstone/videos/videos/46667_4.mp4,0,6,36,84,31.446859264373778,excessive_forward_lean,medium,Torso remains strongly inclined from bottom into early ascent.
+27,train,high,48840_5,/Users/josephkamil/Desktop/Capstone/videos/videos/48840_5.mp4,0,6,42,78,31.313057231903077,excessive_forward_lean,medium,Noticeable forward pitch persists through the sticking region.
+28,train,high,45946_1,/Users/josephkamil/Desktop/Capstone/videos/videos/45946_1.mp4,0,6,42,198,31.164410481997766,uncertain,medium,Long detected interval and distant framing limit reliable ascent assessment.
+29,train,high,46109_1,/Users/josephkamil/Desktop/Capstone/videos/videos/46109_1.mp4,0,6,36,78,31.038161325454713,excessive_forward_lean,high,Pronounced forward torso position and apparent chest drop during ascent.
+30,train,high,48004_12,/Users/josephkamil/Desktop/Capstone/videos/videos/48004_12.mp4,0,6,30,72,30.728597927093503,clear,medium,Torso angle appears stable relative to setup and recovers normally.
+31,train,middle,36261_1,/Users/josephkamil/Desktop/Capstone/videos/videos/36261_1.mp4,0,6,36,180,29.214868450164797,uncertain,medium,Framing and obstruction make the torso-hip relationship ambiguous.
+32,train,middle,49053_3,/Users/josephkamil/Desktop/Capstone/videos/videos/49053_3.mp4,0,6,42,78,28.984140396118164,clear,high,Consistent upright torso position without an obvious forward collapse.
+33,train,middle,50091_1,/Users/josephkamil/Desktop/Capstone/videos/videos/50091_1.mp4,0,6,30,78,26.984734523296357,unusable,high,Rear-quarter view does not support reliable sagittal torso assessment.
+34,train,middle,50601_2,/Users/josephkamil/Desktop/Capstone/videos/videos/50601_2.mp4,0,0,48,120,26.85280590057373,clear,medium,Torso remains comparatively controlled despite the distant view.
+35,train,middle,49070_2,/Users/josephkamil/Desktop/Capstone/videos/videos/49070_2.mp4,0,6,54,120,26.100014257431027,clear,medium,Normal inclination without a clear excessive chest drop.
+36,train,middle,49203_1,/Users/josephkamil/Desktop/Capstone/videos/videos/49203_1.mp4,0,30,72,138,25.950347995758058,excessive_forward_lean,medium,Torso is markedly forward at bottom and remains inclined into ascent.

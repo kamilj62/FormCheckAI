@@ -1,0 +1,13 @@
+candidate_number,split,candidate_group,video_id,video_path,rep_index,start_frame,bottom_frame,end_frame,ranking_score,review_label,review_confidence,review_notes
+13,train,high,33503_2,/Users/josephkamil/Desktop/Capstone/videos/videos/33503_2.mp4,0,6,90,120,36.93769884109497,clear,medium,Torso remains comparatively stable through bottom and ascent.
+14,train,high,48638_2,/Users/josephkamil/Desktop/Capstone/videos/videos/48638_2.mp4,0,0,108,150,36.74527616500854,excessive_forward_lean,medium,Pronounced forward torso position persists during ascent.
+15,train,high,37958_1,/Users/josephkamil/Desktop/Capstone/videos/videos/37958_1.mp4,0,0,42,126,36.645223712921144,clear,medium,Inclination appears consistent with squat style without obvious chest collapse.
+16,train,high,46406_3,/Users/josephkamil/Desktop/Capstone/videos/videos/46406_3.mp4,0,0,42,66,35.30311994552613,clear,medium,Torso angle appears controlled across the repetition.
+17,train,high,50118_3,/Users/josephkamil/Desktop/Capstone/videos/videos/50118_3.mp4,0,6,54,108,34.701291847229,uncertain,medium,Rear-quarter angle and obstruction limit reliable chest-movement assessment.
+18,train,high,37069_1,/Users/josephkamil/Desktop/Capstone/videos/videos/37069_1.mp4,0,6,48,90,34.350956964492795,excessive_forward_lean,medium,Torso appears to pitch forward from bottom into ascent.
+19,train,high,36991_2,/Users/josephkamil/Desktop/Capstone/videos/videos/36991_2.mp4,0,18,66,138,33.2468321800232,unusable,high,Rear-quarter view does not support reliable sagittal torso assessment.
+20,train,high,47525_3,/Users/josephkamil/Desktop/Capstone/videos/videos/47525_3.mp4,0,6,30,60,32.514066028594975,excessive_forward_lean,high,Strong forward torso position and apparent chest drop through the sticking region.
+21,train,high,47251_1,/Users/josephkamil/Desktop/Capstone/videos/videos/47251_1.mp4,0,0,42,90,32.46391415596008,excessive_forward_lean,medium,Pronounced inclination appears to persist from bottom into ascent.
+22,train,high,48802_1,/Users/josephkamil/Desktop/Capstone/videos/videos/48802_1.mp4,0,6,42,102,32.30623610019684,unusable,high,Rear-quarter framing is insufficient for dependable forward-lean assessment.
+23,train,high,47649_1,/Users/josephkamil/Desktop/Capstone/videos/videos/47649_1.mp4,0,18,102,156,32.01712734103203,uncertain,medium,Spotter and close obstruction make the torso-hip relationship ambiguous.
+24,train,high,37902_1,/Users/josephkamil/Desktop/Capstone/videos/videos/37902_1.mp4,0,6,42,102,31.80771532058716,unusable,high,Mostly rear view; forward torso displacement is not reliably visible.

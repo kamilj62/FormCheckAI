@@ -1,0 +1,13 @@
+candidate_number,split,candidate_group,video_id,video_path,rep_index,start_frame,bottom_frame,end_frame,ranking_score,review_label,review_confidence,review_notes
+37,train,middle,33433_2,/Users/josephkamil/Desktop/Capstone/videos/videos/33433_2.mp4,0,6,42,96,25.27780046463013,unusable,high,Rear view does not support reliable sagittal torso assessment.
+38,train,middle,32990_6,/Users/josephkamil/Desktop/Capstone/videos/videos/32990_6.mp4,0,12,60,90,25.14654083251953,uncertain,medium,Static frames do not clearly distinguish normal inclination from chest collapse.
+39,train,middle,49516_1,/Users/josephkamil/Desktop/Capstone/videos/videos/49516_1.mp4,0,0,36,96,24.892279434204102,excessive_forward_lean,medium,Pronounced forward torso position appears to persist into ascent.
+40,train,middle,47140_1,/Users/josephkamil/Desktop/Capstone/videos/videos/47140_1.mp4,0,66,90,156,24.311562633514406,excessive_forward_lean,high,Clear forward torso pitch through bottom and the sticking region.
+41,train,middle,36772_6,/Users/josephkamil/Desktop/Capstone/videos/videos/36772_6.mp4,0,0,24,48,23.03706874847412,unusable,high,Mostly rear view; forward torso displacement is not reliably visible.
+42,train,middle,49045_2,/Users/josephkamil/Desktop/Capstone/videos/videos/49045_2.mp4,0,0,30,120,22.61587253808975,excessive_forward_lean,medium,Marked torso inclination appears to persist from bottom into ascent.
+43,train,middle,46745_2,/Users/josephkamil/Desktop/Capstone/videos/videos/46745_2.mp4,0,6,30,54,22.59416415691376,clear,medium,Torso remains comparatively controlled and returns without obvious collapse.
+44,train,middle,33297_2,/Users/josephkamil/Desktop/Capstone/videos/videos/33297_2.mp4,0,6,54,108,20.365637731552123,unusable,high,Front view is unsuitable for reliable sagittal forward-lean assessment.
+45,train,middle,33671_1,/Users/josephkamil/Desktop/Capstone/videos/videos/33671_1.mp4,0,54,78,120,19.277046775817873,clear,medium,Torso inclination appears modest and stable through the movement.
+46,train,low,45919_1,/Users/josephkamil/Desktop/Capstone/videos/videos/45919_1.mp4,0,54,84,126,17.527947974205016,uncertain,medium,Distant framing prevents a confident torso-hip assessment.
+47,train,low,46302_3,/Users/josephkamil/Desktop/Capstone/videos/videos/46302_3.mp4,0,6,42,72,17.326556766033175,clear,high,Consistent relatively upright torso position without obvious chest drop.
+48,train,low,50352_2,/Users/josephkamil/Desktop/Capstone/videos/videos/50352_2.mp4,0,6,42,102,17.28804724216461,unusable,high,Rear view prevents reliable assessment of forward torso movement.

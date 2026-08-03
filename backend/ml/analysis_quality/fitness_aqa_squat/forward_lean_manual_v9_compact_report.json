@@ -1,0 +1,189 @@
+{
+  "version": "forward_lean_manual_v9_compact_v1",
+  "status": "shadow_only",
+  "test_split_used": false,
+  "threshold": 0.5,
+  "feature_count": 24,
+  "feature_names": [
+    "torso_angle__setup_mean",
+    "torso_angle__descent_mean",
+    "torso_angle__bottom_mean",
+    "torso_angle__bottom_maximum",
+    "torso_angle__ascent_mean",
+    "torso_angle__ascent_maximum",
+    "torso_angle__finish_mean",
+    "torso_angle__setup_to_bottom",
+    "torso_angle__bottom_to_finish",
+    "torso_angle__setup_to_finish",
+    "torso_angle__descent_range",
+    "torso_angle__ascent_range",
+    "torso_angle__bottom_vs_rep_mean",
+    "torso_angle__ascent_vs_descent_mean",
+    "hip_y__setup_to_bottom",
+    "hip_y__bottom_to_finish",
+    "hip_y__ascent_range",
+    "hip_y__ascent_vs_descent_mean",
+    "shoulder_y__setup_to_bottom",
+    "shoulder_y__bottom_to_finish",
+    "shoulder_y__ascent_range",
+    "shoulder_y__ascent_vs_descent_mean",
+    "hip_angle__bottom_mean",
+    "knee_angle__bottom_mean"
+  ],
+  "train_rows": 34,
+  "validation_rows": 15,
+  "train": {
+    "balanced_accuracy": 0.9736842105263157,
+    "roc_auc": 0.9859649122807018,
+    "precision": 1.0,
+    "recall": 0.9473684210526315,
+    "confusion_matrix": [
+      [
+        15,
+        0
+      ],
+      [
+        1,
+        18
+      ]
+    ]
+  },
+  "validation": {
+    "balanced_accuracy": 0.5555555555555556,
+    "roc_auc": 0.6851851851851852,
+    "precision": 0.6666666666666666,
+    "recall": 0.4444444444444444,
+    "confusion_matrix": [
+      [
+        4,
+        2
+      ],
+      [
+        5,
+        4
+      ]
+    ]
+  },
+  "validation_predictions": [
+    {
+      "candidate_number": 61,
+      "review_label": "clear",
+      "review_confidence": "high",
+      "score": 0.2570232077062362,
+      "prediction": "clear",
+      "correct": true
+    },
+    {
+      "candidate_number": 62,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.6570927573755926,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 63,
+      "review_label": "clear",
+      "review_confidence": "high",
+      "score": 0.7296343007155484,
+      "prediction": "excessive_forward_lean",
+      "correct": false
+    },
+    {
+      "candidate_number": 64,
+      "review_label": "clear",
+      "review_confidence": "high",
+      "score": 0.3803738443246128,
+      "prediction": "clear",
+      "correct": true
+    },
+    {
+      "candidate_number": 65,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.4335055878384652,
+      "prediction": "clear",
+      "correct": false
+    },
+    {
+      "candidate_number": 68,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.49772582730824005,
+      "prediction": "clear",
+      "correct": false
+    },
+    {
+      "candidate_number": 69,
+      "review_label": "clear",
+      "review_confidence": "medium",
+      "score": 0.3232686396361145,
+      "prediction": "clear",
+      "correct": true
+    },
+    {
+      "candidate_number": 71,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.6042374898870742,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 72,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.5554137118144418,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 73,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.41148130419554735,
+      "prediction": "clear",
+      "correct": false
+    },
+    {
+      "candidate_number": 74,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.683818251868138,
+      "prediction": "excessive_forward_lean",
+      "correct": true
+    },
+    {
+      "candidate_number": 76,
+      "review_label": "clear",
+      "review_confidence": "medium",
+      "score": 0.6677117916237159,
+      "prediction": "excessive_forward_lean",
+      "correct": false
+    },
+    {
+      "candidate_number": 77,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "medium",
+      "score": 0.49181506116030344,
+      "prediction": "clear",
+      "correct": false
+    },
+    {
+      "candidate_number": 78,
+      "review_label": "excessive_forward_lean",
+      "review_confidence": "high",
+      "score": 0.4570811793509284,
+      "prediction": "clear",
+      "correct": false
+    },
+    {
+      "candidate_number": 79,
+      "review_label": "clear",
+      "review_confidence": "medium",
+      "score": 0.3365574244852817,
+      "prediction": "clear",
+      "correct": true
+    }
+  ]
+}
