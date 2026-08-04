@@ -13317,7 +13317,15 @@ def analyze_video(
             and raw_label == "push_press"
             and float(base_conf or 0.0) >= 0.40
             and bio_label == "squat"
-            and float(squat_conf or 0.0) < 0.60
+            and (
+                float(squat_conf or 0.0) < 0.60
+                or (
+                    float(base_conf or 0.0) >= 0.65
+                    and float(squat_conf or 0.0) >= 0.90
+                    and olympic_pred == "clean_and_jerk"
+                    and 0.80 <= float(olympic_conf or 0.0) < 0.85
+                )
+            )
             and bool(_looks_thruster)
             and not bool(_looks_cj)
             and not bool(_looks_split)
