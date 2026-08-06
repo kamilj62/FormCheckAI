@@ -442,11 +442,48 @@ def extract_features_and_biomechanics(results):
     elbow_mid = (left_elbow + right_elbow) / 2
     wrist_mid = (left_wrist + right_wrist) / 2
 
-    knee_angle = safe_float(angle(left_hip, left_knee, left_ankle))
-    hip_angle = safe_float(angle(left_shoulder, left_hip, left_knee))
-    elbow_angle = safe_float(angle(left_shoulder, left_elbow, left_wrist))
+    left_knee_angle = safe_float(
+        angle(left_hip, left_knee, left_ankle)
+    )
+    right_knee_angle = safe_float(
+        angle(right_hip, right_knee, right_ankle)
+    )
+    # Preserve the legacy analyzer signal. Existing rep analyzers were
+    # calibrated using the left-side angle.
+    knee_angle = left_knee_angle
 
-    torso_angle = safe_float(angle(shoulder_mid, hip_mid, hip_mid + np.array([0, -1])))
+    hip_angle = safe_float(
+        angle(left_shoulder, left_hip, left_knee)
+    )
+
+    left_elbow_angle = safe_float(
+        angle(left_shoulder, left_elbow, left_wrist)
+    )
+    right_elbow_angle = safe_float(
+        angle(right_shoulder, right_elbow, right_wrist)
+    )
+    # Preserve the legacy analyzer signal. The shadow model separately
+    # derives its bilateral average from the per-side fields.
+    elbow_angle = left_elbow_angle
+
+    torso_angle = safe_float(
+        angle(
+            shoulder_mid,
+            hip_mid,
+            hip_mid + np.array([0, -1]),
+        )
+    )
+
+    torso_dx = safe_float(shoulder_mid[0] - hip_mid[0])
+    torso_dy = safe_float(hip_mid[1] - shoulder_mid[1])
+    torso_lean = safe_float(
+        np.degrees(
+            np.arctan2(
+                abs(torso_dx),
+                max(abs(torso_dy), 1e-6),
+            )
+        )
+    )
 
     valgus_ratio = safe_float(
         np.clip(
@@ -456,11 +493,23 @@ def extract_features_and_biomechanics(results):
         )
     )
 
+    def landmark_visibility(name):
+        idx = mp_pose.PoseLandmark[name].value
+        return safe_float(landmarks[idx].visibility)
+
     biomechanics = {
         "knee_angle": knee_angle,
+        "left_knee_angle": left_knee_angle,
+        "right_knee_angle": right_knee_angle,
+
         "hip_angle": hip_angle,
+
         "elbow_angle": elbow_angle,
+        "left_elbow_angle": left_elbow_angle,
+        "right_elbow_angle": right_elbow_angle,
+
         "torso_angle": torso_angle,
+        "torso_lean": torso_lean,
 
         "hip_y": safe_float(hip_mid[1]),
         "knee_y": safe_float(knee_mid[1]),
@@ -473,6 +522,49 @@ def extract_features_and_biomechanics(results):
         "shoulder_x": safe_float(shoulder_mid[0]),
 
         "wrist_x": safe_float(wrist_mid[0]),
+
+        "left_shoulder_x": safe_float(left_shoulder[0]),
+        "left_shoulder_y": safe_float(left_shoulder[1]),
+        "right_shoulder_x": safe_float(right_shoulder[0]),
+        "right_shoulder_y": safe_float(right_shoulder[1]),
+
+        "left_elbow_x": safe_float(left_elbow[0]),
+        "left_elbow_y": safe_float(left_elbow[1]),
+        "right_elbow_x": safe_float(right_elbow[0]),
+        "right_elbow_y": safe_float(right_elbow[1]),
+
+        "left_wrist_x": safe_float(left_wrist[0]),
+        "left_wrist_y": safe_float(left_wrist[1]),
+        "right_wrist_x": safe_float(right_wrist[0]),
+        "right_wrist_y": safe_float(right_wrist[1]),
+
+        "left_hip_x": safe_float(left_hip[0]),
+        "left_hip_y": safe_float(left_hip[1]),
+        "right_hip_x": safe_float(right_hip[0]),
+        "right_hip_y": safe_float(right_hip[1]),
+
+        "left_knee_x": safe_float(left_knee[0]),
+        "left_knee_y": safe_float(left_knee[1]),
+        "right_knee_x": safe_float(right_knee[0]),
+        "right_knee_y": safe_float(right_knee[1]),
+
+        "left_ankle_x": safe_float(left_ankle[0]),
+        "left_ankle_y": safe_float(left_ankle[1]),
+        "right_ankle_x": safe_float(right_ankle[0]),
+        "right_ankle_y": safe_float(right_ankle[1]),
+
+        "visibility_left_shoulder": landmark_visibility("LEFT_SHOULDER"),
+        "visibility_right_shoulder": landmark_visibility("RIGHT_SHOULDER"),
+        "visibility_left_elbow": landmark_visibility("LEFT_ELBOW"),
+        "visibility_right_elbow": landmark_visibility("RIGHT_ELBOW"),
+        "visibility_left_wrist": landmark_visibility("LEFT_WRIST"),
+        "visibility_right_wrist": landmark_visibility("RIGHT_WRIST"),
+        "visibility_left_hip": landmark_visibility("LEFT_HIP"),
+        "visibility_right_hip": landmark_visibility("RIGHT_HIP"),
+        "visibility_left_knee": landmark_visibility("LEFT_KNEE"),
+        "visibility_right_knee": landmark_visibility("RIGHT_KNEE"),
+        "visibility_left_ankle": landmark_visibility("LEFT_ANKLE"),
+        "visibility_right_ankle": landmark_visibility("RIGHT_ANKLE"),
 
         "shoulder_hip_distance": safe_float(np.linalg.norm(shoulder_mid - hip_mid)),
         "hip_knee_distance": safe_float(np.linalg.norm(hip_mid - knee_mid)),
@@ -15077,7 +15169,57 @@ def analyze_video(
             rep_feedback, _ = analyze_bench_press_reps(biomech)
 
         elif final_label == "push_press":
-            rep_feedback, _ = analyze_push_press_reps(biomech, "push_press")
+            rep_feedback, _ = analyze_push_press_reps(
+                biomech,
+                "push_press",
+            )
+
+            # Shadow-only push-press quality models.
+            # These diagnostics do not alter scores, issues, feedback,
+            # grades, coaching zones, or exercise routing.
+            try:
+                from ml.analysis_quality.push_press_quality.shadow_inference import (
+                    score_push_press_rep,
+                )
+
+                shadow_analysis_fps = float(
+                    debug.get("analysis_fps", 30.0)
+                )
+
+                for rep in rep_feedback or []:
+                    # Skip synthetic fallback reps that do not have
+                    # biomechanically detected phase anchors.
+                    required_phase_keys = (
+                        "dip_frame",
+                        "drive_frame",
+                        "lockout_frame",
+                    )
+
+                    if not all(
+                        isinstance(rep.get(key), (int, float))
+                        for key in required_phase_keys
+                    ):
+                        rep["push_press_quality_shadow"] = {
+                            "available": False,
+                            "reason": "missing_phase_anchors",
+                        }
+                        continue
+
+                    rep["push_press_quality_shadow"] = (
+                        score_push_press_rep(
+                            biomechanics=biomech,
+                            rep=rep,
+                            analysis_fps=shadow_analysis_fps,
+                        )
+                    )
+
+            except Exception as shadow_error:
+                for rep in rep_feedback or []:
+                    rep["push_press_quality_shadow"] = {
+                        "available": False,
+                        "reason": "shadow_inference_error",
+                        "error": str(shadow_error),
+                    }
 
         elif final_label == "thruster":
             rep_feedback, _ = analyze_push_press_reps(biomech, "thruster")
