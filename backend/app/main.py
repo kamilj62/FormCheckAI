@@ -8813,6 +8813,13 @@ def extract_video_biomechanics(video_path, sample_every=1):
     """
     cap = cv2.VideoCapture(video_path)
 
+    source_fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+    if not np.isfinite(source_fps) or source_fps <= 0.0:
+        source_fps = 30.0
+
+    safe_sample_every = max(1, int(sample_every or 1))
+    analysis_fps = source_fps / safe_sample_every
+
     if not cap.isOpened():
         return [], [], {
             "error": "video_not_opened",
@@ -8876,7 +8883,7 @@ def extract_video_biomechanics(video_path, sample_every=1):
                 break
 
             frame_idx += 1
-            if frame_idx % sample_every != 0:
+            if frame_idx % safe_sample_every != 0:
                 continue
 
             analysis_frame = frame
