@@ -1,0 +1,41 @@
+{
+  "target": "elbow_error",
+  "model_version": "push_press_elbow_candidate_v1",
+  "source_model": "elbow_error_baseline.joblib",
+  "old_threshold": 0.20499999999999996,
+  "selected_threshold": 0.545,
+  "validation": {
+    "confusion_matrix": [
+      [
+        234,
+        15
+      ],
+      [
+        12,
+        74
+      ]
+    ],
+    "balanced_accuracy": 0.9001,
+    "precision": 0.8315,
+    "recall": 0.8605,
+    "specificity": 0.9398,
+    "f1": 0.8457
+  },
+  "test": {
+    "confusion_matrix": [
+      [
+        226,
+        21
+      ],
+      [
+        13,
+        72
+      ]
+    ],
+    "balanced_accuracy": 0.881,
+    "precision": 0.7742,
+    "recall": 0.8471,
+    "specificity": 0.915,
+    "f1": 0.809
+  }
+}
