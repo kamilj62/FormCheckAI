@@ -1022,6 +1022,8 @@ const saveAnalysisHistory = async (
       set_summary: analysis.set_summary || {},
       rep_feedback: analysis.rep_feedback || [],
       coaching_zones: analysis.coaching_zones || [],
+
+      knee_tracking: analysis.knee_tracking || null,
     };
 
     const existing =
@@ -2522,6 +2524,70 @@ export default function App() {
                 </View>
               </View>
             </View>
+
+            {result?.knee_tracking?.status === "issue_detected" && (
+
+              <View style={styles.warningCard}>
+
+                <Text style={styles.warningTitle}>Knee Tracking</Text>
+
+
+                <Text style={styles.warningText}>
+
+                  {result.knee_tracking.message}
+
+                </Text>
+
+
+                {result.knee_tracking.coaching && (
+
+                  <Text style={styles.warningText}>
+
+                    {result.knee_tracking.coaching}
+
+                  </Text>
+
+                )}
+
+
+                {result.knee_tracking.rep_localized &&
+
+                  result.knee_tracking.rep != null && (
+
+                    <Text style={styles.warningText}>
+
+                      Detected around Rep {result.knee_tracking.rep}
+
+                    </Text>
+
+                  )}
+
+              </View>
+
+            )}
+
+
+            {result?.knee_tracking?.status === "not_assessable" && (
+
+              <View style={styles.warningCard}>
+
+                <Text style={styles.warningTitle}>
+
+                  Knee Tracking Not Assessed
+
+                </Text>
+
+
+                <Text style={styles.warningText}>
+
+                  {result.knee_tracking.message}
+
+                </Text>
+
+              </View>
+
+            )}
+
 
             {visualsLoading && (
               <View style={styles.warningCard}>

@@ -9135,6 +9135,7 @@ def extract_video_biomechanics(video_path, sample_every=1):
         "frames_processed": len(sequence),
         "pose_frames": pose_frames,
         "total_frames": total_frames,
+        "analysis_fps": float(analysis_fps),
     }
 
 
@@ -9316,6 +9317,7 @@ def build_final_analysis_response(
     final_conf,
     analysis_mode,
     rep_feedback,
+    analysis_fps,
     predicted_exercise,
     normalized_forced_label,
     olympic_pred,
@@ -9372,8 +9374,100 @@ def build_final_analysis_response(
     """Build the public analysis result and router diagnostics."""
     resolved_label = final_label or "unknown"
 
+    if resolved_label not in {
+        "squat_back",
+        "squat_front",
+        "overhead_squat",
+    }:
+        knee_tracking = {
+            "status": "not_applicable",
+            "scope": None,
+            "rep_localized": False,
+        }
+    else:
+        candidate = knee_inward_shadow_candidate or {}
+        candidate_status = candidate.get("status")
+        decision = candidate.get("production_decision")
+        matched_rep = candidate.get("matched_rep")
+
+        if (
+            candidate_status == "not_assessable"
+            or decision == "abstain"
+        ):
+            knee_tracking = {
+                "status": "not_assessable",
+                "scope": "set",
+                "rep_localized": False,
+                "message": candidate.get(
+                    "user_message",
+                    (
+                        "Knee tracking could not be assessed reliably. "
+                        "Record from the front or a 45-degree angle with "
+                        "both knees and feet visible."
+                    ),
+                ),
+                "reason": candidate.get("abstention_reason"),
+            }
+
+        elif decision == "show_knees_inward_coaching":
+            knee_tracking = {
+                "status": "issue_detected",
+                "scope": (
+                    "rep"
+                    if matched_rep is not None
+                    else "set"
+                ),
+                "rep_localized": matched_rep is not None,
+                "rep": matched_rep,
+                "message": (
+                    "Knees moved inward during the squat."
+                    if matched_rep is not None
+                    else (
+                        "Knees moved inward during at least one "
+                        "squat in this set."
+                    )
+                ),
+                "coaching": (
+                    "Drive your knees out so they track over "
+                    "your toes."
+                ),
+                "probability": candidate.get("probability"),
+                "threshold": candidate.get("threshold"),
+            }
+
+        elif decision == "no_knees_inward_warning":
+            knee_tracking = {
+                "status": "no_warning",
+                "scope": "set",
+                "rep_localized": False,
+                "message": (
+                    "No knees-inward warning was detected in "
+                    "the analyzed squat."
+                ),
+                "probability": candidate.get("probability"),
+                "threshold": candidate.get("threshold"),
+            }
+
+        elif candidate_status == "error":
+            knee_tracking = {
+                "status": "unavailable",
+                "scope": None,
+                "rep_localized": False,
+                "message": (
+                    "Knee tracking analysis was unavailable."
+                ),
+            }
+
+        else:
+            knee_tracking = {
+                "status": "pending",
+                "scope": None,
+                "rep_localized": False,
+            }
+
     return {
         "exercise_label": resolved_label,
+        "knee_tracking": knee_tracking,
         "confidence": round(final_conf, 2),
         "analysis_mode": analysis_mode,
         "rep_feedback": rep_feedback,
@@ -9385,6 +9479,7 @@ def build_final_analysis_response(
         "overlay_video_url": None,
         "phase_images": None,
         "debug": {
+            "analysis_fps": float(analysis_fps),
             "predicted_exercise": predicted_exercise,
             "forced_exercise_label": normalized_forced_label,
             "user_confirmed": bool(normalized_forced_label),
@@ -14464,6 +14559,466 @@ def analyze_video(
         if final_label in {"squat_back", "squat_front", "overhead_squat"}:
             rep_feedback, _ = analyze_squat_reps(biomech, final_label)
 
+            try:
+                from ml.analysis_quality.squat_knee_runtime.extractor import (
+                    extract_knee_aqa_record,
+                )
+                from ml.analysis_quality.squat_knee_runtime.inference import (
+                    SquatKneeInwardModel,
+                )
+
+                # Use the same dedicated 10 FPS MediaPipe extraction path
+                # used during model training. Downsampling the main FormCheck
+                # pose stream afterward does not preserve temporal-tracker parity.
+                knee_record = extract_knee_aqa_record(video_path)
+                knee_inward_aqa = (
+                    SquatKneeInwardModel().score_record(knee_record)
+                )
+                knee_inward_aqa["mode"] = "shadow_only"
+                knee_inward_aqa["exercise_label"] = final_label
+
+                if (
+                    knee_inward_aqa.get("prediction")
+                    == "insufficient_visibility"
+                ):
+                    knee_inward_aqa["status"] = "not_assessable"
+                    knee_inward_aqa["coaching_allowed"] = False
+                    knee_inward_aqa["user_message"] = (
+                        "Knee tracking could not be assessed reliably. "
+                        "Record from the front or a 45-degree angle with "
+                        "both knees visible."
+                    )
+                else:
+                    knee_inward_aqa["status"] = "scored"
+                    knee_inward_aqa["coaching_allowed"] = False
+
+                # Score the selected 151-feature candidate from the same
+                # extracted record. Candidate failures remain isolated and
+                # never change the existing runtime result or coaching.
+                try:
+                    knee_inward_shadow_candidate = (
+                        get_knee_shadow_candidate_model().score_record(
+                            knee_record
+                        )
+                    )
+                    knee_inward_shadow_candidate["mode"] = (
+                        "shadow_candidate"
+                    )
+                    knee_inward_shadow_candidate["exercise_label"] = (
+                        final_label
+                    )
+
+                    candidate_prediction = (
+                        knee_inward_shadow_candidate.get("prediction")
+                    )
+
+                    if candidate_prediction == "insufficient_visibility":
+                        knee_inward_shadow_candidate["status"] = (
+                            "not_assessable"
+                        )
+                        knee_inward_shadow_candidate[
+                            "coaching_allowed"
+                        ] = False
+                        knee_inward_shadow_candidate[
+                            "user_message"
+                        ] = (
+                            "Knee tracking could not be assessed reliably. "
+                            "Record from the front or a 45-degree angle with "
+                            "both knees visible."
+                        )
+                        knee_inward_shadow_candidate[
+                            "production_decision"
+                        ] = "abstain"
+
+                    elif candidate_prediction == "knees_inward":
+                        knee_inward_shadow_candidate["status"] = "scored"
+                        knee_inward_shadow_candidate[
+                            "coaching_allowed"
+                        ] = True
+                        knee_inward_shadow_candidate[
+                            "production_decision"
+                        ] = "show_knees_inward_coaching"
+
+                    else:
+                        knee_inward_shadow_candidate["status"] = "scored"
+                        knee_inward_shadow_candidate[
+                            "coaching_allowed"
+                        ] = False
+                        knee_inward_shadow_candidate[
+                            "production_decision"
+                        ] = "no_knees_inward_warning"
+                except Exception as candidate_exc:
+                    knee_inward_shadow_candidate = {
+                        "mode": "shadow_candidate",
+                        "status": "error",
+                        "exercise_label": final_label,
+                        "error": str(candidate_exc),
+                    }
+
+                window_start = knee_inward_aqa.get(
+                    "best_window_start_frame"
+                )
+                window_end = knee_inward_aqa.get(
+                    "best_window_end_frame"
+                )
+
+                if (
+                    knee_inward_aqa.get("prediction")
+                    == "knees_inward"
+                    and window_start is not None
+                    and window_end is not None
+                    and rep_feedback
+                ):
+                    best_rep = None
+                    best_overlap = 0
+
+                    for rep in rep_feedback:
+                        rep_start = rep.get("start_frame")
+                        rep_end = rep.get("end_frame")
+
+                        if rep_start is None or rep_end is None:
+                            continue
+
+                        overlap = max(
+                            0,
+                            min(int(window_end), int(rep_end))
+                            - max(int(window_start), int(rep_start))
+                            + 1,
+                        )
+
+                        if overlap > best_overlap:
+                            best_overlap = overlap
+                            best_rep = rep
+
+                    if best_rep is not None and best_overlap > 0:
+                        best_rep["knee_inward_shadow"] = {
+                            "mode": "shadow_only",
+                            "prediction": "knees_inward",
+                            "probability": knee_inward_aqa.get(
+                                "probability"
+                            ),
+                            "threshold": knee_inward_aqa.get(
+                                "threshold"
+                            ),
+                            "window_start_frame": int(window_start),
+                            "window_end_frame": int(window_end),
+                            "overlap_frames": int(best_overlap),
+                        }
+
+                        knee_inward_aqa["matched_rep"] = best_rep.get(
+                            "rep"
+                        )
+                        knee_inward_aqa["matched_rep_overlap_frames"] = (
+                            int(best_overlap)
+                        )
+
+                # Production uploads must contain a detected squat rep before
+                # knee-tracking feedback can be considered assessable. Do not
+                # invent rep 1 for videos where the squat analyzer found no rep.
+                if not rep_feedback:
+                    knee_inward_aqa["status"] = "not_assessable"
+                    knee_inward_aqa["coaching_allowed"] = False
+                    knee_inward_aqa["abstention_reason"] = (
+                        "no_squat_rep_detected"
+                    )
+
+                    knee_inward_shadow_candidate["status"] = (
+                        "not_assessable"
+                    )
+                    knee_inward_shadow_candidate[
+                        "coaching_allowed"
+                    ] = False
+                    knee_inward_shadow_candidate[
+                        "production_decision"
+                    ] = "abstain"
+                    knee_inward_shadow_candidate[
+                        "abstention_reason"
+                    ] = "no_squat_rep_detected"
+                    knee_inward_shadow_candidate[
+                        "user_message"
+                    ] = (
+                        "Knee tracking could not be assessed because no "
+                        "complete squat rep was detected. Record the full "
+                        "movement from the front or a 45-degree angle with "
+                        "both knees and feet visible."
+                    )
+
+                # Apply the selected knee model to the squat rep whose frame
+                # range overlaps the model's strongest temporal window.
+                # This updates visible coaching but intentionally leaves the
+                # existing numerical squat score unchanged.
+                if (
+                    rep_feedback
+                    and knee_inward_shadow_candidate.get("status")
+                    == "scored"
+                ):
+                    candidate_start_seconds = (
+                        knee_inward_shadow_candidate.get(
+                            "best_window_start_seconds"
+                        )
+                    )
+                    candidate_end_seconds = (
+                        knee_inward_shadow_candidate.get(
+                            "best_window_end_seconds"
+                        )
+                    )
+
+                    if (
+                        candidate_start_seconds is not None
+                        and candidate_end_seconds is not None
+                    ):
+                        video_fps = float(
+                            debug.get("analysis_fps") or 30.0
+                        )
+                        candidate_start_frame = int(
+                            round(
+                                float(candidate_start_seconds)
+                                * video_fps
+                            )
+                        )
+                        candidate_end_frame = int(
+                            round(
+                                float(candidate_end_seconds)
+                                * video_fps
+                            )
+                        )
+
+                        matched_rep = None
+                        matched_overlap = 0
+
+                        for rep in rep_feedback:
+                            rep_start = rep.get("start_frame")
+                            rep_end = rep.get("end_frame")
+
+                            if rep_start is None or rep_end is None:
+                                continue
+
+                            overlap = max(
+                                0,
+                                min(
+                                    candidate_end_frame,
+                                    int(rep_end),
+                                )
+                                - max(
+                                    candidate_start_frame,
+                                    int(rep_start),
+                                )
+                                + 1,
+                            )
+
+                            if overlap > matched_overlap:
+                                matched_overlap = overlap
+                                matched_rep = rep
+
+                        if matched_rep is not None and matched_overlap > 0:
+                            knee_issue_messages = {
+                                "Knees cave inward noticeably.",
+                                "Slight knee cave detected.",
+                            }
+                            knee_feedback_messages = {
+                                "Drive knees out over your toes.",
+                                "Keep knees tracking over your toes.",
+                            }
+
+                            matched_rep["issues"] = [
+                                message
+                                for message in matched_rep.get(
+                                    "issues",
+                                    [],
+                                )
+                                if message not in knee_issue_messages
+                            ]
+                            matched_rep["feedback"] = [
+                                message
+                                for message in matched_rep.get(
+                                    "feedback",
+                                    [],
+                                )
+                                if message not in knee_feedback_messages
+                            ]
+
+                            decision = (
+                                knee_inward_shadow_candidate.get(
+                                    "production_decision"
+                                )
+                            )
+
+                            if (
+                                decision
+                                == "show_knees_inward_coaching"
+                            ):
+                                matched_rep.setdefault(
+                                    "breakdown",
+                                    {},
+                                )["knees"] = "poor"
+
+                                matched_rep["issues"].append(
+                                    "Knees moved inward during the squat."
+                                )
+                                matched_rep["feedback"].append(
+                                    "Drive your knees out so they track "
+                                    "over your toes."
+                                )
+
+                            matched_rep["knee_inward_model"] = {
+                                "prediction": (
+                                    knee_inward_shadow_candidate.get(
+                                        "prediction"
+                                    )
+                                ),
+                                "probability": (
+                                    knee_inward_shadow_candidate.get(
+                                        "probability"
+                                    )
+                                ),
+                                "threshold": (
+                                    knee_inward_shadow_candidate.get(
+                                        "threshold"
+                                    )
+                                ),
+                                "production_decision": decision,
+                                "window_start_frame": (
+                                    candidate_start_frame
+                                ),
+                                "window_end_frame": (
+                                    candidate_end_frame
+                                ),
+                                "overlap_frames": int(
+                                    matched_overlap
+                                ),
+                                "score_changed": False,
+                            }
+
+                            if final_label == "overhead_squat":
+                                matched_rep["coaching"] = (
+                                    build_overhead_squat_coaching(
+                                        matched_rep
+                                    )
+                                )
+                            else:
+                                matched_rep["coaching"] = (
+                                    build_squat_coaching(
+                                        matched_rep,
+                                        final_label,
+                                    )
+                                )
+
+                            knee_inward_shadow_candidate[
+                                "matched_rep"
+                            ] = matched_rep.get("rep")
+                            knee_inward_shadow_candidate[
+                                "matched_rep_overlap_frames"
+                            ] = int(matched_overlap)
+
+                # When the candidate detects knees inward at the set level
+                # but its strongest window cannot be safely localized to a
+                # specific rep, apply a conservative penalty across the set.
+                if (
+                    rep_feedback
+                    and knee_inward_shadow_candidate.get(
+                        "production_decision"
+                    ) == "show_knees_inward_coaching"
+                    and knee_inward_shadow_candidate.get(
+                        "matched_rep"
+                    ) is None
+                ):
+                    set_issue = (
+                        "Knees moved inward during the squat."
+                    )
+                    set_feedback = (
+                        "Drive your knees out so they track over "
+                        "your toes."
+                    )
+
+                    for rep in rep_feedback:
+                        rep.setdefault("breakdown", {})["knees"] = "poor"
+
+                        issues = rep.setdefault("issues", [])
+                        feedback = rep.setdefault("feedback", [])
+
+                        generic_good_messages = {
+                            (
+                                "Strong squat rep. Keep bracing and "
+                                "driving through the floor."
+                            ),
+                            (
+                                "Strong front squat rep. Keep elbows "
+                                "high and stay tall."
+                            ),
+                        }
+
+                        feedback[:] = [
+                            message
+                            for message in feedback
+                            if message not in generic_good_messages
+                        ]
+
+                        if set_issue not in issues:
+                            issues.append(set_issue)
+
+                        if set_feedback not in feedback:
+                            feedback.append(set_feedback)
+
+                        old_score = float(rep.get("score", 0.0))
+                        new_score = min(7.8, old_score - 2.0)
+                        new_score = max(1.0, round(new_score, 1))
+
+                        rep["score"] = new_score
+                        rep["grade"] = grade_score(new_score)
+
+                        rep["knee_inward_model"] = {
+                            "prediction": (
+                                knee_inward_shadow_candidate.get(
+                                    "prediction"
+                                )
+                            ),
+                            "probability": (
+                                knee_inward_shadow_candidate.get(
+                                    "probability"
+                                )
+                            ),
+                            "threshold": (
+                                knee_inward_shadow_candidate.get(
+                                    "threshold"
+                                )
+                            ),
+                            "production_decision": (
+                                "show_knees_inward_coaching"
+                            ),
+                            "scope": "set",
+                            "rep_localized": False,
+                            "score_changed": True,
+                            "score_penalty": 2.0,
+                            "score_cap": 7.8,
+                        }
+
+                        if final_label == "overhead_squat":
+                            rep["coaching"] = (
+                                build_overhead_squat_coaching(rep)
+                            )
+                        else:
+                            rep["coaching"] = build_squat_coaching(
+                                rep,
+                                final_label,
+                            )
+
+
+            except Exception as exc:
+                knee_inward_aqa = {
+                    "mode": "shadow_only",
+                    "status": "error",
+                    "exercise_label": final_label,
+                    "error": str(exc),
+                }
+
+            if final_label == "squat_back":
+                forward_lean_shadow = evaluate_forward_lean_shadow(
+                    sequence=sequence,
+                    biomechanics=biomech,
+                    reps=rep_feedback,
+                    exercise_label=final_label,
+                )
+
         elif final_label == "clean":
             rep_feedback, _ = analyze_clean_reps(biomech)
 
@@ -14710,6 +15265,9 @@ def analyze_video(
             final_conf=final_conf,
             analysis_mode=analysis_mode,
             rep_feedback=rep_feedback,
+            analysis_fps=float(
+                debug.get("analysis_fps") or 30.0
+            ),
             predicted_exercise=predicted_exercise,
             normalized_forced_label=normalized_forced_label,
             olympic_pred=olympic_pred,
