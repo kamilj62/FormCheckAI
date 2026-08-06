@@ -12474,6 +12474,54 @@ def analyze_video(
                 if isinstance(router_v5_debug, dict):
                     router_v5_debug["decision"] = "clean_and_jerk_high_conf_rescue"
 
+            # Rescue a complete clean-and-jerk sequence that Router V5
+            # conservatively labels as clean. Require ordered clean and jerk
+            # events plus overhead lockout evidence; do not lower the global
+            # Olympic-router confidence threshold.
+            cj_events = (
+                router_v5_debug.get("events", {})
+                if isinstance(router_v5_debug, dict)
+                else {}
+            )
+            cj_features = (
+                router_v5_debug.get("features", {})
+                if isinstance(router_v5_debug, dict)
+                else {}
+            )
+
+            try:
+                full_cj_event_sequence = (
+                    int(cj_events.get("clean_extension", -1))
+                    < int(cj_events.get("clean_catch", -1))
+                    <= int(cj_events.get("clean_recovery", -1))
+                    < int(cj_events.get("jerk_dip", -1))
+                    <= int(cj_events.get("jerk_drive", -1))
+                    <= int(cj_events.get("jerk_catch", -1))
+                    < int(cj_events.get("lockout", -1))
+                )
+            except (TypeError, ValueError):
+                full_cj_event_sequence = False
+
+            if (
+                router_v5_label == "clean"
+                and olympic_pred == "clean_and_jerk"
+                and float(olympic_conf or 0.0) >= 0.50
+                and full_cj_event_sequence
+                and float(cj_features.get("has_overhead", 0.0) or 0.0) >= 0.90
+                and float(cj_features.get("catch_overhead", 0.0) or 0.0) >= 0.90
+                and float(cj_features.get("lockout_duration", 0.0) or 0.0) >= 20.0
+                and float(explosive_score or 0.0) >= 25.0
+            ):
+                router_v5_label = "clean_and_jerk"
+                router_v5_conf = max(
+                    float(router_v5_conf or 0.0),
+                    0.80,
+                )
+                if isinstance(router_v5_debug, dict):
+                    router_v5_debug["decision"] = (
+                        "clean_and_jerk_full_sequence_rescue"
+                    )
+
             short_split_press = (
                 float(split_features.get("lockout_duration", 0.0) or 0.0) <= 90.0
                 and float(split_features.get("catch_to_finish", 0.0) or 0.0) <= 120.0
