@@ -236,7 +236,16 @@ def fuse_predictions(
         family_scores["press"] += 0.90
         label_scores["strict_press"] += 0.90
 
-    if state.looks_thruster:
+    # Thruster should not override a strong push press classification.
+    # Push press and thruster share overhead mechanics, so only promote
+    # thruster when the base/biomechanics evidence is not already aligned.
+    strong_push_press = (
+        state.raw_label == "push_press"
+        and state.bio_label == "push_press"
+        and float(state.bio_conf or 0.0) >= 0.75
+    )
+
+    if state.looks_thruster and not strong_push_press:
         family_scores["press"] += 1.00
         label_scores["thruster"] += 1.00
 

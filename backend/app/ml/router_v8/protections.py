@@ -176,6 +176,11 @@ def early_strength_protections(
         ) <= 65.0
         and float(olympic_conf or 0.0) < 0.65
         and not looks_split
+        and not (
+            raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.70
+            and float(bio_conf or 0.0) >= 0.70
+        )
     )
 
     if early_thruster:
@@ -319,6 +324,13 @@ def strength_protections(
         and bio_label == "squat"
         and float(squat_conf or 0.0) >= 0.60
         and not looks_split
+        and not (
+            float(base_conf or 0.0) >= 0.75
+            and float(bio_conf or 0.0) >= 0.75
+            and not looks_cj
+            and not looks_clean
+            and not looks_split
+        )
     )
 
     if later_thruster_pattern:

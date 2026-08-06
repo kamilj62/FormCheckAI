@@ -39,6 +39,9 @@ from app.ml.events.clean_events import detect_clean_events
 import cv2
 import mediapipe as mp
 import numpy as np
+from ml.analysis_quality.fitness_aqa_squat.forward_lean_runtime import (
+    evaluate_forward_lean_shadow,
+)
 import tensorflow as tf
 
 import joblib
@@ -9469,6 +9472,7 @@ def build_final_analysis_response(
     router_v6_label,
     router_v6_conf,
     router_v6_decision,
+    knee_inward_shadow_candidate=None,
 ):
     """Build the public analysis result and router diagnostics."""
     resolved_label = final_label or "unknown"
@@ -14655,8 +14659,27 @@ def analyze_video(
             protected_label = final_label
             protected_reason = "user_confirmed_exercise"
 
+        # Shadow AQA outputs
+        # Must exist for all exercise paths because the final response builder
+        # includes optional diagnostics.
+        knee_inward_shadow_candidate = None
+
         if final_label in {"squat_back", "squat_front", "overhead_squat"}:
             rep_feedback, _ = analyze_squat_reps(biomech, final_label)
+
+            # Initialize shadow outputs before optional AQA models run.
+            # Shadow failures must never break production analysis.
+            knee_inward_aqa = {
+                "mode": "shadow_only",
+                "status": "not_run",
+                "exercise_label": final_label,
+            }
+
+            knee_inward_shadow_candidate = {
+                "mode": "shadow_candidate",
+                "status": "not_run",
+                "exercise_label": final_label,
+            }
 
             try:
                 from ml.analysis_quality.squat_knee_runtime.extractor import (
@@ -15482,9 +15505,10 @@ def analyze_video(
             router_scores=router_scores,
             router_score_winner=router_score_winner,
             router_score_value=router_score_value,
-            router_v6_label=router_v6_label,
-            router_v6_conf=router_v6_conf,
-            router_v6_decision=router_v6_decision,
+              router_v6_label=router_v6_label,
+              router_v6_conf=router_v6_conf,
+              router_v6_decision=router_v6_decision,
+              knee_inward_shadow_candidate=knee_inward_shadow_candidate,
         )
 
     except Exception as e:
