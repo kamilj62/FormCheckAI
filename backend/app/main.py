@@ -12410,6 +12410,7 @@ def analyze_video(
             analysis_mode = "insufficient_signal"
 
         router_v5_debug = None
+        router_v8_cj_lock = False
         clear_squat_should_hold = False
         if run_oly_router:
             try:
@@ -12684,9 +12685,17 @@ def analyze_video(
                     )
                     analysis_mode = "squat_router_protected"
                 else:
-                    final_label = router_v5_label
-                    final_conf = router_v5_conf
-                    analysis_mode = "router_v5"
+                    if router_v8_cj_lock:
+                        final_label = "clean_and_jerk"
+                        final_conf = max(
+                            float(router_v5_conf or 0.0),
+                            0.80,
+                        )
+                        analysis_mode = "router_v8_context_lock"
+                    else:
+                        final_label = router_v5_label
+                        final_conf = router_v5_conf
+                        analysis_mode = "router_v5"
 
                 # Reject upright curl clips that Router V5 mistakes for an
                 # Olympic lift. Genuine Olympic controls should have at least
@@ -15326,6 +15335,15 @@ def analyze_video(
                 state=router_state,
             )
 
+            # Promote only validated Router V8 C&J context locks.
+            # All other V8 decisions remain shadow-only.
+            router_v8_cj_lock = (
+                isinstance(v8_result, dict)
+                and v8_result.get("decision") == "context_lock"
+                and v8_result.get("label") == "clean_and_jerk"
+                and float(v8_result.get("confidence", 0.0) or 0.0) >= 0.80
+            )
+
             debug["router_v8"] = build_debug(
                 v8_predictions,
                 v8_result,
@@ -15431,6 +15449,14 @@ def analyze_video(
             press_variant_shadow=press_variant_shadow,
             routing_candidates=routing_candidates,
         )
+
+        if router_v8_cj_lock:
+            final_label = "clean_and_jerk"
+            final_conf = max(
+                float(final_conf or 0.0),
+                0.80,
+            )
+            analysis_mode = "router_v8_context_lock"
 
         return build_final_analysis_response(
             final_label=final_label,

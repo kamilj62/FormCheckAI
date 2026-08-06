@@ -1195,6 +1195,25 @@ def get_locks(state: RouterState) -> list[dict]:
         )
 
     # ==========================================================
+    # 2b. Olympic router clean & jerk authority
+    # ==========================================================
+    # The Olympic router can identify a full clean & jerk even when
+    # the generic looks_cj shape detector misses the sequence.
+    # Preserve that decision above split jerk / clean fallback paths.
+    if (
+        state.olympic_label == "clean_and_jerk"
+        and olympic_conf >= 0.70
+        and not state.looks_thruster
+    ):
+        _add_lock(
+            locks,
+            label="clean_and_jerk",
+            confidence=max(0.80, olympic_conf),
+            reason="olympic_router_clean_and_jerk_authority",
+            priority=109,
+        )
+
+    # ==========================================================
     # 3. Split jerk shape
     # ==========================================================
     # A generic looks_split signal is noisy. Require:
