@@ -6,3 +6,4 @@ video,label,expected_reps,tier,notes
 /Users/josephkamil/Desktop/Capstone/clean-correct.mov,clean,2,production,known clean clip
 /Users/josephkamil/Desktop/Capstone/snatch- correct.mov,snatch,2,production,known snatch clip
 /Users/josephkamil/Desktop/Capstone/IdealPushPress2.mov,push_press,3,production,verified three-rep push press clip
+/Users/josephkamil/Desktop/Capstone/pushpress_short.mov,push_press,0,production,verified zero-rep push press hard negative
