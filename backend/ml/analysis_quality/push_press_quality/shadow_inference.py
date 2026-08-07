@@ -397,11 +397,6 @@ def score_push_press_rep(
             center_frame=elbow_center,
             analysis_fps=analysis_fps,
         ),
-        "knee_error": fixed_pose_window(
-            biomechanics,
-            center_frame=dip_frame,
-            analysis_fps=analysis_fps,
-        ),
     }
 
     results = {}
