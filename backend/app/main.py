@@ -1318,7 +1318,11 @@ def analyze_deadlift_reps(biomechanics):
 
             in_rep = False
 
-    if not reps and len(biomechanics) >= 10:
+    if (
+        not reps
+        and len(biomechanics) >= 10
+        and exercise_label != "push_press"
+    ):
         bottom_idx = int(np.argmax(torso))
         phase_frames = find_deadlift_phase_window(
             0,
@@ -2082,6 +2086,13 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 in_rep = False
                 continue
             wrist_above = float(np.mean(rep_wrist_y < rep_shoulder_y))
+
+            # A knee dip alone is not a push-press rep. Require meaningful
+            # overhead wrist evidence inside the detected candidate window.
+            if exercise_label == "push_press" and wrist_above < 0.50:
+                in_rep = False
+                continue
+
             min_valgus = float(np.percentile(clean_valgus, 15))
 
             wrist_drift = float(
@@ -2409,7 +2420,11 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
             in_rep = False
 
-    if not reps and len(biomechanics) >= 10:
+    if (
+        not reps
+        and len(biomechanics) >= 10
+        and exercise_label != "push_press"
+    ):
         start_idx = int(len(frame_numbers) * 0.05)
         end_idx = int(len(frame_numbers) * 0.45)
 
