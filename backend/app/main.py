@@ -2040,17 +2040,163 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
     reps = []
 
+    # ------------------------------------------------------------
+    # PUSH PRESS REP SEGMENTATION
+    #
+    # The legacy detector uses a global knee-angle percentile.
+    # Shallow push-press dips can hover near full knee extension and
+    # become fragmented by pose noise, causing real reps to disappear.
+    #
+    # For multi-rep push-press sets, first look for strong rack ->
+    # overhead wrist movements. Knee motion is still used later for
+    # biomechanics/scoring. If we cannot find a convincing set of
+    # wrist-driven cycles, preserve the legacy knee detector.
+    # ------------------------------------------------------------
+    segmentation_signal = knee.copy()
     threshold = np.percentile(knee, 40)
+    pp_wrist_windows = []
+
+    if exercise_label == "push_press" and len(wrist_y) >= 20:
+        smooth_wrist = np.array([
+            float(np.median(
+                wrist_y[max(0, idx - 7):min(len(wrist_y), idx + 8)]
+            ))
+            for idx in range(len(wrist_y))
+        ])
+
+        pp_raw_candidates = []
+
+        for idx in range(5, len(smooth_wrist) - 5):
+            rack_frame = int(frame_numbers[idx])
+
+            # Require a local low-bar / rack maximum.
+            local = smooth_wrist[idx - 5:idx + 6]
+            if smooth_wrist[idx] < float(np.max(local)):
+                continue
+
+            # A true push-press rack position should place the wrist
+            # approximately level with / just below the shoulder.
+            #
+            # Reject local wrist maxima that occur while the bar is
+            # already overhead, as well as post-set low-bar movement.
+            rack_offset = float(wrist_y[idx] - shoulder_y[idx])
+
+            # Reject clearly non-rack positions immediately.
+            # Slightly-above-shoulder rack positions are evaluated
+            # later using wrist-travel strength.
+            if rack_offset < -0.02 or rack_offset > 0.08:
+                continue
+
+            # Search up to 50 actual video frames ahead for the
+            # highest wrist position (smaller image-space y).
+            max_frame = rack_frame + 50
+            search_end = int(
+                np.searchsorted(frame_numbers, max_frame, side="right")
+            )
+            search_end = min(search_end, len(smooth_wrist))
+
+            if search_end <= idx + 1:
+                continue
+
+            future = smooth_wrist[idx + 1:search_end]
+            overhead_rel = int(np.argmin(future))
+            overhead_idx = idx + 1 + overhead_rel
+            overhead_frame = int(frame_numbers[overhead_idx])
+
+            wrist_travel = float(
+                smooth_wrist[idx] - smooth_wrist[overhead_idx]
+            )
+
+            # Native elbow-drop validation clip showed real presses
+            # around 0.21-0.28 normalized vertical wrist travel.
+            # 0.12 rejects the small tracking oscillations while
+            # retaining those presses.
+            if (
+                wrist_travel < 0.12
+                or overhead_frame - rack_frame < 8
+            ):
+                continue
+
+            # If the wrist is slightly above the shoulder at the
+            # candidate rack frame, require a much stronger press
+            # excursion. This preserves valid reps such as knee-cave
+            # while rejecting small overhead oscillations.
+            if rack_offset < -0.005 and wrist_travel < 0.20:
+                continue
+
+            # Include the dip before the rack extremum and enough
+            # overhead time afterward for scoring/phase selection.
+            # Keep enough context around the press for dip/lockout
+            # analysis without allowing neighboring reps to overlap
+            # and merge into one segmentation region.
+            start_frame = rack_frame - 30
+            end_frame = overhead_frame + 30
+
+            start_idx = int(
+                np.searchsorted(frame_numbers, start_frame, side="left")
+            )
+            end_idx = int(
+                np.searchsorted(frame_numbers, end_frame, side="right") - 1
+            )
+
+            start_idx = max(0, min(start_idx, len(knee) - 1))
+            end_idx = max(start_idx + 1, min(end_idx, len(knee) - 1))
+
+            pp_raw_candidates.append({
+                "rack_frame": rack_frame,
+                "wrist_travel": wrist_travel,
+                "start_idx": start_idx,
+                "end_idx": end_idx,
+            })
+
+        # Nearby local maxima can belong to the same physical press.
+        # Cluster them and keep the strongest wrist excursion instead
+        # of accepting whichever candidate happens to appear first.
+        pp_wrist_windows = []
+
+        if pp_raw_candidates:
+            clusters = []
+
+            for candidate in pp_raw_candidates:
+                if (
+                    not clusters
+                    or candidate["rack_frame"] - clusters[-1][-1]["rack_frame"] >= 80
+                ):
+                    clusters.append([candidate])
+                else:
+                    clusters[-1].append(candidate)
+
+            for cluster in clusters:
+                best = max(
+                    cluster,
+                    key=lambda candidate: candidate["wrist_travel"],
+                )
+                pp_wrist_windows.append(
+                    (best["start_idx"], best["end_idx"])
+                )
+
+        # Keep the change conservative:
+        # use wrist-driven segmentation only for a convincing multi-rep set.
+        if len(pp_wrist_windows) >= 3:
+            segmentation_signal = np.ones(len(knee), dtype=float)
+
+            for start_idx, end_idx in pp_wrist_windows:
+                segmentation_signal[start_idx:end_idx + 1] = 0.0
+
+            threshold = 0.5
+
+        else:
+            pp_wrist_windows = []
 
     in_rep = False
     start = 0
 
-    for i, k in enumerate(knee):
-        if not in_rep and k < threshold:
+    for i, k_seg in enumerate(segmentation_signal):
+        if not in_rep and k_seg < threshold:
             in_rep = True
             start = i
 
-        elif in_rep and k >= threshold:
+        elif in_rep and k_seg >= threshold:
             end = i
 
             min_rep_len = (
@@ -2133,7 +2279,19 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             elbow_lockout = float(np.percentile(rep_elbow, 85))
             max_rep_elbow = float(np.max(rep_elbow))
 
-            dip_idx = int(np.argmin(rep_knee))
+            if exercise_label == "push_press":
+                valid_knee = np.where(
+                    (rep_knee >= 165.0) & (rep_knee <= 185.0),
+                    rep_knee,
+                    np.inf,
+                )
+                dip_idx = (
+                    int(np.argmin(valid_knee))
+                    if np.isfinite(valid_knee).any()
+                    else int(np.argmin(rep_knee))
+                )
+            else:
+                dip_idx = int(np.argmin(rep_knee))
 
             if exercise_label == "thruster":
                 overhead_candidates = np.where(
@@ -2393,7 +2551,16 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
             if exercise_label == "push_press":
                 rep_len = len(rep_knee)
 
-                dip_local = int(np.argmin(rep_knee))
+                valid_knee = np.where(
+                    (rep_knee >= 165.0) & (rep_knee <= 185.0),
+                    rep_knee,
+                    np.inf,
+                )
+                dip_local = (
+                    int(np.argmin(valid_knee))
+                    if np.isfinite(valid_knee).any()
+                    else int(np.argmin(rep_knee))
+                )
                 dip_abs_idx = start + dip_local
 
                 # Drive: after dip, find first frame where knees have mostly re-extended.
