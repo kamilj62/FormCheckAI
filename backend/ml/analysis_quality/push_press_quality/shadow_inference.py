@@ -10,7 +10,7 @@ MODULE_DIR = Path(__file__).resolve().parent
 MODELS_DIR = MODULE_DIR / "results" / "models"
 
 MODEL_FILES = {
-    "elbow_error": "elbow_error_candidate.joblib",
+    "elbow_error": "elbow_error_native_mix_v5.joblib",
     "knee_error": "knee_error_candidate.joblib",
 }
 
@@ -387,16 +387,58 @@ def score_push_press_rep(
         )
     )
 
-    elbow_center = int(
-        round((drive_frame + lockout_frame) / 2.0)
+    # Match v5 training/validation semantics exactly:
+    # elbow window = dip -> lockout with 0.15 sec padding,
+    # resampled to approximately 10 FPS.
+    pad_frames = 0.15 * analysis_fps
+    elbow_start = float(dip_frame) - pad_frames
+    elbow_end = float(lockout_frame) + pad_frames
+
+    ordered = sorted(
+        biomechanics,
+        key=lambda row: int(row.get("frame_number", 0)),
     )
 
+    frame_numbers = np.asarray(
+        [
+            int(row.get("frame_number", index))
+            for index, row in enumerate(ordered)
+        ],
+        dtype=float,
+    )
+
+    duration_seconds = max(
+        (elbow_end - elbow_start) / max(analysis_fps, 1.0),
+        0.1,
+    )
+
+    sample_count = max(
+        4,
+        int(round(duration_seconds * 10.0)) + 1,
+    )
+
+    target_frames = np.linspace(
+        elbow_start,
+        elbow_end,
+        sample_count,
+    )
+
+    elbow_window = []
+    used_indices = set()
+
+    for target_frame in target_frames:
+        nearest_index = int(
+            np.argmin(np.abs(frame_numbers - target_frame))
+        )
+
+        if nearest_index in used_indices:
+            continue
+
+        used_indices.add(nearest_index)
+        elbow_window.append(ordered[nearest_index])
+
     target_windows = {
-        "elbow_error": fixed_pose_window(
-            biomechanics,
-            center_frame=elbow_center,
-            analysis_fps=analysis_fps,
-        ),
+        "elbow_error": elbow_window,
     }
 
     results = {}
