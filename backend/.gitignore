@@ -3,3 +3,6 @@
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+# Local push press quality experiments
+ml/analysis_quality/push_press_quality/local_experiments/
