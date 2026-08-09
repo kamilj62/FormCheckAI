@@ -318,6 +318,68 @@ def strength_protections(
             reason="push_press_pattern_detected",
         )
 
+    # Preserve strong independent push-press consensus when the
+    # Olympic router is weak. A noisy split-shape heuristic should not
+    # override both the raw and biomechanics classifiers at high confidence.
+    strong_push_press_consensus_hold = (
+        raw_label == "push_press"
+        and float(base_conf or 0.0) >= 0.95
+        and bio_label == "push_press"
+        and float(bio_conf or 0.0) >= 0.95
+        and not looks_cj
+        and not (
+            squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.75
+            and float(explosive_score or 0.0) < 60.0
+        )
+    )
+
+    if strong_push_press_consensus_hold:
+        return ProtectionResult(
+            label="push_press",
+            confidence=max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.95,
+            ),
+            reason="strong_push_press_consensus_hold",
+        )
+
+    # Preserve exceptionally strong raw push-press evidence when a
+    # lower-body form fault makes the biomechanics path look squat-like.
+    # Keep this narrow so genuine thrusters still reach the thruster rule.
+    medium_raw_push_press_hold = (
+        raw_label == "push_press"
+        and float(base_conf or 0.0) >= 0.75
+        and bio_label == "squat"
+        and float(explosive_score or 0.0) >= 120.0
+        and not looks_cj
+        and not looks_split
+    )
+
+    if medium_raw_push_press_hold:
+        return ProtectionResult(
+            label="push_press",
+            confidence=max(float(base_conf or 0.0), 0.78),
+            reason="medium_raw_push_press_hold",
+        )
+
+    strong_raw_push_press_fault_hold = (
+        raw_label == "push_press"
+        and float(base_conf or 0.0) >= 0.95
+        and bio_label == "squat"
+        and float(explosive_score or 0.0) >= 100.0
+        and not looks_cj
+        and not looks_split
+    )
+
+    if strong_raw_push_press_fault_hold:
+        return ProtectionResult(
+            label="push_press",
+            confidence=max(float(base_conf or 0.0), 0.95),
+            reason="strong_raw_push_press_fault_hold",
+        )
+
     later_thruster_pattern = (
         looks_thruster
         and raw_label == "push_press"
@@ -328,7 +390,7 @@ def strength_protections(
             float(base_conf or 0.0) >= 0.75
             and float(bio_conf or 0.0) >= 0.75
             and not looks_cj
-            and not looks_clean
+            and not looks_clean_only
             and not looks_split
         )
     )

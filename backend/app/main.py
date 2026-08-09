@@ -2039,6 +2039,7 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
     ])
 
     reps = []
+
     threshold = np.percentile(knee, 40)
 
     in_rep = False
@@ -2087,9 +2088,34 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                 continue
             wrist_above = float(np.mean(rep_wrist_y < rep_shoulder_y))
 
-            # A knee dip alone is not a push-press rep. Require meaningful
-            # overhead wrist evidence inside the detected candidate window.
-            if exercise_label == "push_press" and wrist_above < 0.50:
+            # Diagnostic: push press overhead happens after the knee dip,
+            # so inspect a short post-dip window as well.
+            target_frame = frame_numbers[end] + 90
+            post_end = int(np.searchsorted(frame_numbers, target_frame, side="right") - 1)
+            post_end = max(end, min(len(wrist_y) - 1, post_end))
+
+            post_wrist_y = wrist_y[start:post_end + 1]
+            post_shoulder_y = shoulder_y[start:post_end + 1]
+            post_wrist_above = float(
+                np.mean(post_wrist_y < post_shoulder_y)
+            )
+
+            # A knee dip alone is not a push-press rep.
+            #
+            # Normal push-press reps should show strong overhead wrist evidence.
+            # Faulty reps such as severe knee cave may distort that signal, so
+            # also allow candidates with a very large knee excursion plus
+            # meaningful wrist travel.
+            push_press_motion_ok = (
+                wrist_above >= 0.50
+                or (
+                    knee_range >= 20.0
+                    and float(np.max(rep_wrist_y) - np.min(rep_wrist_y)) >= 0.10
+                    and post_wrist_above >= 0.50
+                )
+            )
+
+            if exercise_label == "push_press" and not push_press_motion_ok:
                 in_rep = False
                 continue
 
@@ -8947,6 +8973,7 @@ def extract_video_biomechanics(video_path, sample_every=1):
 
     subject_center = None
     subject_area = None
+    subject_reject_streak = 0
 
     yolo_tracker = (
         YOLOTracker(
@@ -9169,12 +9196,26 @@ def extract_video_biomechanics(video_path, sample_every=1):
                 # identity and normal squat motion can otherwise look like an
                 # invalid center/area jump after crop-to-frame remapping.
                 if not USE_YOLO_TRACKING:
-                    if (
+                    continuity_bad = (
                         jump > 0.22
                         or area_ratio < 0.45
                         or area_ratio > 2.2
-                    ):
-                        continue
+                    )
+
+                    if continuity_bad:
+                        subject_reject_streak += 1
+
+                        # Do not let one stale/bad subject estimate poison the
+                        # rest of the video. After repeated rejects, reacquire
+                        # the current pose as the new subject reference.
+                        if subject_reject_streak >= 30:
+                            subject_center = center
+                            subject_area = area
+                            subject_reject_streak = 0
+                        else:
+                            continue
+                    else:
+                        subject_reject_streak = 0
 
                 subject_center = (
                     subject_center[0] * 0.85 + center[0] * 0.15,
