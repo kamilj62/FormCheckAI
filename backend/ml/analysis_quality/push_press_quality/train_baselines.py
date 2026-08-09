@@ -168,6 +168,15 @@ def train_target(all_features, target):
 
     sample_weight = inverse_video_weights(train)
 
+    if "sample_weight" in train.columns:
+        source_weight = (
+            train["sample_weight"]
+            .fillna(1.0)
+            .astype(float)
+            .to_numpy()
+        )
+        sample_weight = sample_weight * source_weight
+
     model = Pipeline([
         (
             "imputer",
@@ -263,6 +272,10 @@ def main():
     features = pd.read_csv(FEATURES_PATH)
 
     for target in ("elbow_error", "knee_error"):
+        if not (features["target"] == target).any():
+            print(f"SKIP {target}: no rows in feature file")
+            continue
+
         train_target(features, target)
 
 
