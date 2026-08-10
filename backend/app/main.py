@@ -15251,6 +15251,111 @@ def analyze_video(
                 else "deadlift_analyzer_disagreement_rescue"
             )
 
+        # ---------------------------------------------------------
+        # FINAL OLYMPIC AUTHORITY
+        # ---------------------------------------------------------
+        # Specialized Olympic evidence gets one final vote after generic
+        # squat / bench / bodyweight recovery rules. Keep these rules
+        # deliberately conservative so weak Olympic predictions cannot
+        # overwrite strong non-Olympic controls.
+
+        final_olympic_authority = None
+
+        # Complete clean-and-jerk shape + direct Olympic agreement.
+        if (
+            not forced_exercise_label
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.65
+            and bool(_looks_cj)
+        ):
+            final_olympic_authority = "clean_and_jerk"
+
+        # Strong snatch prediction plus highly explosive movement.
+        # This specifically prevents generic squat/bodyweight recovery
+        # from stealing a credible floor-to-overhead snatch.
+        elif (
+            not forced_exercise_label
+            and olympic_pred == "snatch"
+            and float(olympic_conf or 0.0) >= 0.70
+            and float(explosive_score or 0.0) >= 80.0
+        ):
+            final_olympic_authority = "snatch"
+
+        # Standalone split jerk: dedicated Olympic prediction together
+        # with split geometry and no complete clean-and-jerk sequence.
+        elif (
+            not forced_exercise_label
+            and olympic_pred == "split_jerk"
+            and float(olympic_conf or 0.0) >= 0.70
+            and bool(_looks_split)
+            and not bool(_looks_cj)
+        ):
+            final_olympic_authority = "split_jerk"
+
+        if final_olympic_authority:
+            final_label = final_olympic_authority
+            final_conf = max(
+                float(olympic_conf or 0.0),
+                0.75,
+            )
+            analysis_mode = "olympic_final_authority"
+            protected_label = final_label
+            protected_conf = final_conf
+            protected_reason = "specialized_olympic_final_authority"
+
+        # ---------------------------------------------------------
+        # FINAL OLYMPIC AUTHORITY
+        # ---------------------------------------------------------
+        final_olympic_authority = None
+
+        if (
+            not forced_exercise_label
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) >= 0.65
+            and bool(_looks_cj)
+        ):
+            final_olympic_authority = "clean_and_jerk"
+
+        elif (
+            not forced_exercise_label
+            and olympic_pred == "snatch"
+            and float(olympic_conf or 0.0) >= 0.70
+            and float(explosive_score or 0.0) >= 80.0
+        ):
+            final_olympic_authority = "snatch"
+
+        elif (
+            not forced_exercise_label
+            and olympic_pred == "snatch"
+            and float(olympic_conf or 0.0) >= 0.50
+            and raw_label == "squat"
+            and bio_label == "push_press"
+            and squat_label == "squat_back"
+            and bool(_looks_split)
+            and not bool(_looks_cj)
+        ):
+            final_olympic_authority = "snatch"
+
+        elif (
+            not forced_exercise_label
+            and olympic_pred == "split_jerk"
+            and float(olympic_conf or 0.0) >= 0.70
+            and bool(_looks_split)
+            and not bool(_looks_cj)
+        ):
+            final_olympic_authority = "split_jerk"
+
+        if final_olympic_authority:
+            final_label = final_olympic_authority
+            final_conf = max(
+                float(olympic_conf or 0.0),
+                0.75,
+            )
+            analysis_mode = "olympic_final_authority"
+            protected_label = final_label
+            protected_conf = final_conf
+            protected_reason = "specialized_olympic_final_authority"
+
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
 

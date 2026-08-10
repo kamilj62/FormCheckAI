@@ -1424,6 +1424,8 @@ export default function App() {
     helpful,
     repCountCorrect,
     correctedRepCount,
+      phaseReviewAccurate,
+      phaseReviewIssue,
     updateLocal = true,
   } = {}) => {
     if (!analysisId) {
@@ -1449,6 +1451,14 @@ export default function App() {
     if (correctedRepCount !== undefined) {
       formData.append("corrected_rep_count", String(correctedRepCount));
     }
+
+      if (phaseReviewAccurate !== undefined) {
+        formData.append("phase_review_accurate", String(phaseReviewAccurate));
+      }
+
+      if (phaseReviewIssue !== undefined) {
+        formData.append("phase_review_issue", phaseReviewIssue);
+      }
 
     try {
       setFeedbackSubmitting(true);
@@ -1487,6 +1497,15 @@ export default function App() {
               data.rep_count_correct !== undefined
                 ? data.rep_count_correct
                 : current.rep_count_correct,
+              phase_review_accurate:
+                data.phase_review_accurate !== null &&
+                data.phase_review_accurate !== undefined
+                  ? data.phase_review_accurate
+                  : current.phase_review_accurate,
+              phase_review_issue:
+                data.phase_review_issue !== undefined
+                  ? data.phase_review_issue
+                  : current.phase_review_issue,
           };
         });
       }
@@ -3041,6 +3060,106 @@ export default function App() {
                   );
                 })}
               </ScrollView>
+
+                {result.analysis_id && (
+                  <View style={styles.correctedRepBox}>
+                    <Text style={styles.betaFeedbackQuestion}>
+                      Was this Phase Review accurate?
+                    </Text>
+
+                    <View style={styles.betaFeedbackRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.betaFeedbackButton,
+                          result.phase_review_accurate === true &&
+                            styles.betaFeedbackButtonActive,
+                        ]}
+                        disabled={feedbackSubmitting}
+                        onPress={() =>
+                          submitAnalysisFeedback({
+                            phaseReviewAccurate: true,
+                          })
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.betaFeedbackButtonText,
+                            result.phase_review_accurate === true &&
+                              styles.betaFeedbackButtonTextActive,
+                          ]}
+                        >
+                          Yes
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.betaFeedbackButton,
+                          result.phase_review_accurate === false &&
+                            styles.betaFeedbackButtonActive,
+                        ]}
+                        disabled={feedbackSubmitting}
+                        onPress={() =>
+                          submitAnalysisFeedback({
+                            phaseReviewAccurate: false,
+                          })
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.betaFeedbackButtonText,
+                            result.phase_review_accurate === false &&
+                              styles.betaFeedbackButtonTextActive,
+                          ]}
+                        >
+                          No
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {result.phase_review_accurate === false && (
+                      <>
+                        <Text style={styles.betaFeedbackQuestion}>
+                          What was wrong?
+                        </Text>
+
+                        {[
+                          ["wrong_phase_timing", "Wrong phase timing"],
+                          ["wrong_image_frame", "Wrong image/frame"],
+                          ["coaching_didnt_match", "Coaching didn’t match"],
+                          ["other", "Other"],
+                        ].map(([value, label]) => (
+                          <TouchableOpacity
+                            key={value}
+                            style={[
+                              styles.betaFeedbackButton,
+                              result.phase_review_issue === value &&
+                                styles.betaFeedbackButtonActive,
+                              { marginBottom: 8 },
+                            ]}
+                            disabled={feedbackSubmitting}
+                            onPress={() =>
+                              submitAnalysisFeedback({
+                                phaseReviewAccurate: false,
+                                phaseReviewIssue: value,
+                              })
+                            }
+                          >
+                            <Text
+                              style={[
+                                styles.betaFeedbackButtonText,
+                                result.phase_review_issue === value &&
+                                  styles.betaFeedbackButtonTextActive,
+                              ]}
+                            >
+                              {label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </>
+                    )}
+                  </View>
+                )}
             </View>
 
                 </>
