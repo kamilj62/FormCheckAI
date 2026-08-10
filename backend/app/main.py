@@ -1,3 +1,5 @@
+from datetime import datetime
+import json
 from sys import prefix
 import tempfile
 from pathlib import Path
@@ -107,12 +109,46 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 S3_BUCKET = os.getenv("S3_BUCKET", "formcheck-ai-overlays-kamilj")
 S3_REGION = os.getenv("AWS_REGION", "us-west-2")
+BETA_DATA_BUCKET = os.getenv("BETA_DATA_BUCKET", "formcheck-ai-beta-data-kamilj")
 s3_client = boto3.client("s3", region_name=S3_REGION)
 
 OVERLAY_DIR = "outputs"
 os.makedirs(OVERLAY_DIR, exist_ok=True)
 
 app.mount("/outputs", StaticFiles(directory=OVERLAY_DIR), name="outputs")
+
+
+def save_beta_analysis_record(analysis_id, result, original_filename=None):
+    try:
+        record = {
+            "analysis_id": analysis_id,
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "original_filename": original_filename,
+            "exercise_label": result.get("exercise_label"),
+            "confidence": result.get("confidence"),
+            "analysis_mode": result.get("analysis_mode"),
+            "rep_count": len(result.get("rep_feedback") or []),
+            "protected_reason": (result.get("debug") or {}).get("protected_reason"),
+            "predicted_exercise": result.get("exercise_label"),
+            "confirmed_exercise": None,
+            "was_corrected": False,
+            "helpful": None,
+            "rep_count_correct": None,
+            "training_review_status": "unreviewed",
+        }
+
+        s3_client.put_object(
+            Bucket=BETA_DATA_BUCKET,
+            Key=f"beta_analyses/{analysis_id}.json",
+            Body=json.dumps(record).encode("utf-8"),
+            ContentType="application/json",
+        )
+
+        return True
+
+    except Exception as e:
+        print("BETA ANALYSIS SAVE FAILED:", e)
+        return False
 
 
 app.add_middleware(
@@ -2066,6 +2102,75 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
         pp_raw_candidates = []
 
+        # Short/cropped clips often begin with the athlete already in the
+        # rack/setup position. The normal local-maximum loop starts at index 5,
+        # so a true rack position at the leading edge can be missed entirely.
+        #
+        # Probe the first ~15 analysis frames as a boundary rack candidate.
+        if len(smooth_wrist) >= 20:
+            leading_end = min(15, len(smooth_wrist))
+            leading_idx = int(np.argmax(smooth_wrist[:leading_end]))
+
+            rack_frame = int(frame_numbers[leading_idx])
+            rack_offset = float(
+                wrist_y[leading_idx] - shoulder_y[leading_idx]
+            )
+
+            max_frame = rack_frame + 60
+            search_end = int(
+                np.searchsorted(frame_numbers, max_frame, side="right")
+            )
+            search_end = min(search_end, len(smooth_wrist))
+
+            if search_end > leading_idx + 1:
+                future = smooth_wrist[leading_idx + 1:search_end]
+                overhead_rel = int(np.argmin(future))
+                overhead_idx = leading_idx + 1 + overhead_rel
+                overhead_frame = int(frame_numbers[overhead_idx])
+
+                wrist_travel = float(
+                    smooth_wrist[leading_idx] - smooth_wrist[overhead_idx]
+                )
+
+                if (
+                    -0.04 <= rack_offset <= 0.12
+                    and wrist_travel >= 0.12
+                    and overhead_frame - rack_frame >= 8
+                ):
+                    start_frame = rack_frame
+                    end_frame = overhead_frame + 30
+
+                    start_idx = int(
+                        np.searchsorted(
+                            frame_numbers,
+                            start_frame,
+                            side="left",
+                        )
+                    )
+                    end_idx = int(
+                        np.searchsorted(
+                            frame_numbers,
+                            end_frame,
+                            side="right",
+                        ) - 1
+                    )
+
+                    start_idx = max(
+                        0,
+                        min(start_idx, len(knee) - 1),
+                    )
+                    end_idx = max(
+                        start_idx + 1,
+                        min(end_idx, len(knee) - 1),
+                    )
+
+                    pp_raw_candidates.append({
+                        "rack_frame": rack_frame,
+                        "wrist_travel": wrist_travel,
+                        "start_idx": start_idx,
+                        "end_idx": end_idx,
+                    })
+
         for idx in range(5, len(smooth_wrist) - 5):
             rack_frame = int(frame_numbers[idx])
 
@@ -2254,9 +2359,11 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
 
             min_knee = float(np.percentile(clean_knee, 10))
             knee_range = float(np.max(clean_knee) - np.min(clean_knee))
+
             if exercise_label == "push_press" and knee_range < 4:
                 in_rep = False
                 continue
+
             wrist_above = float(np.mean(rep_wrist_y < rep_shoulder_y))
 
             # Diagnostic: push press overhead happens after the knee dip,
@@ -7399,11 +7506,15 @@ def create_push_press_phase_images(input_path, output_dir, rep, sample_every=1, 
             dip_frame + int((lockout_frame - dip_frame) * 0.35)
         ))
 
+        # Push press rep windows currently bracket the movement in the
+        # opposite visual direction for these clips: start is the overhead
+        # position and end is the rack/setup position.
+        # Keep dip/drive unchanged, but assign the visual endpoints correctly.
         phase_frames = {
-            "setup": setup_frame,
+            "setup": lockout_frame,
             "dip": dip_frame,
             "drive": drive_frame,
-            "lockout": lockout_frame,
+            "lockout": setup_frame,
         }
 
     saved = {}
@@ -16260,7 +16371,6 @@ async def generate_visuals(
     rep_json: str = Form(None),
     exercise_label: str = Form(None),
 ):
-    import json
 
     suffix = os.path.splitext(file.filename or "")[1] or ".mov"
     temp_filename = f"visuals_{uuid.uuid4().hex[:8]}{suffix}"
@@ -16443,7 +16553,6 @@ async def generate_overlay(
     rep_json: str = Form(None),
     exercise_label: str = Form(None),
 ):
-    import json
     import time
 
     started_at = time.time()
@@ -16529,6 +16638,7 @@ async def analyze(
     file: UploadFile = File(...),
     exercise_label: str = Form(None),
 ):
+    analysis_id = uuid.uuid4().hex
     temp_path = f"/tmp/{uuid.uuid4().hex}_{file.filename}"
     transcoded_path = None
 
@@ -16555,14 +16665,27 @@ async def analyze(
                 retry_result.setdefault("debug", {})
                 retry_result["debug"]["transcoded_retry"] = True
                 retry_result["debug"]["original_frames_processed"] = result.get("debug", {}).get("frames_processed")
+                retry_result["analysis_id"] = analysis_id
+                save_beta_analysis_record(
+                    analysis_id,
+                    retry_result,
+                    original_filename=file.filename,
+                )
                 return retry_result
 
+        result["analysis_id"] = analysis_id
+        save_beta_analysis_record(
+            analysis_id,
+            result,
+            original_filename=file.filename,
+        )
         return result
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         return {
+            "analysis_id": analysis_id,
             "exercise_label": "Unknown",
             "confidence": 0.0,
             "analysis_mode": "error",
@@ -16580,6 +16703,139 @@ async def analyze(
             os.remove(temp_path)
         if transcoded_path and os.path.exists(transcoded_path):
             os.remove(transcoded_path)
+
+
+@app.post("/analysis_feedback")
+async def analysis_feedback(
+    analysis_id: str = Form(...),
+    confirmed_exercise: str = Form(None),
+    helpful: bool = Form(None),
+    rep_count_correct: bool = Form(None),
+    corrected_rep_count: int = Form(None),
+    phase_review_accurate: bool = Form(None),
+    phase_review_issue: str = Form(None),
+):
+    # Only accept IDs generated by /analyze.
+    if (
+        len(analysis_id) != 32
+        or any(c not in "0123456789abcdef" for c in analysis_id.lower())
+    ):
+        raise HTTPException(status_code=400, detail="Invalid analysis_id")
+
+    s3_key = f"beta_analyses/{analysis_id}.json"
+
+    try:
+        response = s3_client.get_object(
+            Bucket=BETA_DATA_BUCKET,
+            Key=s3_key,
+        )
+        record = json.loads(response["Body"].read().decode("utf-8"))
+
+    except s3_client.exceptions.NoSuchKey:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    except Exception as e:
+        # Some S3 clients expose a generic ClientError rather than NoSuchKey.
+        error_code = (
+            getattr(e, "response", {})
+            .get("Error", {})
+            .get("Code")
+        )
+
+        if error_code in {"NoSuchKey", "404"}:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+
+        print("BETA FEEDBACK READ FAILED:", e)
+        raise HTTPException(status_code=500, detail="Unable to load analysis")
+
+    predicted_exercise = record.get("predicted_exercise")
+
+    if confirmed_exercise is not None:
+        confirmed_exercise = confirmed_exercise.strip()
+
+        if not confirmed_exercise:
+            raise HTTPException(
+                status_code=400,
+                detail="confirmed_exercise cannot be empty",
+            )
+
+        record["confirmed_exercise"] = confirmed_exercise
+        record["was_corrected"] = (
+            bool(predicted_exercise)
+            and confirmed_exercise != predicted_exercise
+        )
+
+    if helpful is not None:
+        record["helpful"] = helpful
+
+    if rep_count_correct is not None:
+        record["rep_count_correct"] = rep_count_correct
+
+    if corrected_rep_count is not None:
+        if corrected_rep_count < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="corrected_rep_count must be >= 0",
+            )
+
+        record["corrected_rep_count"] = corrected_rep_count
+
+        if record.get("rep_count") is not None:
+            record["rep_count_correct"] = (
+                corrected_rep_count == record["rep_count"]
+            )
+
+    if phase_review_accurate is not None:
+        record["phase_review_accurate"] = phase_review_accurate
+
+        if phase_review_accurate:
+            record["phase_review_issue"] = None
+
+    if phase_review_issue is not None:
+        phase_review_issue = phase_review_issue.strip()
+
+        allowed_phase_issues = {
+            "wrong_phase_timing",
+            "wrong_image_frame",
+            "coaching_didnt_match",
+            "other",
+        }
+
+        if phase_review_issue not in allowed_phase_issues:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid phase_review_issue",
+            )
+
+        record["phase_review_issue"] = phase_review_issue
+        record["phase_review_accurate"] = False
+
+    record["feedback_updated_at"] = datetime.utcnow().isoformat() + "Z"
+
+    try:
+        s3_client.put_object(
+            Bucket=BETA_DATA_BUCKET,
+            Key=s3_key,
+            Body=json.dumps(record).encode("utf-8"),
+            ContentType="application/json",
+        )
+
+    except Exception as e:
+        print("BETA FEEDBACK SAVE FAILED:", e)
+        raise HTTPException(status_code=500, detail="Unable to save feedback")
+
+    return {
+        "status": "ok",
+        "analysis_id": analysis_id,
+        "predicted_exercise": record.get("predicted_exercise"),
+        "confirmed_exercise": record.get("confirmed_exercise"),
+        "was_corrected": record.get("was_corrected"),
+        "helpful": record.get("helpful"),
+        "rep_count_correct": record.get("rep_count_correct"),
+        "corrected_rep_count": record.get("corrected_rep_count"),
+        "phase_review_accurate": record.get("phase_review_accurate"),
+        "phase_review_issue": record.get("phase_review_issue"),
+    }
 
 
 def _safe_clean_fallback(*args, **kwargs):

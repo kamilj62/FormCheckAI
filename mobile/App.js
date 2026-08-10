@@ -1054,6 +1054,8 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [reanalysisLoading, setReanalysisLoading] = useState(false);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [correctedRepCountInput, setCorrectedRepCountInput] = useState("");
   const [visualsLoading, setVisualsLoading] = useState(false);
   const [selectedZone, setSelectedZone] = useState(null);
   const [exerciseCorrectionOpen, setExerciseCorrectionOpen] = useState(false);
@@ -1416,6 +1418,88 @@ export default function App() {
     }, 2000);
   };
 
+  const submitAnalysisFeedback = async ({
+    analysisId = result?.analysis_id,
+    confirmedExercise,
+    helpful,
+    repCountCorrect,
+    correctedRepCount,
+    updateLocal = true,
+  } = {}) => {
+    if (!analysisId) {
+      console.log("BETA FEEDBACK SKIPPED: no analysis_id");
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("analysis_id", analysisId);
+
+    if (confirmedExercise !== undefined) {
+      formData.append("confirmed_exercise", confirmedExercise);
+    }
+
+    if (helpful !== undefined) {
+      formData.append("helpful", String(helpful));
+    }
+
+    if (repCountCorrect !== undefined) {
+      formData.append("rep_count_correct", String(repCountCorrect));
+    }
+
+    if (correctedRepCount !== undefined) {
+      formData.append("corrected_rep_count", String(correctedRepCount));
+    }
+
+    try {
+      setFeedbackSubmitting(true);
+
+      const res = await fetch(`${API_URL}/analysis_feedback`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.detail ||
+            data?.message ||
+            "Unable to save analysis feedback",
+        );
+      }
+
+      if (updateLocal) {
+        setResult((current) => {
+          if (!current || current.analysis_id !== analysisId) {
+            return current;
+          }
+
+          return {
+            ...current,
+            confirmed_exercise:
+              data.confirmed_exercise ?? current.confirmed_exercise,
+            helpful:
+              data.helpful !== null && data.helpful !== undefined
+                ? data.helpful
+                : current.helpful,
+            rep_count_correct:
+              data.rep_count_correct !== null &&
+              data.rep_count_correct !== undefined
+                ? data.rep_count_correct
+                : current.rep_count_correct,
+          };
+        });
+      }
+
+      return data;
+    } catch (err) {
+      console.log("BETA FEEDBACK ERROR:", err);
+      return null;
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
+
   const correctDetectedExercise = async (correctedExercise) => {
     if (!result || !video || reanalysisLoading) return;
 
@@ -1430,6 +1514,14 @@ export default function App() {
     setOverlayUrl(null);
 
     try {
+      if (result.analysis_id) {
+        await submitAnalysisFeedback({
+          analysisId: result.analysis_id,
+          confirmedExercise: correctedExercise,
+          updateLocal: false,
+        });
+      }
+
       const res = await fetch(`${API_URL}/analyze`, {
         method: "POST",
         body: await buildFormData({
@@ -2138,31 +2230,6 @@ export default function App() {
           )}
         </TouchableOpacity>
 
-        <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Privacy & Safety</Text>
-
-            <Text style={styles.sectionSub}>
-              How FormCheck AI handles your workout data
-            </Text>
-
-            <Text style={styles.feedbackLine}>
-              Workout history and athlete profile information shown in the app
-              are saved locally on this device.
-            </Text>
-
-            <Text style={styles.feedbackLine}>
-              When you choose Analyze Lift, the selected workout video is
-              uploaded to the FormCheck AI analysis service so your movement
-              can be processed and scored.
-            </Text>
-
-            <Text style={styles.feedbackLine}>
-              FormCheck AI provides automated fitness and technique feedback
-              for informational purposes only. AI analysis may be inaccurate
-              and is not medical advice or a substitute for a qualified coach
-              or healthcare professional.
-            </Text>
-          </View>
 
           <View style={styles.historyCard}>
           <View style={styles.historyHeader}>
@@ -2396,6 +2463,7 @@ export default function App() {
           )}
         </View>
 
+
         {result?.error && (
           <View style={styles.errorCard}>
             <Text style={styles.errorTitle}>Request Failed</Text>
@@ -2439,7 +2507,7 @@ export default function App() {
 
                   {result.confirmed_exercise && (
                     <Text style={styles.correctedExerciseText}>
-                      AI originally predicted{" "}
+                      Original guess:{" "}
                       {formatLabel(
                         result.predicted_exercise ||
                         result.debug?.predicted_exercise ||
@@ -2519,6 +2587,184 @@ export default function App() {
                     </View>
                   )}
               </View>
+
+              {result.analysis_id && (
+                <View style={styles.insightCard}>
+                  <Text style={styles.cardLabel}>
+                    Help improve FormCheck AI
+                  </Text>
+
+                  <Text style={styles.betaFeedbackQuestion}>
+                    Was this analysis helpful?
+                  </Text>
+
+                  <View style={styles.betaFeedbackRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.betaFeedbackButton,
+                        result.helpful === true &&
+                          styles.betaFeedbackButtonActive,
+                      ]}
+                      disabled={feedbackSubmitting}
+                      onPress={() =>
+                        submitAnalysisFeedback({ helpful: true })
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.betaFeedbackButtonText,
+                          result.helpful === true &&
+                            styles.betaFeedbackButtonTextActive,
+                        ]}
+                      >
+                        Yes
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.betaFeedbackButton,
+                        result.helpful === false &&
+                          styles.betaFeedbackButtonActive,
+                      ]}
+                      disabled={feedbackSubmitting}
+                      onPress={() =>
+                        submitAnalysisFeedback({ helpful: false })
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.betaFeedbackButtonText,
+                          result.helpful === false &&
+                            styles.betaFeedbackButtonTextActive,
+                        ]}
+                      >
+                        No
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.betaFeedbackQuestion}>
+                    Was the rep count correct?
+                  </Text>
+
+                  <View style={styles.betaFeedbackRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.betaFeedbackButton,
+                        result.rep_count_correct === true &&
+                          styles.betaFeedbackButtonActive,
+                      ]}
+                      disabled={feedbackSubmitting}
+                      onPress={() =>
+                        submitAnalysisFeedback({
+                          repCountCorrect: true,
+                        })
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.betaFeedbackButtonText,
+                          result.rep_count_correct === true &&
+                            styles.betaFeedbackButtonTextActive,
+                        ]}
+                      >
+                        Yes
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.betaFeedbackButton,
+                        result.rep_count_correct === false &&
+                          styles.betaFeedbackButtonActive,
+                      ]}
+                      disabled={feedbackSubmitting}
+                      onPress={() =>
+                        submitAnalysisFeedback({
+                          repCountCorrect: false,
+                        })
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.betaFeedbackButtonText,
+                          result.rep_count_correct === false &&
+                            styles.betaFeedbackButtonTextActive,
+                        ]}
+                      >
+                        No
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {result.rep_count_correct === false && (
+                    <View style={styles.correctedRepBox}>
+                      <Text style={styles.betaFeedbackQuestion}>
+                        How many reps did you actually do?
+                      </Text>
+
+                      <TextInput
+                        style={styles.correctedRepInput}
+                        value={correctedRepCountInput}
+                        onChangeText={(value) =>
+                          setCorrectedRepCountInput(
+                            value.replace(/[^0-9]/g, ""),
+                          )
+                        }
+                        placeholder="Actual reps"
+                        placeholderTextColor="#64748B"
+                        keyboardType="number-pad"
+                      />
+
+                      <TouchableOpacity
+                        style={[
+                          styles.betaFeedbackButton,
+                          !correctedRepCountInput &&
+                            styles.disabledButton,
+                        ]}
+                        disabled={
+                          feedbackSubmitting || !correctedRepCountInput
+                        }
+                        onPress={async () => {
+                          const count = Number(correctedRepCountInput);
+
+                          if (!Number.isInteger(count) || count < 0) {
+                            return;
+                          }
+
+                          const saved = await submitAnalysisFeedback({
+                            repCountCorrect: false,
+                            correctedRepCount: count,
+                          });
+
+                          if (saved) {
+                            setResult((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    corrected_rep_count: count,
+                                  }
+                                : current,
+                            );
+                          }
+                        }}
+                      >
+                        <Text style={styles.betaFeedbackButtonText}>
+                          Save Actual Reps
+                        </Text>
+                      </TouchableOpacity>
+
+                      {result.corrected_rep_count !== undefined &&
+                        result.corrected_rep_count !== null && (
+                          <Text style={styles.correctedRepSaved}>
+                            Saved: {result.corrected_rep_count} reps
+                          </Text>
+                        )}
+                    </View>
+                  )}
+                </View>
+              )}
 
               <View style={styles.insightCard}>
                 <Text style={styles.cardLabel}>Biggest Fix</Text>
@@ -2843,8 +3089,36 @@ export default function App() {
 
               <Text style={styles.coachText}>{buildCoachSummary(result)}</Text>
             </View>
+
           </>
         )}
+
+        <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Privacy & Safety</Text>
+
+            <Text style={styles.sectionSub}>
+              How FormCheck AI handles your workout data
+            </Text>
+
+            <Text style={styles.feedbackLine}>
+              Workout history and athlete profile information shown in the app
+              are saved locally on this device.
+            </Text>
+
+            <Text style={styles.feedbackLine}>
+              When you choose Analyze Lift, the selected workout video is
+              uploaded to the FormCheck AI analysis service so your movement
+              can be processed and scored.
+            </Text>
+
+            <Text style={styles.feedbackLine}>
+              FormCheck AI provides automated fitness and technique feedback
+              for informational purposes only. AI analysis may be inaccurate
+              and is not medical advice or a substitute for a qualified coach
+              or healthcare professional.
+            </Text>
+          </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -3265,6 +3539,58 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 5,
     textAlign: "center",
+  },
+  correctedRepBox: {
+    marginTop: 10,
+  },
+  correctedRepInput: {
+    backgroundColor: "#020617",
+    color: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#334155",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    fontSize: 16,
+  },
+  correctedRepSaved: {
+    color: "#86efac",
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 8,
+  },
+
+  betaFeedbackQuestion: {
+    color: "#E5E7EB",
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  betaFeedbackRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 8,
+  },
+  betaFeedbackButton: {
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+  betaFeedbackButtonActive: {
+    backgroundColor: "#86efac",
+    borderColor: "#86efac",
+  },
+  betaFeedbackButtonText: {
+    color: "#F8FAFC",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  betaFeedbackButtonTextActive: {
+    color: "#020617",
   },
   exerciseCorrectionButton: {
     backgroundColor: "#111827",
