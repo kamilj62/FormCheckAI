@@ -2175,13 +2175,38 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
                     (best["start_idx"], best["end_idx"])
                 )
 
-        # Keep the change conservative:
-        # use wrist-driven segmentation only for a convincing multi-rep set.
-        if len(pp_wrist_windows) >= 3:
+        # Use wrist-driven segmentation for either:
+        #   1) a convincing multi-rep set, or
+        #   2) a single strong rack-to-overhead press.
+        #
+        # The single-window path supports short/cropped real-world clips
+        # while retaining the existing 0.12 candidate noise rejection.
+        strongest_wrist_travel = max(
+            (
+                float(candidate["wrist_travel"])
+                for candidate in pp_raw_candidates
+            ),
+            default=0.0,
+        )
+
+        use_wrist_segmentation = (
+            len(pp_wrist_windows) >= 3
+            or (
+                len(pp_wrist_windows) >= 1
+                and strongest_wrist_travel >= 0.14
+            )
+        )
+
+        if use_wrist_segmentation:
             segmentation_signal = np.ones(len(knee), dtype=float)
 
             for start_idx, end_idx in pp_wrist_windows:
                 segmentation_signal[start_idx:end_idx + 1] = 0.0
+
+            # Ensure a wrist-driven rep that reaches the end of the clip
+            # gets a closing edge so the segmentation loop can finalize it.
+            if len(segmentation_signal) > 1:
+                segmentation_signal[-1] = 1.0
 
             threshold = 0.5
 
@@ -10001,6 +10026,7 @@ def run_movement_protections(
             "squat_label": squat_label,
             "squat_conf": float(squat_conf or 0.0),
             "explosive_score": float(explosive_score or 0.0),
+            "bodyweight_debug": bodyweight_debug,
             "looks_strict": looks_strict,
             "looks_thruster": looks_thruster,
             "looks_clean_only": looks_clean_only,
@@ -11323,6 +11349,16 @@ def build_pullup_shape_flags(
             )
         )
         <= 45.0
+
+        # Tight pull-ups keep the hands comparatively fixed while the
+        # shoulders/body move. Reject barbell presses with dominant wrist travel.
+        and (
+            float(bodyweight_debug.get("wrist_y_range", 0.0))
+            / max(
+                float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                0.001,
+            )
+        ) <= 2.20
     )
 
     static_cropped_pull_up = (
@@ -11911,6 +11947,8 @@ def analyze_video(
             looks_strict=_looks_strict,
         )
 
+        # Temporary router diagnostics for pull-up / push-press collisions.
+
         (
             _looks_muscle_up,
             _looks_burpee,
@@ -12370,10 +12408,22 @@ def analyze_video(
 
         elif (
             _looks_split
-              and not (
-                  squat_label == "overhead_squat"
-                  and float(squat_conf or 0.0) >= 0.75
-              )
+
+            # Preserve strong independent push-press consensus before the
+            # generic split-shape override.
+            and not (
+                raw_label == "push_press"
+                and float(base_conf or 0.0) >= 0.85
+                and bio_label == "push_press"
+                and float(bio_conf or 0.0) >= 0.85
+                and router_v6_label == "push_press"
+                and float(router_v6_conf or 0.0) >= 0.85
+            )
+
+            and not (
+                squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.75
+            )
             and not _looks_cj
             and explosive_score > 20
             and olympic_pred != "snatch"
@@ -12386,6 +12436,37 @@ def analyze_video(
             final_label = "split_jerk"
             final_conf = 0.80
             analysis_mode = "shape_override"
+
+        elif (
+            raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.85
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.85
+            and router_v6_label == "push_press"
+            and float(router_v6_conf or 0.0) >= 0.85
+            and not _looks_cj
+
+            # Preserve a credible overhead squat when the wrists move
+            # with the torso rather than showing dominant press travel.
+            and not (
+                squat_label == "overhead_squat"
+                and float(squat_conf or 0.0) >= 0.75
+                and (
+                    float(bodyweight_debug.get("wrist_y_range", 0.0))
+                    / max(
+                        float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                        0.001,
+                    )
+                ) <= 1.50
+            )
+        ):
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                float(router_v6_conf or 0.0),
+            )
+            analysis_mode = "biomechanics_override"
 
         elif (
             raw_label == "squat_front"
@@ -12527,6 +12608,18 @@ def analyze_video(
         # so we use a lower explosive threshold (>20).
         elif (
             _looks_split
+
+            # Do not let the generic split-shape detector overwrite strong
+            # independent push-press consensus.
+            and not (
+                raw_label == "push_press"
+                and float(base_conf or 0.0) >= 0.85
+                and bio_label == "push_press"
+                and float(bio_conf or 0.0) >= 0.85
+                and router_v6_label == "push_press"
+                and float(router_v6_conf or 0.0) >= 0.85
+            )
+
             and not (
                 squat_label == "overhead_squat"
                 and float(squat_conf or 0.0) >= 0.75
@@ -12878,10 +12971,25 @@ def analyze_video(
             )
 
             push_press_should_hold = (
-                protected_label == "push_press"
-                and raw_label == "push_press"
-                and bio_label == "push_press"
-                and router_v5_label == "clean_and_jerk"
+                (
+                    protected_label == "push_press"
+                    and raw_label == "push_press"
+                    and bio_label == "push_press"
+                    and router_v5_label == "clean_and_jerk"
+                )
+                or (
+                    # Preserve strong independent push-press consensus when
+                    # Router V5 proposes C&J from weak Olympic evidence.
+                    raw_label == "push_press"
+                    and float(base_conf or 0.0) >= 0.85
+                    and bio_label == "push_press"
+                    and float(bio_conf or 0.0) >= 0.85
+                    and router_v6_label == "push_press"
+                    and float(router_v6_conf or 0.0) >= 0.85
+                    and router_v5_label == "clean_and_jerk"
+                    and float(olympic_conf or 0.0) < 0.60
+                    and not bool(_looks_cj)
+                )
             )
 
             if (
@@ -13172,6 +13280,17 @@ def analyze_video(
         # low-confidence Olympic label, recover pull_up before rep analysis.
         if (
             _pull_up_router_guard
+
+            # Pull-up hands remain relatively fixed while the body moves.
+            # Reject barbell presses where wrist travel dominates shoulder travel.
+            and (
+                float(bodyweight_debug.get("wrist_y_range", 0.0))
+                / max(
+                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                    0.001,
+                )
+            ) <= 0.75
+
             and not (
                 raw_label == "bench_press"
                 and bio_label == "bench_press"
@@ -13441,6 +13560,35 @@ def analyze_video(
             protected_label = "split_jerk"
             protected_conf = final_conf
             protected_reason = "standalone_split_shape_recovery"
+
+        # Recover controlled push presses whose rack/dip geometry looks like
+        # front squat + split jerk. Require near-unanimous raw/biomechanics
+        # confidence and extremely low explosiveness so genuine front squats
+        # and standalone split jerks remain unaffected.
+        final_low_explosive_push_press_over_split = (
+            not forced_exercise_label
+            and final_label == "split_jerk"
+            and protected_reason == "standalone_split_shape_recovery"
+            and raw_label == "squat_front"
+            and float(base_conf or 0.0) >= 0.99
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.99
+            and bool(_looks_split)
+            and not bool(_looks_cj)
+            and float(explosive_score or 0.0) < 15.0
+        )
+
+        if final_low_explosive_push_press_over_split:
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.95,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "low_explosive_push_press_over_split"
 
         # Final authority for a verified standalone split-jerk rescue.
         # This runs after squat, bodyweight, and clean-and-jerk recovery.
@@ -14623,6 +14771,115 @@ def analyze_video(
             protected_reason = "push_press_analyzer_over_pull_up_authority"
 
         # Recover highly explosive push presses incorrectly finalized as
+        # split jerks. Require agreement from raw / biomechanics / V6,
+        # weak clean-and-jerk Olympic evidence, no complete C&J shape,
+        # and large wrist travel relative to shoulder travel.
+        final_push_press_over_weak_cj_split = (
+            not forced_exercise_label
+            and final_label == "split_jerk"
+            and raw_label == "push_press"
+            and float(base_conf or 0.0) >= 0.70
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.75
+            and router_v6_label == "push_press"
+            and float(router_v6_conf or 0.0) >= 0.70
+            and olympic_pred == "clean_and_jerk"
+            and float(olympic_conf or 0.0) < 0.65
+            and not bool(_looks_cj)
+            and float(explosive_score or 0.0) >= 70.0
+            and (
+                float(bodyweight_debug.get("wrist_y_range", 0.0))
+                / max(
+                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                    0.001,
+                )
+            ) >= 3.0
+        )
+
+        if final_push_press_over_weak_cj_split:
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                float(router_v6_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = "push_press_over_weak_cj_split"
+
+        # Recover low-body-travel push presses incorrectly finalized as
+        # back squats. This pattern has modest squat-model confidence but strong
+        # split-jerk evidence and wrist travel far exceeding torso travel.
+        final_low_motion_push_press_over_back_squat = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "squat"
+            and float(base_conf or 0.0) <= 0.75
+            and bio_label == "squat"
+            and float(bio_conf or 0.0) <= 0.75
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+            and olympic_pred == "split_jerk"
+            and float(olympic_conf or 0.0) >= 0.80
+            and not bool(_looks_cj)
+            and float(explosive_score or 0.0) < 15.0
+            and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.15
+            and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.15
+            and (
+                float(bodyweight_debug.get("wrist_y_range", 0.0))
+                / max(
+                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                    0.001,
+                )
+            ) >= 2.20
+        )
+
+        # Recover highly explosive push presses whose squat router strongly
+        # prefers back squat. Require explicit push-press biomechanics plus
+        # dominant wrist travel and weak Olympic evidence.
+        final_explosive_push_press_over_back_squat = (
+            not forced_exercise_label
+            and final_label == "squat_back"
+            and raw_label == "squat"
+            and float(base_conf or 0.0) <= 0.70
+            and bio_label == "push_press"
+            and float(bio_conf or 0.0) >= 0.75
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.95
+            and float(olympic_conf or 0.0) < 0.50
+            and not bool(_looks_cj)
+            and float(explosive_score or 0.0) >= 100.0
+            and (
+                float(bodyweight_debug.get("wrist_y_range", 0.0))
+                / max(
+                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                    0.001,
+                )
+            ) >= 2.20
+        )
+
+        if (
+            final_low_motion_push_press_over_back_squat
+            or final_explosive_push_press_over_back_squat
+        ):
+            final_label = "push_press"
+            final_conf = max(
+                float(base_conf or 0.0),
+                float(bio_conf or 0.0),
+                0.86,
+            )
+            analysis_mode = "biomechanics_override"
+            protected_label = "push_press"
+            protected_conf = final_conf
+            protected_reason = (
+                "low_motion_push_press_over_back_squat"
+                if final_low_motion_push_press_over_back_squat
+                else "explosive_push_press_over_back_squat"
+            )
+
+        # Recover highly explosive push presses incorrectly finalized as
         # overhead squats. Require exact raw + biomechanics push-press
         # consensus and only moderate overhead-squat router confidence.
         final_explosive_push_press_authority = (
@@ -15613,6 +15870,20 @@ def analyze_video(
                 and v8_result.get("decision") == "context_lock"
                 and v8_result.get("label") == "clean_and_jerk"
                 and float(v8_result.get("confidence", 0.0) or 0.0) >= 0.80
+
+                # Do not let the late C&J context lock overwrite strong
+                # independent push-press consensus when Olympic C&J
+                # evidence is weak and there is no complete C&J shape.
+                and not (
+                    raw_label == "push_press"
+                    and float(base_conf or 0.0) >= 0.85
+                    and bio_label == "push_press"
+                    and float(bio_conf or 0.0) >= 0.85
+                    and router_v6_label == "push_press"
+                    and float(router_v6_conf or 0.0) >= 0.85
+                    and float(olympic_conf or 0.0) < 0.60
+                    and not bool(_looks_cj)
+                )
             )
 
             debug["router_v8"] = build_debug(

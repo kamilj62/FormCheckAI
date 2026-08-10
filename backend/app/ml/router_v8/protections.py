@@ -66,7 +66,18 @@ def bodyweight_protections(
             bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)
         ) <= -0.08
         and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-        and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
+        and float(bodyweight_debug.get("min_elbow", 180.0)) <= 55.0
+
+        # Pull-up hands remain comparatively fixed while the shoulders move.
+        # Push presses show much larger vertical wrist/bar travel.
+        and (
+            float(bodyweight_debug.get("wrist_y_range", 0.0))
+            / max(
+                float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                0.001,
+            )
+        ) <= 0.75
+
         and float(
             bodyweight_debug.get("avg_torso_angle", 180.0)
         ) <= 20.0
@@ -263,6 +274,7 @@ def strength_protections(
     squat_label: str | None,
     squat_conf: float,
     explosive_score: float,
+    bodyweight_debug: dict[str, Any],
     looks_strict: bool,
     looks_thruster: bool,
     looks_clean_only: bool,
@@ -327,11 +339,17 @@ def strength_protections(
         and bio_label == "push_press"
         and float(bio_conf or 0.0) >= 0.95
         and not looks_cj
-        and not (
-            squat_label == "overhead_squat"
-            and float(squat_conf or 0.0) >= 0.75
-            and float(explosive_score or 0.0) < 60.0
-        )
+
+        # In a push press, the wrists/bar travel vertically much more than
+        # the shoulders. In a pull-up, the hands remain relatively fixed
+        # while the shoulders/body move toward the bar.
+        and (
+            float(bodyweight_debug.get("wrist_y_range", 0.0))
+            / max(
+                float(bodyweight_debug.get("shoulder_y_range", 0.0)),
+                0.001,
+            )
+        ) >= 1.50
     )
 
     if strong_push_press_consensus_hold:
