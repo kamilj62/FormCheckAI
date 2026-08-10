@@ -32,8 +32,6 @@ const API_URL = BACKEND_URL;
 
 const MEDIA_URL = BACKEND_URL;
 
-console.log("CURRENT API URL:", API_URL);
-console.log("CURRENT MEDIA URL:", MEDIA_URL);
 
 const fullUrl = (path) => {
   if (!path) return null;
@@ -2140,7 +2138,33 @@ export default function App() {
           )}
         </TouchableOpacity>
 
-        <View style={styles.historyCard}>
+        <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Privacy & Safety</Text>
+
+            <Text style={styles.sectionSub}>
+              How FormCheck AI handles your workout data
+            </Text>
+
+            <Text style={styles.feedbackLine}>
+              Workout history and athlete profile information shown in the app
+              are saved locally on this device.
+            </Text>
+
+            <Text style={styles.feedbackLine}>
+              When you choose Analyze Lift, the selected workout video is
+              uploaded to the FormCheck AI analysis service so your movement
+              can be processed and scored.
+            </Text>
+
+            <Text style={styles.feedbackLine}>
+              FormCheck AI provides automated fitness and technique feedback
+              for informational purposes only. AI analysis may be inaccurate
+              and is not medical advice or a substitute for a qualified coach
+              or healthcare professional.
+            </Text>
+          </View>
+
+          <View style={styles.historyCard}>
           <View style={styles.historyHeader}>
             <View style={{ flex: 1 }}>
               <Text style={styles.sectionTitle}>Workout History</Text>
