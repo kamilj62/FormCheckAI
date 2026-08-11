@@ -71,6 +71,9 @@ fieldnames = [
     "learned_family",
     "learned_family_confidence",
     "learned_family_trusted",
+    "learned_press",
+    "learned_press_confidence",
+    "learned_press_trusted",
     "hierarchical_label",
     "hierarchical_family",
     "hierarchical_source",
@@ -185,6 +188,15 @@ def process_row(index, row):
         ),
         "learned_family_trusted": debug.get(
             "learned_family_shadow_trusted"
+        ),
+        "learned_press": debug.get(
+            "learned_press_shadow_label"
+        ),
+        "learned_press_confidence": debug.get(
+            "learned_press_shadow_confidence"
+        ),
+        "learned_press_trusted": debug.get(
+            "learned_press_shadow_trusted"
         ),
         "hierarchical_label": (
             hierarchical_shadow.get("label")

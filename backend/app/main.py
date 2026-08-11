@@ -103,6 +103,19 @@ try:
     print("FAMILY CLASSIFIER V1 LOADED:", _family_v1_path)
 except Exception as exc:
     print("FAMILY CLASSIFIER V1 NOT LOADED:", exc)
+
+PRESS_CLASSIFIER_V1 = None
+try:
+    _press_v1_path = (
+        Path(__file__).parent
+        / "models"
+        / "press_classifier_v1.joblib"
+    )
+    _press_v1_data = joblib.load(_press_v1_path)
+    PRESS_CLASSIFIER_V1 = _press_v1_data["model"]
+    print("PRESS CLASSIFIER V1 LOADED:", _press_v1_path)
+except Exception as exc:
+    print("PRESS CLASSIFIER V1 NOT LOADED:", exc)
 from app.ml.press_variant_shadow import classify_press_variant_shadow
 from app.ml.hierarchical_router_shadow import classify_hierarchical_shadow
 
@@ -9820,6 +9833,9 @@ def build_final_analysis_response(
     learned_family_shadow_label,
     learned_family_shadow_confidence,
     learned_family_shadow_trusted,
+    learned_press_shadow_label,
+    learned_press_shadow_confidence,
+    learned_press_shadow_trusted,
     press_variant_shadow,
     hierarchical_router_shadow,
     bodyweight_debug,
@@ -10040,6 +10056,16 @@ def build_final_analysis_response(
             ),
             "learned_family_shadow_trusted": bool(
                 learned_family_shadow_trusted
+            ),
+            "learned_press_shadow_label": (
+                learned_press_shadow_label
+            ),
+            "learned_press_shadow_confidence": round(
+                float(learned_press_shadow_confidence or 0.0),
+                3,
+            ),
+            "learned_press_shadow_trusted": bool(
+                learned_press_shadow_trusted
             ),
             "press_variant_shadow": press_variant_shadow,
             "hierarchical_router_shadow": (
@@ -16249,6 +16275,43 @@ def analyze_video(
         except Exception as exc:
             print("LEARNED FAMILY SHADOW ERROR:", exc)
 
+        learned_press_shadow_label = None
+        learned_press_shadow_confidence = 0.0
+        learned_press_shadow_trusted = False
+
+        try:
+            if (
+                PRESS_CLASSIFIER_V1 is not None
+                and learned_family_shadow_label == "press"
+            ):
+                _press_v1_probs = (
+                    PRESS_CLASSIFIER_V1.predict_proba(
+                        [_family_v1_row]
+                    )[0]
+                )
+
+                _press_v1_idx = int(
+                    _press_v1_probs.argmax()
+                )
+
+                learned_press_shadow_label = str(
+                    PRESS_CLASSIFIER_V1.classes_[
+                        _press_v1_idx
+                    ]
+                )
+
+                learned_press_shadow_confidence = float(
+                    _press_v1_probs[_press_v1_idx]
+                )
+
+                learned_press_shadow_trusted = (
+                    learned_family_shadow_trusted
+                    and learned_press_shadow_confidence >= 0.60
+                )
+
+        except Exception as exc:
+            print("LEARNED PRESS SHADOW ERROR:", exc)
+
         family_router_shadow = classify_family_shadow(
             candidates=routing_candidates,
             truly_explosive=bool(_truly_explosive),
@@ -16339,6 +16402,15 @@ def analyze_video(
             ),
             learned_family_shadow_trusted=(
                 learned_family_shadow_trusted
+            ),
+            learned_press_shadow_label=(
+                learned_press_shadow_label
+            ),
+            learned_press_shadow_confidence=(
+                learned_press_shadow_confidence
+            ),
+            learned_press_shadow_trusted=(
+                learned_press_shadow_trusted
             ),
             press_variant_shadow=press_variant_shadow,
             hierarchical_router_shadow=(
