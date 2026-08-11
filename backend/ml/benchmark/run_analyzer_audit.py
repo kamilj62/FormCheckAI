@@ -66,6 +66,14 @@ fieldnames = [
     "squat_label",
     "olympic_label",
     "router_v8_winner",
+    "family_shadow",
+    "family_margin",
+    "learned_family",
+    "learned_family_confidence",
+    "learned_family_trusted",
+    "hierarchical_label",
+    "hierarchical_family",
+    "hierarchical_source",
     "error",
 ]
 
@@ -135,6 +143,8 @@ def process_row(index, row):
         expected_reps = ""
 
     router_v8 = debug.get("router_v8") or {}
+    family_shadow = debug.get("family_router_shadow") or {}
+    hierarchical_shadow = debug.get("hierarchical_router_shadow") or {}
 
     return {
         "expected_label": expected,
@@ -155,6 +165,40 @@ def process_row(index, row):
         "router_v8_winner": (
             router_v8.get("winner")
             if isinstance(router_v8, dict)
+            else None
+        ),
+        "family_shadow": (
+            family_shadow.get("family")
+            if isinstance(family_shadow, dict)
+            else None
+        ),
+        "family_margin": (
+            family_shadow.get("margin")
+            if isinstance(family_shadow, dict)
+            else None
+        ),
+        "learned_family": debug.get(
+            "learned_family_shadow_label"
+        ),
+        "learned_family_confidence": debug.get(
+            "learned_family_shadow_confidence"
+        ),
+        "learned_family_trusted": debug.get(
+            "learned_family_shadow_trusted"
+        ),
+        "hierarchical_label": (
+            hierarchical_shadow.get("label")
+            if isinstance(hierarchical_shadow, dict)
+            else None
+        ),
+        "hierarchical_family": (
+            hierarchical_shadow.get("family")
+            if isinstance(hierarchical_shadow, dict)
+            else None
+        ),
+        "hierarchical_source": (
+            hierarchical_shadow.get("source")
+            if isinstance(hierarchical_shadow, dict)
             else None
         ),
         "error": data.get("error"),

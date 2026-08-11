@@ -125,23 +125,6 @@ push_press,/Users/josephkamil/Desktop/Capstone/Push Press- Head Clearance .mov,P
 push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/yt_001.mp4,yt_001.mp4,5458269,,,
 push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/yt_002.mp4,yt_002.mp4,12924332,,,
 push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/yt_003.mp4,yt_003.mp4,16230244,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_1.mp4,shoulder press_1.mp4,5332355,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_2.mp4,shoulder press_2.mp4,1059806,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_3.MOV,shoulder press_3.MOV,45937856,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_3.mp4,shoulder press_3.mp4,19248957,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_4.MOV,shoulder press_4.MOV,53886217,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_4.mp4,shoulder press_4.mp4,17600177,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_5.mp4,shoulder press_5.mp4,8614244,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_6.mp4,shoulder press_6.mp4,3755079,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_7.mp4,shoulder press_7.mp4,7491881,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_8.mp4,shoulder press_8.mp4,3580142,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_9.mp4,shoulder press_9.mp4,7599356,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_10.mp4,shoulder press_10.mp4,6753325,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_11.mp4,shoulder press_11.mp4,3902993,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_12.mp4,shoulder press_12.mp4,4760451,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_13.mp4,shoulder press_13.mp4,3644697,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_14.mp4,shoulder press_14.mp4,3178175,,,
-push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_15.mp4,shoulder press_15.mp4,5644624,,,
 strict_press,/Users/josephkamil/Desktop/Capstone/strict press.mov,strict press.mov,19233767,,,
 strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_1.mp4,shoulder press_1.mp4,5332355,,,
 strict_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/strict_press/shoulder press_2.mp4,shoulder press_2.mp4,1059806,,,
@@ -265,24 +248,6 @@ split_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/segmented/split_jerk/spl
 snatch,/Users/josephkamil/Desktop/Capstone/snatch- correct.mov,snatch- correct.mov,70444467,,,
 snatch,/Users/josephkamil/Desktop/Capstone/snatch_correct_cfr.mp4,snatch_correct_cfr.mp4,6389823,,,
 snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatch_test.mp4,snatch_test.mp4,482839,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_1.mp4,snatching_1.mp4,3472186,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_2.mp4,snatching_2.mp4,1331709,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_3.mp4,snatching_3.mp4,3330570,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_4.mp4,snatching_4.mp4,2580742,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_5.mp4,snatching_5.mp4,2190783,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_6.mp4,snatching_6.mp4,4003906,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_7.mp4,snatching_7.mp4,1599147,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_8.mp4,snatching_8.mp4,640566,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_9.mp4,snatching_9.mp4,1214149,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_10.mp4,snatching_10.mp4,2442229,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_11.mp4,snatching_11.mp4,2013159,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_12.mp4,snatching_12.mp4,1136285,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_13.mp4,snatching_13.mp4,1489063,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_14.mp4,snatching_14.mp4,1572565,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_15.mp4,snatching_15.mp4,676826,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_16.mp4,snatching_16.mp4,2552552,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_17.mp4,snatching_17.mp4,1380103,,,
-snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatching_videos/snatching_18.mp4,snatching_18.mp4,1778501,,,
 snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_snatch/snatch_correct_320x240.mp4,snatch_correct_320x240.mp4,296925,,,
 snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatch_mp4/-38xT-m3Fr4_01080_01414.mp4,-38xT-m3Fr4_01080_01414.mp4,1113968,,,
 snatch,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/snatch_mp4/-R8O1oRTmaw_01565_01796.mp4,-R8O1oRTmaw_01565_01796.mp4,1058563,,,
@@ -385,3 +350,33 @@ handstand_push_up,/Users/josephkamil/Desktop/Capstone/HandstandPushups/v_HandSta
 thruster,/Users/josephkamil/Desktop/Capstone/thruster-correct.mov,thruster-correct.mov,23329373,,,
 thruster,/Users/josephkamil/Desktop/Capstone/thruster_one_rep_720p.mp4,thruster_one_rep_720p.mp4,361238,,,
 thruster,/Users/josephkamil/Desktop/Capstone/thruster-correct-small.mp4,thruster-correct-small.mp4,1133546,,,
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/62794_6.mp4,62794_6.mp4,99191,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/63435_1.mp4,63435_1.mp4,448396,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/64024_2.mp4,64024_2.mp4,1032263,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/64620_1.mp4,64620_1.mp4,1182938,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/65343_1.mp4,65343_1.mp4,191157,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/65854_2.mp4,65854_2.mp4,90372,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/66392_1.mp4,66392_1.mp4,1087614,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/67106_1.mp4,67106_1.mp4,246807,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/67612_1.mp4,67612_1.mp4,314920,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/68153_4.mp4,68153_4.mp4,108314,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/68620_1.mp4,68620_1.mp4,502185,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/69194_1.mp4,69194_1.mp4,727644,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/69740_1.mp4,69740_1.mp4,334346,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/70361_2.mp4,70361_2.mp4,219400,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/70992_4.mp4,70992_4.mp4,562908,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/71591_1.mp4,71591_1.mp4,177034,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/72226_2.mp4,72226_2.mp4,177788,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/72791_5.mp4,72791_5.mp4,303604,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/73168_3.mp4,73168_3.mp4,678302,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/73979_3.mp4,73979_3.mp4,224468,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/74775_3.mp4,74775_3.mp4,171524,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/75437_1.mp4,75437_1.mp4,248613,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/76177_1.mp4,76177_1.mp4,809055,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/76864_1.mp4,76864_1.mp4,441960,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/77662_2.mp4,77662_2.mp4,165368,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/78484_2.mp4,78484_2.mp4,357989,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/79268_1.mp4,79268_1.mp4,534425,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/79891_3.mp4,79891_3.mp4,629501,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/80621_2.mp4,80621_2.mp4,251880,1,,verified push press source: videos-OHP
+push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/80924_1.mp4,80924_1.mp4,769668,1,,verified push press source: videos-OHP

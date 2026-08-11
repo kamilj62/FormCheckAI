@@ -49,6 +49,7 @@ import tensorflow as tf
 import joblib
 from app.movement.event_detector import detect_movement_events
 from app.feature_engine.movement_video_features import build_movement_video_features
+from app.feature_engine.movement_video_features_v2 import build_movement_video_features as build_movement_video_features_v2
 from app.feature_engine.movement_video_features_v4 import (
     build_movement_video_features_v4,
 )
@@ -89,6 +90,19 @@ except Exception:
 from app.ml.oly_router_v5 import route_olympic_lift
 from app.ml.central_router_shadow import arbitrate_shadow
 from app.ml.family_router_shadow import classify_family_shadow
+
+FAMILY_CLASSIFIER_V1 = None
+try:
+    _family_v1_path = (
+        Path(__file__).parent
+        / "models"
+        / "family_classifier_v1.joblib"
+    )
+    _family_v1_data = joblib.load(_family_v1_path)
+    FAMILY_CLASSIFIER_V1 = _family_v1_data["model"]
+    print("FAMILY CLASSIFIER V1 LOADED:", _family_v1_path)
+except Exception as exc:
+    print("FAMILY CLASSIFIER V1 NOT LOADED:", exc)
 from app.ml.press_variant_shadow import classify_press_variant_shadow
 from app.ml.hierarchical_router_shadow import classify_hierarchical_shadow
 
@@ -9803,6 +9817,9 @@ def build_final_analysis_response(
     routing_winner,
     central_router_shadow,
     family_router_shadow,
+    learned_family_shadow_label,
+    learned_family_shadow_confidence,
+    learned_family_shadow_trusted,
     press_variant_shadow,
     hierarchical_router_shadow,
     bodyweight_debug,
@@ -10014,6 +10031,16 @@ def build_final_analysis_response(
             "routing_winner": routing_winner,
             "central_router_shadow": central_router_shadow,
             "family_router_shadow": family_router_shadow,
+            "learned_family_shadow_label": (
+                learned_family_shadow_label
+            ),
+            "learned_family_shadow_confidence": round(
+                float(learned_family_shadow_confidence or 0.0),
+                3,
+            ),
+            "learned_family_shadow_trusted": bool(
+                learned_family_shadow_trusted
+            ),
             "press_variant_shadow": press_variant_shadow,
             "hierarchical_router_shadow": (
                 hierarchical_router_shadow
@@ -16180,6 +16207,48 @@ def analyze_video(
             wrist_overhead_ratio=float(wrist_overhead_ratio or 0.0),
         )
 
+        learned_family_shadow_label = None
+        learned_family_shadow_confidence = 0.0
+        learned_family_shadow_trusted = False
+
+        try:
+            if FAMILY_CLASSIFIER_V1 is not None:
+                _family_v1_features = build_movement_video_features_v2(
+                    biomechanics
+                )
+
+                _family_v1_row = [
+                    float(v)
+                    for v in _family_v1_features
+                ]
+
+                _family_v1_probs = (
+                    FAMILY_CLASSIFIER_V1.predict_proba(
+                        [_family_v1_row]
+                    )[0]
+                )
+
+                _family_v1_idx = int(
+                    _family_v1_probs.argmax()
+                )
+
+                learned_family_shadow_label = str(
+                    FAMILY_CLASSIFIER_V1.classes_[
+                        _family_v1_idx
+                    ]
+                )
+
+                learned_family_shadow_confidence = float(
+                    _family_v1_probs[_family_v1_idx]
+                )
+
+                learned_family_shadow_trusted = (
+                    learned_family_shadow_confidence >= 0.50
+                )
+
+        except Exception as exc:
+            print("LEARNED FAMILY SHADOW ERROR:", exc)
+
         family_router_shadow = classify_family_shadow(
             candidates=routing_candidates,
             truly_explosive=bool(_truly_explosive),
@@ -16262,6 +16331,15 @@ def analyze_video(
             routing_winner=routing_winner,
             central_router_shadow=central_router_shadow,
             family_router_shadow=family_router_shadow,
+            learned_family_shadow_label=(
+                learned_family_shadow_label
+            ),
+            learned_family_shadow_confidence=(
+                learned_family_shadow_confidence
+            ),
+            learned_family_shadow_trusted=(
+                learned_family_shadow_trusted
+            ),
             press_variant_shadow=press_variant_shadow,
             hierarchical_router_shadow=(
                 hierarchical_router_shadow
