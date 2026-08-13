@@ -3811,6 +3811,9 @@ def select_protected_evidence(
         and ctx.bio_label == "bench_press"
         and _float(ctx.base_conf) >= 0.80
         and _float(ctx.bio_conf) >= 0.80
+        # A verified deep squat-to-press cycle is incompatible with bench.
+        # Do not let broad bench-model agreement suppress thruster geometry.
+        and not bool(ctx.looks_thruster)
         and not (
             ctx.squat_label in {"squat_back", "squat_front"}
             and _float(ctx.squat_conf) >= 0.95

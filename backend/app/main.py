@@ -4073,13 +4073,29 @@ def looks_like_thruster(biomechanics):
     hip_range = float(np.max(hip) - np.min(hip))
     elbow_range = float(np.max(elbow) - np.min(elbow))
     overhead_ratio = float(np.mean(wrist_y < shoulder_y))
+    wrist_y_range = float(np.max(wrist_y) - np.min(wrist_y))
+    max_elbow = float(np.percentile(elbow, 90))
+
+    # Camera-tolerant press completion:
+    # Some side/oblique clips do not place the tracked wrist numerically
+    # above the shoulder even though the athlete reaches full lockout.
+    direct_overhead = overhead_ratio >= 0.10
+
+    extended_press_completion = (
+        wrist_y_range >= 0.20
+        and max_elbow >= 165.0
+        and elbow_range >= 90.0
+        and float(np.min(elbow)) <= 100.0
+    )
+
+    press_completed = direct_overhead or extended_press_completion
 
     return (
         float(np.min(knee)) < 125
         and knee_range >= 25
         and hip_range >= 20
         and elbow_range >= 18
-        and overhead_ratio >= 0.10
+        and press_completed
     )
 
 

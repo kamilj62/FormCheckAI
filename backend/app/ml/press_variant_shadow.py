@@ -125,14 +125,14 @@ def classify_press_variant_shadow(
     # ---------------------------------------------------------
     # Bench press: horizontal torso orientation.
     # ---------------------------------------------------------
-    if horizontal:
+    if horizontal and not looks_thruster:
         add(
             "bench_press",
             3.0,
             f"horizontal torso angle {avg_torso:.1f}",
         )
 
-    if "bench_press" in source_labels:
+    if "bench_press" in source_labels and not looks_thruster:
         add(
             "bench_press",
             0.35,

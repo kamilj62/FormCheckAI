@@ -258,6 +258,8 @@ def early_strength_protections(
 
     trusted_base_bench = (
         raw_label == "bench_press"
+        # A verified squat-to-press cycle is incompatible with bench press.
+        and not bool(looks_thruster)
         and not (
             looks_push_up
             or looks_pull_up
