@@ -10,6 +10,7 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
     max_hip = summary.get("max_hip_angle", 0)
     min_torso = summary.get("min_torso_angle", 0)
     max_torso = summary.get("max_torso_angle", 0)
+    avg_torso = summary.get("avg_torso_angle", 0)
     max_elbow = summary.get("max_elbow_angle", 0)
     min_elbow = summary.get("min_elbow_angle", 0)
     wrist_ratio = summary.get("wrist_above_shoulder_ratio", 0)
@@ -38,7 +39,19 @@ def classify_with_biomechanics(raw_label, confidence, summary, pose_frames):
         and min_elbow >= 70
     )
 
-    if raw_label == "bench_press" and not obvious_push_up:
+    # A raw bench prediction is only trusted when the pose also has
+    # credible bench-like geometry. This prevents upright squat-to-press
+    # movements such as thrusters from being locked as bench press.
+    credible_bench_geometry = (
+        avg_torso >= 70.0
+        and wrist_ratio >= 0.20
+    )
+
+    if (
+        raw_label == "bench_press"
+        and not obvious_push_up
+        and credible_bench_geometry
+    ):
         return "bench_press", max(confidence, 0.80), True, "trusted_model_bench_press"
 
     if raw_label == "bench_press" and obvious_push_up:

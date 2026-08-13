@@ -1193,6 +1193,13 @@ def select_router_v5_override(
         and not ctx.clean_rescue_active
     )
 
+    strong_bench_should_hold = (
+        ctx.raw_label == "bench_press"
+        and _float(ctx.base_confidence) >= 0.95
+        and ctx.bio_label == "bench_press"
+        and _float(ctx.bio_confidence) >= 0.95
+    )
+
     push_press_should_hold = (
         (
             protected_label == "push_press"
@@ -1261,6 +1268,7 @@ def select_router_v5_override(
 
     should_apply_router_v5 = (
         not push_press_should_hold
+        and not strong_bench_should_hold
         and not front_squat_push_press_guard
         and not front_squat_weak_cj_guard
         and not thruster_should_hold
@@ -3539,9 +3547,17 @@ def select_fallback_final_decision(
         and _float(ctx.router_v6_conf) >= 0.85
     )
 
+    strong_bench_consensus = (
+        ctx.raw_label == "bench_press"
+        and _float(ctx.base_conf) >= 0.95
+        and ctx.bio_label == "bench_press"
+        and _float(ctx.bio_conf) >= 0.95
+    )
+
     if (
         ctx.looks_split
         and not strong_push_press_consensus
+        and not strong_bench_consensus
         and not (
             ctx.squat_label == "overhead_squat"
             and _float(ctx.squat_conf) >= 0.75
@@ -3651,6 +3667,27 @@ def select_fallback_final_decision(
             label="push_press",
             confidence=_float(ctx.base_conf),
             mode="base_model_locked",
+        )
+
+    # Preserve unanimous high-confidence bench evidence when no stronger
+    # movement-specific authority has fired. This prevents a trusted bench
+    # prediction from falling through to "unknown" and later being reclassified
+    # by a weaker hierarchy result.
+    strong_bench_consensus = (
+        ctx.raw_label == "bench_press"
+        and _float(ctx.base_conf) >= 0.95
+        and ctx.bio_label == "bench_press"
+        and _float(ctx.bio_conf) >= 0.95
+    )
+
+    if strong_bench_consensus:
+        return FallbackFinalDecision(
+            label="bench_press",
+            confidence=max(
+                _float(ctx.base_conf),
+                _float(ctx.bio_conf),
+            ),
+            mode="biomechanics_override",
         )
 
     return FallbackFinalDecision(
@@ -3768,9 +3805,17 @@ def select_early_final_decision(
         and _float(ctx.router_v6_conf) >= 0.85
     )
 
+    strong_bench_consensus = (
+        ctx.raw_label == "bench_press"
+        and _float(ctx.base_conf) >= 0.95
+        and ctx.bio_label == "bench_press"
+        and _float(ctx.bio_conf) >= 0.95
+    )
+
     if (
         ctx.looks_split
         and not strong_push_press_consensus
+        and not strong_bench_consensus
         and not (
             ctx.squat_label == "overhead_squat"
             and _float(ctx.squat_conf) >= 0.75

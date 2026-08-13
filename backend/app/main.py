@@ -5156,6 +5156,12 @@ def analyze_bench_press_reps(biomechanics):
         shoulder_range = float(np.max(rep_shoulder_y) - np.min(rep_shoulder_y))
         hip_range = float(np.max(rep_hip_y) - np.min(rep_hip_y))
 
+        # A real bench-press bottom requires meaningful elbow flexion.
+        # Local minima near extension can have large window ROM because of
+        # neighboring motion, but they are not actual rep bottoms.
+        if float(smooth[bottom]) > 110.5:
+            continue
+
         if elbow_range < 35:
             continue
 
