@@ -2768,6 +2768,7 @@ def select_final_press_squat_pre_probe_authority(
         explosive_score=ctx.explosive_score,
         squat_knee_range=ctx.squat_knee_range,
         squat_hip_range=ctx.squat_hip_range,
+        bodyweight_debug=ctx.bodyweight_debug,
     ):
         final_label = "strict_press"
         final_confidence = max(0.86, final_confidence)

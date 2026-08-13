@@ -1,5 +1,5 @@
 {
-  "analysis_id": "b45a76ca66814817be17fad5cdc94b1c",
+  "analysis_id": "0bc2b30eaf83434a978dc30c145b40cc",
   "analysis_mode": "biomechanics_override",
   "coaching_zones": {
     "exercise_label": "deadlift",
@@ -56,6 +56,7 @@
       },
       "squat_frames_used": 25,
       "total_frames": 63,
+      "true_overhead_squat": false,
       "wrist_height_above_shoulder": -0.016
     },
     "base_conf": 0.481,

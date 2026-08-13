@@ -76,18 +76,39 @@ def should_recover_strict_press(
     explosive_score: float,
     squat_knee_range: float,
     squat_hip_range: float,
+    bodyweight_debug: dict[str, Any] | None = None,
 ) -> bool:
-    return (
-        not forced_exercise_label
-        and final_label == "push_press"
+    bodyweight_debug = bodyweight_debug or {}
+
+    # Original strict-press recovery for clips already recognized as
+    # push_press by the broad classifiers.
+    legacy_push_press_shape = (
+        final_label == "push_press"
         and raw_label == "push_press"
         and bio_label == "push_press"
         and bool(looks_strict)
+        and _float(squat_knee_range) < 20.0
+        and _float(squat_hip_range) < 12.0
+    )
+
+    # Some strict presses are projected as squat_front while the
+    # biomechanics classifier still sees a press. Use actual body
+    # translation to distinguish them from genuine squats:
+    # wrists travel substantially while the hips remain nearly fixed.
+    controlled_standing_press_shape = (
+        final_label in {"squat_front", "push_press"}
+        and raw_label in {"squat_front", "push_press"}
+        and bio_label == "push_press"
+        and _debug_float(bodyweight_debug, "hip_y_range", 999.0) <= 0.06
+        and _debug_float(bodyweight_debug, "wrist_y_range", 0.0) >= 0.20
+    )
+
+    return (
+        not forced_exercise_label
+        and (legacy_push_press_shape or controlled_standing_press_shape)
         and not bool(looks_split)
         and not bool(looks_thruster)
         and _float(explosive_score) < 15.0
-        and _float(squat_knee_range) < 20.0
-        and _float(squat_hip_range) < 12.0
     )
 
 

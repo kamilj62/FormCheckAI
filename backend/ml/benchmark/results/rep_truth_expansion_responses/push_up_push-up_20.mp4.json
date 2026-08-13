@@ -1,5 +1,5 @@
 {
-  "analysis_id": "542ca32427024803b8196bdd1d57b623",
+  "analysis_id": "78082144c0de422d8af767bc59201fbb",
   "analysis_mode": "biomechanics_override",
   "coaching_zones": {
     "exercise_label": "push_up",
@@ -46,6 +46,7 @@
       },
       "squat_frames_used": 29,
       "total_frames": 73,
+      "true_overhead_squat": false,
       "wrist_height_above_shoulder": -0.384
     },
     "base_conf": 0.981,

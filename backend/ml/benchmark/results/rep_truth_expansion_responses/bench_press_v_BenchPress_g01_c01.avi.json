@@ -1,5 +1,5 @@
 {
-  "analysis_id": "08b00f283f5b4eb3a21198c14540e60e",
+  "analysis_id": "3c7eabb119d64153b44acb8cfbabdd74",
   "analysis_mode": "biomechanics_override",
   "coaching_zones": {
     "exercise_label": "bench_press",
@@ -109,6 +109,7 @@
       },
       "squat_frames_used": 17,
       "total_frames": 41,
+      "true_overhead_squat": false,
       "wrist_height_above_shoulder": -0.085
     },
     "base_conf": 0.823,

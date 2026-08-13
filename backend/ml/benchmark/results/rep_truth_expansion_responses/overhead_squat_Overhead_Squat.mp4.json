@@ -1,5 +1,5 @@
 {
-  "analysis_id": "e01082c4e4174146b2780fe259d5e029",
+  "analysis_id": "b85dc3f1ac7a4bbfb1f46afd5952340e",
   "analysis_mode": "detailed_rep_analysis",
   "coaching_zones": {
     "exercise_label": "overhead_squat",
@@ -76,6 +76,7 @@
       },
       "squat_frames_used": 102,
       "total_frames": 255,
+      "true_overhead_squat": true,
       "wrist_height_above_shoulder": 0.222
     },
     "base_conf": 0.999,

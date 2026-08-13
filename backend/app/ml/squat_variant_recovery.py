@@ -29,7 +29,10 @@ def should_recover_front_squat_from_back_router(
     front_rack_bar_evidence = (
         float((bar_debug.get("scores") or {}).get("squat_front") or 0.0)
         >= 0.55
-        and float(bar_debug.get("front_rack_elbow_p25", 180.0)) <= 45.0
+        # Genuine front-rack clips show a very acute lower-quartile elbow
+    # angle. A looser 45-degree cutoff also caught back-squat rack
+    # projections, so require stronger front-rack evidence.
+    and float(bar_debug.get("front_rack_elbow_p25", 180.0)) <= 20.0
         and float(bar_debug.get("avg_elbow_angle_sq", 180.0)) <= 70.0
         and float(bar_debug.get("squat_frames_used", 0.0)) >= 80.0
     )

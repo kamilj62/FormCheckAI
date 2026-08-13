@@ -1,5 +1,5 @@
 {
-  "analysis_id": "c4903902924e49169778c68f5b6e55b5",
+  "analysis_id": "be316b7ff49c4611b0ca5e8c362e5c23",
   "analysis_mode": "router_v8_context_lock",
   "coaching_zones": {
     "exercise_label": "clean_and_jerk",
@@ -66,6 +66,7 @@
       },
       "squat_frames_used": 36,
       "total_frames": 90,
+      "true_overhead_squat": false,
       "wrist_height_above_shoulder": 0.213
     },
     "base_conf": 0.384,

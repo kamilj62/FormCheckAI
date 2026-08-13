@@ -1,5 +1,5 @@
 {
-  "analysis_id": "56e59122073a477eadb69ac0008f6509",
+  "analysis_id": "3dc39f5772134ea89a6e07d5b5835edf",
   "analysis_mode": "router_v6_bodyweight",
   "coaching_zones": {
     "exercise_label": "handstand_push_up",
@@ -52,6 +52,7 @@
       },
       "squat_frames_used": 31,
       "total_frames": 78,
+      "true_overhead_squat": false,
       "wrist_height_above_shoulder": -0.311
     },
     "base_conf": 0.817,

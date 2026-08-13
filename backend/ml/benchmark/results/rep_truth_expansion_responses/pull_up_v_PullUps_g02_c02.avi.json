@@ -1,5 +1,5 @@
 {
-  "analysis_id": "c3709daa3b774b8499471a4cc11c5e7a",
+  "analysis_id": "77cfeee3132043c5a632c52840c14520",
   "analysis_mode": "router_v6_bodyweight",
   "coaching_zones": {
     "exercise_label": "pull_up",
@@ -70,6 +70,7 @@
       },
       "squat_frames_used": 71,
       "total_frames": 176,
+      "true_overhead_squat": true,
       "wrist_height_above_shoulder": 0.226
     },
     "base_conf": 0.965,

@@ -1,5 +1,5 @@
 {
-  "analysis_id": "645f019148b34b4b98403be21fd342d4",
+  "analysis_id": "d03a810f430344a99fb04ce60c3b1144",
   "analysis_mode": "olympic_final_authority",
   "coaching_zones": {
     "exercise_label": "snatch",
@@ -86,6 +86,7 @@
       },
       "squat_frames_used": 39,
       "total_frames": 96,
+      "true_overhead_squat": true,
       "wrist_height_above_shoulder": 0.232
     },
     "base_conf": 0.759,

@@ -1848,9 +1848,15 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
                 # Reject a short opening fragment when recording begins during
                 # setup or partway through a movement. Preserve genuine reps
                 # filmed from the beginning when they contain a full cycle.
+                # Require a meaningful full squat cycle in source-video time.
+                # Pose-index spans alone can admit tiny tracking fragments when
+                # MediaPipe briefly crosses the squat threshold.
+                min_source_rep_span = 15
+
                 if (
                     descent_span < 4
                     or ascent_span < 4
+                    or source_span < min_source_rep_span
                     or (starts_near_video_open and source_span < 30)
                 ):
                     in_rep = False
@@ -10369,6 +10375,7 @@ def build_core_routing_flags(
     bar_label,
     bar_conf,
     bar_pos_valid,
+    true_overhead_squat=False,
 ):
     """Build the core flags shared by movement arbitration rules."""
     squat_confident = (
@@ -10388,6 +10395,7 @@ def build_core_routing_flags(
         bar_label == "overhead_squat"
         and float(bar_conf or 0.0) >= 0.60
         and bool(bar_pos_valid)
+        and bool(true_overhead_squat)
     )
 
     return (
@@ -10639,9 +10647,10 @@ def build_olympic_routing_signals(biomechanics):
 
 
 def predict_squat_variant(seq_base, biomechanics):
-    """Run the squat router and bar-position refinement."""
+    """Run the squat router and validate/refine with bar-position geometry."""
     squat_label = None
     squat_conf = 0.0
+    squat_probs = None
 
     if SQUAT_ROUTER_MODEL is not None:
         squat_probs = SQUAT_ROUTER_MODEL.predict(
@@ -10661,7 +10670,54 @@ def predict_squat_variant(seq_base, biomechanics):
         bar_debug.get("front_rack_elbow_p25", 0) >= 20
     )
 
-    if bar_conf >= 0.60 and bar_pos_valid:
+    # A true overhead squat requires more than wrists appearing above the
+    # shoulders. Back/front rack positions can produce that projection from
+    # some camera angles. Require sustained elevated, extended elbows.
+    true_overhead_squat = (
+        float(bar_debug.get("overhead_ratio", 0.0)) >= 0.70
+        and float(bar_debug.get("elbow_elevated_ratio", 0.0)) >= 0.60
+        and float(bar_debug.get("avg_elbow_angle_sq", 0.0)) >= 150.0
+    )
+
+    bar_debug["true_overhead_squat"] = bool(true_overhead_squat)
+
+    # If the learned router proposes overhead squat but the physical overhead
+    # posture is absent, fall back to its strongest non-overhead subtype.
+    if (
+        squat_label == "overhead_squat"
+        and not true_overhead_squat
+        and squat_probs is not None
+    ):
+        non_overhead = [
+            (idx, label)
+            for idx, label in SQUAT_ROUTER_LABELS.items()
+            if label != "overhead_squat"
+        ]
+
+        if non_overhead:
+            fallback_idx, fallback_label = max(
+                non_overhead,
+                key=lambda item: float(squat_probs[item[0]]),
+            )
+            squat_label = fallback_label
+            squat_conf = float(squat_probs[fallback_idx])
+            bar_debug["overhead_model_rejected"] = True
+            bar_debug["overhead_model_fallback"] = fallback_label
+        else:
+            bar_debug["overhead_model_rejected"] = False
+
+    # Geometry may refine the learned subtype, but an overhead-squat geometry
+    # override is only allowed when true overhead lockout is actually present.
+    allow_bar_override = (
+        bar_conf >= 0.60
+        and bar_pos_valid
+        and (
+            bar_label != "overhead_squat"
+            or true_overhead_squat
+        )
+    )
+
+    if allow_bar_override:
         squat_label = bar_label
         squat_conf = bar_conf
 
@@ -11906,6 +11962,9 @@ def analyze_video(
             bar_label=bar_label,
             bar_conf=bar_conf,
             bar_pos_valid=_bar_pos_valid,
+            true_overhead_squat=bool(
+                bar_debug.get("true_overhead_squat", False)
+            ),
         )
 
         _squat_knee_range = (
