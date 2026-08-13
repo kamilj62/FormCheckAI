@@ -1,0 +1,14 @@
+family,exercise_label,video,name,source_group,reason,frames_processed,pose_frames
+olympic,split_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/jerk/splitjerk-correct.mov,splitjerk-correct.mov,split_jerk:splitjerk-correct,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench Press- Correct2.mov,Bench Press- Correct2.mov,bench_press:Bench Press- Correct2,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench press- bar path.mov,Bench press- bar path.mov,bench_press:Bench press- bar path,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench press- head lift.mov,Bench press- head lift.mov,bench_press:Bench press- head lift,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench press- elbow flare.mov,Bench press- elbow flare.mov,bench_press:Bench press- elbow flare,timeout_120s,,
+press,push_press,/Users/josephkamil/Desktop/Capstone/test_pushpress_1sec.mp4,test_pushpress_1sec.mp4,push_press:test_pushpress_1sec,insufficient_data,8,8
+press,push_press,/Users/josephkamil/Desktop/Capstone/Push Press- Head Clearance .mov,Push Press- Head Clearance .mov,push_press:Push Press- Head Clearance ,timeout_120s,,
+squat,squat_back,/Users/josephkamil/Desktop/Capstone/Back squats- forward lean.mov,Back squats- forward lean.mov,squat_back:Back squats- forward lean,timeout_120s,,
+squat,squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/yt_001.mp4,yt_001.mp4,squat_back:yt_001,timeout_120s,,
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/Front Squat- Depth.mov,Front Squat- Depth.mov,squat_front:Front Squat- Depth,timeout_120s,,
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/Front squat- elbow drop.mov,Front squat- elbow drop.mov,squat_front:Front squat- elbow drop,timeout_120s,,
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/Front squats- butt wink .mov,Front squats- butt wink .mov,squat_front:Front squats- butt wink ,timeout_120s,,
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/yt_003.mp4,yt_003.mp4,squat_front:yt_003,timeout_120s,,

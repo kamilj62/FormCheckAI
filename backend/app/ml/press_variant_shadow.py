@@ -2,13 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-
-PRESS_LABELS = {
-    "bench_press",
-    "strict_press",
-    "push_press",
-    "thruster",
-}
+from app.ml.movement_signatures import PRESS_LABELS
 
 
 def _number(data: dict[str, Any], key: str, default: float = 0.0) -> float:
@@ -53,6 +47,11 @@ def classify_press_variant_shadow(
         "avg_torso_angle",
         _number(body, "avg_torso_angle"),
     )
+    avg_torso_lean = _number(
+        bio,
+        "avg_torso_lean",
+        _number(body, "avg_torso_lean"),
+    )
     min_knee = _number(bio, "min_knee_angle", 180.0)
     max_knee = _number(bio, "max_knee_angle", 180.0)
     min_hip = _number(bio, "min_hip_angle", 180.0)
@@ -81,16 +80,31 @@ def classify_press_variant_shadow(
     base_candidate = candidates.get("base") or {}
     bio_candidate = candidates.get("biomechanics") or {}
     v5_candidate = candidates.get("router_v5") or {}
+    protected_candidate = candidates.get("protected_evidence") or {}
 
     source_labels = {
         base_candidate.get("label"),
         bio_candidate.get("label"),
         v5_candidate.get("label"),
+        protected_candidate.get("label"),
     }
+
+    protected_label = protected_candidate.get("label")
+    protected_reason = str(
+        protected_candidate.get("reason") or ""
+    )
 
     horizontal = avg_torso >= 55.0
     upright = avg_torso < 25.0
     non_horizontal = avg_torso < 55.0
+
+    # Standing press variants must actually show overhead wrist motion.
+    # This prevents horizontal/bench clips with noisy knee/hip motion from
+    # being promoted to strict press or push press.
+    overhead_press_motion = (
+        wrist_overhead_ratio >= 0.15
+        or bool(strong_overhead)
+    )
 
     scores = {
         "bench_press": 0.0,
@@ -192,7 +206,7 @@ def classify_press_variant_shadow(
         and hip_range >= 11.0
     )
 
-    if upright and small_leg_motion:
+    if upright and overhead_press_motion and small_leg_motion:
         add(
             "strict_press",
             1.25,
@@ -202,14 +216,14 @@ def classify_press_variant_shadow(
             ),
         )
 
-    if looks_strict and explosive_score < 8.0:
+    if overhead_press_motion and looks_strict and explosive_score < 8.0:
         add(
             "strict_press",
             0.75,
             "strict pattern with low explosive score",
         )
 
-    if upright and moderate_leg_drive:
+    if upright and overhead_press_motion and moderate_leg_drive:
         add(
             "push_press",
             1.25,
@@ -219,7 +233,7 @@ def classify_press_variant_shadow(
             ),
         )
 
-    if upright and explosive_score >= 8.0:
+    if upright and overhead_press_motion and explosive_score >= 8.0:
         add(
             "push_press",
             min(0.75, explosive_score / 30.0),
@@ -236,6 +250,115 @@ def classify_press_variant_shadow(
             "overhead press classifier agreement",
         )
 
+    push_press_consensus = (
+        overhead_press_motion
+        and base_candidate.get("label") == "push_press"
+        and bio_candidate.get("label") == "push_press"
+    )
+
+    protected_push_press = (
+        protected_label == "push_press"
+        and protected_reason in {
+            "push_press_pattern_detected",
+            "learned_press_hierarchy_authority",
+            "strong_push_press_over_false_thruster",
+            "context_supported_push_press_agreement",
+        }
+    )
+
+    strict_press_source_support = (
+        "strict_press" in source_labels
+        or bool(looks_strict)
+    )
+
+    strict_press_consensus = (
+        base_candidate.get("label") == "strict_press"
+        or bio_candidate.get("label") == "strict_press"
+    )
+
+    protected_strict_press = (
+        protected_label == "strict_press"
+        and protected_reason in {
+            "strict_press_pattern_detected",
+            "learned_press_hierarchy_authority",
+            "strict_press_over_false_push_press",
+            "context_supported_strict_press_agreement",
+        }
+    )
+
+    strict_press_geometry = (
+        upright
+        and small_leg_motion
+        and float(explosive_score or 0.0) < 12.0
+        and wrist_overhead_ratio >= 0.45
+    )
+
+    if strict_press_source_support:
+        add(
+            "strict_press",
+            0.60,
+            "strict press classifier or geometry signal",
+        )
+
+    if strict_press_consensus:
+        add(
+            "strict_press",
+            0.90,
+            "base or biomechanics supports strict press",
+        )
+
+    if protected_strict_press:
+        add(
+            "strict_press",
+            1.15,
+            f"contextual strict-press evidence: {protected_reason}",
+        )
+
+    if strict_press_geometry:
+        add(
+            "strict_press",
+            0.80,
+            "upright overhead press with minimal leg drive",
+        )
+
+    if push_press_consensus:
+        add(
+            "push_press",
+            0.85,
+            "base and biomechanics agree on push press",
+        )
+
+    if protected_push_press:
+        add(
+            "push_press",
+            1.15,
+            f"contextual push-press evidence: {protected_reason}",
+        )
+
+    if (
+        (strict_press_geometry or protected_strict_press)
+        and scores["push_press"] > 0.0
+    ):
+        scores["push_press"] *= 0.55
+        evidence["push_press"].append(
+            "discounted push-press evidence under strict-press geometry"
+        )
+
+    if (
+        (push_press_consensus or protected_push_press)
+        and scores["thruster"] > 0.0
+        and not (
+            deep_squat
+            and front_squat_support
+            and large_vertical_travel
+            and looks_thruster
+        )
+    ):
+        scores["thruster"] *= 0.55
+        evidence["thruster"].append(
+            "discounted ambiguous thruster evidence under push-press consensus"
+        )
+
     ranked = sorted(
         scores.items(),
         key=lambda item: item[1],
@@ -246,7 +369,7 @@ def classify_press_variant_shadow(
     runner_up = ranked[1]
 
     return {
-        "version": "press_variant_shadow_v1",
+        "version": "press_variant_shadow_v2",
         "eligible": True,
         "label": winner[0],
         "score": round(winner[1], 3),
@@ -262,6 +385,7 @@ def classify_press_variant_shadow(
         "evidence": evidence,
         "features": {
             "avg_torso_angle": round(avg_torso, 3),
+            "avg_torso_lean": round(avg_torso_lean, 3),
             "min_knee_angle": round(min_knee, 3),
             "knee_range": round(knee_range, 3),
             "min_hip_angle": round(min_hip, 3),
@@ -284,7 +408,14 @@ def classify_press_variant_shadow(
             "front_squat_support": front_squat_support,
             "large_vertical_travel": large_vertical_travel,
             "upright": upright,
+            "overhead_press_motion": overhead_press_motion,
             "small_leg_motion": small_leg_motion,
             "moderate_leg_drive": moderate_leg_drive,
+            "push_press_consensus": push_press_consensus,
+            "protected_push_press": protected_push_press,
+            "strict_press_source_support": strict_press_source_support,
+            "strict_press_consensus": strict_press_consensus,
+            "protected_strict_press": protected_strict_press,
+            "strict_press_geometry": strict_press_geometry,
         },
     }

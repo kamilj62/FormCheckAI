@@ -118,6 +118,39 @@ except Exception as exc:
     print("PRESS CLASSIFIER V1 NOT LOADED:", exc)
 from app.ml.press_variant_shadow import classify_press_variant_shadow
 from app.ml.hierarchical_router_shadow import classify_hierarchical_shadow
+from app.ml.final_classifier import simplify_final_classification
+from app.ml.specialist_router_stack import classify_specialist_routers
+from app.ml.router_audit import (
+    build_router_score_flags,
+    finalize_router_scores,
+    initialize_router_audit,
+    populate_router_scores,
+)
+from app.ml.movement_signatures import normalize_forced_exercise_label
+from app.ml.rep_detector import (
+    detect_reps_for_label,
+    rep_detector_spec,
+    validate_rep_phases,
+)
+from app.ml.final_arbitration_adapters import FinalArbitrationProbeAdapters
+from app.ml.final_decision_router import (
+    EarlyFinalContext,
+    FallbackFinalContext,
+    FinalArbitrationContext,
+    FinalDecisionState,
+    ProtectedEvidenceContext,
+    RouterV5AdjustmentContext,
+    RouterV5OverrideContext,
+    adjust_router_v5_prediction,
+    run_final_arbitration,
+    select_early_final_decision,
+    select_fallback_final_decision,
+    select_protected_evidence,
+    select_router_v5_override,
+)
+from app.ml.squat_variant_recovery import (
+    should_recover_front_squat_from_back_router,
+)
 
 from app.coaching.clean import build_clean_coaching
 
@@ -198,10 +231,9 @@ from pathlib import Path
 from .model_runtime import NumpyFormCheckModel
 
 from app.ml.router_v8.collectors import collect_predictions
-from app.ml.router_v8.fusion_clean_v56 import fuse_predictions
+from app.ml.router_v8.fusion import fuse_predictions
 from app.ml.router_v8.debug import build_debug
 from app.ml.router_v8.state import RouterState
-from app.ml.router_v8.locks import get_locks
 
 from app.logic import (
     classify_with_biomechanics,
@@ -733,6 +765,7 @@ def summarize_biomechanics(biomechanics):
             "avg_torso_angle": 0.0,
             "min_torso_angle": 0.0,
             "max_torso_angle": 0.0,
+            "avg_torso_lean": 0.0,
             "avg_elbow_angle": 180.0,
             "min_elbow_angle": 180.0,
             "max_elbow_angle": 180.0,
@@ -744,6 +777,7 @@ def summarize_biomechanics(biomechanics):
     knee = np.array([b["knee_angle"] for b in biomechanics])
     hip = np.array([b["hip_angle"] for b in biomechanics])
     torso = np.array([b["torso_angle"] for b in biomechanics])
+    torso_lean = np.array([b.get("torso_lean", 0.0) for b in biomechanics])
     elbow = np.array([b["elbow_angle"] for b in biomechanics])
     valgus = np.array([b.get("valgus_ratio", 1.0) for b in biomechanics])
     wrist_above = np.array([
@@ -764,6 +798,7 @@ def summarize_biomechanics(biomechanics):
         "avg_torso_angle": float(np.mean(torso)),
         "min_torso_angle": float(np.min(torso)),
         "max_torso_angle": float(np.max(torso)),
+        "avg_torso_lean": float(np.mean(torso_lean)),
         "avg_elbow_angle": float(np.mean(elbow)),
         "min_elbow_angle": float(np.min(elbow)),
         "max_elbow_angle": float(np.max(elbow)),
@@ -5018,8 +5053,14 @@ def analyze_bench_press_reps(biomechanics):
         for i, b in enumerate(biomechanics)
     ])
 
-    start_offset = int(len(elbow_all) * 0.20)
-    end_offset = int(len(elbow_all) * 0.85)
+    # Keep nearly the full clip for multi-rep bench detection.
+    # The old 20%-85% crop could remove the first or last rep in
+    # short sets before local-bottom detection even ran.
+    # Keep a small setup trim, but preserve the full end of the clip.
+    # Short multi-rep bench sets may place the final bottom/lockout in
+    # the last few pose samples.
+    start_offset = int(len(elbow_all) * 0.05)
+    end_offset = len(elbow_all)
 
     elbow = elbow_all[start_offset:end_offset]
     wrist_y = wrist_y_all[start_offset:end_offset]
@@ -5033,21 +5074,50 @@ def analyze_bench_press_reps(biomechanics):
     if len(elbow) < 10:
         return reps, build_set_summary(reps)
 
-    kernel = np.ones(5) / 5
-    smooth = np.convolve(elbow, kernel, mode="same")
+    # Smooth with edge padding so reps near the start/end are not
+    # distorted by zero-padding from np.convolve(..., mode="same").
+    kernel = np.ones(5, dtype=float) / 5.0
+    pad = len(kernel) // 2
+    smooth = np.convolve(
+        np.pad(elbow, (pad, pad), mode="edge"),
+        kernel,
+        mode="valid",
+    )
 
     bottoms = []
 
-    for i in range(3, len(smooth) - 3):
-        window = smooth[i - 3:i + 4]
+    # Detect ordinary bottoms with a two-sample neighborhood.
+    for i in range(2, len(smooth) - 2):
+        window = smooth[i - 2:i + 3]
 
         if smooth[i] == np.min(window):
             bottoms.append(i)
 
-    last_end = -999
+    # The final bench rep may bottom very close to the end of a short clip,
+    # leaving only one following pose sample. Accept that terminal minimum
+    # when it is clearly lower than the preceding samples and then rises.
+    if len(smooth) >= 4:
+        i = len(smooth) - 2
+        terminal_window = smooth[max(0, i - 2):i + 2]
+
+        if (
+            smooth[i] == np.min(terminal_window)
+            and smooth[i] < smooth[i - 1]
+            and smooth[i + 1] > smooth[i]
+            and i not in bottoms
+        ):
+            bottoms.append(i)
+
+    bottoms = sorted(set(bottoms))
+
+    # De-duplicate nearby bottom detections using bottom-to-bottom
+    # spacing, not the end of the previous grading window. Using
+    # previous end suppressed legitimate reps in short multi-rep clips
+    # because each grading window extends ~10 samples past its bottom.
+    last_bottom = -999
 
     for bottom in bottoms:
-        if bottom - last_end < 6:
+        if bottom - last_bottom < 6:
             continue
 
         start = max(0, bottom - 8)
@@ -5067,7 +5137,7 @@ def analyze_bench_press_reps(biomechanics):
         if elbow_range < 35:
             continue
 
-        if wrist_range < 0.04:
+        if wrist_range < 0.03:
             continue
 
         if shoulder_range > 0.20 or hip_range > 0.20:
@@ -5209,7 +5279,7 @@ def analyze_bench_press_reps(biomechanics):
             "visibility_notes": visibility_notes,
         })
 
-        last_end = end
+        last_bottom = bottom
 
     if not reps and len(elbow) >= 10:
         bottom = int(np.argmin(smooth))
@@ -9267,7 +9337,14 @@ def classify_squat_by_bar_position(biomechanics):
     return best_label, confidence, debug
 
 
-def extract_video_biomechanics(video_path, sample_every=1):
+def extract_video_biomechanics(
+    video_path,
+    sample_every=1,
+    *,
+    static_image_mode=None,
+    detection_confidence=None,
+    tracking_confidence=None,
+):
     """
     Extract pose sequence and biomechanics from a video.
 
@@ -9285,6 +9362,17 @@ def extract_video_biomechanics(video_path, sample_every=1):
 
     safe_sample_every = max(1, int(sample_every or 1))
     analysis_fps = source_fps / safe_sample_every
+    pose_static_mode = bool(static_image_mode)
+    pose_detection_confidence = float(
+        detection_confidence
+        if detection_confidence is not None
+        else os.getenv("MEDIAPIPE_DETECTION_CONF", "0.5")
+    )
+    pose_tracking_confidence = float(
+        tracking_confidence
+        if tracking_confidence is not None
+        else os.getenv("MEDIAPIPE_TRACKING_CONF", "0.5")
+    )
 
     if not cap.isOpened():
         return [], [], {
@@ -9325,23 +9413,15 @@ def extract_video_biomechanics(video_path, sample_every=1):
     yolo_debug_path = os.getenv("YOLO_DEBUG_DUMP_PATH", "").strip()
 
     with mp_pose.Pose(
-        static_image_mode=False,
-        min_detection_confidence=float(
-            os.getenv("MEDIAPIPE_DETECTION_CONF", "0.5")
-        ),
-        min_tracking_confidence=float(
-            os.getenv("MEDIAPIPE_TRACKING_CONF", "0.5")
-        ),
+        static_image_mode=pose_static_mode,
+        min_detection_confidence=pose_detection_confidence,
+        min_tracking_confidence=pose_tracking_confidence,
     ) as pose, mp_pose.Pose(
         # Keep an independent full-frame temporal tracker for frames where
         # YOLO has not acquired the athlete or its crop becomes unreliable.
-        static_image_mode=False,
-        min_detection_confidence=float(
-            os.getenv("MEDIAPIPE_DETECTION_CONF", "0.5")
-        ),
-        min_tracking_confidence=float(
-            os.getenv("MEDIAPIPE_TRACKING_CONF", "0.5")
-        ),
+        static_image_mode=pose_static_mode,
+        min_detection_confidence=pose_detection_confidence,
+        min_tracking_confidence=pose_tracking_confidence,
     ) as full_frame_pose:
 
         while cap.isOpened():
@@ -9624,7 +9704,38 @@ def extract_video_biomechanics(video_path, sample_every=1):
         "pose_frames": pose_frames,
         "total_frames": total_frames,
         "analysis_fps": float(analysis_fps),
+        "static_image_mode": pose_static_mode,
+        "detection_confidence": pose_detection_confidence,
+        "tracking_confidence": pose_tracking_confidence,
     }
+
+
+def extract_video_biomechanics_with_fallback(video_path, sample_every=1):
+    sequence, biomechanics, debug = extract_video_biomechanics(
+        video_path,
+        sample_every=sample_every,
+    )
+
+    if len(sequence) >= 10:
+        return sequence, biomechanics, debug
+
+    retry_sequence, retry_biomechanics, retry_debug = extract_video_biomechanics(
+        video_path,
+        sample_every=sample_every,
+        static_image_mode=True,
+        detection_confidence=0.25,
+        tracking_confidence=0.25,
+    )
+
+    if len(retry_sequence) > len(sequence):
+        retry_debug["pose_fallback"] = "static_low_confidence"
+        retry_debug["first_pass_frames_processed"] = len(sequence)
+        retry_debug["first_pass_pose_frames"] = debug.get("pose_frames", len(sequence))
+        return retry_sequence, retry_biomechanics, retry_debug
+
+    debug["pose_fallback"] = "static_low_confidence_no_improvement"
+    debug["fallback_frames_processed"] = len(retry_sequence)
+    return sequence, biomechanics, debug
 
 
 def normalize_biomechanics(biomechanics):
@@ -9838,6 +9949,7 @@ def build_final_analysis_response(
     learned_press_shadow_trusted,
     press_variant_shadow,
     hierarchical_router_shadow,
+    specialist_router_stack,
     bodyweight_debug,
     bodyweight_router_label,
     bodyweight_router_conf,
@@ -9864,6 +9976,7 @@ def build_final_analysis_response(
     router_v6_label,
     router_v6_conf,
     router_v6_decision,
+    rep_detector_debug=None,
     knee_inward_shadow_candidate=None,
 ):
     """Build the public analysis result and router diagnostics."""
@@ -10071,6 +10184,7 @@ def build_final_analysis_response(
             "hierarchical_router_shadow": (
                 hierarchical_router_shadow
             ),
+            "specialist_router_stack": specialist_router_stack,
             "bodyweight": bodyweight_debug,
             "bodyweight_router_label": bodyweight_router_label,
             "bodyweight_router_conf": round(
@@ -10110,6 +10224,7 @@ def build_final_analysis_response(
                 3,
             ),
             "router_v6_decision": router_v6_decision,
+            "rep_detector": rep_detector_debug,
         },
     }
 
@@ -10245,38 +10360,6 @@ def build_split_protection_flags(
     return effective_looks_split, credible_split_jerk
 
 
-def build_router_score_flags(
-    *,
-    raw_label,
-    base_conf,
-    bio_label,
-    bio_conf,
-    looks_thruster,
-    bodyweight_router_label,
-    bodyweight_router_conf,
-):
-    """Build flags used to weight the audit router scores."""
-    strong_bench_evidence = (
-        raw_label == "bench_press"
-        and float(base_conf or 0.0) >= 0.95
-        and bio_label == "bench_press"
-        and float(bio_conf or 0.0) >= 0.95
-        and not bool(looks_thruster)
-    )
-
-    bodyweight_high_conf = (
-        bodyweight_router_label in {
-            "push_up",
-            "pull_up",
-            "handstand_push_up",
-        }
-        and float(bodyweight_router_conf or 0.0) >= 0.95
-        and not strong_bench_evidence
-    )
-
-    return strong_bench_evidence, bodyweight_high_conf
-
-
 def build_core_routing_flags(
     *,
     squat_label,
@@ -10344,188 +10427,6 @@ def predict_bodyweight_movement(biomechanics):
         bodyweight_router_conf,
         bodyweight_router_features,
     )
-
-
-def populate_router_scores(
-    add_router_score,
-    *,
-    raw_label,
-    base_conf,
-    bio_label,
-    bio_conf,
-    squat_label,
-    squat_conf,
-    olympic_pred,
-    olympic_conf,
-    bodyweight_router_label,
-    bodyweight_router_conf,
-    bodyweight_high_conf,
-    truly_explosive,
-):
-    """Populate audit scores without changing routing decisions."""
-    raw_weight = 0.35 if bodyweight_high_conf else 1.0
-    bio_weight = 0.35 if bodyweight_high_conf else 1.0
-
-    add_router_score(
-        raw_label,
-        float(base_conf or 0.0) * raw_weight,
-        "raw_model",
-    )
-    add_router_score(
-        bio_label,
-        float(bio_conf or 0.0) * bio_weight,
-        "bio_model",
-    )
-    add_router_score(
-        squat_label,
-        squat_conf,
-        "squat_router",
-    )
-    add_router_score(
-        olympic_pred,
-        olympic_conf,
-        "olympic_router",
-    )
-    add_router_score(
-        bodyweight_router_label,
-        bodyweight_router_conf,
-        "bodyweight_router",
-    )
-
-    if bodyweight_router_label in {
-        "push_up",
-        "pull_up",
-        "handstand_push_up",
-    }:
-        add_router_score(
-            bodyweight_router_label,
-            float(bodyweight_router_conf or 0.0) * 0.50,
-            "bodyweight_bonus",
-        )
-
-    if squat_label in {
-        "squat_back",
-        "squat_front",
-        "overhead_squat",
-    }:
-        add_router_score(
-            squat_label,
-            float(squat_conf or 0.0) * 0.25,
-            "squat_bonus",
-        )
-
-    if (
-        olympic_pred in {
-            "snatch",
-            "clean",
-            "clean_and_jerk",
-            "split_jerk",
-        }
-        and truly_explosive
-    ):
-        add_router_score(
-            olympic_pred,
-            float(olympic_conf or 0.0) * 0.35,
-            "olympic_explosive_bonus",
-        )
-
-
-def finalize_router_scores(router_scores):
-    """Select the audit score winner and derive the Router V6 confidence."""
-    router_score_winner = None
-    router_score_value = 0.0
-    router_v6_label = None
-    router_v6_conf = 0.0
-    router_v6_decision = "no_scores"
-
-    if router_scores:
-        router_score_winner, score_info = max(
-            router_scores.items(),
-            key=lambda item: float(
-                item[1].get("score", 0.0)
-            ),
-        )
-
-        router_score_value = float(
-            score_info.get("score", 0.0)
-        )
-
-        router_v6_label = router_score_winner
-        router_v6_conf = min(
-            0.99,
-            max(
-                0.01,
-                router_score_value / 2.0,
-            ),
-        )
-        router_v6_decision = "score_winner"
-
-    return (
-        router_score_winner,
-        router_score_value,
-        router_v6_label,
-        router_v6_conf,
-        router_v6_decision,
-    )
-
-
-def initialize_router_audit(
-    *,
-    raw_label,
-    base_conf,
-    bio_label,
-    bio_conf,
-    bio_reason,
-    squat_label,
-    squat_conf,
-    olympic_pred,
-    olympic_conf,
-    bodyweight_router_label,
-    bodyweight_router_conf,
-):
-    """Initialize routing trace and score accumulation for audit/debug."""
-    routing_trace = []
-
-    def trace_route(stage, label=None, conf=None, reason=None):
-        routing_trace.append({
-            "stage": stage,
-            "label": str(label if label is not None else ""),
-            "conf": round(float(conf or 0.0), 3),
-            "reason": str(reason or ""),
-        })
-
-    trace_route("raw_model", raw_label, base_conf)
-    trace_route("bio_model", bio_label, bio_conf, bio_reason)
-    trace_route("squat_router", squat_label, squat_conf)
-    trace_route("olympic_router", olympic_pred, olympic_conf)
-    trace_route(
-        "bodyweight_router",
-        bodyweight_router_label,
-        bodyweight_router_conf,
-    )
-
-    router_scores = {}
-
-    def add_router_score(label, score, source):
-        if not label:
-            return
-
-        label = str(label)
-        score = float(score or 0.0)
-
-        if label not in router_scores:
-            router_scores[label] = {
-                "score": 0.0,
-                "sources": [],
-            }
-
-        router_scores[label]["score"] += score
-        router_scores[label]["sources"].append({
-            "source": source,
-            "score": round(score, 3),
-        })
-
-    return routing_trace, router_scores, trace_route, add_router_score
 
 
 def predict_olympic_movement(biomechanics, run_router):
@@ -10824,6 +10725,38 @@ def build_insufficient_data_response(frames_processed):
         "overlay_video_url": None,
         "phase_images": None,
         "debug": {"frames_processed": frames_processed},
+    }
+
+
+def is_pose_runtime_error(error):
+    message = str(error or "")
+    return (
+        "kGpuService" in message
+        or "NSOpenGLPixelFormat" in message
+        or "ImageToTensorCalculator" in message
+    )
+
+
+def build_pose_runtime_error_response(error):
+    message = str(error)
+    return {
+        "exercise_label": "Unknown",
+        "confidence": 0.0,
+        "analysis_mode": "pose_runtime_error",
+        "rep_feedback": [],
+        "set_summary": build_set_summary([]),
+        "overlay_video_url": None,
+        "phase_images": None,
+        "error": message,
+        "debug": {
+            "error": message,
+            "pose_runtime_error": True,
+            "pose_runtime_hint": (
+                "MediaPipe could not create the local pose graph. "
+                "Run the analyzer in a GUI/OpenGL-capable runtime or with a "
+                "pose backend that does not require the MediaPipe GL service."
+            ),
+        },
     }
 
 
@@ -11849,7 +11782,7 @@ def analyze_video(
         # =========================================================
         # 1. INPUT EXTRACTION
         # =========================================================
-        sequence, biomechanics, debug = extract_video_biomechanics(
+        sequence, biomechanics, debug = extract_video_biomechanics_with_fallback(
             video_path,
             sample_every=1,
         )
@@ -12120,10 +12053,6 @@ def analyze_video(
             bodyweight_debug
         )
 
-        protected_label = None
-        protected_conf = 0.0
-        protected_reason = None
-
         (
             effective_looks_split_for_protection,
             credible_split_jerk,
@@ -12171,211 +12100,47 @@ def analyze_video(
             credible_split_jerk=credible_split_jerk,
         )
 
-        # Two independent perfect bench predictions take priority over
-        # false overhead-squat/bodyweight signatures caused by the camera
-        # orientation of a horizontal bench-press clip.
-        bench_model_consensus = (
-            raw_label == "bench_press"
-            and bio_label == "bench_press"
-            and float(base_conf or 0.0) >= 0.80
-            and float(bio_conf or 0.0) >= 0.80
-
-            # Strong back/front-squat geometry can indicate an upright movement
-            # such as a thruster or handstand push-up that the base model has
-            # incorrectly labeled as bench press.
-            and not (
-                squat_label in {"squat_back", "squat_front"}
-                and float(squat_conf or 0.0) >= 0.95
+        protected_decision = select_protected_evidence(
+            ProtectedEvidenceContext(
+                raw_label=raw_label,
+                base_conf=base_conf,
+                bio_label=bio_label,
+                bio_conf=bio_conf,
+                bio_override=bool(bio_override),
+                bio_reason=bio_reason,
+                squat_label=squat_label,
+                squat_conf=squat_conf,
+                olympic_pred=olympic_pred,
+                olympic_conf=olympic_conf,
+                run_oly_router=bool(run_oly_router),
+                explosive_score=explosive_score,
+                wrist_overhead_ratio=wrist_overhead_ratio,
+                router_v6_conf=router_v6_conf,
+                strong_bench_evidence=strong_bench_evidence,
+                protection=protection,
+                looks_clean_only=bool(_looks_clean_only),
+                looks_cj=bool(_looks_cj),
+                looks_split=bool(_looks_split),
+                looks_strict=bool(_looks_strict),
+                looks_thruster=bool(_looks_thruster),
+                looks_push_up=bool(_looks_push_up),
+                looks_pull_up=bool(_looks_pull_up),
+                looks_handstand_push_up=bool(_looks_handstand_push_up),
+                truly_explosive=bool(_truly_explosive),
+                squat_confident=bool(_squat_confident),
+                deadlift_setup_geometry=bool(_deadlift_setup_geometry),
+                short_low_camera_bench_setup=bool(
+                    _short_low_camera_bench_setup
+                ),
+                bodyweight_debug=bodyweight_debug,
+                bar_debug=bar_debug,
             )
         )
 
-        if strong_bench_evidence or bench_model_consensus:
-            protected_label = "bench_press"
-            protected_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.95,
-            )
-            protected_reason = (
-                "strong_bench_model_agreement"
-                if strong_bench_evidence
-                else "bench_model_consensus"
-            )
-
-        elif (
-            protection.label
-            and not (
-                protection.label == "pull_up"
-                and olympic_pred == "snatch"
-                and float(olympic_conf or 0.0) >= 0.60
-                and raw_label == "squat"
-                and bio_label == "push_press"
-                and float(explosive_score or 0.0) >= 50.0
-                and float(router_v6_conf or 0.0) < 0.75
-            )
-        ):
-            protected_label = protection.label
-            protected_conf = protection.confidence
-            protected_reason = protection.reason
-
-        elif bio_label == "bench_press" and not _looks_strict and not _looks_thruster and not (_looks_push_up or _looks_pull_up or _looks_handstand_push_up):
-            bench_blocked_by_oly = (
-                olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
-                and float(olympic_conf or 0.0) >= 0.90
-                and raw_label in {"squat", "deadlift", "push_press"}
-            )
-
-            if not bench_blocked_by_oly:
-                protected_label = "bench_press"
-                protected_conf = max(float(bio_conf or 0.0), 0.80)
-                protected_reason = bio_reason
-            else:
-                protected_reason = "bench_blocked_by_olympic_router"
-        elif (
-            raw_label == "squat"
-            and squat_label == "squat_front"
-            and not _looks_clean_only
-            and not _looks_cj
-            and not _looks_split
-            and not _looks_strict
-            and not _looks_thruster
-            and not (
-                olympic_pred in {"snatch", "clean", "clean_and_jerk", "split_jerk"}
-                and float(olympic_conf or 0.0) >= 0.50
-            )
-        ):
-            protected_label = "bench_press"
-            protected_conf = max(base_conf, 0.80)
-            protected_reason = "bench_press_squat_front_false_positive"
-        elif (
-            raw_label in {"squat", "deadlift"}
-            and squat_label in {"squat_back", "squat_front", "overhead_squat"}
-
-            # Do not let the generic fast-press rescue overwrite strong
-            # front-squat router evidence.
-            and not (
-                squat_label == "squat_front"
-                and float(squat_conf or 0.0) >= 0.90
-            )
-
-            and bio_label in {"squat", "deadlift"}
-            and explosive_score >= 60.0
-
-            # A genuine horizontal press rescue should keep the torso platform
-            # relatively stable. Large shoulder/hip travel is typical of noisy
-            # upright curl clips rather than bench press.
-            and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.20
-            and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.20
-
-            and float(olympic_conf or 0.0) < 0.70
-            and not (
-                raw_label in {"squat", "squat_front", "squat_back"}
-                and float(base_conf or 0.0) >= 0.90
-                and bio_label == "squat"
-                and float(bio_conf or 0.0) >= 0.90
-            )
-            and not _looks_clean_only
-            and not _looks_cj
-            and not _looks_split
-            and not _looks_strict
-        ):
-            protected_label = "bench_press"
-            protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
-            protected_reason = "bench_press_fast_press_rescue"
-        elif (
-            raw_label in {"squat", "squat_front", "squat_back", "push_press"}
-            and squat_label in {"squat_back", "squat_front", "overhead_squat"}
-
-            # Do not let the short-squat bench rescue overwrite strong
-            # overhead-squat router evidence.
-            and not (
-                squat_label == "overhead_squat"
-                and float(squat_conf or 0.0) >= 0.80
-            )
-
-            and bio_label in {"squat", "push_press", "deadlift"}
-
-            # Preserve strong front-squat router evidence. Very short clips can
-            # otherwise look like a horizontal press because only a few frames
-            # survive pose extraction.
-            and not (
-                squat_label == "squat_front"
-                and float(squat_conf or 0.0) >= 0.90
-            )
-
-            # Preserve a clean-and-jerk sequence that appears as squat +
-            # push press with front-squat catch evidence. Verified bench
-            # controls do not share this routing combination.
-            and not (
-                raw_label == "squat"
-                and bio_label == "push_press"
-                and squat_label == "squat_front"
-                and olympic_pred == "clean_and_jerk"
-                and float(olympic_conf or 0.0) >= 0.73
-                and float(explosive_score or 0.0) >= 45.0
-            )
-
-            and not (
-                raw_label in {"squat", "squat_front", "squat_back"}
-                and float(base_conf or 0.0) >= 0.85
-                and bio_label == "squat"
-                and float(bio_conf or 0.0) >= 0.85
-            )
-            and not _looks_clean_only
-            and not _looks_cj
-            and not _looks_split
-            and (not _deadlift_setup_geometry or _short_low_camera_bench_setup)
-            and (
-                int(bar_debug.get("squat_frames_used", 999) or 999) <= 35
-                or (
-                    run_oly_router
-                    and float(olympic_conf or 0.0) < 0.80
-                    and wrist_overhead_ratio > 0.25
-                    and explosive_score > 20
-                )
-            )
-        ):
-            protected_label = "bench_press"
-            protected_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
-            protected_reason = "bench_press_short_squat_rescue"
-        elif (
-            bio_label == "deadlift"
-            and (
-                (
-                    bio_override
-                    and not (raw_label in {"squat", "squat_front"} and _squat_confident)
-                )
-                or (
-                    wrist_overhead_ratio < 0.08
-                    and explosive_score <= 30.0
-                    and float(bar_debug.get("front_rack_elbow_p25", 0.0)) >= 130.0
-                    and not _looks_clean_only
-                    and not _looks_cj
-                    and not _looks_split
-                    and not _looks_strict
-                    and not _looks_thruster
-                )
-            )
-        ):
-            protected_label = "deadlift"
-            protected_conf = bio_conf
-            protected_reason = bio_reason
-        vertical_pullup_signature = (
-            raw_label == "push_press"
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.80
-            and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.08
-            and float(bodyweight_debug.get("elbow_range", 0.0)) >= 110.0
-            and float(bodyweight_debug.get("min_elbow", 180.0)) <= 45.0
-            and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 10.0
-            and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.03
-            and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.18
-            and not _truly_explosive
-        )
-
-        if vertical_pullup_signature and protected_label is None:
-            protected_label = "pull_up"
-            protected_conf = 0.86
-            protected_reason = "vertical_pullup_signature"
+        protected_label = protected_decision.label
+        protected_conf = protected_decision.confidence
+        protected_reason = protected_decision.reason
+        bench_model_consensus = protected_decision.bench_model_consensus
 
         push_press_should_hold = (
             protected_label == "push_press"
@@ -12404,492 +12169,85 @@ def analyze_video(
         )
 
 
-        front_squat_weak_router_recovery = (
-            protected_label is None
-            and raw_label == "squat"
-            and float(base_conf or 0.0) >= 0.95
-            and bio_label == "squat"
-            and float(bio_conf or 0.0) >= 0.95
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) <= 0.65
-            and 0.25 <= wrist_overhead_ratio <= 0.55
-            and float(
-                bar_debug.get("scores", {}).get("squat_front", 0.0)
-            ) >= 0.35
-            and float(
-                bar_debug.get("scores", {}).get("overhead_squat", 0.0)
-            ) < 0.70
-        )
-
-        if front_squat_weak_router_recovery:
-            protected_label = "squat_front"
-            protected_conf = 0.80
-            protected_reason = "front_squat_weak_router_recovery"
-
-        # Reject an early biomechanics pull-up protection when the clip has
-        # the validated shape of a long barbell squat or overhead Olympic lift.
-        # This runs before protected_label is copied into final_label.
-        early_pull_up_long_squat_collision = (
-            protected_label == "pull_up"
-            and squat_label in {
-                "squat_back",
-                "squat_front",
-                "overhead_squat",
-            }
-            and float(squat_conf or 0.0) >= 0.75
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.70
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 250
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) >= 0.27
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.18
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    0.0,
-                )
-            ) >= 0.85
-        )
-
-        early_pull_up_long_overhead_collision = (
-            protected_label == "pull_up"
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.87
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 300
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    999.0,
-                )
-            ) <= 0.11
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    999.0,
-                )
-            ) <= 0.10
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) >= 0.20
-            and (
-                raw_label == "push_press"
-                or bio_label == "push_press"
+        early_final_decision = select_early_final_decision(
+            EarlyFinalContext(
+                protected_label=protected_label,
+                protected_conf=protected_conf,
+                protected_reason=protected_reason,
+                strong_oly_lock=bool(strong_oly_lock),
+                bodyweight_router_label=bodyweight_router_label,
+                bodyweight_router_conf=bodyweight_router_conf,
+                raw_label=raw_label,
+                base_conf=base_conf,
+                bio_label=bio_label,
+                bio_conf=bio_conf,
+                squat_label=squat_label,
+                squat_conf=squat_conf,
+                olympic_pred=olympic_pred,
+                olympic_conf=olympic_conf,
+                run_oly_router=bool(run_oly_router),
+                explosive_score=explosive_score,
+                wrist_overhead_ratio=wrist_overhead_ratio,
+                router_v6_label=router_v6_label,
+                router_v6_conf=router_v6_conf,
+                pull_up_router_guard=bool(_pull_up_router_guard),
+                looks_cj=bool(_looks_cj),
+                looks_split=bool(_looks_split),
+                truly_explosive=bool(_truly_explosive),
+                strong_overhead=bool(_strong_overhead),
+                bodyweight_debug=bodyweight_debug,
             )
         )
 
-        if (
-            early_pull_up_long_squat_collision
-            or early_pull_up_long_overhead_collision
-        ):
-            protected_label = None
-            protected_conf = 0.0
-            protected_reason = None
-
-        if protected_label and not strong_oly_lock:
-            final_label = protected_label
-            final_conf = protected_conf
-            analysis_mode = "biomechanics_override"
-
-        elif (
-            bodyweight_router_label == "pull_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.95
-              and not (
-                  squat_label == "overhead_squat"
-                  and float(squat_conf or 0.0) < 0.86
-              )
-            and raw_label == "push_press"
-            and bio_label == "push_press"
-            and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.80
-        ):
-            final_label = "pull_up"
-            final_conf = max(float(bodyweight_router_conf or 0.0), 0.90)
-            protected_label = "pull_up"
-            protected_conf = final_conf
-            protected_reason = "bodyweight_router_pull_up_high_conf"
-            analysis_mode = "bodyweight_router"
-
-        elif (
-            squat_label == "squat_front"
-            and float(squat_conf or 0.0) >= 0.80
-            and raw_label == "push_press"
-            and float(olympic_conf or 0.0) < 0.75
-        ):
-            final_label = "squat_front"
-            final_conf = squat_conf
-            analysis_mode = "detailed_rep_analysis"
-
-        elif (
-            run_oly_router
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.75
-            and explosive_score > 20
-            and not (
-                _pull_up_router_guard
-              and not (
-                  squat_label == "overhead_squat"
-                  and float(squat_conf or 0.0) >= 0.70
-              )
-                and float(olympic_conf or 0.0) < 0.95
-            )
-              and not (
-                  squat_label == "squat_front"
-                  and float(squat_conf or 0.0) >= 0.80
-                  and raw_label == "squat"
-                  and float(base_conf or 0.0) >= 0.95
-                  and bio_label == "squat"
-                  and float(bio_conf or 0.0) >= 0.95
-              )
-            and (
-                raw_label in {"squat", "squat_back", "squat_front", "bench_press"}
-                or (raw_label == "push_press" and not _looks_split)
-            )
-        ):
-            final_label = "clean_and_jerk"
-            final_conf = olympic_conf
-            analysis_mode = "olympic_locked"
-
-        elif (
-            _looks_split
-
-            # Preserve strong independent push-press consensus before the
-            # generic split-shape override.
-            and not (
-                raw_label == "push_press"
-                and float(base_conf or 0.0) >= 0.85
-                and bio_label == "push_press"
-                and float(bio_conf or 0.0) >= 0.85
-                and router_v6_label == "push_press"
-                and float(router_v6_conf or 0.0) >= 0.85
-            )
-
-            and not (
-                squat_label == "overhead_squat"
-                and float(squat_conf or 0.0) >= 0.75
-            )
-            and not _looks_cj
-            and explosive_score > 20
-            and olympic_pred != "snatch"
-            and (
-                raw_label == "push_press"
-                or olympic_pred != "clean_and_jerk"
-                or float(olympic_conf or 0.0) < 0.75
-            )
-        ):
-            final_label = "split_jerk"
-            final_conf = 0.80
-            analysis_mode = "shape_override"
-
-        elif (
-            raw_label == "push_press"
-            and float(base_conf or 0.0) >= 0.85
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.85
-            and router_v6_label == "push_press"
-            and float(router_v6_conf or 0.0) >= 0.85
-            and not _looks_cj
-
-            # Preserve a credible overhead squat when the wrists move
-            # with the torso rather than showing dominant press travel.
-            and not (
-                squat_label == "overhead_squat"
-                and float(squat_conf or 0.0) >= 0.75
-                and (
-                    float(bodyweight_debug.get("wrist_y_range", 0.0))
-                    / max(
-                        float(bodyweight_debug.get("shoulder_y_range", 0.0)),
-                        0.001,
-                    )
-                ) <= 1.50
-            )
-        ):
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                float(router_v6_conf or 0.0),
-            )
-            analysis_mode = "biomechanics_override"
-
-        elif (
-            raw_label == "squat_front"
-            and float(base_conf or 0.0) >= 0.90
-            and bio_label == "squat"
-            and float(bio_conf or 0.0) >= 0.85
-            and not _truly_explosive
-            and not _strong_overhead
-            and float(olympic_conf or 0.0) < 0.75
-        ):
-            # Preserve a high-confidence front-squat prediction when the
-            # general biomechanics classifier independently confirms squat.
-            # YOLO crop geometry can shift the squat variant router toward
-            # squat_back even though the movement family remains clear.
-            final_label = "squat_front"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-            )
-            analysis_mode = "squat_raw_consensus"
-
-        elif (
-            _squat_confident
-            and bio_label not in {"push_up", "pull_up", "handstand_push_up"}
-            and raw_label == "squat"
-            and squat_label in {"squat_back", "squat_front"}
-            and not _truly_explosive
-            and not _strong_overhead
-            and float(olympic_conf or 0.0) < 0.85
-        ):
-            final_label = squat_label
-            final_conf = squat_conf
-            analysis_mode = "detailed_rep_analysis"
-
-        elif (
-            squat_label == "overhead_squat"
-            and squat_conf >= 0.75
-            and float(olympic_conf or 0.0) < 0.85
-            and not (
-                raw_label == "push_press"
-                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
-                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
-                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
-                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
-            )
-        ):
-            final_label = "overhead_squat"
-            final_conf = max(bar_conf, squat_conf)
-            analysis_mode = "detailed_rep_analysis"
-
-        # Strong Olympic predictions are lower-calibrated than the neural squat
-        # router. Let them win before squat/overhead/split-shape fallbacks steal
-        # Olympic benchmark clips; Router V5 below can still rescue standalone
-        # split jerks from clean-and-jerk.
-        elif (
-            run_oly_router
-            and olympic_pred in OLY_SET
-            and olympic_conf >= 0.65
-            and not push_press_should_hold
-              and not (
-                  squat_label == "squat_front"
-                  and float(squat_conf or 0.0) >= 0.80
-                  and float(olympic_conf or 0.0) < 0.75
-              )
-            and not (
-                raw_label == "push_press"
-                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
-                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
-                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
-                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                and not _truly_explosive
-            )
-        ):
-            final_label = olympic_pred
-            final_conf = olympic_conf
-            analysis_mode = "olympic_locked"
-
-        elif (
-            run_oly_router
-            and olympic_pred == "snatch"
-            and olympic_conf >= 0.45
-            and wrist_overhead_ratio > 0.35
-            and _looks_split
-            and raw_label in {"squat", "squat_front", "squat_back"}
-        ):
-            final_label = "snatch"
-            final_conf = max(0.60, olympic_conf)
-            analysis_mode = "olympic_rescue"
-
-        # Overhead squat: bar position is definitive — wrists locked out overhead
-        # throughout the entire squat, not just briefly during a catch.
-        # Must check this first before any Olympic path.
-        elif (
-            (_bar_says_ohs and not _truly_explosive)
-            or (
-                squat_label == "overhead_squat"
-                and squat_conf >= 0.90
-                and olympic_conf < 0.85
-                and not (
-                    raw_label == "push_press"
-                    and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
-                    and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-                    and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                    and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
-                    and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
-                    and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                    and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
-                )
-            )
-        ):
-            final_label   = "overhead_squat"
-            final_conf    = max(bar_conf, squat_conf)
-            analysis_mode = "detailed_rep_analysis"
-
-        # Strong Olympic router: very high confidence AND truly explosive.
-        # This must come before shape detectors — the Olympic router at 80%+
-        # is more reliable than shape heuristics that fire on multiple lifts.
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.80 and _truly_explosive and not push_press_should_hold:
-            final_label   = olympic_pred
-            final_conf    = olympic_conf
-            analysis_mode = "olympic_locked"
-
-        # High Olympic confidence + explosive (lower threshold).
-        elif run_oly_router and olympic_pred in OLY_SET and olympic_conf >= 0.65 and _truly_explosive and not push_press_should_hold:
-            final_label   = olympic_pred
-            final_conf    = olympic_conf
-            analysis_mode = "olympic_locked"
-
-        # Split jerk: the Olympic router ALWAYS mislabels split jerks as C&J.
-        # So we use the shape detector here regardless of Olympic confidence,
-        # but require that the Olympic router did NOT say snatch (snatch is
-        # distinct enough that the router is reliable for it).
-        # Split jerk is less explosive than clean/snatch (dip-and-drive, not full pull)
-        # so we use a lower explosive threshold (>20).
-        elif (
-            _looks_split
-
-            # Do not let the generic split-shape detector overwrite strong
-            # independent push-press consensus.
-            and not (
-                raw_label == "push_press"
-                and float(base_conf or 0.0) >= 0.85
-                and bio_label == "push_press"
-                and float(bio_conf or 0.0) >= 0.85
-                and router_v6_label == "push_press"
-                and float(router_v6_conf or 0.0) >= 0.85
-            )
-
-            and not (
-                squat_label == "overhead_squat"
-                and float(squat_conf or 0.0) >= 0.75
-            )
-            and explosive_score > 20
-            and olympic_pred != "snatch"
-
-            # Do not promote squat-consensus clean segments to split jerk when
-            # the Olympic router only weakly sees C&J and the shape detector
-            # already sees a broader clean-and-jerk sequence.
-            and not (
-                raw_label == "squat"
-                and bio_label == "squat"
-                and float(base_conf or 0.0) >= 0.95
-                and float(bio_conf or 0.0) >= 0.95
-                and olympic_pred == "clean_and_jerk"
-                and float(olympic_conf or 0.0) < 0.60
-                and bool(_looks_cj)
-                and float(wrist_overhead_ratio or 0.0) < 0.40
-            )
-        ):
-            final_label   = "split_jerk"
-            final_conf    = 0.80
-            analysis_mode = "shape_override"
-
-        # Clean (no jerk): shape detector sees clean catch + explosive, but Olympic
-        # router is confused (often says snatch). Trust shape + explosive.
-        elif _looks_clean_only and _truly_explosive and not _looks_cj and not _looks_split:
-            final_label   = "clean"
-            final_conf    = 0.75
-            analysis_mode = "shape_override"
-
-        # Squat wins: confident squat router, not truly explosive.
-        # squat_label is already bar-position-adjusted from step 3.
-        elif _squat_confident and not _truly_explosive and bio_label not in {"push_up", "pull_up", "handstand_push_up"}:
-            final_label   = squat_label
-            final_conf    = squat_conf
-            analysis_mode = "detailed_rep_analysis"
-
-        # Shape detectors as fallback for remaining Olympic cases.
-        elif _looks_cj and _strong_overhead:
-            final_label   = "clean_and_jerk"
-            final_conf    = 0.68
-            analysis_mode = "shape_override"
-
-        elif _looks_clean_only:
-            final_label   = "clean"
-            final_conf    = 0.68
-            analysis_mode = "shape_override"
-
-        elif (
-            squat_label
-            and squat_conf >= 0.55
-            and _has_real_squat_motion
-            and bio_label not in {"push_up", "pull_up", "handstand_push_up"}
-            and not (
-                raw_label == "push_press"
-                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
-                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
-                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
-                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                and float(bodyweight_debug.get("wrist_y_range", 1.0)) <= 0.15
-            )
-        ):
-            final_label   = squat_label
-            final_conf    = squat_conf
-            analysis_mode = "detailed_rep_analysis"
-
-        elif (
-            run_oly_router
-            and olympic_pred in OLY_SET
-            and olympic_conf >= 0.50
-            and not push_press_should_hold
-            and not (
-                raw_label == "push_press"
-                and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
-                and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
-                and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
-                and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                and not _truly_explosive
-            )
-        ):
-            final_label   = olympic_pred
-            final_conf    = olympic_conf
-            analysis_mode = "olympic_locked"
-
-        elif bio_override and bio_label == "push_press":
-            final_label = "push_press"
-            final_conf = bio_conf
-            analysis_mode = "biomechanics_override"
-
-        elif raw_label == "push_press" and base_conf >= 0.65 and not _looks_split:
-            final_label = "push_press"
-            final_conf = base_conf
-            analysis_mode = "base_model_locked"
+        if early_final_decision:
+            final_label = early_final_decision.label
+            final_conf = early_final_decision.confidence
+            analysis_mode = early_final_decision.mode
+            protected_label = early_final_decision.protected_label
+            protected_conf = early_final_decision.protected_conf
+            protected_reason = early_final_decision.protected_reason
 
         else:
-            final_label   = "unknown"
-            final_conf    = 0.5
-            analysis_mode = "insufficient_signal"
+            fallback_decision = select_fallback_final_decision(
+                FallbackFinalContext(
+                    raw_label=raw_label,
+                    base_conf=base_conf,
+                    bio_label=bio_label,
+                    bio_conf=bio_conf,
+                    bio_override=bool(bio_override),
+                    squat_label=squat_label,
+                    squat_conf=squat_conf,
+                    bar_conf=bar_conf,
+                    olympic_pred=olympic_pred,
+                    olympic_conf=olympic_conf,
+                    run_oly_router=bool(run_oly_router),
+                    explosive_score=explosive_score,
+                    wrist_overhead_ratio=wrist_overhead_ratio,
+                    router_v6_label=router_v6_label,
+                    router_v6_conf=router_v6_conf,
+                    squat_confident=bool(_squat_confident),
+                    truly_explosive=bool(_truly_explosive),
+                    strong_overhead=bool(_strong_overhead),
+                    bar_says_overhead_squat=bool(_bar_says_ohs),
+                    has_real_squat_motion=bool(_has_real_squat_motion),
+                    push_press_should_hold=bool(push_press_should_hold),
+                    looks_clean_only=bool(_looks_clean_only),
+                    looks_cj=bool(_looks_cj),
+                    looks_split=bool(_looks_split),
+                    bodyweight_debug=bodyweight_debug,
+                )
+            )
+            final_label = fallback_decision.label
+            final_conf = fallback_decision.confidence
+            analysis_mode = fallback_decision.mode
 
+        router_v5_label = None
+        router_v5_conf = 0.0
         router_v5_debug = None
+        router_v5_decision = ""
+        clean_rescue_active = False
+        upright_curl_signature = False
+        snatch_rescue_from_overhead_squat = False
         router_v8_cj_lock = False
         clear_squat_should_hold = False
         if run_oly_router:
@@ -12906,397 +12264,88 @@ def analyze_video(
                 router_v5_conf = final_conf
                 router_v5_debug = {"router_error": str(e)}
 
-            split_features = (router_v5_debug or {}).get("split_features", {}) if isinstance(router_v5_debug, dict) else {}
-            likely_standalone_split = (
-                raw_label == "push_press"
-                and (
-                    float(split_features.get("lockout_duration", 0.0) or 0.0) >= 200.0
-                    or float(split_features.get("catch_to_finish", 0.0) or 0.0) >= 300.0
+            router_v5_adjustment = adjust_router_v5_prediction(
+                RouterV5AdjustmentContext(
+                    router_v5_label=router_v5_label,
+                    router_v5_conf=router_v5_conf,
+                    router_v5_debug=router_v5_debug,
+                    raw_label=raw_label,
+                    base_conf=base_conf,
+                    bio_label=bio_label,
+                    bio_conf=bio_conf,
+                    squat_label=squat_label,
+                    squat_conf=squat_conf,
+                    olympic_pred=olympic_pred,
+                    olympic_conf=olympic_conf,
+                    explosive_score=explosive_score,
+                    wrist_overhead_ratio=wrist_overhead_ratio,
+                    looks_clean_only=bool(_looks_clean_only),
+                    looks_cj=bool(_looks_cj),
+                    looks_split=bool(_looks_split),
+                    truly_explosive=bool(_truly_explosive),
+                    bodyweight_debug=bodyweight_debug,
                 )
             )
-
-            # A standalone split jerk often appears as push_press to the
-            # base/biomechanics models and clean_and_jerk to the Olympic
-            # classifier. Long split recovery evidence distinguishes it from
-            # a complete clean-and-jerk sequence.
-            if (
-                likely_standalone_split
-                and olympic_pred == "clean_and_jerk"
-                and float(olympic_conf or 0.0) >= 0.80
-
-                # Exceptionally strong full C&J evidence should not be reduced
-                # to a standalone split jerk. Verified standalone split clips
-                # currently peak well below this threshold.
-                and float(olympic_conf or 0.0) < 0.97
-
-                and raw_label == "push_press"
-                and bio_label == "push_press"
-                and _looks_split
-            ):
-                router_v5_label = "split_jerk"
-                router_v5_conf = max(
-                    float(router_v5_conf or 0.0),
-                    0.80,
-                )
-                if isinstance(router_v5_debug, dict):
-                    router_v5_debug["decision"] = (
-                        "standalone_split_from_cj"
-                    )
-
-            if (
-                router_v5_label == "split_jerk"
-                and olympic_pred == "clean_and_jerk"
-                and float(olympic_conf or 0.0) >= 0.90
-                and not likely_standalone_split
-            ):
-                router_v5_label = "clean_and_jerk"
-                router_v5_conf = max(float(olympic_conf or 0.0), float(router_v5_conf or 0.0))
-                if isinstance(router_v5_debug, dict):
-                    router_v5_debug["decision"] = "clean_and_jerk_high_conf_rescue"
-
-            # Rescue a complete clean-and-jerk sequence that Router V5
-            # conservatively labels as clean. Require ordered clean and jerk
-            # events plus overhead lockout evidence; do not lower the global
-            # Olympic-router confidence threshold.
-            cj_events = (
-                router_v5_debug.get("events", {})
-                if isinstance(router_v5_debug, dict)
-                else {}
-            )
-            cj_features = (
-                router_v5_debug.get("features", {})
-                if isinstance(router_v5_debug, dict)
-                else {}
-            )
-
-            try:
-                full_cj_event_sequence = (
-                    int(cj_events.get("clean_extension", -1))
-                    < int(cj_events.get("clean_catch", -1))
-                    <= int(cj_events.get("clean_recovery", -1))
-                    < int(cj_events.get("jerk_dip", -1))
-                    <= int(cj_events.get("jerk_drive", -1))
-                    <= int(cj_events.get("jerk_catch", -1))
-                    < int(cj_events.get("lockout", -1))
-                )
-            except (TypeError, ValueError):
-                full_cj_event_sequence = False
-
-            if (
-                router_v5_label == "clean"
-                and olympic_pred == "clean_and_jerk"
-                and float(olympic_conf or 0.0) >= 0.50
-                and full_cj_event_sequence
-                and float(cj_features.get("has_overhead", 0.0) or 0.0) >= 0.90
-                and float(cj_features.get("catch_overhead", 0.0) or 0.0) >= 0.90
-                and float(cj_features.get("lockout_duration", 0.0) or 0.0) >= 20.0
-                and float(explosive_score or 0.0) >= 25.0
-            ):
-                router_v5_label = "clean_and_jerk"
-                router_v5_conf = max(
-                    float(router_v5_conf or 0.0),
-                    0.80,
-                )
-                if isinstance(router_v5_debug, dict):
-                    router_v5_debug["decision"] = (
-                        "clean_and_jerk_full_sequence_rescue"
-                    )
-
-            short_split_press = (
-                float(split_features.get("lockout_duration", 0.0) or 0.0) <= 90.0
-                and float(split_features.get("catch_to_finish", 0.0) or 0.0) <= 120.0
-            )
-
-            # Upright curls can be misread as short Olympic press segments.
-            # A bench press has a substantially more horizontal torso and a
-            # much smaller hip-to-shoulder vertical separation.
-            upright_curl_signature = (
-                float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 15.0
-                and float(bodyweight_debug.get("elbow_range", 0.0)) >= 80.0
-                and float(bodyweight_debug.get("avg_wrist_forward", 0.0)) >= 0.08
-                and float(
-                    bodyweight_debug.get("mean_hip_minus_shoulder_y", 0.0)
-                ) >= 0.20
-                and float(
-                    bodyweight_debug.get("wrist_above_shoulder_ratio", 1.0)
-                ) < 0.10
-            )
-            if (
-                router_v5_label == "split_jerk"
-                and raw_label in {"squat", "deadlift"}
-                and bio_label in {"push_press", "squat", "deadlift"}
-                and short_split_press
-                and float(olympic_conf or 0.0) < 0.70
-
-                # Preserve short explosive clean segments. These clips can look
-                # like split jerk to Router V5, but strong squat consensus,
-                # substantial wrist travel, and little sustained overhead motion
-                # do not match a bench press.
-                and not (
-                    raw_label == "squat"
-                    and bio_label == "squat"
-                    and float(base_conf or 0.0) >= 0.95
-                    and float(bio_conf or 0.0) >= 0.95
-                    and squat_label == "squat_back"
-                    and float(squat_conf or 0.0) >= 0.90
-                    and float(explosive_score or 0.0) >= 70.0
-                    and float(wrist_overhead_ratio or 0.0) < 0.20
-                    and int(bodyweight_debug.get("total_frames", 999) or 999) <= 60
-                )
-
-                and not _looks_clean_only
-                and not _looks_cj
-                and not upright_curl_signature
-            ):
-                router_v5_label = "bench_press"
-                router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
-                if isinstance(router_v5_debug, dict):
-                    router_v5_debug["decision"] = "bench_press_short_split_rescue"
-
-            cj_features = (router_v5_debug or {}).get("features", {}) if isinstance(router_v5_debug, dict) else {}
-            short_cj_press = (
-                float(cj_features.get("lockout_duration", 0.0) or 0.0) <= 65.0
-                and float(cj_features.get("catch_to_finish", 0.0) or 0.0) <= 65.0
-            )
-            if (
-                router_v5_label == "clean_and_jerk"
-                and raw_label in {"squat", "squat_front", "squat_back", "deadlift"}
-                and bio_label in {"push_press", "squat", "deadlift"}
-                and short_cj_press
-                and float(olympic_conf or 0.0) < 0.90
-
-                # Preserve a C&J sequence with front-squat catch evidence.
-                # This exact routing combination is not present in the
-                # verified bench controls.
-                and not (
-                    raw_label == "squat"
-                    and bio_label == "push_press"
-                    and squat_label == "squat_front"
-                    and olympic_pred == "clean_and_jerk"
-                    and float(olympic_conf or 0.0) >= 0.73
-                    and float(explosive_score or 0.0) >= 45.0
-                )
-
-                and not _looks_clean_only
-                and not _looks_cj
-                and not upright_curl_signature
-            ):
-                router_v5_label = "bench_press"
-                router_v5_conf = max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.80)
-                if isinstance(router_v5_debug, dict):
-                    router_v5_debug["decision"] = "bench_press_short_cj_rescue"
-
-            if (
-                router_v5_label == "snatch"
-                and _looks_cj
-                and not _looks_clean_only
-                and raw_label in {"squat", "squat_front", "squat_back"}
-                and float(olympic_conf or 0.0) < 0.90
-                and wrist_overhead_ratio < 0.45
-                and explosive_score > 80.0
-            ):
-                router_v5_label = "clean_and_jerk"
-                router_v5_conf = max(float(router_v5_conf or 0.0), 0.76)
-                if isinstance(router_v5_debug, dict):
-                    router_v5_debug["decision"] = "clean_and_jerk_shape_rescue"
-
-            router_v5_decision = (
-                str((router_v5_debug or {}).get("decision", ""))
-                if isinstance(router_v5_debug, dict)
-                else ""
-            )
-
+            router_v5_label = router_v5_adjustment.label
+            router_v5_conf = router_v5_adjustment.confidence
+            router_v5_debug = router_v5_adjustment.debug
+            router_v5_decision = router_v5_adjustment.decision
             clean_rescue_active = (
-                router_v5_label == "clean"
-                and router_v5_decision == "clean_rescue_from_weak_snatch"
-                and _truly_explosive
-                and float(router_v5_conf or 0.0) >= 0.70
+                router_v5_adjustment.clean_rescue_active
+            )
+            upright_curl_signature = (
+                router_v5_adjustment.upright_curl_signature
             )
 
-            protected_non_olympic = protected_label in {
-                "bench_press",
-                "burpee",
-                "deadlift",
-                "handstand_push_up",
-                "muscle_up",
-                "push_up",
-                "pull_up",
-                "push_press",
-                "thruster",
-                "strict_press",
-            }
-            squat_should_hold = (
-                final_label in {"squat_back", "squat_front", "overhead_squat"}
-                and (
-                    float(olympic_conf or 0.0) < 0.65
-                    or not _truly_explosive
-                )
-                and not clean_rescue_active
-            )
-
-            push_press_should_hold = (
-                (
-                    protected_label == "push_press"
-                    and raw_label == "push_press"
-                    and bio_label == "push_press"
-                    and router_v5_label == "clean_and_jerk"
-                )
-                or (
-                    # Preserve strong independent push-press consensus when
-                    # Router V5 proposes C&J from weak Olympic evidence.
-                    raw_label == "push_press"
-                    and float(base_conf or 0.0) >= 0.85
-                    and bio_label == "push_press"
-                    and float(bio_conf or 0.0) >= 0.85
-                    and router_v6_label == "push_press"
-                    and float(router_v6_conf or 0.0) >= 0.85
-                    and router_v5_label == "clean_and_jerk"
-                    and float(olympic_conf or 0.0) < 0.60
-                    and not bool(_looks_cj)
+            router_v5_override = select_router_v5_override(
+                RouterV5OverrideContext(
+                    final_label=final_label,
+                    final_confidence=final_conf,
+                    analysis_mode=analysis_mode,
+                    protected_label=protected_label,
+                    protected_confidence=protected_conf,
+                    protected_reason=protected_reason,
+                    router_v5_label=router_v5_label,
+                    router_v5_confidence=router_v5_conf,
+                    router_v5_debug=router_v5_debug,
+                    router_v6_label=router_v6_label,
+                    router_v6_confidence=router_v6_conf,
+                    raw_label=raw_label,
+                    base_confidence=base_conf,
+                    bio_label=bio_label,
+                    bio_confidence=bio_conf,
+                    squat_label=squat_label,
+                    squat_confidence=squat_conf,
+                    olympic_pred=olympic_pred,
+                    olympic_confidence=olympic_conf,
+                    explosive_score=explosive_score,
+                    clean_rescue_active=clean_rescue_active,
+                    upright_curl_signature=upright_curl_signature,
+                    router_v8_cj_lock=router_v8_cj_lock,
+                    clear_squat_should_hold=clear_squat_should_hold,
+                    looks_clean_only=bool(_looks_clean_only),
+                    looks_cj=bool(_looks_cj),
+                    looks_split=bool(_looks_split),
+                    truly_explosive=bool(_truly_explosive),
+                    bodyweight_debug=bodyweight_debug,
                 )
             )
-
-            if (
-                not push_press_should_hold
-                    and not (
-                        squat_label == "squat_front"
-                        and float(squat_conf or 0.0) >= 0.80
-                        and raw_label == "push_press"
-                        and float(olympic_conf or 0.0) < 0.75
-                    )
-                  and not (
-                      squat_label == "squat_front"
-                      and float(squat_conf or 0.0) >= 0.80
-                      and router_v5_label == "clean_and_jerk"
-                      and float(router_v5_conf or 0.0) < 0.75
-                  )
-                  and not (
-                      raw_label == "push_press"
-                      and router_v5_label in OLY_SET
-                      and float(bodyweight_debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.85
-                      and float(bodyweight_debug.get("mean_wrist_minus_shoulder_y", 1.0)) <= -0.10
-                      and float(bodyweight_debug.get("elbow_range", 0.0)) >= 120.0
-                      and float(bodyweight_debug.get("min_elbow", 180.0)) <= 35.0
-                      and float(bodyweight_debug.get("avg_torso_angle", 180.0)) <= 8.0
-                      and float(bodyweight_debug.get("avg_wrist_forward", 1.0)) <= 0.02
-                      and not _truly_explosive
-                  )
-                and (
-                    final_label in OLY_SET or (
-                        router_v5_label in OLY_SET
-                        and not protected_non_olympic
-                        and not squat_should_hold
-                    )
-                )
-            ):
-                # Hard block: clear squat should not be stolen by weak Olympic Router V5.
-                strong_explosive_snatch = (
-                    (
-                        olympic_pred == "snatch"
-                        and float(olympic_conf or 0.0) >= 0.80
-                        and bool(_truly_explosive)
-                        and float(explosive_score or 0.0) >= 100.0
-                    )
-                    or (
-                        # Short real-time snatch signature discovered by the
-                        # untouched holdout. The deep catch resembles a back
-                        # squat, while biomechanics resembles a push press.
-                        olympic_pred == "snatch"
-                        and float(olympic_conf or 0.0) >= 0.60
-                        and raw_label == "squat"
-                        and bio_label == "push_press"
-                        and squat_label == "squat_back"
-                        and float(squat_conf or 0.0) >= 0.90
-                        and float(explosive_score or 0.0) >= 50.0
-                        and float(router_v6_conf or 0.0) < 0.75
-                    )
-                )
-
-                if (
-                    raw_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
-                    and squat_label in {"squat_back", "squat_front", "overhead_squat"}
-                    and float(squat_conf or 0.0) >= 0.90
-                    and router_v5_label in OLY_SET
-                    and float(router_v5_conf or 0.0) < 0.85
-                    and not clean_rescue_active
-                    and not strong_explosive_snatch
-                ):
-                    final_label = squat_label
-                    final_conf = max(
-                        float(squat_conf or 0.0),
-                        float(base_conf or 0.0) if raw_label == squat_label else 0.0,
-                    )
-                    analysis_mode = "squat_router_protected"
-                else:
-                    if router_v8_cj_lock:
-                        final_label = "clean_and_jerk"
-                        final_conf = max(
-                            float(router_v5_conf or 0.0),
-                            0.80,
-                        )
-                        analysis_mode = "router_v8_context_lock"
-                    else:
-                        final_label = router_v5_label
-                        final_conf = router_v5_conf
-                        analysis_mode = "router_v5"
-
-                # Reject upright curl clips that Router V5 mistakes for an
-                # Olympic lift. Genuine Olympic controls should have at least
-                # one credible clean, C&J, or split-jerk shape signature.
-                if (
-                    upright_curl_signature
-                    and final_label in OLY_SET
-                    and not _looks_clean_only
-                    and not _looks_cj
-                    and not _looks_split
-                ):
-                    final_label = "unknown"
-                    final_conf = 0.50
-                    analysis_mode = "insufficient_signal"
-                    protected_label = None
-                    protected_conf = None
-                    protected_reason = None
-
-                    if isinstance(router_v5_debug, dict):
-                        router_v5_debug["decision"] = (
-                            "rejected_upright_curl_signature"
-                        )
-
-                if clean_rescue_active:
-                    final_label = "clean"
-                    final_conf = float(router_v5_conf or 0.75)
-                    analysis_mode = "router_v5"
-
-                # Preserve Router V5's explicit snatch rescue when the clip
-                # has strong overhead motion and enough wrist travel to differ
-                # from a controlled overhead squat.
-                snatch_rescue_from_overhead_squat = (
-                    olympic_pred == "snatch"
-                    and str((router_v5_debug or {}).get("decision", "")) == "snatch_rescue_from_squat"
-                    and float(olympic_conf or 0.0) >= 0.74
-                    and squat_label == "overhead_squat"
-                    and float(explosive_score or 0.0) >= 40.0
-                    and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.45
-                )
-
-                # Final squat recovery after Router V5.
-                if (
-                    clear_squat_should_hold
-                    and not clean_rescue_active
-                    and not snatch_rescue_from_overhead_squat
-                ):
-                    final_label = squat_label
-                    final_conf = max(
-                        float(squat_conf or 0.0),
-                        float(base_conf or 0.0) if raw_label == squat_label else 0.0,
-                    )
-                    analysis_mode = "squat_router_protected"
+            final_label = router_v5_override.final_label
+            final_conf = router_v5_override.final_confidence
+            analysis_mode = router_v5_override.analysis_mode
+            protected_label = router_v5_override.protected_label
+            protected_conf = router_v5_override.protected_confidence
+            protected_reason = router_v5_override.protected_reason
+            router_v5_debug = router_v5_override.router_v5_debug
+            snatch_rescue_from_overhead_squat = (
+                router_v5_override.snatch_rescue_from_overhead_squat
+            )
 
         # Final squat recovery after Router V5 / Olympic override.
         if (
             clear_squat_should_hold
             and not clean_rescue_active
-            and not locals().get("snatch_rescue_from_overhead_squat", False)
+            and not snatch_rescue_from_overhead_squat
             and analysis_mode != "squat_raw_consensus"
         ):
             final_label = squat_label
@@ -13370,16 +12419,11 @@ def analyze_video(
         )
 
         final_clean_rescue = (
-            locals().get("router_v5_label") == "clean"
-            and str(
-                (
-                    locals().get("router_v5_debug") or {}
-                ).get("decision", "")
-            ) == "clean_rescue_from_weak_snatch"
-            and bool(locals().get("_truly_explosive", False))
-            and float(
-                locals().get("router_v5_conf", 0.0) or 0.0
-            ) >= 0.70
+            router_v5_label == "clean"
+            and str((router_v5_debug or {}).get("decision", ""))
+            == "clean_rescue_from_weak_snatch"
+            and bool(_truly_explosive)
+            and float(router_v5_conf or 0.0) >= 0.70
             and not strong_front_squat_consensus
         )
 
@@ -13412,6 +12456,29 @@ def analyze_video(
             protected_label = "squat_front"
             protected_conf = final_conf
             protected_reason = "front_squat_consensus_final_authority"
+
+        if should_recover_front_squat_from_back_router(
+            forced_exercise_label=forced_exercise_label,
+            final_label=final_label,
+            raw_label=raw_label,
+            bio_label=bio_label,
+            squat_label=squat_label,
+            squat_conf=squat_conf,
+            olympic_pred=olympic_pred,
+            olympic_conf=olympic_conf,
+            truly_explosive=_truly_explosive,
+            looks_clean_only=_looks_clean_only,
+            looks_cj=_looks_cj,
+            looks_split=_looks_split,
+            looks_thruster=_looks_thruster,
+            bar_debug=bar_debug,
+        ):
+            final_label = "squat_front"
+            final_conf = max(float(squat_conf or 0.0), 0.86)
+            analysis_mode = "squat_router_protected"
+            protected_label = "squat_front"
+            protected_conf = final_conf
+            protected_reason = "front_squat_over_back_router_rack_confusion"
 
         # Recover back squats that the squat-variant model calls front squat
         # despite weak and internally inconsistent front-rack geometry.
@@ -13523,1943 +12590,229 @@ def analyze_video(
             final_conf = 0.86
             analysis_mode = "biomechanics_override"
 
+        routing_candidates = {
+            "base": {
+                "label": raw_label,
+                "confidence": round(float(base_conf or 0.0), 3),
+            },
+            "biomechanics": {
+                "label": bio_label,
+                "confidence": round(float(bio_conf or 0.0), 3),
+            },
+            "squat_router": {
+                "label": squat_label,
+                "confidence": round(float(squat_conf or 0.0), 3),
+            },
+            "olympic_router": {
+                "label": olympic_pred,
+                "confidence": round(float(olympic_conf or 0.0), 3),
+            },
+            "router_v5": {
+                "label": locals().get("router_v5_label"),
+                "confidence": round(
+                    float(locals().get("router_v5_conf", 0.0) or 0.0),
+                    3,
+                ),
+                "decision": (
+                    (locals().get("router_v5_debug") or {}).get("decision")
+                    if isinstance(locals().get("router_v5_debug"), dict)
+                    else None
+                ),
+            },
+            "bodyweight_router": {
+                "label": bodyweight_router_label,
+                "confidence": round(
+                    float(bodyweight_router_conf or 0.0),
+                    3,
+                ),
+            },
+            "protected_evidence": {
+                "label": protected_label,
+                "confidence": round(
+                    float(final_conf or 0.0),
+                    3,
+                ),
+                "reason": protected_reason,
+            },
+        }
+
+        learned_family_shadow_label = None
+        learned_family_shadow_confidence = 0.0
+        learned_family_shadow_trusted = False
+        _family_v1_row = None
+
+        try:
+            if FAMILY_CLASSIFIER_V1 is not None:
+                _family_v1_features = build_movement_video_features_v2(
+                    biomechanics
+                )
+
+                _family_v1_row = [
+                    float(v)
+                    for v in _family_v1_features
+                ]
+
+                _family_v1_probs = (
+                    FAMILY_CLASSIFIER_V1.predict_proba(
+                        [_family_v1_row]
+                    )[0]
+                )
+
+                _family_v1_idx = int(
+                    _family_v1_probs.argmax()
+                )
+
+                learned_family_shadow_label = str(
+                    FAMILY_CLASSIFIER_V1.classes_[
+                        _family_v1_idx
+                    ]
+                )
+
+                learned_family_shadow_confidence = float(
+                    _family_v1_probs[_family_v1_idx]
+                )
+
+                learned_family_shadow_trusted = (
+                    learned_family_shadow_confidence >= 0.50
+                )
+
+        except Exception as exc:
+            print("LEARNED FAMILY SHADOW ERROR:", exc)
+
+        family_router_shadow = classify_family_shadow(
+            candidates=routing_candidates,
+            truly_explosive=bool(_truly_explosive),
+            explosive_score=float(explosive_score or 0.0),
+            looks_clean_only=bool(_looks_clean_only),
+            looks_cj=bool(_looks_cj),
+            looks_split=bool(_looks_split),
+            looks_thruster=bool(_looks_thruster),
+            strong_overhead=bool(_strong_overhead),
+        )
+
         # =========================================================
         # 6. REP ANALYSIS
         # =========================================================
-        # ---------------- ROUTER V6 FINAL BODYWEIGHT ARBITRATION ----------------
-        # Runs AFTER legacy routing, BEFORE rep analysis.
-        # This avoids editing the fragile if/elif router chain.
-        # Prevent the pull-up router from stealing long barbell movements.
-        # These signatures were validated against the Router Challenge pull-up
-        # set and UIndy external squat, push-press, and jerk demonstrations.
+        def adopt_final_decision(decision):
+            nonlocal final_label, final_conf, analysis_mode
+            nonlocal protected_label, protected_conf, protected_reason
+
+            state = (
+                decision
+                if isinstance(decision, FinalDecisionState)
+                else final_state_from_decision(decision)
+            )
+
+            final_label = state.final_label
+            final_conf = state.final_confidence
+            analysis_mode = state.analysis_mode
+            protected_label = state.protected_label
+            protected_conf = state.protected_confidence
+            protected_reason = state.protected_reason
+
+        final_arbitration_adapters = FinalArbitrationProbeAdapters(
+            biomechanics=biomech,
+            forced_exercise_label=forced_exercise_label,
+            raw_label=raw_label,
+            base_confidence=base_conf,
+            bio_label=bio_label,
+            bio_confidence=bio_conf,
+            squat_label=squat_label,
+            squat_confidence=squat_conf,
+            router_v6_label=router_v6_label,
+            router_v6_confidence=router_v6_conf,
+            bodyweight_router_label=bodyweight_router_label,
+            bodyweight_router_confidence=bodyweight_router_conf,
+            olympic_pred=olympic_pred,
+            olympic_confidence=olympic_conf,
+            wrist_overhead_ratio=wrist_overhead_ratio,
+            explosive_score=explosive_score,
+            bodyweight_debug=bodyweight_debug,
+            bar_debug=bar_debug,
+            use_yolo_tracking=bool(USE_YOLO_TRACKING),
+            summarize_biomechanics=summarize_biomechanics,
+            analyze_push_press_reps=analyze_push_press_reps,
+            analyze_deadlift_reps=analyze_deadlift_reps,
+            analyze_yolo_deadlift_reps=analyze_yolo_deadlift_reps,
+            analyze_squat_reps=analyze_squat_reps,
+        )
+
+        final_arbitration = run_final_arbitration(
+            FinalArbitrationContext(
+                state=FinalDecisionState(
+                    final_label=final_label,
+                    final_confidence=final_conf,
+                    analysis_mode=analysis_mode,
+                    protected_label=protected_label,
+                    protected_confidence=protected_conf,
+                    protected_reason=protected_reason,
+                ),
+                forced_exercise_label=forced_exercise_label,
+                raw_label=raw_label,
+                base_confidence=base_conf,
+                bio_label=bio_label,
+                bio_confidence=bio_conf,
+                squat_label=squat_label,
+                squat_confidence=squat_conf,
+                router_v6_label=router_v6_label,
+                router_v6_confidence=router_v6_conf,
+                bodyweight_router_label=bodyweight_router_label,
+                bodyweight_router_confidence=bodyweight_router_conf,
+                olympic_pred=olympic_pred,
+                olympic_confidence=olympic_conf,
+                explosive_score=explosive_score,
+                wrist_overhead_ratio=wrist_overhead_ratio,
+                run_oly_router=bool(run_oly_router),
+                strong_oly_lock=strong_oly_lock,
+                strong_bench_evidence=strong_bench_evidence,
+                credible_split_jerk=credible_split_jerk,
+                looks_clean_only=bool(_looks_clean_only),
+                looks_cj=bool(_looks_cj),
+                looks_split=bool(_looks_split),
+                looks_strict=bool(_looks_strict),
+                looks_thruster=bool(_looks_thruster),
+                strong_front_squat_consensus=(
+                    strong_front_squat_consensus
+                ),
+                bench_model_consensus=bench_model_consensus,
+                squat_knee_range=_squat_knee_range,
+                squat_hip_range=_squat_hip_range,
+                bodyweight_debug=bodyweight_debug,
+                bar_debug=bar_debug,
+                router_v5_label=router_v5_label,
+                router_v5_confidence=router_v5_conf,
+                router_v5_debug=router_v5_debug,
+                family_router_shadow=family_router_shadow,
+                learned_family_shadow_label=learned_family_shadow_label,
+                learned_family_shadow_confidence=learned_family_shadow_confidence,
+                learned_family_shadow_trusted=learned_family_shadow_trusted,
+                push_press_probe=final_arbitration_adapters.push_press_probe,
+                yolo_deadlift_recovery=(
+                    final_arbitration_adapters.yolo_deadlift_recovery
+                ),
+                deadlift_probe=final_arbitration_adapters.deadlift_probe,
+            )
+        )
+        yolo_deadlift_probe_reps = (
+            final_arbitration_adapters.yolo_deadlift_probe_reps
+        )
         pull_up_long_squat_barbell_collision = (
-            router_v6_label == "pull_up"
-            and squat_label in {
-                "squat_back",
-                "squat_front",
-                "overhead_squat",
-            }
-            and float(squat_conf or 0.0) >= 0.75
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.70
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 250
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) >= 0.27
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.18
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    0.0,
-                )
-            ) >= 0.85
+            final_arbitration.pull_up_long_squat_barbell_collision
         )
-
         pull_up_long_overhead_barbell_collision = (
-            router_v6_label == "pull_up"
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.87
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 300
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    999.0,
-                )
-            ) <= 0.11
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    999.0,
-                )
-            ) <= 0.10
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) >= 0.20
-            and (
-                raw_label == "push_press"
-                or bio_label == "push_press"
-            )
+            final_arbitration.pull_up_long_overhead_barbell_collision
         )
-
-        router_v6_bodyweight_allowed = (
-            not (
-                protected_reason == "strict_press_pattern_detected"
-                and protected_label == "strict_press"
-                and float(protected_conf or 0.0) >= 0.90
-            )
-            and
-            router_v6_label in {"push_up", "pull_up", "handstand_push_up"}
-            and bodyweight_router_label == router_v6_label
-            and float(bodyweight_router_conf or 0.0) >= 0.95
-            and float(router_v6_conf or 0.0) >= 0.72
-            and not strong_oly_lock
-            and not strong_bench_evidence
-            and not pull_up_long_squat_barbell_collision
-            and not pull_up_long_overhead_barbell_collision
-
-            # Broad bench consensus guard.
-            # When both the base classifier and biomechanics independently
-            # identify bench press, do not let a false vertical bodyweight
-            # signature overwrite the horizontal press classification.
-            and not (
-                router_v6_label == "pull_up"
-                and raw_label == "bench_press"
-                and bio_label == "bench_press"
-                and float(base_conf or 0.0) >= 0.60
-                and float(bio_conf or 0.0) >= 0.60
-            )
-
-            # Split-jerk guard: an explosive overhead Olympic movement can look
-            # like a pull-up to the bodyweight router because of the long elbow
-            # range and sustained overhead wrist position.
-            and not (
-                router_v6_label == "pull_up"
-                and credible_split_jerk
-            )
-
-            and not (
-                router_v6_label == "pull_up"
-                and final_label == "overhead_squat"
-                and squat_label == "overhead_squat"
-                and float(squat_conf or 0.0) >= 0.75
-            )
-            and not (
-                protected_reason == "push_press_pattern_detected"
-                and float(olympic_conf or 0.0) >= 0.90
-            )
-
-            # Clear push-press agreement should not be stolen by a false
-            # pull-up prediction from the bodyweight router.
-            and not (
-                router_v6_label == "pull_up"
-                and raw_label == "push_press"
-                and bio_label == "push_press"
-                and float(base_conf or 0.0) >= 0.65
-                and float(bio_conf or 0.0) >= 0.75
-                and float(explosive_score or 0.0) < 30.0
-            )
-        )
-
-        if router_v6_bodyweight_allowed:
-            final_label = router_v6_label
-            final_conf = max(float(bodyweight_router_conf or 0.0), float(router_v6_conf or 0.0), 0.90)
-            analysis_mode = "router_v6_bodyweight"
-            protected_label = final_label
-            protected_conf = final_conf
-            protected_reason = "router_v6_bodyweight_winner"
-
-        # Final clean-and-jerk shape recovery.
-        # Some C&J clips are classified as squat/snatch because the clean catch
-        # dominates the base and squat routers. A clear C&J event shape plus
-        # extreme explosiveness is stronger evidence than the squat fallback.
-        if (
-            final_label in {"squat_back", "squat_front", "overhead_squat", "squat"}
-            and bool(_looks_cj)
-            and bool(run_oly_router)
-            and float(olympic_conf or 0.0) >= 0.80
-            and float(explosive_score or 0.0) >= 100.0
-        ):
-            final_label = "clean_and_jerk"
-            final_conf = max(0.86, float(olympic_conf or 0.0))
-            analysis_mode = "router_v5"
-            protected_label = final_label
-            protected_conf = final_conf
-            protected_reason = "clean_and_jerk_shape_final_recovery"
-
-        # Standalone split-jerk event-shape recovery.
-        # Segmented split jerks are frequently labeled clean_and_jerk by the
-        # Olympic classifier and may be labeled squat or bench by base models.
-        # A split signature without a complete clean-and-jerk event shape is
-        # stronger evidence of a standalone split jerk.
-        split_shape_final_recovery = (
-            not forced_exercise_label
-            and bool(credible_split_jerk)
-            and not bool(_looks_cj)
-            and olympic_pred in {"clean_and_jerk", "split_jerk"}
-            and float(olympic_conf or 0.0) >= 0.80
-
-            # Preserve unanimous bench evidence. A generic split-shape signal
-            # must not overwrite agreement from the base, biomechanics, and
-            # Router V6 bench classifiers.
-            and not (
-                raw_label == "bench_press"
-                and bio_label == "bench_press"
-                and float(base_conf or 0.0) >= 0.90
-                and float(bio_conf or 0.0) >= 0.90
-                and router_v6_label == "bench_press"
-                and float(router_v6_conf or 0.0) >= 0.90
-            )
-
-            # Preserve standalone split segments while rejecting pull-up
-            # lookalikes and complete clean-and-jerk sequences.
-            and raw_label != "push_press"
-            and float(explosive_score or 0.0) < 55.0
-        )
-
-        if split_shape_final_recovery:
-            final_label = "split_jerk"
-            final_conf = max(float(olympic_conf or 0.0), 0.80)
-            analysis_mode = "router_v5"
-            protected_label = "split_jerk"
-            protected_conf = final_conf
-            protected_reason = "standalone_split_shape_recovery"
-
-        # Recover controlled push presses whose rack/dip geometry looks like
-        # front squat + split jerk. Require near-unanimous raw/biomechanics
-        # confidence and extremely low explosiveness so genuine front squats
-        # and standalone split jerks remain unaffected.
-        final_low_explosive_push_press_over_split = (
-            not forced_exercise_label
-            and final_label == "split_jerk"
-            and protected_reason == "standalone_split_shape_recovery"
-            and raw_label == "squat_front"
-            and float(base_conf or 0.0) >= 0.99
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.99
-            and bool(_looks_split)
-            and not bool(_looks_cj)
-            and float(explosive_score or 0.0) < 15.0
-        )
-
-        if final_low_explosive_push_press_over_split:
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.95,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "low_explosive_push_press_over_split"
-
-        # Final authority for a verified standalone split-jerk rescue.
-        # This runs after squat, bodyweight, and clean-and-jerk recovery.
-        final_split_rescue = (
-            not forced_exercise_label
-            and isinstance(locals().get("router_v5_debug"), dict)
-            and (
-                locals()
-                .get("router_v5_debug", {})
-                .get("decision")
-                == "standalone_split_from_cj"
-            )
-        )
-
-        if final_split_rescue:
-            final_label = "split_jerk"
-            final_conf = max(
-                float(locals().get("router_v5_conf", 0.0) or 0.0),
-                0.80,
-            )
-            analysis_mode = "router_v5"
-            protected_label = "split_jerk"
-            protected_conf = final_conf
-            protected_reason = "standalone_split_from_cj"
-
-        # Recover low-explosive push presses incorrectly finalized as
-        # standalone split jerks. Require exact push-press model consensus,
-        # weak split evidence characteristics, and multiple dedicated
-        # push-press reps before overriding the split decision.
-        final_push_press_from_split_probe_reps = []
-        final_push_press_from_split_candidate = (
-            not forced_exercise_label
-            and final_label == "split_jerk"
-            and protected_reason == "standalone_split_from_cj"
-            and raw_label == "push_press"
-            and float(base_conf or 0.0) >= 0.99
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.99
-            and squat_label == "overhead_squat"
-            and 0.78 <= float(squat_conf or 0.0) <= 0.85
-            and olympic_pred == "clean_and_jerk"
-            and 0.80 <= float(olympic_conf or 0.0) <= 0.85
-            and float(explosive_score or 0.0) < 20.0
-            and 0.80 <= float(bar_debug.get("overhead_ratio", 0.0)) < 0.90
-            and int(bar_debug.get("total_frames", 0) or 0) >= 250
-        )
-
-        if final_push_press_from_split_candidate:
-            try:
-                (
-                    final_push_press_from_split_probe_reps,
-                    _final_push_press_from_split_summary,
-                ) = analyze_push_press_reps(biomech, "push_press")
-                final_push_press_from_split_probe_reps = (
-                    final_push_press_from_split_probe_reps or []
-                )
-            except Exception:
-                final_push_press_from_split_probe_reps = []
-
-        if len(final_push_press_from_split_probe_reps) >= 3:
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.90,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "push_press_analyzer_over_split_authority"
-
-        # Exceptionally strong full clean-and-jerk authority.
-        # This runs after split-jerk recovery because Router V5 can still
-        # reduce a complete C&J sequence to split_jerk. Verified standalone
-        # split-jerk controls remain below this Olympic confidence threshold.
-        final_high_conf_cj_authority = (
-            not forced_exercise_label
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.97
-            and raw_label == "push_press"
-            and bio_label == "push_press"
-        )
-
-        if final_high_conf_cj_authority:
-            final_label = "clean_and_jerk"
-            final_conf = max(float(olympic_conf or 0.0), 0.97)
-            analysis_mode = "router_v5"
-            protected_label = "clean_and_jerk"
-            protected_conf = final_conf
-            protected_reason = "clean_and_jerk_high_conf_final_authority"
-
-        # Final push-press recovery.
-        # Some explosive push presses look like thrusters to biomechanics and
-        # clean-and-jerks to the Olympic classifier despite lacking a C&J or
-        # split-jerk event shape.
-        final_push_press_rescue = (
-            not forced_exercise_label
-            and raw_label == "push_press"
-            and float(base_conf or 0.0) >= 0.40
-            and bio_label == "squat"
-            and float(squat_conf or 0.0) < 0.60
-            and bool(_looks_thruster)
-            and not bool(_looks_cj)
-            and not bool(_looks_split)
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) < 0.85
-        )
-
-        if final_push_press_rescue:
-            final_label = "push_press"
-            final_conf = max(float(base_conf or 0.0), 0.76)
-            analysis_mode = "detailed_rep_analysis"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "push_press_from_false_cj_agreement"
-
-        # Final muscle-up recovery.
-        # Ring muscle-ups often appear as explosive pull-ups with a squat /
-        # push-press model disagreement and weak Olympic evidence.
-        ring_muscle_up_rescue = (
-            not forced_exercise_label
-            and final_label == "pull_up"
-            and router_v6_label == "pull_up"
-            and raw_label == "squat"
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.75
-            and float(bodyweight_router_conf or 0.0) >= 0.97
-            and float(explosive_score or 0.0) >= 90.0
-            and 0.50 <= float(wrist_overhead_ratio or 0.0) <= 0.85
-            and float(olympic_conf or 0.0) < 0.70
-        )
-
-        # Bar muscle-ups can look like front/overhead squats because the torso
-        # rises above the bar while the bodyweight router sees only pull-up.
-        bar_muscle_up_rescue = (
-            not forced_exercise_label
-            and final_label == "pull_up"
-            and router_v6_label == "pull_up"
-            and raw_label == "squat_front"
-            and bio_label == "squat_front"
-            and float(base_conf or 0.0) >= 0.95
-            and float(bio_conf or 0.0) >= 0.95
-            and squat_label == "overhead_squat"
-            and float(squat_conf or 0.0) >= 0.90
-            and float(bodyweight_router_conf or 0.0) >= 0.94
-            and float(explosive_score or 0.0) < 30.0
-            and 0.35 <= float(wrist_overhead_ratio or 0.0) <= 0.70
-        )
-
-        if ring_muscle_up_rescue or bar_muscle_up_rescue:
-            final_label = "muscle_up"
-            final_conf = max(
-                float(bodyweight_router_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = final_label
-            protected_conf = final_conf
-            protected_reason = (
-                "ring_muscle_up_final_recovery"
-                if ring_muscle_up_rescue
-                else "bar_muscle_up_final_recovery"
-            )
-
-        # ---------------------------------------------------------
-        # Experimental YOLO busy-scene deadlift recovery
-        # ---------------------------------------------------------
-        # In crowded scenes, the selected athlete's deadlift may look like
-        # repeated squats to the general routers. Compare both exercise-specific
-        # rep analyzers and rescue deadlift only when their counts strongly
-        # disagree. This remains inactive unless YOLO tracking is enabled.
-        yolo_deadlift_probe_reps = []
-        yolo_squat_probe_reps = []
-        yolo_deadlift_rescue = False
-
-        if (
-            USE_YOLO_TRACKING
-            and not forced_exercise_label
-            and final_label in {"squat", "squat_back", "squat_front", "overhead_squat"}
-            and raw_label in {"squat", "squat_back", "squat_front"}
-            and bio_label == "squat"
-            and float(olympic_conf or 0.0) < 0.80
-        ):
-            try:
-                yolo_deadlift_probe_reps = analyze_yolo_deadlift_reps(
-                    biomech
-                )
-                yolo_squat_probe_reps, _ = analyze_squat_reps(
-                    biomech,
-                    final_label if final_label != "squat" else "squat_back",
-                )
-
-                deadlift_count = len(yolo_deadlift_probe_reps or [])
-                squat_count = len(yolo_squat_probe_reps or [])
-
-                yolo_deadlift_rescue = (
-                    1 <= deadlift_count <= 4
-                    and squat_count >= deadlift_count * 2 + 3
-                )
-
-                if yolo_deadlift_rescue:
-                    final_label = "deadlift"
-                    final_conf = max(0.86, float(final_conf or 0.0))
-                    analysis_mode = "yolo_deadlift_recovery"
-                    protected_label = "deadlift"
-                    protected_conf = final_conf
-                    protected_reason = "yolo_rep_count_deadlift_recovery"
-            except Exception as exc:
-                print(f"YOLO deadlift recovery skipped: {exc}")
-
-        # Last automatic-routing authority for a verified clean-only shape.
-        # This runs after Router V5, Router V6, Olympic recoveries, muscle-up
-        # recovery, and optional YOLO deadlift recovery. User-confirmed labels
-        # are still applied afterward.
-        final_clean_shape_authority = (
-            not forced_exercise_label
-            and bool(_looks_clean_only)
-            and not bool(_looks_cj)
-            and not bool(_looks_split)
-            and not strong_front_squat_consensus
-            and not (
-                raw_label == "bench_press"
-                and bio_label == "bench_press"
-                and float(base_conf or 0.0) >= 0.80
-                and float(bio_conf or 0.0) >= 0.80
-            )
-            and (
-                (
-                    olympic_pred == "clean_and_jerk"
-                    and float(olympic_conf or 0.0) >= 0.62
-                )
-                or (
-                    locals().get("router_v5_label") == "clean"
-                    and str(
-                        (locals().get("router_v5_debug") or {}).get(
-                            "decision",
-                            "",
-                        )
-                    ) == "clean_rescue_from_weak_snatch"
-                )
-            )
-        )
-
-        if final_clean_shape_authority:
-            final_label = "clean"
-            final_conf = 0.75
-            analysis_mode = "shape_override"
-            protected_label = "clean"
-            protected_conf = final_conf
-            protected_reason = "clean_only_shape_final_authority"
-
-        # Recover very short horizontal bench-press clips that all movement
-        # classifiers mistake for push press despite having no overhead phase.
-        # Require substantial elbow and platform motion to avoid short pull-up
-        # and machine-press lookalikes.
-        final_short_horizontal_bench_recovery = (
-            not forced_exercise_label
-            and final_label == "push_press"
-            and raw_label == "push_press"
-            and bio_label == "push_press"
-            and router_v6_label == "push_press"
-            and protected_reason == "push_press_pattern_detected"
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) < 0.05
-            and float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    180.0,
-                )
-            ) < 15.0
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) >= 150.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) >= 0.15
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    0.0,
-                )
-            ) >= 0.15
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.18
-            and 20 <= int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) <= 60
-        )
-
-        if final_short_horizontal_bench_recovery:
-            final_label = "bench_press"
-            final_conf = max(
-                float(final_conf or 0.0),
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "bench_press"
-            protected_conf = final_conf
-            protected_reason = "short_horizontal_bench_final_recovery"
-
-        # Final push-up authority.
-        # Recover horizontal bodyweight pressing clips that both bodyweight
-        # routers identify as push-ups but late clean/Olympic arbitration steals.
-        # Preserve real clean/C&J event shapes and overhead movements.
-        final_push_up_authority = (
-            not forced_exercise_label
-            and final_label in {"clean", "clean_and_jerk"}
-            and bodyweight_router_label == "push_up"
-            and router_v6_label == "push_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.85
-            and float(router_v6_conf or 0.0) >= 0.64
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) < 0.10
-            and not bool(_looks_cj)
-            and not bool(_looks_split)
-        )
-
-        if final_push_up_authority:
-            final_label = "push_up"
-            final_conf = max(
-                float(bodyweight_router_conf or 0.0),
-                float(router_v6_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "router_v6_bodyweight"
-            protected_label = "push_up"
-            protected_conf = final_conf
-            protected_reason = "push_up_final_authority"
-
-        # Recover a long squat clip that the Olympic router mistakes for
-        # clean and jerk. Require strong squat consensus, front-squat router
-        # support, low torso angle, substantial squat motion, and a weak
-        # clean-and-jerk confidence band.
-        final_long_squat_over_cj_recovery = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and raw_label == "squat"
-            and float(base_conf or 0.0) >= 0.99
-            and bio_label == "squat"
-            and float(bio_conf or 0.0) >= 0.99
-            and squat_label == "squat_front"
-            and float(squat_conf or 0.0) >= 0.85
-            and router_v6_label == "squat"
-            and float(router_v6_conf or 0.0) >= 0.98
-            and olympic_pred == "clean_and_jerk"
-            and 0.70 <= float(olympic_conf or 0.0) <= 0.74
-            and float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    999.0,
-                )
-            ) <= 3.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) <= 0.20
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    0.0,
-                )
-            ) >= 0.55
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.40
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) >= 145.0
-            and float(
-                bodyweight_debug.get(
-                    "avg_elbow",
-                    999.0,
-                )
-            ) <= 60.0
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 500
-        )
-
-        if final_long_squat_over_cj_recovery:
-            final_label = "squat_back"
-            final_conf = max(
-                float(squat_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "squat_router_protected"
-            protected_label = "squat_back"
-            protected_conf = final_conf
-            protected_reason = "long_squat_over_cj_final_recovery"
-
-        # Recover a medium-length back squat clip that the Olympic router
-        # mistakes for clean and jerk. Keep this separate from the longer
-        # squat recovery because its motion profile is distinct.
-        final_medium_squat_over_cj_recovery = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and raw_label == "squat"
-            and float(base_conf or 0.0) >= 0.99
-            and bio_label == "squat"
-            and float(bio_conf or 0.0) >= 0.99
-            and squat_label == "squat_front"
-            and float(squat_conf or 0.0) >= 0.96
-            and router_v6_label == "squat"
-            and float(router_v6_conf or 0.0) >= 0.98
-            and olympic_pred == "clean_and_jerk"
-            and 0.70 <= float(olympic_conf or 0.0) <= 0.75
-            and 3.5 <= float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    0.0,
-                )
-            ) <= 7.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) <= 0.10
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    0.0,
-                )
-            ) >= 0.45
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.60
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) >= 165.0
-            and float(
-                bodyweight_debug.get(
-                    "avg_elbow",
-                    999.0,
-                )
-            ) <= 45.0
-            and 300 <= int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) <= 450
-        )
-
-        if final_medium_squat_over_cj_recovery:
-            final_label = "squat_back"
-            final_conf = max(
-                float(squat_conf or 0.0),
-                0.97,
-            )
-            analysis_mode = "squat_router_protected"
-            protected_label = "squat_back"
-            protected_conf = final_conf
-            protected_reason = "medium_squat_over_cj_final_recovery"
-
-        # Recover a long deadlift clip that the squat router mistakes for
-        # back squat. Require the distinctive straight-arm, long-duration,
-        # moderate-hinge profile observed in deadlift_17.
-        final_long_deadlift_over_squat_recovery = (
-            not forced_exercise_label
-            and final_label == "squat_back"
-            and raw_label == "push_press"
-            and 0.84 <= float(base_conf or 0.0) <= 0.90
-            and bio_label == "squat"
-            and 0.84 <= float(bio_conf or 0.0) <= 0.90
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.96
-            and router_v6_label == "squat_back"
-            and 0.58 <= float(router_v6_conf or 0.0) <= 0.64
-            and olympic_pred == "snatch"
-            and 0.58 <= float(olympic_conf or 0.0) <= 0.64
-            and 22.0 <= float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    0.0,
-                )
-            ) <= 30.0
-            and 0.30 <= float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) <= 0.40
-            and 0.30 <= float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    0.0,
-                )
-            ) <= 0.42
-            and 0.12 <= float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) <= 0.20
-            and 35.0 <= float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) <= 55.0
-            and float(
-                bodyweight_debug.get(
-                    "avg_elbow",
-                    0.0,
-                )
-            ) >= 170.0
-            and float(
-                bodyweight_debug.get(
-                    "min_elbow",
-                    0.0,
-                )
-            ) >= 125.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) <= 0.05
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 800
-        )
-
-        if final_long_deadlift_over_squat_recovery:
-            final_label = "deadlift"
-            final_conf = 0.82
-            analysis_mode = "biomechanics_override"
-            protected_label = "deadlift"
-            protected_conf = final_conf
-            protected_reason = "long_deadlift_over_squat_final_recovery"
-
-        # Recover a short deadlift clip that the Olympic router mistakes for
-        # snatch. Require deadlift raw evidence, no overhead wrist position,
-        # almost-straight elbows with little elbow motion, and short duration.
-        final_short_deadlift_over_snatch_recovery = (
-            not forced_exercise_label
-            and final_label == "snatch"
-            and raw_label == "deadlift"
-            and bio_label == "squat"
-            and bodyweight_router_label == "push_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.85
-            and router_v6_label == "push_up"
-            and float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    0.0,
-                )
-            ) >= 60.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) < 0.05
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    999.0,
-                )
-            ) <= 30.0
-            and float(
-                bodyweight_debug.get(
-                    "min_elbow",
-                    0.0,
-                )
-            ) >= 150.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    1.0,
-                )
-            ) <= 0.30
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    1.0,
-                )
-            ) <= 0.20
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) <= 80
-            and float(explosive_score or 0.0) >= 80.0
-        )
-
-        if final_short_deadlift_over_snatch_recovery:
-            final_label = "deadlift"
-            final_conf = max(
-                float(base_conf or 0.0),
-                0.82,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "deadlift"
-            protected_conf = final_conf
-            protected_reason = "short_deadlift_over_snatch_final_recovery"
-
-        # Recover a short bench press clip incorrectly accepted as push-up.
-        # This signature is isolated to ucf50_bench_05 in the collision scan.
-        final_short_bench_over_pushup_recovery = (
-            not forced_exercise_label
-            and final_label == "push_up"
-            and raw_label == "squat_front"
-            and 0.65 <= float(base_conf or 0.0) <= 0.72
-            and bio_label == "deadlift"
-            and 0.82 <= float(bio_conf or 0.0) <= 0.88
-            and squat_label == "squat_front"
-            and float(squat_conf or 0.0) >= 0.96
-            and router_v6_label == "squat_front"
-            and float(router_v6_conf or 0.0) >= 0.93
-            and olympic_pred == "clean_and_jerk"
-            and 0.66 <= float(olympic_conf or 0.0) <= 0.72
-            and 65.0 <= float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    0.0,
-                )
-            ) <= 80.0
-            and 0.15 <= float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) <= 0.23
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    1.0,
-                )
-            ) <= 0.07
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    1.0,
-                )
-            ) <= 0.07
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) >= 160.0
-            and float(
-                bodyweight_debug.get(
-                    "avg_elbow",
-                    0.0,
-                )
-            ) >= 130.0
-            and float(
-                bodyweight_debug.get(
-                    "min_elbow",
-                    999.0,
-                )
-            ) <= 10.0
-            and 0.08 <= float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    0.0,
-                )
-            ) <= 0.18
-            and 30 <= int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) <= 60
-        )
-
-        if final_short_bench_over_pushup_recovery:
-            final_label = "bench_press"
-            final_conf = 0.86
-            analysis_mode = "biomechanics_override"
-            protected_label = "bench_press"
-            protected_conf = final_conf
-            protected_reason = "short_bench_over_pushup_final_recovery"
-
-        # Recover a long snatch clip that the squat router protects as back
-        # squat. Require weak squat-model agreement together with sustained
-        # overhead position, large arm motion, and highly explosive movement.
-        final_long_snatch_over_squat_recovery = (
-            not forced_exercise_label
-            and final_label == "squat_back"
-            and raw_label == "squat"
-            and 0.45 <= float(base_conf or 0.0) <= 0.55
-            and bio_label == "squat"
-            and 0.45 <= float(bio_conf or 0.0) <= 0.55
-            and squat_label == "squat_back"
-            and 0.92 <= float(squat_conf or 0.0) <= 0.96
-            and router_v6_label == "squat_back"
-            and 0.56 <= float(router_v6_conf or 0.0) <= 0.62
-            and olympic_pred == "clean_and_jerk"
-            and 0.54 <= float(olympic_conf or 0.0) <= 0.60
-            and float(
-                bodyweight_debug.get(
-                    "wrist_y_range",
-                    0.0,
-                )
-            ) >= 0.65
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    0.0,
-                )
-            ) >= 0.28
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.30
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) >= 165.0
-            and float(
-                bodyweight_debug.get(
-                    "avg_elbow",
-                    0.0,
-                )
-            ) >= 155.0
-            and float(
-                bodyweight_debug.get(
-                    "min_elbow",
-                    999.0,
-                )
-            ) <= 10.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    0.0,
-                )
-            ) >= 0.45
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 1200
-            and float(explosive_score or 0.0) >= 130.0
-        )
-
-        if final_long_snatch_over_squat_recovery:
-            final_label = "snatch"
-            final_conf = max(
-                float(olympic_conf or 0.0),
-                0.70,
-            )
-            analysis_mode = "router_v5"
-            protected_label = "snatch"
-            protected_conf = final_conf
-            protected_reason = "long_snatch_over_squat_final_recovery"
-
-        # Recover a horizontal push-up clip that the Olympic router mistakes
-        # for clean and jerk. Require a nearly horizontal torso, substantial
-        # shoulder/hip vertical motion, large elbow motion, and bodyweight
-        # push-up support.
-        final_horizontal_push_up_recovery = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and raw_label == "deadlift"
-            and bio_label == "squat"
-            and bodyweight_router_label == "push_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.50
-            and float(
-                bodyweight_debug.get(
-                    "avg_torso_angle",
-                    0.0,
-                )
-            ) >= 160.0
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    0.0,
-                )
-            ) >= 0.30
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    0.0,
-                )
-            ) >= 0.20
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    0.0,
-                )
-            ) >= 150.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) <= 0.30
-        )
-
-        if final_horizontal_push_up_recovery:
-            final_label = "push_up"
-            final_conf = max(
-                float(bodyweight_router_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "router_v6_bodyweight"
-            protected_label = "push_up"
-            protected_conf = final_conf
-            protected_reason = "horizontal_push_up_final_recovery"
-
-        # Recover a short, nearly static pull-up clip that all primary movement
-        # classifiers mistake for push press. The wrists remain below the shoulders,
-        # the elbows stay almost fully extended, and the bodyweight router still
-        # identifies pull-up with useful confidence.
-        final_low_motion_pull_up_recovery = (
-            not forced_exercise_label
-            and final_label == "push_press"
-            and raw_label == "push_press"
-            and bio_label == "push_press"
-            and router_v6_label == "push_press"
-            and protected_reason == "push_press_pattern_detected"
-            and bodyweight_router_label == "pull_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.85
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    1.0,
-                )
-            ) < 0.05
-            and float(
-                bodyweight_debug.get(
-                    "mean_wrist_minus_shoulder_y",
-                    0.0,
-                )
-            ) >= 0.20
-            and float(
-                bodyweight_debug.get(
-                    "elbow_range",
-                    999.0,
-                )
-            ) <= 25.0
-            and float(
-                bodyweight_debug.get(
-                    "min_elbow",
-                    0.0,
-                )
-            ) >= 145.0
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    1.0,
-                )
-            ) <= 0.03
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    1.0,
-                )
-            ) <= 0.03
-            and float(
-                bodyweight_debug.get(
-                    "avg_wrist_forward",
-                    0.0,
-                )
-            ) >= 0.05
-            and 50 <= int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) <= 110
-        )
-
-        if final_low_motion_pull_up_recovery:
-            final_label = "pull_up"
-            final_conf = max(
-                float(bodyweight_router_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "router_v6_bodyweight"
-            protected_label = "pull_up"
-            protected_conf = final_conf
-            protected_reason = "low_motion_pull_up_final_recovery"
-
-        # Final pull-up authority.
-        # The bodyweight router consistently recognizes difficult pull-up clips,
-        # but bench and Olympic arbitration can overwrite that evidence later.
-        # Require agreement from Router V6 and preserve strong bench, push-press,
-        # and muscle-up decisions.
-        final_pull_up_authority = (
-            not forced_exercise_label
-            and final_label != "muscle_up"
-            and bodyweight_router_label == "pull_up"
-            and router_v6_label == "pull_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.90
-            and not bench_model_consensus
-            and not pull_up_long_squat_barbell_collision
-            and not pull_up_long_overhead_barbell_collision
-
-            # Preserve real Olympic event shapes even when the bodyweight
-            # router incorrectly sees a vertical pull.
-            and not bool(_looks_cj)
-
-            # Pull-up clips frequently trigger the generic split-shape detector.
-            # Permit that overlap only when both bodyweight routers strongly agree,
-            # the squat router sees an overhead posture, and the movement is far
-            # less explosive than a real split jerk.
-            and not (
-                bool(_looks_split)
-                and not (
-                    squat_label == "overhead_squat"
-                    and float(bodyweight_router_conf or 0.0) >= 0.99
-                    and float(router_v6_conf or 0.0) >= 0.74
-                    and float(explosive_score or 0.0) < 20.0
-                )
-            )
-
-            and not bool(_looks_strict)
-
-            # A thruster-like shape with weak Olympic evidence is not reliable
-            # enough for final pull-up authority. This preserves bench and
-            # overhead-squat cases while retaining the verified pull-up gain
-            # whose Olympic confidence is stronger.
-            and not (
-                bool(_looks_thruster)
-                and float(olympic_conf or 0.0) < 0.70
-            )
-
-            # Preserve a low-motion overhead squat that the bodyweight router
-            # mistakes for a pull-up.
-            and not (
-                squat_label == "overhead_squat"
-                and float(squat_conf or 0.0) >= 0.80
-                and bool(_looks_thruster)
-                and float(explosive_score or 0.0) < 25.0
-            )
-
-            # Preserve short explosive snatches that the bodyweight router
-            # mistakes for vertical pull-ups. Require a narrow routing signature:
-            # squat base, push-press biomechanics, explicit snatch prediction,
-            # high explosiveness, and only weak Router V6 pull-up confidence.
-            and not (
-                olympic_pred == "snatch"
-                and float(olympic_conf or 0.0) >= 0.60
-                and raw_label == "squat"
-                and bio_label == "push_press"
-                and float(explosive_score or 0.0) >= 50.0
-                and float(router_v6_conf or 0.0) < 0.75
-            )
-
-            # Preserve a push press already established by its dedicated
-            # biomechanics protection. The failed pull-up lookalike has no
-            # such protection.
-            and protected_reason != "push_press_pattern_detected"
-        )
-
-        if final_pull_up_authority:
-            final_label = "pull_up"
-            final_conf = max(
-                float(bodyweight_router_conf or 0.0),
-                float(router_v6_conf or 0.0),
-                0.90,
-            )
-            analysis_mode = "router_v6_bodyweight"
-            protected_label = "pull_up"
-            protected_conf = final_conf
-            protected_reason = "pull_up_final_authority"
-
-        # Recover controlled push presses incorrectly finalized as
-        # clean-and-jerk. Require dedicated push-press biomechanics,
-        # minimal lower-body travel, low explosiveness, and no complete
-        # clean-and-jerk event shape.
-        final_controlled_push_press_recovery = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.75
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.90
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.85
-            and not bool(_looks_cj)
-            and not bool(_looks_split)
-            and float(explosive_score or 0.0) < 15.0
-            and float(
-                bodyweight_debug.get(
-                    "shoulder_y_range",
-                    999.0,
-                )
-            ) <= 0.10
-            and float(
-                bodyweight_debug.get(
-                    "hip_y_range",
-                    999.0,
-                )
-            ) <= 0.09
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    0.0,
-                )
-            ) >= 0.85
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 250
-        )
-
-        if final_controlled_push_press_recovery:
-            final_label = "push_press"
-            final_conf = max(float(bio_conf or 0.0), 0.78)
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "controlled_push_press_final_recovery"
-
-        # Recover a controlled overhead squat incorrectly finalized as
-        # clean-and-jerk. Require explicit overhead-squat router evidence,
-        # sustained overhead arms, low explosiveness, and no Olympic event
-        # shape.
-        final_controlled_overhead_squat_recovery = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and squat_label == "overhead_squat"
-            and float(squat_conf or 0.0) >= 0.80
-            and raw_label == "push_press"
-            and bio_label == "push_press"
-            and float(base_conf or 0.0) >= 0.95
-            and float(bio_conf or 0.0) >= 0.95
-            and olympic_pred == "clean_and_jerk"
-            and 0.75 <= float(olympic_conf or 0.0) <= 0.85
-            and not bool(_looks_cj)
-            and not bool(_looks_split)
-            and float(explosive_score or 0.0) < 30.0
-            and float(
-                bodyweight_debug.get(
-                    "wrist_above_shoulder_ratio",
-                    0.0,
-                )
-            ) >= 0.85
-            and float(
-                bodyweight_debug.get(
-                    "avg_elbow",
-                    0.0,
-                )
-            ) >= 150.0
-            and float(
-                bodyweight_debug.get(
-                    "min_elbow",
-                    0.0,
-                )
-            ) >= 30.0
-            and int(
-                bodyweight_debug.get(
-                    "total_frames",
-                    0,
-                ) or 0
-            ) >= 200
-        )
-
-        if final_controlled_overhead_squat_recovery:
-            final_label = "overhead_squat"
-            final_conf = max(float(squat_conf or 0.0), 0.81)
-            analysis_mode = "detailed_rep_analysis"
-            protected_label = "overhead_squat"
-            protected_conf = final_conf
-            protected_reason = "controlled_overhead_squat_final_recovery"
-
-        # Recover controlled strict presses that the base and biomechanics
-        # classifiers both call push press. Require explicit strict-press shape,
-        # very low explosiveness, and minimal knee/hip movement.
-        final_strict_press_rescue = (
-            not forced_exercise_label
-            and final_label == "push_press"
-            and raw_label == "push_press"
-            and bio_label == "push_press"
-            and bool(_looks_strict)
-            and not bool(_looks_split)
-            and not bool(_looks_thruster)
-            and float(explosive_score or 0.0) < 15.0
-            and float(_squat_knee_range or 0.0) < 20.0
-            and float(_squat_hip_range or 0.0) < 12.0
-        )
-
-        if final_strict_press_rescue:
-            final_label = "strict_press"
-            final_conf = max(0.86, float(final_conf or 0.0))
-            analysis_mode = "shape_override"
-            protected_label = "strict_press"
-            protected_conf = final_conf
-            protected_reason = "strict_press_low_leg_drive_final_authority"
-
-        # Recover push presses incorrectly finalized as pull-ups. Require
-        # near-perfect raw + biomechanics push-press consensus, weak Olympic
-        # evidence, and multiple reps from the dedicated push-press analyzer.
-        final_push_press_from_pull_up_probe_reps = []
-        final_push_press_from_pull_up_candidate = (
-            not forced_exercise_label
-            and final_label == "pull_up"
-            and raw_label == "push_press"
-            and float(base_conf or 0.0) >= 0.99
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.99
-            and squat_label == "overhead_squat"
-            and float(squat_conf or 0.0) >= 0.86
-            and bodyweight_router_label == "pull_up"
-            and float(bodyweight_router_conf or 0.0) >= 0.95
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) < 0.70
-            and float(explosive_score or 0.0) < 30.0
-        )
-
-        if final_push_press_from_pull_up_candidate:
-            try:
-                (
-                    final_push_press_from_pull_up_probe_reps,
-                    _final_push_press_from_pull_up_summary,
-                ) = analyze_push_press_reps(biomech, "push_press")
-                final_push_press_from_pull_up_probe_reps = (
-                    final_push_press_from_pull_up_probe_reps or []
-                )
-            except Exception:
-                final_push_press_from_pull_up_probe_reps = []
-
-        if len(final_push_press_from_pull_up_probe_reps) >= 2:
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.90,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "push_press_analyzer_over_pull_up_authority"
-
-        # Recover highly explosive push presses incorrectly finalized as
-        # split jerks. Require agreement from raw / biomechanics / V6,
-        # weak clean-and-jerk Olympic evidence, no complete C&J shape,
-        # and large wrist travel relative to shoulder travel.
-        final_push_press_over_weak_cj_split = (
-            not forced_exercise_label
-            and final_label == "split_jerk"
-            and raw_label == "push_press"
-            and float(base_conf or 0.0) >= 0.70
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.75
-            and router_v6_label == "push_press"
-            and float(router_v6_conf or 0.0) >= 0.70
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) < 0.65
-            and not bool(_looks_cj)
-            and float(explosive_score or 0.0) >= 70.0
-            and (
-                float(bodyweight_debug.get("wrist_y_range", 0.0))
-                / max(
-                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
-                    0.001,
-                )
-            ) >= 3.0
-        )
-
-        if final_push_press_over_weak_cj_split:
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                float(router_v6_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "push_press_over_weak_cj_split"
-
-        # Recover low-body-travel push presses incorrectly finalized as
-        # back squats. This pattern has modest squat-model confidence but strong
-        # split-jerk evidence and wrist travel far exceeding torso travel.
-        final_low_motion_push_press_over_back_squat = (
-            not forced_exercise_label
-            and final_label == "squat_back"
-            and raw_label == "squat"
-            and float(base_conf or 0.0) <= 0.75
-            and bio_label == "squat"
-            and float(bio_conf or 0.0) <= 0.75
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.90
-            and olympic_pred == "split_jerk"
-            and float(olympic_conf or 0.0) >= 0.80
-            and not bool(_looks_cj)
-            and float(explosive_score or 0.0) < 15.0
-            and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.15
-            and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.15
-            and (
-                float(bodyweight_debug.get("wrist_y_range", 0.0))
-                / max(
-                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
-                    0.001,
-                )
-            ) >= 2.20
-        )
-
-        # Recover highly explosive push presses whose squat router strongly
-        # prefers back squat. Require explicit push-press biomechanics plus
-        # dominant wrist travel and weak Olympic evidence.
-        final_explosive_push_press_over_back_squat = (
-            not forced_exercise_label
-            and final_label == "squat_back"
-            and raw_label == "squat"
-            and float(base_conf or 0.0) <= 0.70
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.75
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.95
-            and float(olympic_conf or 0.0) < 0.50
-            and not bool(_looks_cj)
-            and float(explosive_score or 0.0) >= 100.0
-            and (
-                float(bodyweight_debug.get("wrist_y_range", 0.0))
-                / max(
-                    float(bodyweight_debug.get("shoulder_y_range", 0.0)),
-                    0.001,
-                )
-            ) >= 2.20
-        )
-
-        if (
-            final_low_motion_push_press_over_back_squat
-            or final_explosive_push_press_over_back_squat
-        ):
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.86,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = (
-                "low_motion_push_press_over_back_squat"
-                if final_low_motion_push_press_over_back_squat
-                else "explosive_push_press_over_back_squat"
-            )
-
-        # Recover highly explosive push presses incorrectly finalized as
-        # overhead squats. Require exact raw + biomechanics push-press
-        # consensus and only moderate overhead-squat router confidence.
-        final_explosive_push_press_authority = (
-            not forced_exercise_label
-            and final_label == "overhead_squat"
-            and raw_label == "push_press"
-            and float(base_conf or 0.0) >= 0.99
-            and bio_label == "push_press"
-            and float(bio_conf or 0.0) >= 0.99
-            and squat_label == "overhead_squat"
-            and 0.78 <= float(squat_conf or 0.0) <= 0.85
-            and float(explosive_score or 0.0) >= 100.0
-            and float(olympic_conf or 0.0) < 0.75
-            and float(bar_debug.get("overhead_ratio", 0.0)) >= 0.95
-        )
-
-        if final_explosive_push_press_authority:
-            final_label = "push_press"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                0.90,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "push_press"
-            protected_conf = final_conf
-            protected_reason = "explosive_push_press_consensus_final_authority"
-
-        # Final sustained overhead-squat authority. Run after all automatic
-        # routing authorities but before user-confirmed label handling.
-        final_sustained_overhead_squat = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and squat_label == "overhead_squat"
-            and float(squat_conf or 0.0) >= 0.80
-            and float(wrist_overhead_ratio or 0.0) >= 0.90
-            and int(bodyweight_debug.get("total_frames", 0) or 0) >= 300
-            and not _looks_cj
-            and float(olympic_conf or 0.0) <= 0.82
-        )
-
-        if final_sustained_overhead_squat:
-            final_label = "overhead_squat"
-            final_conf = float(squat_conf or 0.81)
-            analysis_mode = "detailed_rep_analysis"
-            protected_label = "overhead_squat"
-            protected_conf = final_conf
-            protected_reason = "sustained_overhead_squat_final_authority"
-
-        # Recover short explosive clean segments that are protected as back
-        # squats after the false short-split bench rescue is blocked.
-        final_short_clean_segment = (
-            not forced_exercise_label
-            and final_label == "squat_back"
-            and raw_label == "squat"
-            and bio_label == "squat"
-            and float(base_conf or 0.0) >= 0.95
-            and float(bio_conf or 0.0) >= 0.95
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.90
-            and olympic_pred == "clean_and_jerk"
-            and 0.50 <= float(olympic_conf or 0.0) < 0.65
-            and bool(_looks_split)
-            and not bool(_looks_cj)
-            and float(explosive_score or 0.0) >= 80.0
-            and float(wrist_overhead_ratio or 0.0) < 0.20
-            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.35
-            and int(bodyweight_debug.get("total_frames", 999) or 999) <= 60
-        )
-
-        if final_short_clean_segment:
-            final_label = "clean"
-            final_conf = 0.75
-            analysis_mode = "shape_override"
-            protected_label = "clean"
-            protected_conf = final_conf
-            protected_reason = "short_explosive_clean_segment"
-
-        # Recover short clean segments extracted from clean-and-jerk clips.
-        # These may retain a weak C&J event shape despite having no overhead
-        # catch or sustained jerk phase.
-        router_v5_features = (
-            (router_v5_debug or {}).get("features", {})
-            if isinstance(router_v5_debug, dict)
-            else {}
-        )
-
-        final_segmented_clean_from_weak_cj = (
-            not forced_exercise_label
-            and final_label == "clean_and_jerk"
-            and raw_label == "squat"
-            and bio_label == "squat"
-            and float(base_conf or 0.0) >= 0.95
-            and float(bio_conf or 0.0) >= 0.95
-            and squat_label == "squat_front"
-            and float(squat_conf or 0.0) < 0.60
-            and olympic_pred == "clean_and_jerk"
-            and 0.50 <= float(olympic_conf or 0.0) < 0.60
-            and bool(_looks_split)
-            and bool(_looks_cj)
-            and float(explosive_score or 0.0) < 60.0
-            and float(wrist_overhead_ratio or 0.0) < 0.40
-            and 80 <= int(bodyweight_debug.get("total_frames", 0) or 0) <= 130
-            and float(router_v5_features.get("catch_overhead", 1.0) or 0.0) == 0.0
-            and float(router_v5_features.get("extension_to_catch", 999.0) or 999.0) <= 8.0
-            and float(router_v5_features.get("catch_to_finish", 999.0) or 999.0) <= 70.0
-            and float(router_v5_features.get("lockout_duration", 999.0) or 999.0) <= 40.0
-        )
-
-        if final_segmented_clean_from_weak_cj:
-            final_label = "clean"
-            final_conf = 0.75
-            analysis_mode = "shape_override"
-            protected_label = "clean"
-            protected_conf = final_conf
-            protected_reason = "segmented_clean_from_weak_cj"
-
-        # Recover compact clean-and-jerk clips incorrectly protected as back
-        # squats. Require Olympic/Router V5 agreement, explosive overhead motion,
-        # and a credible late jerk phase.
-        final_compact_clean_and_jerk = (
-            not forced_exercise_label
-            and final_label == "squat_back"
-            and raw_label == "squat"
-            and bio_label == "push_press"
-            and float(base_conf or 0.0) >= 0.70
-            and float(bio_conf or 0.0) >= 0.75
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.90
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.75
-            and str((router_v5_debug or {}).get("decision", "")) == "agreement"
-            and float(explosive_score or 0.0) >= 80.0
-            and 0.55 <= float(wrist_overhead_ratio or 0.0) <= 0.85
-            and 80 <= int(bodyweight_debug.get("total_frames", 0) or 0) <= 220
-            and float(
-                ((router_v5_debug or {}).get("features", {}))
-                .get("catch_to_finish", 0.0) or 0.0
-            ) >= 50.0
-            and float(
-                ((router_v5_debug or {}).get("features", {}))
-                .get("lockout_duration", 0.0) or 0.0
-            ) >= 40.0
-        )
-
-        if final_compact_clean_and_jerk:
-            final_label = "clean_and_jerk"
-            final_conf = float(olympic_conf or 0.75)
-            analysis_mode = "router_v5"
-            protected_label = "clean_and_jerk"
-            protected_conf = final_conf
-            protected_reason = "compact_clean_and_jerk_final_authority"
-
-        # Recover deadlifts incorrectly protected as back squats or bench
-        # presses. Always require the dedicated deadlift analyzer to confirm
-        # at least one valid rep before changing the final label.
-        final_deadlift_probe_reps = []
-
-        try:
-            final_deadlift_summary = summarize_biomechanics(biomech) or {}
-        except Exception:
-            final_deadlift_summary = {}
-
-        final_deadlift_knee_range = max(
-            0.0,
-            float(final_deadlift_summary.get("max_knee_angle", 0.0) or 0.0)
-            - float(final_deadlift_summary.get("min_knee_angle", 0.0) or 0.0),
-        )
-        final_deadlift_hip_range = max(
-            0.0,
-            float(final_deadlift_summary.get("max_hip_angle", 0.0) or 0.0)
-            - float(final_deadlift_summary.get("min_hip_angle", 0.0) or 0.0),
-        )
-        final_deadlift_torso_range = max(
-            0.0,
-            float(final_deadlift_summary.get("max_torso_angle", 0.0) or 0.0)
-            - float(final_deadlift_summary.get("min_torso_angle", 0.0) or 0.0),
-        )
-
-        squat_to_deadlift_geometry = (
-            final_label == "squat_back"
-            and raw_label == "squat"
-            and bio_label == "squat"
-            and float(base_conf or 0.0) >= 0.95
-            and float(bio_conf or 0.0) >= 0.95
-            and squat_label == "squat_back"
-            and float(squat_conf or 0.0) >= 0.90
-            and float(wrist_overhead_ratio or 0.0) < 0.02
-            and float(bodyweight_debug.get("avg_elbow", 0.0)) >= 165.0
-            and float(bodyweight_debug.get("elbow_range", 999.0)) <= 30.0
-            and float(bodyweight_debug.get("avg_torso_angle", 0.0)) >= 20.0
-            and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.25
-            and float(bar_debug.get("front_rack_elbow_p25", 0.0)) >= 160.0
-            and float(
-                bar_debug.get("wrist_height_above_shoulder", 0.0)
-            ) <= -0.10
-            and 25.0 <= float(explosive_score or 0.0) <= 55.0
-            and 100 <= int(
-                bodyweight_debug.get("total_frames", 0) or 0
-            ) <= 220
-        )
-
-        # A deadlift filmed from an unusual angle can receive unanimous bench
-        # votes. Recover only a highly specific straight-arm hinge signature:
-        # nearly fixed elbows plus substantial knee, hip, and torso articulation.
-        bench_to_deadlift_geometry = (
-            final_label == "bench_press"
-            and raw_label == "bench_press"
-            and bio_label == "bench_press"
-            and router_v6_label == "bench_press"
-            and float(base_conf or 0.0) >= 0.95
-            and float(bio_conf or 0.0) >= 0.95
-            and float(router_v6_conf or 0.0) >= 0.95
-            and float(bodyweight_debug.get("elbow_range", 999.0)) <= 20.0
-            and float(bodyweight_debug.get("min_elbow", 0.0)) >= 155.0
-            and float(bodyweight_debug.get("avg_elbow", 0.0)) >= 165.0
-            and float(
-                bodyweight_debug.get("avg_torso_angle", 999.0)
-            ) <= 30.0
-            and final_deadlift_knee_range >= 80.0
-            and final_deadlift_hip_range >= 80.0
-            and final_deadlift_torso_range >= 25.0
-        )
-
-        final_deadlift_geometry_candidate = (
-            not forced_exercise_label
-            and (
-                squat_to_deadlift_geometry
-                or bench_to_deadlift_geometry
-            )
-        )
-
-        if final_deadlift_geometry_candidate:
-            try:
-                deadlift_probe_result = analyze_deadlift_reps(biomech)
-                final_deadlift_probe_reps = (
-                    deadlift_probe_result[0]
-                    if isinstance(deadlift_probe_result, tuple)
-                    else deadlift_probe_result
-                ) or []
-            except Exception:
-                final_deadlift_probe_reps = []
-
-        if len(final_deadlift_probe_reps) >= 1:
-            final_label = "deadlift"
-            final_conf = max(
-                float(base_conf or 0.0),
-                float(bio_conf or 0.0),
-                float(squat_conf or 0.0),
-                0.90,
-            )
-            analysis_mode = "biomechanics_override"
-            protected_label = "deadlift"
-            protected_conf = final_conf
-            protected_reason = (
-                "straight_arm_hinge_deadlift_recovery"
-                if bench_to_deadlift_geometry
-                else "deadlift_analyzer_disagreement_rescue"
-            )
-
-        # ---------------------------------------------------------
-        # FINAL OLYMPIC AUTHORITY
-        # ---------------------------------------------------------
-        # Specialized Olympic evidence gets one final vote after generic
-        # squat / bench / bodyweight recovery rules. Keep these rules
-        # deliberately conservative so weak Olympic predictions cannot
-        # overwrite strong non-Olympic controls.
-
-        final_olympic_authority = None
-
-        # Complete clean-and-jerk shape + direct Olympic agreement.
-        if (
-            not forced_exercise_label
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.65
-            and bool(_looks_cj)
-        ):
-            final_olympic_authority = "clean_and_jerk"
-
-        # Strong snatch prediction plus highly explosive movement.
-        # This specifically prevents generic squat/bodyweight recovery
-        # from stealing a credible floor-to-overhead snatch.
-        elif (
-            not forced_exercise_label
-            and olympic_pred == "snatch"
-            and float(olympic_conf or 0.0) >= 0.70
-            and float(explosive_score or 0.0) >= 80.0
-        ):
-            final_olympic_authority = "snatch"
-
-        # Standalone split jerk: dedicated Olympic prediction together
-        # with split geometry and no complete clean-and-jerk sequence.
-        elif (
-            not forced_exercise_label
-            and olympic_pred == "split_jerk"
-            and float(olympic_conf or 0.0) >= 0.70
-            and bool(_looks_split)
-            and not bool(_looks_cj)
-        ):
-            final_olympic_authority = "split_jerk"
-
-        if final_olympic_authority:
-            final_label = final_olympic_authority
-            final_conf = max(
-                float(olympic_conf or 0.0),
-                0.75,
-            )
-            analysis_mode = "olympic_final_authority"
-            protected_label = final_label
-            protected_conf = final_conf
-            protected_reason = "specialized_olympic_final_authority"
-
-        # ---------------------------------------------------------
-        # FINAL OLYMPIC AUTHORITY
-        # ---------------------------------------------------------
-        final_olympic_authority = None
-
-        if (
-            not forced_exercise_label
-            and olympic_pred == "clean_and_jerk"
-            and float(olympic_conf or 0.0) >= 0.65
-            and bool(_looks_cj)
-        ):
-            final_olympic_authority = "clean_and_jerk"
-
-        elif (
-            not forced_exercise_label
-            and olympic_pred == "snatch"
-            and float(olympic_conf or 0.0) >= 0.70
-            and float(explosive_score or 0.0) >= 80.0
-        ):
-            final_olympic_authority = "snatch"
-
-        elif (
-            not forced_exercise_label
-            and olympic_pred == "snatch"
-            and float(olympic_conf or 0.0) >= 0.50
-            and raw_label == "squat"
-            and bio_label == "push_press"
-            and squat_label == "squat_back"
-            and bool(_looks_split)
-            and not bool(_looks_cj)
-        ):
-            final_olympic_authority = "snatch"
-
-        elif (
-            not forced_exercise_label
-            and olympic_pred == "split_jerk"
-            and float(olympic_conf or 0.0) >= 0.70
-            and bool(_looks_split)
-            and not bool(_looks_cj)
-        ):
-            final_olympic_authority = "split_jerk"
-
-        if final_olympic_authority:
-            final_label = final_olympic_authority
-            final_conf = max(
-                float(olympic_conf or 0.0),
-                0.75,
-            )
-            analysis_mode = "olympic_final_authority"
-            protected_label = final_label
-            protected_conf = final_conf
-            protected_reason = "specialized_olympic_final_authority"
+        adopt_final_decision(final_arbitration.state)
 
         # Preserve the router prediction before applying a user-confirmed label.
         predicted_exercise = final_label
 
-        forced_label_aliases = {
-            "back_squat": "squat_back",
-            "front_squat": "squat_front",
-            "bar_muscle_up": "muscle_up",
-            "ring_muscle_up": "muscle_up",
-        }
-
-        supported_forced_labels = {
-            "squat_back",
-            "squat_front",
-            "overhead_squat",
-            "clean",
-            "clean_and_jerk",
-            "snatch",
-            "split_jerk",
-            "deadlift",
-            "bench_press",
-            "push_press",
-            "thruster",
-            "strict_press",
-            "pull_up",
-            "handstand_push_up",
-            "push_up",
-            "burpee",
-            "muscle_up",
-        }
-
         normalized_forced_label = None
 
         if forced_exercise_label:
-            requested_label = (
-                str(forced_exercise_label)
-                .strip()
-                .lower()
-                .replace(" ", "_")
-                .replace("-", "_")
+            normalized_forced_label = normalize_forced_exercise_label(
+                forced_exercise_label
             )
-
-            normalized_forced_label = forced_label_aliases.get(
-                requested_label,
-                requested_label,
-            )
-
-            if normalized_forced_label not in supported_forced_labels:
-                raise ValueError(
-                    f"Unsupported forced exercise label: {forced_exercise_label}"
-                )
-
             final_label = normalized_forced_label
             analysis_mode = "user_confirmed_reanalysis"
             protected_label = final_label
@@ -15947,17 +13300,23 @@ def analyze_video(
                     exercise_label=final_label,
                 )
 
-        elif final_label == "clean":
-            rep_feedback, _ = analyze_clean_reps(biomech)
-
-        elif final_label == "clean_and_jerk":
-            rep_feedback, _ = analyze_clean_and_jerk_reps(biomech)
-
-        elif final_label == "snatch":
-            rep_feedback, _ = analyze_snatch_reps(biomech)
-
-        elif final_label == "split_jerk":
-            rep_feedback, _ = analyze_split_jerk_reps(biomech)
+        elif final_label in {
+            "clean",
+            "clean_and_jerk",
+            "snatch",
+            "split_jerk",
+        }:
+            rep_detection = detect_reps_for_label(
+                label=final_label,
+                biomechanics=biomech,
+                detectors={
+                    "clean": analyze_clean_reps,
+                    "clean_and_jerk": analyze_clean_and_jerk_reps,
+                    "snatch": analyze_snatch_reps,
+                    "split_jerk": analyze_split_jerk_reps,
+                },
+            )
+            rep_feedback = rep_detection.reps
 
         elif final_label == "deadlift":
             if (
@@ -15995,13 +13354,24 @@ def analyze_video(
                 rep_feedback, _ = analyze_deadlift_reps(biomech)
 
         elif final_label == "bench_press":
-            rep_feedback, _ = analyze_bench_press_reps(biomech)
+            rep_detection = detect_reps_for_label(
+                label=final_label,
+                biomechanics=biomech,
+                detectors={
+                    "bench_press": analyze_bench_press_reps,
+                },
+            )
+            rep_feedback = rep_detection.reps
 
         elif final_label == "push_press":
-            rep_feedback, _ = analyze_push_press_reps(
-                biomech,
-                "push_press",
+            rep_detection = detect_reps_for_label(
+                label=final_label,
+                biomechanics=biomech,
+                detectors={
+                    "push_press": analyze_push_press_reps,
+                },
             )
+            rep_feedback = rep_detection.reps
 
             # Shadow-only push-press quality models.
             # These diagnostics do not alter scores, issues, feedback,
@@ -16050,26 +13420,67 @@ def analyze_video(
                         "error": str(shadow_error),
                     }
 
-        elif final_label == "thruster":
-            rep_feedback, _ = analyze_push_press_reps(biomech, "thruster")
+        elif final_label in {
+            "thruster",
+            "strict_press",
+            "pull_up",
+            "handstand_push_up",
+            "push_up",
+            "burpee",
+            "muscle_up",
+        }:
+            rep_detection = detect_reps_for_label(
+                label=final_label,
+                biomechanics=biomech,
+                detectors={
+                    "push_press": analyze_push_press_reps,
+                    "strict_press": analyze_strict_press_reps,
+                    "pull_up": analyze_pull_up_reps,
+                    "handstand_push_up": analyze_handstand_push_up_reps,
+                    "push_up": analyze_push_up_reps,
+                    "burpee": analyze_burpee_reps,
+                    "muscle_up": analyze_muscle_up_reps,
+                },
+            )
+            rep_feedback = rep_detection.reps
 
-        elif final_label == "strict_press":
-            rep_feedback, _ = analyze_strict_press_reps(biomech)
-
-        elif final_label == "pull_up":
-            rep_feedback, _ = analyze_pull_up_reps(biomech)
-
-        elif final_label == "handstand_push_up":
-            rep_feedback, _ = analyze_handstand_push_up_reps(biomech)
-
-        elif final_label == "push_up":
-            rep_feedback, _ = analyze_push_up_reps(biomech)
-
-        elif final_label == "burpee":
-            rep_feedback, _ = analyze_burpee_reps(biomech)
-
-        elif final_label == "muscle_up":
-            rep_feedback, _ = analyze_muscle_up_reps(biomech)
+        spec = rep_detector_spec(final_label)
+        if spec is not None:
+            rep_validations = validate_rep_phases(
+                rep_feedback,
+                spec.required_phase_fields,
+            )
+            debug["rep_detector"] = {
+                "label": final_label,
+                "detected_reps": len(rep_feedback or []),
+                "required_phase_fields": list(
+                    spec.required_phase_fields
+                ),
+                "phase_complete": bool(rep_validations) and all(
+                    validation.complete
+                    for validation in rep_validations
+                ),
+                "phase_ordered": bool(rep_validations) and all(
+                    validation.ordered
+                    for validation in rep_validations
+                ),
+                "reps": [
+                    {
+                        "rep": validation.rep,
+                        "complete": validation.complete,
+                        "ordered": validation.ordered,
+                        "missing_fields": list(
+                            validation.missing_fields
+                        ),
+                        "frames": {
+                            field: rep_feedback[index].get(field)
+                            for field in spec.required_phase_fields
+                            if index < len(rep_feedback)
+                        },
+                    }
+                    for index, validation in enumerate(rep_validations)
+                ],
+            }
 
         # =========================================================
         # 7. FINAL OUTPUT
@@ -16111,7 +13522,7 @@ def analyze_video(
         # ------------------------------------------------------------------
         try:
             from app.ml.router_v8.collectors import collect_predictions
-            from app.ml.router_v8.fusion_clean_v56 import fuse_predictions
+            from app.ml.router_v8.fusion import fuse_predictions
             from app.ml.router_v8.debug import build_debug
 
             v8_predictions = collect_predictions(
@@ -16233,48 +13644,6 @@ def analyze_video(
             wrist_overhead_ratio=float(wrist_overhead_ratio or 0.0),
         )
 
-        learned_family_shadow_label = None
-        learned_family_shadow_confidence = 0.0
-        learned_family_shadow_trusted = False
-
-        try:
-            if FAMILY_CLASSIFIER_V1 is not None:
-                _family_v1_features = build_movement_video_features_v2(
-                    biomechanics
-                )
-
-                _family_v1_row = [
-                    float(v)
-                    for v in _family_v1_features
-                ]
-
-                _family_v1_probs = (
-                    FAMILY_CLASSIFIER_V1.predict_proba(
-                        [_family_v1_row]
-                    )[0]
-                )
-
-                _family_v1_idx = int(
-                    _family_v1_probs.argmax()
-                )
-
-                learned_family_shadow_label = str(
-                    FAMILY_CLASSIFIER_V1.classes_[
-                        _family_v1_idx
-                    ]
-                )
-
-                learned_family_shadow_confidence = float(
-                    _family_v1_probs[_family_v1_idx]
-                )
-
-                learned_family_shadow_trusted = (
-                    learned_family_shadow_confidence >= 0.50
-                )
-
-        except Exception as exc:
-            print("LEARNED FAMILY SHADOW ERROR:", exc)
-
         learned_press_shadow_label = None
         learned_press_shadow_confidence = 0.0
         learned_press_shadow_trusted = False
@@ -16283,6 +13652,7 @@ def analyze_video(
             if (
                 PRESS_CLASSIFIER_V1 is not None
                 and learned_family_shadow_label == "press"
+                and _family_v1_row is not None
             ):
                 _press_v1_probs = (
                     PRESS_CLASSIFIER_V1.predict_proba(
@@ -16312,17 +13682,6 @@ def analyze_video(
         except Exception as exc:
             print("LEARNED PRESS SHADOW ERROR:", exc)
 
-        family_router_shadow = classify_family_shadow(
-            candidates=routing_candidates,
-            truly_explosive=bool(_truly_explosive),
-            explosive_score=float(explosive_score or 0.0),
-            looks_clean_only=bool(_looks_clean_only),
-            looks_cj=bool(_looks_cj),
-            looks_split=bool(_looks_split),
-            looks_thruster=bool(_looks_thruster),
-            strong_overhead=bool(_strong_overhead),
-        )
-
         press_variant_shadow = classify_press_variant_shadow(
             family=family_router_shadow.get("family"),
             biomechanics_summary=summary,
@@ -16340,6 +13699,31 @@ def analyze_video(
             routing_candidates=routing_candidates,
         )
 
+        specialist_router_stack = classify_specialist_routers(
+            candidates=routing_candidates,
+            press_variant=press_variant_shadow,
+            family_shadow=family_router_shadow,
+        )
+
+        simplified_classifier_decision = simplify_final_classification(
+            current_label=final_label,
+            current_confidence=final_conf,
+            current_mode=analysis_mode,
+            forced_label=forced_exercise_label,
+            family_shadow=family_router_shadow,
+            press_variant_shadow=press_variant_shadow,
+            hierarchical_shadow=hierarchical_router_shadow,
+            specialist_router_stack=specialist_router_stack,
+        )
+
+        if simplified_classifier_decision.changed:
+            final_label = simplified_classifier_decision.label
+            final_conf = simplified_classifier_decision.confidence
+            analysis_mode = simplified_classifier_decision.mode
+            protected_label = final_label
+            protected_conf = final_conf
+            protected_reason = simplified_classifier_decision.reason
+
         if router_v8_cj_lock:
             final_label = "clean_and_jerk"
             final_conf = max(
@@ -16347,6 +13731,104 @@ def analyze_video(
                 0.80,
             )
             analysis_mode = "router_v8_context_lock"
+
+        rep_detector_debug = debug.get("rep_detector")
+        rep_detector_label = (
+            rep_detector_debug.get("label")
+            if isinstance(rep_detector_debug, dict)
+            else None
+        )
+
+        rep_detector_count = (
+            int(rep_detector_debug.get("detected_reps", 0) or 0)
+            if isinstance(rep_detector_debug, dict)
+            else 0
+        )
+        rep_detector_complete = (
+            bool(rep_detector_debug.get("phase_complete"))
+            if isinstance(rep_detector_debug, dict)
+            else False
+        )
+        rep_detector_ordered = (
+            bool(rep_detector_debug.get("phase_ordered"))
+            if isinstance(rep_detector_debug, dict)
+            else False
+        )
+        thin_squat_reps = (
+            final_label in {"squat_front", "overhead_squat"}
+            and rep_detector_count < 2
+            and len(biomech) >= 50
+        )
+        rep_detector_needs_reconcile = (
+            final_label
+            and (
+                rep_detector_label != final_label
+                or rep_detector_count == 0
+                or not rep_detector_complete
+                or not rep_detector_ordered
+                or thin_squat_reps
+            )
+        )
+
+        if rep_detector_needs_reconcile:
+            try:
+                rep_detection = detect_reps_for_label(
+                    label=final_label,
+                    biomechanics=biomech,
+                    detectors={
+                        "squat": analyze_squat_reps,
+                        "deadlift": analyze_deadlift_reps,
+                        "bench_press": analyze_bench_press_reps,
+                        "push_press": analyze_push_press_reps,
+                        "strict_press": analyze_strict_press_reps,
+                        "clean": analyze_clean_reps,
+                        "clean_and_jerk": analyze_clean_and_jerk_reps,
+                        "snatch": analyze_snatch_reps,
+                        "split_jerk": analyze_split_jerk_reps,
+                        "pull_up": analyze_pull_up_reps,
+                        "handstand_push_up": analyze_handstand_push_up_reps,
+                        "push_up": analyze_push_up_reps,
+                        "burpee": analyze_burpee_reps,
+                        "muscle_up": analyze_muscle_up_reps,
+                    },
+                )
+                rep_feedback = rep_detection.reps
+                debug["rep_detector"] = {
+                    "label": final_label,
+                    "detected_reps": len(rep_feedback or []),
+                    "required_phase_fields": list(
+                        rep_detection.required_phase_fields
+                    ),
+                    "phase_complete": rep_detection.phase_complete,
+                    "phase_ordered": rep_detection.phase_ordered,
+                    "reconciled_from": rep_detector_label,
+                    "reps": [
+                        {
+                            "rep": validation.rep,
+                            "complete": validation.complete,
+                            "ordered": validation.ordered,
+                            "missing_fields": list(
+                                validation.missing_fields
+                            ),
+                            "frames": {
+                                field: rep_feedback[index].get(field)
+                                for field in (
+                                    rep_detection.required_phase_fields
+                                )
+                                if index < len(rep_feedback)
+                            },
+                        }
+                        for index, validation in enumerate(
+                            rep_detection.validations
+                        )
+                    ],
+                }
+            except Exception as rep_reconcile_error:
+                if isinstance(rep_detector_debug, dict):
+                    rep_detector_debug["reconcile_error"] = str(
+                        rep_reconcile_error
+                    )
+                    debug["rep_detector"] = rep_detector_debug
 
         return build_final_analysis_response(
             final_label=final_label,
@@ -16416,6 +13898,7 @@ def analyze_video(
             hierarchical_router_shadow=(
                 hierarchical_router_shadow
             ),
+            specialist_router_stack=specialist_router_stack,
             bodyweight_debug=bodyweight_debug,
             bodyweight_router_label=bodyweight_router_label,
             bodyweight_router_conf=bodyweight_router_conf,
@@ -16442,10 +13925,14 @@ def analyze_video(
               router_v6_label=router_v6_label,
               router_v6_conf=router_v6_conf,
               router_v6_decision=router_v6_decision,
+              rep_detector_debug=debug.get("rep_detector"),
               knee_inward_shadow_candidate=knee_inward_shadow_candidate,
         )
 
     except Exception as e:
+        if is_pose_runtime_error(e):
+            return build_pose_runtime_error_response(e)
+
         import traceback
         return {
             "error": str(e),

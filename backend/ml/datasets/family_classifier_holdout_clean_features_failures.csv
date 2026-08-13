@@ -1,0 +1,5 @@
+family,exercise_label,video,name,source_group,reason,frames_processed,pose_frames
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g01_c01.avi,v_PullUps_g01_c01.avi,pull_up:g01,insufficient_data,0,0
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g01_c02.avi,v_PullUps_g01_c02.avi,pull_up:g01,insufficient_data,0,0
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench Press- Elbow Flare2.mov,Bench Press- Elbow Flare2.mov,bench_press:Bench Press- Elbow Flare2,timeout_120s,,
+squat,squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/yt_003.mp4,yt_003.mp4,squat_back:yt_003,timeout_120s,,

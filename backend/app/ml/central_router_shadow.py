@@ -3,34 +3,16 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+from app.ml.movement_signatures import (
+    BODYWEIGHT_LABELS,
+    OLYMPIC_LABELS,
+    PRESS_LABELS,
+    SQUAT_LABELS,
+)
 
-SQUAT_LABELS = {
-    "squat",
-    "squat_back",
-    "squat_front",
-    "overhead_squat",
-}
 
-SQUAT_VARIANTS = {
-    "squat_back",
-    "squat_front",
-    "overhead_squat",
-}
-
-OLY_LABELS = {
-    "clean",
-    "clean_and_jerk",
-    "snatch",
-    "split_jerk",
-}
-
-BODYWEIGHT_LABELS = {
-    "pull_up",
-    "push_up",
-    "muscle_up",
-    "handstand_push_up",
-    "burpee",
-}
+SQUAT_VARIANTS = SQUAT_LABELS - {"squat", "back_squat", "front_squat"}
+OLY_LABELS = OLYMPIC_LABELS
 
 
 def _candidate(
@@ -326,7 +308,7 @@ def arbitrate_shadow(
         )
 
     # ---------------------------------------------------------
-    # Push press
+    # Press family
     # ---------------------------------------------------------
     # Push press can be mistaken for C&J by both Olympic routers because
     # those predictions are correlated. Require broad push-press support
@@ -349,6 +331,31 @@ def arbitrate_shadow(
             push_press_support + 0.75,
             "push_press_gate",
             "press evidence without verified Olympic sequence",
+        )
+
+    # Thruster is a press-family movement in this app. It shares squat and
+    # overhead features with Olympic clips, so give the press lane an explicit
+    # thruster vote when the thruster shape is present and no clean/split/C&J
+    # sequence has been verified.
+    thruster_support = max(
+        base_conf if base_label == "thruster" else 0.0,
+        bio_conf if bio_label == "thruster" else 0.0,
+    )
+
+    thruster_eligible = (
+        bool(looks_thruster)
+        and not bool(looks_clean_only)
+        and not bool(looks_cj)
+        and not bool(looks_split)
+        and not strong_olympic_event
+    )
+
+    if thruster_eligible:
+        add(
+            "thruster",
+            max(thruster_support, 0.70) + 0.65,
+            "thruster_press_gate",
+            "thruster belongs to press family without verified Olympic sequence",
         )
 
     # ---------------------------------------------------------
@@ -401,6 +408,7 @@ def arbitrate_shadow(
             "overhead_squat": overhead_squat_eligible,
             "olympic": olympic_eligible,
             "push_press": push_press_eligible,
+            "thruster": thruster_eligible,
             "bodyweight": bodyweight_eligible,
         },
         "signals": {

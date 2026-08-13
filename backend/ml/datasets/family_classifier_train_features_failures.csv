@@ -1,0 +1,5 @@
+family,exercise_label,video,name,source_group,reason,frames_processed,pose_frames
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench press- bar path.mov,Bench press- bar path.mov,bench_press:Bench press- bar path,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench press- head lift.mov,Bench press- head lift.mov,bench_press:Bench press- head lift,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench press- elbow flare.mov,Bench press- elbow flare.mov,bench_press:Bench press- elbow flare,timeout_120s,,
+press,bench_press,/Users/josephkamil/Desktop/Capstone/Bench Press- Elbow Flare2.mov,Bench Press- Elbow Flare2.mov,bench_press:Bench Press- Elbow Flare2,timeout_120s,,

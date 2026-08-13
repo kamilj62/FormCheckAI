@@ -2,35 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-
-SQUAT_LABELS = {
-    "squat",
-    "squat_back",
-    "squat_front",
-    "overhead_squat",
-}
-
-OLYMPIC_LABELS = {
-    "clean",
-    "clean_and_jerk",
-    "snatch",
-    "split_jerk",
-}
-
-BODYWEIGHT_LABELS = {
-    "pull_up",
-    "push_up",
-    "handstand_push_up",
-    "burpee",
-    "muscle_up",
-}
-
-PRESS_LABELS = {
-    "bench_press",
-    "strict_press",
-    "push_press",
-    "thruster",
-}
+from app.ml.movement_signatures import (
+    BODYWEIGHT_LABELS,
+    OLYMPIC_LABELS,
+    PRESS_LABELS,
+    SQUAT_LABELS,
+)
 
 
 def _candidate(

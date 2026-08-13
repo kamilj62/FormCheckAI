@@ -1,0 +1,54 @@
+family,exercise_label,video,name,source_group
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_8.mp4,push-up_8.mp4,push_up:push-up_8
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_10.mp4,push-up_10.mp4,push_up:push-up_10
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_16.mp4,push-up_16.mp4,push_up:push-up_16
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_17.mp4,push-up_17.mp4,push_up:push-up_17
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_21.mp4,push-up_21.mp4,push_up:push-up_21
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_26.mp4,push-up_26.mp4,push_up:push-up_26
+bodyweight,push_up,/Users/josephkamil/Desktop/Capstone/push-up/push-up_30.mp4,push-up_30.mp4,push_up:push-up_30
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_1.mp4,pull up_1.mp4,pull_up:pull up_1
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_4.mp4,pull up_4.mp4,pull_up:pull up_4
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_15.mp4,pull up_15.mp4,pull_up:pull up_15
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_20.mp4,pull up_20.mp4,pull_up:pull up_20
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/pull Up/pull up_21.mp4,pull up_21.mp4,pull_up:pull up_21
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g01_c01.avi,v_PullUps_g01_c01.avi,pull_up:g01
+bodyweight,pull_up,/Users/josephkamil/Desktop/Capstone/PullUps/v_PullUps_g01_c02.avi,v_PullUps_g01_c02.avi,pull_up:g01
+bodyweight,handstand_push_up,/Users/josephkamil/Desktop/Capstone/HandstandPushups/v_HandStandPushups_g05_c01.avi,v_HandStandPushups_g05_c01.avi,handstand_push_up:g05
+bodyweight,handstand_push_up,/Users/josephkamil/Desktop/Capstone/HandstandPushups/v_HandStandPushups_g05_c02.avi,v_HandStandPushups_g05_c02.avi,handstand_push_up:g05
+bodyweight,handstand_push_up,/Users/josephkamil/Desktop/Capstone/HandstandPushups/v_HandStandPushups_g05_c03.avi,v_HandStandPushups_g05_c03.avi,handstand_push_up:g05
+bodyweight,handstand_push_up,/Users/josephkamil/Desktop/Capstone/HandstandPushups/v_HandStandPushups_g05_c04.avi,v_HandStandPushups_g05_c04.avi,handstand_push_up:g05
+hinge,deadlift,/Users/josephkamil/Desktop/Capstone/Busy-Deadlift.mov,Busy-Deadlift.mov,deadlift:Busy-Deadlift
+hinge,deadlift,/Users/josephkamil/Desktop/Capstone/Deadlift - bad back.mov,Deadlift - bad back.mov,deadlift:Deadlift - bad back
+hinge,deadlift,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_7.mp4,deadlift_7.mp4,deadlift:deadlift_7
+hinge,deadlift,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_11.mp4,deadlift_11.mp4,deadlift:deadlift_11
+hinge,deadlift,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_22.mp4,deadlift_22.mp4,deadlift:deadlift_22
+hinge,deadlift,/Users/josephkamil/Desktop/Capstone/deadlift/deadlift_23.mp4,deadlift_23.mp4,deadlift:deadlift_23
+olympic,clean,/Users/josephkamil/Desktop/Capstone/clean-correct.mov,clean-correct.mov,clean:clean-correct
+olympic,clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g02_c01.avi,v_CleanAndJerk_g02_c01.avi,clean_and_jerk:g02
+olympic,clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g02_c02.avi,v_CleanAndJerk_g02_c02.avi,clean_and_jerk:g02
+olympic,clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g02_c03.avi,v_CleanAndJerk_g02_c03.avi,clean_and_jerk:g02
+olympic,clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g02_c04.avi,v_CleanAndJerk_g02_c04.avi,clean_and_jerk:g02
+olympic,snatch,/Users/josephkamil/Desktop/Capstone/snatch- correct.mov,snatch- correct.mov,snatch:snatch- correct
+olympic,snatch,/Users/josephkamil/Desktop/Capstone/snatch_correct_cfr.mp4,snatch_correct_cfr.mp4,snatch:snatch_correct_cfr
+press,bench_press,/Users/josephkamil/Desktop/Capstone/IdealBenchPess2.mov,IdealBenchPess2.mov,bench_press:IdealBenchPess2
+press,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_3.mp4,bench press_3.mp4,bench_press:bench press_3
+press,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_7.mp4,bench press_7.mp4,bench_press:bench press_7
+press,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_10.mp4,bench press_10.mp4,bench_press:bench press_10
+press,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_14.mp4,bench press_14.mp4,bench_press:bench press_14
+press,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_18.mp4,bench press_18.mp4,bench_press:bench press_18
+press,bench_press,/Users/josephkamil/Desktop/Capstone/bench press/bench press_20.mp4,bench press_20.mp4,bench_press:bench press_20
+press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_1.mp4,shoulder press_1.mp4,push_press:shoulder press_1
+press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_5.mp4,shoulder press_5.mp4,push_press:shoulder press_5
+press,push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/shoulder press_13.mp4,shoulder press_13.mp4,push_press:shoulder press_13
+press,thruster,/Users/josephkamil/Desktop/Capstone/thruster-correct.mov,thruster-correct.mov,thruster:thruster-correct
+press,thruster,/Users/josephkamil/Desktop/Capstone/thruster_one_rep_720p.mp4,thruster_one_rep_720p.mp4,thruster:thruster_one_rep_720p
+squat,squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/yt_003.mp4,yt_003.mp4,squat_back:yt_003
+squat,squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_12.mp4,squat_12.mp4,squat_back:squat_12
+squat,squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_19.mp4,squat_19.mp4,squat_back:squat_19
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/FrontSquat- correct3.mov,FrontSquat- correct3.mov,squat_front:FrontSquat- correct3
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/yt_001.mp4,yt_001.mp4,squat_front:yt_001
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squat- knee valgus.mov,Front squat- knee valgus.mov,squat_front:Front squat- knee valgus
+squat,squat_front,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_front/Front squat- forward lean.mov,Front squat- forward lean.mov,squat_front:Front squat- forward lean
+squat,overhead_squat,/Users/josephkamil/Desktop/Capstone/OverheadSquat- correct5.mov,OverheadSquat- correct5.mov,overhead_squat:OverheadSquat- correct5
+squat,overhead_squat,/Users/josephkamil/Desktop/Capstone/OverheadSquats- correct3.mov,OverheadSquats- correct3.mov,overhead_squat:OverheadSquats- correct3
+squat,overhead_squat,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/overhead_squat/overhead_squat_crossfit_01.mov,overhead_squat_crossfit_01.mov,overhead_squat:overhead_squat_crossfit_01

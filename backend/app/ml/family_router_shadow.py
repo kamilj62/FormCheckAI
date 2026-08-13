@@ -3,31 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-
-LABEL_TO_FAMILY = {
-    "squat": "squat",
-    "squat_back": "squat",
-    "squat_front": "squat",
-    "overhead_squat": "squat",
-
-    "clean": "olympic",
-    "clean_and_jerk": "olympic",
-    "snatch": "olympic",
-    "split_jerk": "olympic",
-
-    "bench_press": "press",
-    "strict_press": "press",
-    "push_press": "press",
-    "thruster": "press",
-
-    "pull_up": "bodyweight",
-    "push_up": "bodyweight",
-    "handstand_push_up": "bodyweight",
-    "burpee": "bodyweight",
-    "muscle_up": "bodyweight",
-
-    "deadlift": "hinge",
-}
+from app.ml.movement_signatures import BODYWEIGHT_LABELS, LABEL_TO_FAMILY
 
 VERIFIED_OLY_DECISIONS = {
     "agreement",
@@ -36,15 +12,6 @@ VERIFIED_OLY_DECISIONS = {
     "clean_and_jerk_high_conf_rescue",
     "clean_and_jerk_shape_rescue",
 }
-
-BODYWEIGHT_LABELS = {
-    "pull_up",
-    "push_up",
-    "handstand_push_up",
-    "burpee",
-    "muscle_up",
-}
-
 
 def _candidate(
     candidates: dict[str, Any],
@@ -94,6 +61,14 @@ def classify_family_shadow(
         candidates,
         "bodyweight_router",
     )
+    protected_label, protected_conf, _ = _candidate(
+        candidates,
+        "protected_evidence",
+    )
+    protected_reason = str(
+        (candidates.get("protected_evidence") or {}).get("reason")
+        or ""
+    )
 
     base_family = LABEL_TO_FAMILY.get(base_label)
     bio_family = LABEL_TO_FAMILY.get(bio_label)
@@ -101,6 +76,7 @@ def classify_family_shadow(
     oly_family = LABEL_TO_FAMILY.get(oly_label)
     v5_family = LABEL_TO_FAMILY.get(v5_label)
     bw_family = LABEL_TO_FAMILY.get(bw_label)
+    protected_family = LABEL_TO_FAMILY.get(protected_label)
 
     scores: dict[str, float] = defaultdict(float)
     evidence: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -276,6 +252,18 @@ def classify_family_shadow(
         and v5_decision == "clean_rescue_from_weak_snatch"
     )
 
+    protected_bodyweight_supported = (
+        protected_family == "bodyweight"
+        and protected_label in BODYWEIGHT_LABELS
+        and not false_pull_up_during_press
+        and protected_reason in {
+            "push_up_bodyweight_pattern",
+            "handstand_push_up_bodyweight_pattern",
+            "pull_up_bodyweight_pattern",
+            "router_v6_bodyweight_winner",
+        }
+    )
+
     if bodyweight_supported:
         add(
             "bodyweight",
@@ -312,6 +300,23 @@ def classify_family_shadow(
                 "distinct_bodyweight_variant",
                 f"distinct bodyweight variant: {bw_label}",
             )
+
+    if protected_bodyweight_supported:
+        add(
+            "bodyweight",
+            max(1.25, protected_conf),
+            "protected_evidence",
+            (
+                f"contextual bodyweight detector: "
+                f"{protected_label}"
+            ),
+        )
+        add(
+            "bodyweight",
+            0.65,
+            "bodyweight_geometry",
+            protected_reason,
+        )
 
     # ---------------------------------------------------------
     # Press evidence.
@@ -378,7 +383,7 @@ def classify_family_shadow(
     # ---------------------------------------------------------
     # Family-level suppression from strong specialized evidence.
     # ---------------------------------------------------------
-    if bodyweight_supported:
+    if bodyweight_supported or protected_bodyweight_supported:
         for family in ("squat", "press", "hinge", "olympic"):
             scores[family] *= 0.60
 
@@ -427,6 +432,7 @@ def classify_family_shadow(
             "verified_split_jerk": verified_split_jerk,
             "false_pull_up_during_press": false_pull_up_during_press,
             "bodyweight_supported": bodyweight_supported,
+            "protected_bodyweight_supported": protected_bodyweight_supported,
             "bodyweight_clean_conflict": bodyweight_clean_conflict,
             "v5_decision": v5_decision,
         },

@@ -1,0 +1,11 @@
+label,video,name,expected_reps,notes
+split_jerk,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Split_Jerk_Front.mp4,Split_Jerk_Front.mp4,,
+front_squat,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Front_Squat.mp4,Front_Squat.mp4,,
+push_press,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Push_Press.mp4,Push_Press.mp4,,
+pull_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/pull_up/v_PullUps_g02_c02.avi,v_PullUps_g02_c02.avi,,
+bench_press,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/bench_press/ucf50_bench_08.avi,ucf50_bench_08.avi,,
+strict_press,/Users/josephkamil/Desktop/Capstone/strict_press_sources/y9mohYqDdtE.mp4,y9mohYqDdtE.mp4,,
+deadlift,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/deadlift/deadlift_6.mp4,deadlift_6.mp4,,
+handstand_push_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/handstand_push_up/v_HandStandPushups_g01_c01.avi,v_HandStandPushups_g01_c01.avi,,
+back_squat,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/squat_back/squat_13.mp4,squat_13.mp4,,
+snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts_angle2.mp4,9xQp2sldyts_angle2.mp4,,

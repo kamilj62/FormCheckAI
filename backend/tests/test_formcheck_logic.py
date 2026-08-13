@@ -1,6 +1,9 @@
 import pytest
 
 from app.logic import classify_with_biomechanics, build_set_summary
+from app.ml.squat_variant_recovery import (
+    should_recover_front_squat_from_back_router,
+)
 
 def test_trusts_raw_bench_press_prediction():
     summary = {
@@ -72,3 +75,80 @@ def test_build_set_summary_empty_reps():
     assert summary["detected_reps"] == 0
     assert summary["avg_rep_score"] == 0
     assert summary["trend"] == "No clear reps detected."
+
+
+def test_recovers_front_squat_from_back_router_rack_confusion():
+    assert should_recover_front_squat_from_back_router(
+        forced_exercise_label=None,
+        final_label="squat_back",
+        raw_label="squat",
+        bio_label="push_press",
+        squat_label="squat_back",
+        squat_conf=0.95,
+        olympic_pred="clean_and_jerk",
+        olympic_conf=0.72,
+        truly_explosive=False,
+        looks_clean_only=False,
+        looks_cj=False,
+        looks_split=False,
+    )
+
+
+def test_recovers_explosive_front_squat_from_back_router_rack_confusion():
+    assert should_recover_front_squat_from_back_router(
+        forced_exercise_label=None,
+        final_label="squat_back",
+        raw_label="squat",
+        bio_label="push_press",
+        squat_label="squat_back",
+        squat_conf=0.95,
+        olympic_pred="split_jerk",
+        olympic_conf=0.62,
+        truly_explosive=True,
+        looks_clean_only=False,
+        looks_cj=False,
+        looks_split=False,
+        looks_thruster=True,
+        bar_debug={
+            "front_rack_elbow_p25": 3.9,
+            "avg_elbow_angle_sq": 37.9,
+            "squat_frames_used": 180,
+            "scores": {
+                "squat_front": 0.60,
+                "squat_back": 0.15,
+                "overhead_squat": 0.80,
+            },
+        },
+    )
+
+
+def test_front_squat_recovery_does_not_override_forced_or_olympic_sequence():
+    common = {
+        "final_label": "squat_back",
+        "raw_label": "squat",
+        "bio_label": "push_press",
+        "squat_label": "squat_back",
+        "squat_conf": 0.95,
+        "olympic_pred": "clean_and_jerk",
+        "olympic_conf": 0.72,
+        "looks_clean_only": False,
+        "looks_cj": False,
+        "looks_split": False,
+    }
+
+    assert not should_recover_front_squat_from_back_router(
+        forced_exercise_label="squat_back",
+        truly_explosive=False,
+        **common,
+    )
+    assert not should_recover_front_squat_from_back_router(
+        forced_exercise_label=None,
+        truly_explosive=True,
+        **common,
+    )
+    assert not should_recover_front_squat_from_back_router(
+        forced_exercise_label=None,
+        truly_explosive=False,
+        looks_cj=True,
+        **{k: v for k, v in common.items() if k != "looks_cj"},
+    )

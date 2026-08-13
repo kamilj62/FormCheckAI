@@ -42,8 +42,8 @@
       "support": 82.0
     }
   },
-  "model_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/app/models/bodyweight_router.joblib",
-  "labels_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/app/models/bodyweight_router_labels.joblib",
-  "feature_importance_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/ml/reports/bodyweight_feature_importance.csv",
-  "confusion_matrix_path": "/Users/josephkamil/Downloads/formcheck_real_inference_updated/backend/ml/reports/bodyweight_confusion_matrix.csv"
+  "model_path": "/Users/josephkamil/Downloads/formcheck_main_merge/backend/app/models/bodyweight_router.joblib",
+  "labels_path": "/Users/josephkamil/Downloads/formcheck_main_merge/backend/app/models/bodyweight_router_labels.joblib",
+  "feature_importance_path": "/Users/josephkamil/Downloads/formcheck_main_merge/backend/ml/reports/bodyweight_feature_importance.csv",
+  "confusion_matrix_path": "/Users/josephkamil/Downloads/formcheck_main_merge/backend/ml/reports/bodyweight_confusion_matrix.csv"
 }

@@ -3,32 +3,11 @@ from collections import defaultdict
 from .locks import get_locks
 from .models import RouterPrediction
 from .state import RouterState
+from app.ml.movement_signatures import LABEL_TO_FAMILY
 
 
-LABEL_FAMILY = {
-    "squat": "squat",
-    "squat_back": "squat",
-    "squat_front": "squat",
-    "overhead_squat": "squat",
-
-    "clean": "olympic",
-    "clean_and_jerk": "olympic",
-    "snatch": "olympic",
-    "split_jerk": "olympic",
-
-    "bench_press": "press",
-    "push_press": "press",
-    "strict_press": "press",
-    "thruster": "press",
-
-    "push_up": "bodyweight",
-    "pull_up": "bodyweight",
-    "handstand_push_up": "bodyweight",
-    "muscle_up": "bodyweight",
-    "burpee": "bodyweight",
-
-    "deadlift": "pull",
-}
+LABEL_FAMILY = dict(LABEL_TO_FAMILY)
+LABEL_FAMILY["deadlift"] = "pull"
 
 
 ROUTER_WEIGHTS = {
@@ -236,7 +215,16 @@ def fuse_predictions(
         family_scores["press"] += 0.90
         label_scores["strict_press"] += 0.90
 
-    if state.looks_thruster:
+    # Thruster should not override a strong push press classification.
+    # Push press and thruster share overhead mechanics, so only promote
+    # thruster when the base/biomechanics evidence is not already aligned.
+    strong_push_press = (
+        state.raw_label == "push_press"
+        and state.bio_label == "push_press"
+        and float(state.bio_conf or 0.0) >= 0.75
+    )
+
+    if state.looks_thruster and not strong_push_press:
         family_scores["press"] += 1.00
         label_scores["thruster"] += 1.00
 
@@ -373,8 +361,216 @@ def fuse_predictions(
         label_scores[state.squat_label] += 1.25
 
     # ----------------------------------------------------------
+    # Narrow explosive clean-family rescue
+    # ----------------------------------------------------------
+    #
+    # A clean can be mistaken for deadlift/squat from isolated frames.
+    # Promote Olympic only for an uncertain generic prediction with:
+    #   - genuinely explosive clean-shaped motion
+    #   - credible but non-authoritative Olympic evidence
+    #   - a front-rack receiving window
+    #
+    # The wrist window excludes floor-level deadlifts and higher squat/press
+    # receiving positions.
+    narrow_clean_rescue = (
+        bool(state.truly_explosive)
+        and bool(state.looks_clean)
+        and not bool(state.looks_cj)
+        and explosive >= 60.0
+        and float(state.raw_conf or 0.0) < 0.70
+        and 0.50 <= float(state.olympic_conf or 0.0) < 0.80
+        and 0.10 <= float(state.wrist_overhead or 0.0) <= 0.40
+    )
+
+    if narrow_clean_rescue:
+        family_scores["olympic"] += 2.00
+        label_scores["clean"] += 2.00
+        evidence["clean"].append({
+            "router": "clean_shape_rescue",
+            "confidence": round(float(state.olympic_conf or 0.0), 3),
+            "effective_score": 2.0,
+        })
+
+    # ----------------------------------------------------------
     # Family first, subtype second
     # ----------------------------------------------------------
+    # ----------------------------------------------------------
+    # Context-supported snatch family authority
+    # ----------------------------------------------------------
+    # Strong C&J specialist evidence should outrank accumulated squat
+    # evidence when the movement has a non-clean, thruster-like shape.
+    # Unanimous high-confidence deadlift evidence should outrank
+    # conflicting squat-family accumulation after protection is released.
+    unanimous_deadlift_authority = (
+        state.raw_label == "deadlift"
+        and state.bio_label == "deadlift"
+        and float(state.raw_conf or 0.0) >= 0.90
+        and float(state.bio_conf or 0.0) >= 0.90
+    )
+
+    if unanimous_deadlift_authority:
+        strongest_competing_family = max(
+            float(family_scores.get("squat", 0.0)),
+            float(family_scores.get("press", 0.0)),
+            float(family_scores.get("olympic", 0.0)),
+            float(family_scores.get("bodyweight", 0.0)),
+        )
+
+        family_scores["pull"] = max(
+            float(family_scores.get("pull", 0.0)),
+            strongest_competing_family + 0.01,
+        )
+
+        label_scores["deadlift"] = max(
+            float(label_scores.get("deadlift", 0.0)),
+            float(state.raw_conf or 0.0),
+            float(state.bio_conf or 0.0),
+        )
+
+
+    # V29: once the trusted bench lock is vetoed, strong C&J specialist
+    # evidence must also receive enough family authority to beat press.
+    # V30: strong raw deadlift evidence should beat false squat-family
+    # accumulation unless the Olympic specialist has strong snatch evidence.
+    strong_snatch_evidence = (
+        state.olympic_label == "snatch"
+        and float(state.olympic_conf or 0.0) >= 0.75
+    )
+
+    strong_raw_deadlift_authority = (
+        state.raw_label == "deadlift"
+        and float(state.raw_conf or 0.0) >= 0.90
+        and state.bio_label in {"deadlift", "squat"}
+        and float(state.bio_conf or 0.0) >= 0.90
+        and state.squat_label == "squat_back"
+        and state.protected_label is None
+        and not bool(state.looks_split)
+        and not bool(state.looks_thruster)
+        and not strong_snatch_evidence
+    )
+
+    if strong_raw_deadlift_authority:
+        strongest_competing_family = max(
+            float(family_scores.get("squat", 0.0)),
+            float(family_scores.get("press", 0.0)),
+            float(family_scores.get("olympic", 0.0)),
+            float(family_scores.get("bodyweight", 0.0)),
+        )
+
+        family_scores["pull"] = max(
+            float(family_scores.get("pull", 0.0)),
+            strongest_competing_family + 0.01,
+        )
+
+        label_scores["deadlift"] = max(
+            float(label_scores.get("deadlift", 0.0)),
+            float(state.raw_conf or 0.0),
+            float(state.bio_conf or 0.0),
+        )
+
+    # V31: very strong C&J evidence should beat accumulated squat-family
+    # scoring when the squat subtype is overhead squat.
+    strong_cj_overhead_squat_authority = (
+        state.olympic_label == "clean_and_jerk"
+        and float(state.olympic_conf or 0.0) >= 0.96
+        and state.squat_label == "overhead_squat"
+    )
+
+    if strong_cj_overhead_squat_authority:
+        strongest_competing_family = max(
+            float(family_scores.get("squat", 0.0)),
+            float(family_scores.get("press", 0.0)),
+            float(family_scores.get("pull", 0.0)),
+            float(family_scores.get("bodyweight", 0.0)),
+        )
+
+        family_scores["olympic"] = max(
+            float(family_scores.get("olympic", 0.0)),
+            strongest_competing_family + 0.01,
+        )
+
+        label_scores["clean_and_jerk"] = max(
+            float(label_scores.get("clean_and_jerk", 0.0)),
+            float(state.olympic_conf or 0.0),
+        )
+
+    strong_cj_trusted_bench_authority = (
+        state.protected_label == "bench_press"
+        and state.protected_reason == "trusted_base_bench_press"
+        and state.raw_label == "bench_press"
+        and state.bio_label == "bench_press"
+        and float(state.raw_conf or 0.0) >= 0.90
+        and float(state.bio_conf or 0.0) >= 0.90
+        and state.olympic_label == "clean_and_jerk"
+        and float(state.olympic_conf or 0.0) >= 0.87
+    )
+
+    if strong_cj_trusted_bench_authority:
+        strongest_competing_family = max(
+            float(family_scores.get("squat", 0.0)),
+            float(family_scores.get("press", 0.0)),
+            float(family_scores.get("pull", 0.0)),
+            float(family_scores.get("bodyweight", 0.0)),
+        )
+
+        family_scores["olympic"] = max(
+            float(family_scores.get("olympic", 0.0)),
+            strongest_competing_family + 0.01,
+        )
+
+        label_scores["clean_and_jerk"] = max(
+            float(label_scores.get("clean_and_jerk", 0.0)),
+            float(state.olympic_conf or 0.0),
+        )
+
+    cj_family_authority = (
+        state.olympic_label == "clean_and_jerk"
+        and float(state.olympic_conf or 0.0) >= 0.80
+        and not bool(state.looks_clean)
+        and bool(state.looks_thruster)
+    )
+
+    if cj_family_authority:
+        family_scores["olympic"] = max(
+            float(family_scores.get("olympic", 0.0)),
+            float(family_scores.get("squat", 0.0)) + 0.01,
+        )
+        label_scores["clean_and_jerk"] = max(
+            float(label_scores.get("clean_and_jerk", 0.0)),
+            float(state.olympic_conf or 0.0),
+        )
+
+    snatch_family_authority = (
+        state.olympic_label == "snatch"
+        and not bool(state.looks_clean)
+        and (
+            (
+                float(state.olympic_conf or 0.0) >= 0.80
+                and bool(state.looks_split)
+            )
+            or (
+                float(state.olympic_conf or 0.0) >= 0.70
+                and bool(state.truly_explosive)
+            )
+            or (
+                float(state.olympic_conf or 0.0) >= 0.55
+                and bool(state.looks_split)
+                and bool(state.looks_thruster)
+                and float(state.wrist_overhead or 0.0) >= 0.40
+            )
+        )
+    )
+
+    if snatch_family_authority:
+        family_scores["olympic"] = max(
+            float(family_scores.get("olympic", 0.0)),
+            float(family_scores.get("squat", 0.0)) + 0.01,
+        )
+        label_scores["snatch"] = max(
+            float(label_scores.get("snatch", 0.0)),
+            float(state.olympic_conf or 0.0),
+        )
+
     winning_family = max(
         family_scores.items(),
         key=lambda item: float(item[1]),
@@ -394,6 +590,26 @@ def fuse_predictions(
         key=lambda item: float(item[1]),
     )[0]
 
+    # Strong Olympic specialist predictions retain their subtype.
+    # Shape flags such as looks_cj are not authoritative enough to replace
+    # a high-confidence snatch, clean-and-jerk, split-jerk, or clean result.
+    if (
+        winning_family == "olympic"
+        and state.olympic_label in {
+            "clean",
+            "clean_and_jerk",
+            "snatch",
+            "split_jerk",
+        }
+        and float(state.olympic_conf or 0.0) >= 0.80
+    ):
+        winner = state.olympic_label
+        family_labels[winner] = max(
+            float(family_labels.get(winner, 0.0)),
+            float(label_scores.get(winner, 0.0)),
+            float(state.olympic_conf or 0.0),
+        )
+
     # Generic "squat" is a family-level prediction, not a final subtype.
     # Once the squat family wins, use the specialist subtype when credible.
     if (
@@ -407,6 +623,42 @@ def fuse_predictions(
         and float(state.squat_conf or 0.0) >= 0.65
     ):
         winner = state.squat_label
+
+    # ----------------------------------------------------------
+    # Front-vs-back squat subtype reconciliation
+    # ----------------------------------------------------------
+    #
+    # The squat specialist can over-predict front squat when generic models
+    # only identify the broader squat family. Require either direct generic
+    # front-squat support or a front-rack-like wrist position before retaining
+    # the front-squat subtype.
+    unsupported_front_squat = (
+        winning_family == "squat"
+        and winner == "squat_front"
+        and state.squat_label == "squat_front"
+        and float(state.squat_conf or 0.0) >= 0.85
+        and state.raw_label != "squat_front"
+        and state.bio_label != "squat_front"
+        and float(state.wrist_overhead or 0.0) < 0.35
+        and float(state.olympic_conf or 0.0) < 0.85
+    )
+
+    if unsupported_front_squat:
+        winner = "squat_back"
+        family_labels[winner] = max(
+            float(family_labels.get(winner, 0.0)),
+            float(state.squat_conf or 0.0) * 0.95,
+        )
+
+    # Ensure any subtype override has a score entry before confidence
+    # normalization.
+    if winner not in family_labels:
+        family_labels[winner] = max(
+            float(label_scores.get(winner, 0.0)),
+            float(state.olympic_conf or 0.0)
+            if winning_family == "olympic"
+            else 0.0,
+        )
 
     winner_score = float(family_labels[winner])
     confidence = _normalize_confidence(winner_score, family_labels)

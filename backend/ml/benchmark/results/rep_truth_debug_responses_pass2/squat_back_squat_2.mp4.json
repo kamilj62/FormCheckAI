@@ -1,0 +1,1213 @@
+{
+  "analysis_id": "6987521970f8405d837ad87499e93535",
+  "analysis_mode": "detailed_rep_analysis",
+  "coaching_zones": {
+    "exercise_label": "squat_back",
+    "issues": [
+      {
+        "ascent_frame": 112,
+        "bottom_frame": 107,
+        "breakdown": {
+          "butt_wink": "not_detected",
+          "depth": "good",
+          "heels": "good",
+          "knees": "good",
+          "neck": "good",
+          "torso": "good"
+        },
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "message": "Good squat depth.",
+              "status": "good",
+              "title": "Depth"
+            },
+            {
+              "message": "Strong torso position.",
+              "status": "good",
+              "title": "Torso"
+            },
+            {
+              "message": "Knees track well over the toes.",
+              "status": "good",
+              "title": "Knees"
+            },
+            {
+              "message": "Good foot pressure.",
+              "status": "good",
+              "title": "Heels"
+            },
+            {
+              "message": "Good neutral head position.",
+              "status": "good",
+              "title": "Neck"
+            }
+          ]
+        },
+        "descent_frame": 101,
+        "end_frame": 120,
+        "feedback": [
+          "Strong squat rep. Keep bracing and driving through the floor."
+        ],
+        "grade": "Excellent",
+        "issues": [],
+        "rep": 1,
+        "score": 10.0,
+        "start_frame": 95
+      },
+      {
+        "ascent_frame": 176,
+        "bottom_frame": 172,
+        "breakdown": {
+          "butt_wink": "not_detected",
+          "depth": "good",
+          "heels": "good",
+          "knees": "good",
+          "neck": "good",
+          "torso": "good"
+        },
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "message": "Good squat depth.",
+              "status": "good",
+              "title": "Depth"
+            },
+            {
+              "message": "Strong torso position.",
+              "status": "good",
+              "title": "Torso"
+            },
+            {
+              "message": "Knees track well over the toes.",
+              "status": "good",
+              "title": "Knees"
+            },
+            {
+              "message": "Good foot pressure.",
+              "status": "good",
+              "title": "Heels"
+            },
+            {
+              "message": "Good neutral head position.",
+              "status": "good",
+              "title": "Neck"
+            }
+          ]
+        },
+        "descent_frame": 167,
+        "end_frame": 183,
+        "feedback": [
+          "Strong squat rep. Keep bracing and driving through the floor."
+        ],
+        "grade": "Excellent",
+        "issues": [],
+        "rep": 2,
+        "score": 10.0,
+        "start_frame": 161
+      },
+      {
+        "ascent_frame": 245,
+        "bottom_frame": 239,
+        "breakdown": {
+          "butt_wink": "not_detected",
+          "depth": "good",
+          "heels": "good",
+          "knees": "good",
+          "neck": "good",
+          "torso": "good"
+        },
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "message": "Good squat depth.",
+              "status": "good",
+              "title": "Depth"
+            },
+            {
+              "message": "Strong torso position.",
+              "status": "good",
+              "title": "Torso"
+            },
+            {
+              "message": "Knees track well over the toes.",
+              "status": "good",
+              "title": "Knees"
+            },
+            {
+              "message": "Good foot pressure.",
+              "status": "good",
+              "title": "Heels"
+            },
+            {
+              "message": "Good neutral head position.",
+              "status": "good",
+              "title": "Neck"
+            }
+          ]
+        },
+        "descent_frame": 233,
+        "end_frame": 253,
+        "feedback": [
+          "Strong squat rep. Keep bracing and driving through the floor."
+        ],
+        "grade": "Excellent",
+        "issues": [],
+        "rep": 3,
+        "score": 10.0,
+        "start_frame": 227
+      },
+      {
+        "ascent_frame": 321,
+        "bottom_frame": 316,
+        "breakdown": {
+          "butt_wink": "not_detected",
+          "depth": "good",
+          "heels": "good",
+          "knees": "good",
+          "neck": "good",
+          "torso": "good"
+        },
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "message": "Good squat depth.",
+              "status": "good",
+              "title": "Depth"
+            },
+            {
+              "message": "Strong torso position.",
+              "status": "good",
+              "title": "Torso"
+            },
+            {
+              "message": "Knees track well over the toes.",
+              "status": "good",
+              "title": "Knees"
+            },
+            {
+              "message": "Good foot pressure.",
+              "status": "good",
+              "title": "Heels"
+            },
+            {
+              "message": "Good neutral head position.",
+              "status": "good",
+              "title": "Neck"
+            }
+          ]
+        },
+        "descent_frame": 307,
+        "end_frame": 328,
+        "feedback": [
+          "Strong squat rep. Keep bracing and driving through the floor."
+        ],
+        "grade": "Excellent",
+        "issues": [],
+        "rep": 4,
+        "score": 10.0,
+        "start_frame": 297
+      },
+      {
+        "ascent_frame": 387,
+        "bottom_frame": 383,
+        "breakdown": {
+          "butt_wink": "not_detected",
+          "depth": "good",
+          "heels": "good",
+          "knees": "good",
+          "neck": "good",
+          "torso": "good"
+        },
+        "coaching": {
+          "priority": "Excellent technique. Keep building consistency.",
+          "sections": [
+            {
+              "message": "Good squat depth.",
+              "status": "good",
+              "title": "Depth"
+            },
+            {
+              "message": "Strong torso position.",
+              "status": "good",
+              "title": "Torso"
+            },
+            {
+              "message": "Knees track well over the toes.",
+              "status": "good",
+              "title": "Knees"
+            },
+            {
+              "message": "Good foot pressure.",
+              "status": "good",
+              "title": "Heels"
+            },
+            {
+              "message": "Good neutral head position.",
+              "status": "good",
+              "title": "Neck"
+            }
+          ]
+        },
+        "descent_frame": 378,
+        "end_frame": 393,
+        "feedback": [
+          "Strong squat rep. Keep bracing and driving through the floor."
+        ],
+        "grade": "Excellent",
+        "issues": [],
+        "rep": 5,
+        "score": 10.0,
+        "start_frame": 372
+      }
+    ],
+    "zones": []
+  },
+  "confidence": 0.99,
+  "debug": {
+    "analysis_fps": 30.0,
+    "analysis_path": "detailed_rep_analysis",
+    "bar_pos_valid": false,
+    "bar_position": {
+      "avg_elbow_angle_sq": 18.2,
+      "avg_wrist_forward": 0.01,
+      "elbow_elevated_ratio": 0.0,
+      "front_rack_elbow_p25": 15.3,
+      "margin": 0.45,
+      "overhead_ratio": 0.0,
+      "scores": {
+        "overhead_squat": 0.0,
+        "squat_back": 0.3,
+        "squat_front": 0.75
+      },
+      "squat_frames_used": 170,
+      "total_frames": 424,
+      "wrist_height_above_shoulder": 0.028
+    },
+    "base_conf": 0.999,
+    "bio_conf": 0.999,
+    "bio_label": "squat",
+    "bio_override": true,
+    "bio_reason": "squat_pattern_detected",
+    "biomechanics_summary": {
+      "avg_elbow_angle": 32.75612643527871,
+      "avg_hip_angle": 133.45991698055917,
+      "avg_knee_angle": 131.23334800165472,
+      "avg_torso_angle": 3.350869496541424,
+      "avg_valgus_ratio": 1.2843586550294301,
+      "max_elbow_angle": 172.7993176386375,
+      "max_hip_angle": 178.09668153656116,
+      "max_knee_angle": 179.5552339340859,
+      "max_torso_angle": 9.276372959605842,
+      "min_elbow_angle": 12.465163140844933,
+      "min_hip_angle": 27.090251019214094,
+      "min_knee_angle": 14.316807300983246,
+      "min_torso_angle": 0.21830769406230094,
+      "min_valgus_ratio": 0.8321728511607707,
+      "wrist_above_shoulder_ratio": 0.0
+    },
+    "bodyweight": {
+      "avg_elbow": 32.756126403808594,
+      "avg_torso_angle": 3.3508694171905518,
+      "avg_wrist_forward": 0.010102641768753529,
+      "elbow_range": 160.3341522216797,
+      "hip_y_range": 0.3221694231033325,
+      "max_elbow": 172.79931640625,
+      "mean_hip_minus_shoulder_y": 0.17402486503124237,
+      "mean_knee_minus_hip_y": 0.08176656067371368,
+      "mean_wrist_minus_shoulder_y": 0.06075035780668259,
+      "median_head_drop": -0.08511845767498016,
+      "min_elbow": 12.465163230895996,
+      "shoulder_y_range": 0.40935754776000977,
+      "total_frames": 424,
+      "wrist_above_shoulder_ratio": 0.0,
+      "wrist_below_shoulder_ratio": 1.0,
+      "wrist_y_range": 0.45416760444641113
+    },
+    "bodyweight_router_conf": 0.644,
+    "bodyweight_router_label": "push_up",
+    "central_router_shadow": {
+      "eligibility": {
+        "bodyweight": false,
+        "olympic": false,
+        "overhead_squat": false,
+        "push_press": false,
+        "squat": true,
+        "thruster": false
+      },
+      "evidence": {
+        "squat": [
+          {
+            "reason": "discounted broad classifier",
+            "score": 0.499,
+            "source": "base"
+          },
+          {
+            "reason": "discounted broad biomechanics classifier",
+            "score": 0.499,
+            "source": "biomechanics"
+          },
+          {
+            "reason": "base and biomechanics agree",
+            "score": 0.2,
+            "source": "broad_agreement"
+          }
+        ],
+        "squat_back": [
+          {
+            "reason": "squat family eligible",
+            "score": 0.991,
+            "source": "squat_router"
+          },
+          {
+            "reason": "broad squat evidence supports specialized variant",
+            "score": 0.35,
+            "source": "squat_family_agreement"
+          }
+        ]
+      },
+      "label": "squat_back",
+      "margin": 0.142,
+      "runner_up": {
+        "label": "squat",
+        "score": 1.199
+      },
+      "score": 1.341,
+      "scores": {
+        "squat": 1.199,
+        "squat_back": 1.341
+      },
+      "signals": {
+        "explosive_score": 66.163,
+        "looks_cj": false,
+        "looks_clean_only": false,
+        "looks_split": false,
+        "looks_thruster": false,
+        "strong_olympic_event": false,
+        "strong_overhead": false,
+        "truly_explosive": false,
+        "v5_decision": "fallback",
+        "wrist_overhead_ratio": 0.0
+      },
+      "version": "central_router_shadow_v2"
+    },
+    "explosive_score": 66.16,
+    "family_router_shadow": {
+      "evidence": {
+        "squat": [
+          {
+            "reason": "specialized squat variant: squat_back",
+            "score": 0.991,
+            "source": "squat_router"
+          },
+          {
+            "reason": "V5 squat support: squat_back",
+            "score": 0.347,
+            "source": "router_v5"
+          }
+        ]
+      },
+      "family": "squat",
+      "margin": 1.338,
+      "runner_up": {
+        "family": null,
+        "score": 0.0
+      },
+      "score": 1.338,
+      "scores": {
+        "squat": 1.338
+      },
+      "signals": {
+        "bodyweight_clean_conflict": false,
+        "bodyweight_supported": false,
+        "explosive_score": 66.163,
+        "false_pull_up_during_press": false,
+        "looks_cj": false,
+        "looks_clean_only": false,
+        "looks_split": false,
+        "looks_thruster": false,
+        "protected_bodyweight_supported": false,
+        "strong_overhead": false,
+        "truly_explosive": false,
+        "v5_decision": "fallback",
+        "verified_split_jerk": false,
+        "verified_v5_olympic": false
+      },
+      "version": "family_router_shadow_v2"
+    },
+    "forced_exercise_label": null,
+    "hierarchical_router_shadow": {
+      "alternatives": [
+        {
+          "confidence": 0.991,
+          "decision": "fallback",
+          "label": "squat_back",
+          "source": "router_v5"
+        }
+      ],
+      "confidence": 0.991,
+      "eligible": true,
+      "family": "squat",
+      "family_margin": 1.338,
+      "family_score": 1.338,
+      "label": "squat_back",
+      "reason": "specialized squat variant",
+      "source": "squat_router",
+      "version": "hierarchical_router_shadow_v2"
+    },
+    "learned_family_shadow_confidence": 0.926,
+    "learned_family_shadow_label": "squat",
+    "learned_family_shadow_trusted": true,
+    "learned_press_shadow_confidence": 0.0,
+    "learned_press_shadow_label": null,
+    "learned_press_shadow_trusted": false,
+    "looks_cj": false,
+    "looks_clean": false,
+    "looks_split": false,
+    "looks_strict": false,
+    "looks_thruster": false,
+    "olympic_conf": 0.396,
+    "olympic_gate_hardneg_error": null,
+    "olympic_gate_hardneg_prediction": "non_olympic",
+    "olympic_gate_hardneg_probability": 0.413285,
+    "olympic_gate_hardneg_threshold": 0.5,
+    "olympic_pred": "clean",
+    "olympic_stage2_temporal_confidence": 0.454,
+    "olympic_stage2_temporal_error": null,
+    "olympic_stage2_temporal_label": "clean",
+    "olympic_stage2_temporal_probabilities": {
+      "clean": 0.454,
+      "clean_and_jerk": 0.228667,
+      "snatch": 0.21,
+      "split_jerk": 0.107333
+    },
+    "predicted_exercise": "squat_back",
+    "press_variant_shadow": {
+      "eligible": false,
+      "label": null,
+      "reason": "family_not_press",
+      "version": "press_variant_shadow_v2"
+    },
+    "protected_label": null,
+    "protected_reason": null,
+    "raw_label": "squat",
+    "router_score_value": 1.997,
+    "router_score_winner": "squat",
+    "router_scores": {
+      "clean": {
+        "score": 0.396,
+        "sources": [
+          {
+            "score": 0.396,
+            "source": "olympic_router"
+          }
+        ]
+      },
+      "push_up": {
+        "score": 0.965259647092376,
+        "sources": [
+          {
+            "score": 0.644,
+            "source": "bodyweight_router"
+          },
+          {
+            "score": 0.322,
+            "source": "bodyweight_bonus"
+          }
+        ]
+      },
+      "squat": {
+        "score": 1.9974358081817627,
+        "sources": [
+          {
+            "score": 0.999,
+            "source": "raw_model"
+          },
+          {
+            "score": 0.999,
+            "source": "bio_model"
+          }
+        ]
+      },
+      "squat_back": {
+        "score": 1.2386886775493622,
+        "sources": [
+          {
+            "score": 0.991,
+            "source": "squat_router"
+          },
+          {
+            "score": 0.248,
+            "source": "squat_bonus"
+          }
+        ]
+      }
+    },
+    "router_v5": {
+      "decision": "fallback",
+      "events": {
+        "catch": 105,
+        "clean_catch": 105,
+        "clean_extension": 70,
+        "extension": 60,
+        "finish": 119,
+        "first_pull": 31,
+        "lockout": 119,
+        "setup": 0
+      },
+      "features": {
+        "catch_depth": 18.526996190944068,
+        "catch_overhead": 0.0,
+        "catch_to_finish": 14.0,
+        "extension_height_change": 0.209974467754364,
+        "extension_to_catch": 45.0,
+        "has_overhead": 0.0,
+        "lockout_duration": 0.0
+      },
+      "olympic_confidence": 0.396,
+      "olympic_label": "clean",
+      "raw_confidence": 0.9909509420394897,
+      "raw_label": "squat_back",
+      "router": "v5_scaffold",
+      "split_events": {
+        "bottom": 238,
+        "extension": 388,
+        "lockout": 423,
+        "setup": 0
+      },
+      "split_features": {
+        "catch_depth": 178.8378325741215,
+        "catch_overhead": 0.0,
+        "catch_to_finish": 423.0,
+        "extension_height_change": -0.22329741716384888,
+        "extension_to_catch": -388.0,
+        "has_overhead": 0.0,
+        "lockout_duration": 0.0
+      }
+    },
+    "router_v6_conf": 0.99,
+    "router_v6_decision": "score_winner",
+    "router_v6_label": "squat",
+    "router_v8": {
+      "decision": "context_lock",
+      "evidence": {},
+      "family_scores": {},
+      "locks": [
+        {
+          "confidence": 0.991,
+          "label": "squat_back",
+          "priority": 100,
+          "reason": "context_supported_squat_variant"
+        }
+      ],
+      "predictions": [
+        {
+          "confidence": 0.999,
+          "label": "squat",
+          "lock": false,
+          "reason": "",
+          "router": "base"
+        },
+        {
+          "confidence": 0.999,
+          "label": "squat",
+          "lock": false,
+          "reason": "",
+          "router": "biomechanics"
+        },
+        {
+          "confidence": 0.991,
+          "label": "squat_back",
+          "lock": false,
+          "reason": "",
+          "router": "squat"
+        },
+        {
+          "confidence": 0.396,
+          "label": "clean",
+          "lock": false,
+          "reason": "",
+          "router": "olympic"
+        },
+        {
+          "confidence": 0.644,
+          "label": "push_up",
+          "lock": false,
+          "reason": "",
+          "router": "bodyweight"
+        }
+      ],
+      "scores": {},
+      "selected_lock": {
+        "confidence": 0.991,
+        "label": "squat_back",
+        "priority": 100,
+        "reason": "context_supported_squat_variant"
+      },
+      "state": {
+        "analysis_mode": "detailed_rep_analysis",
+        "bar_pos_valid": false,
+        "bio_conf": 0.9987179040908813,
+        "bio_label": "squat",
+        "bio_reason": "squat_pattern_detected",
+        "bodyweight_conf": 0.6435064313949174,
+        "bodyweight_label": "push_up",
+        "explosive_score": 66.16302064737489,
+        "extras": {},
+        "final_conf": 0.9909509420394897,
+        "final_label": "squat_back",
+        "looks_cj": false,
+        "looks_clean": false,
+        "looks_split": false,
+        "looks_strict": false,
+        "looks_thruster": false,
+        "olympic_conf": 0.396,
+        "olympic_label": "clean",
+        "protected_label": null,
+        "protected_reason": null,
+        "raw_conf": 0.9987179040908813,
+        "raw_label": "squat",
+        "router_scores": {
+          "clean": {
+            "score": 0.396,
+            "sources": [
+              {
+                "score": 0.396,
+                "source": "olympic_router"
+              }
+            ]
+          },
+          "push_up": {
+            "score": 0.965259647092376,
+            "sources": [
+              {
+                "score": 0.644,
+                "source": "bodyweight_router"
+              },
+              {
+                "score": 0.322,
+                "source": "bodyweight_bonus"
+              }
+            ]
+          },
+          "squat": {
+            "score": 1.9974358081817627,
+            "sources": [
+              {
+                "score": 0.999,
+                "source": "raw_model"
+              },
+              {
+                "score": 0.999,
+                "source": "bio_model"
+              }
+            ]
+          },
+          "squat_back": {
+            "score": 1.2386886775493622,
+            "sources": [
+              {
+                "score": 0.991,
+                "source": "squat_router"
+              },
+              {
+                "score": 0.248,
+                "source": "squat_bonus"
+              }
+            ]
+          }
+        },
+        "routing_trace": [
+          {
+            "conf": 0.999,
+            "label": "squat",
+            "reason": "",
+            "stage": "raw_model"
+          },
+          {
+            "conf": 0.999,
+            "label": "squat",
+            "reason": "squat_pattern_detected",
+            "stage": "bio_model"
+          },
+          {
+            "conf": 0.991,
+            "label": "squat_back",
+            "reason": "",
+            "stage": "squat_router"
+          },
+          {
+            "conf": 0.396,
+            "label": "clean",
+            "reason": "",
+            "stage": "olympic_router"
+          },
+          {
+            "conf": 0.644,
+            "label": "push_up",
+            "reason": "",
+            "stage": "bodyweight_router"
+          },
+          {
+            "conf": 0.991,
+            "label": "squat_back",
+            "reason": "detailed_rep_analysis",
+            "stage": "final"
+          }
+        ],
+        "squat_conf": 0.9909509420394897,
+        "squat_label": "squat_back",
+        "truly_explosive": false,
+        "wrist_overhead": 0.0
+      },
+      "version": "router_v8_hierarchical_shadow_snapshot_v1",
+      "winner": "squat_back",
+      "winner_confidence": 0.991,
+      "winning_family": "squat"
+    },
+    "routing_candidates": {
+      "base": {
+        "confidence": 0.999,
+        "label": "squat"
+      },
+      "biomechanics": {
+        "confidence": 0.999,
+        "label": "squat"
+      },
+      "bodyweight_router": {
+        "confidence": 0.644,
+        "label": "push_up"
+      },
+      "olympic_router": {
+        "confidence": 0.396,
+        "label": "clean"
+      },
+      "protected_evidence": {
+        "confidence": 0.991,
+        "label": null,
+        "reason": null
+      },
+      "router_v5": {
+        "confidence": 0.991,
+        "decision": "fallback",
+        "label": "squat_back"
+      },
+      "squat_router": {
+        "confidence": 0.991,
+        "label": "squat_back"
+      }
+    },
+    "routing_trace": [
+      {
+        "conf": 0.999,
+        "label": "squat",
+        "reason": "",
+        "stage": "raw_model"
+      },
+      {
+        "conf": 0.999,
+        "label": "squat",
+        "reason": "squat_pattern_detected",
+        "stage": "bio_model"
+      },
+      {
+        "conf": 0.991,
+        "label": "squat_back",
+        "reason": "",
+        "stage": "squat_router"
+      },
+      {
+        "conf": 0.396,
+        "label": "clean",
+        "reason": "",
+        "stage": "olympic_router"
+      },
+      {
+        "conf": 0.644,
+        "label": "push_up",
+        "reason": "",
+        "stage": "bodyweight_router"
+      },
+      {
+        "conf": 0.991,
+        "label": "squat_back",
+        "reason": "detailed_rep_analysis",
+        "stage": "final"
+      }
+    ],
+    "routing_winner": {
+      "confidence": 0.991,
+      "label": "squat_back",
+      "mode": "detailed_rep_analysis",
+      "protected_label": null,
+      "reason": null
+    },
+    "run_oly_router": true,
+    "specialist_router_stack": {
+      "eligible": true,
+      "margin": 0.697,
+      "routers": {
+        "bodyweight": {
+          "eligible": true,
+          "evidence": [
+            "bodyweight model"
+          ],
+          "features": {
+            "false_pull_up_during_press": false
+          },
+          "label": "push_up",
+          "router": "bodyweight",
+          "score": 0.644,
+          "source": "bodyweight_router"
+        },
+        "olympic": {
+          "eligible": true,
+          "evidence": [
+            "olympic model"
+          ],
+          "features": {
+            "v5_decision": "fallback"
+          },
+          "label": "clean",
+          "router": "olympic",
+          "score": 0.297,
+          "source": "olympic_router"
+        },
+        "press": {
+          "eligible": false,
+          "evidence": [],
+          "features": {},
+          "label": null,
+          "router": "press",
+          "score": 0.0,
+          "source": null
+        },
+        "squat": {
+          "eligible": true,
+          "evidence": [
+            "squat model",
+            "broad squat support"
+          ],
+          "features": {},
+          "label": "squat_back",
+          "router": "squat",
+          "score": 1.341,
+          "source": "squat_router"
+        }
+      },
+      "runner_up": {
+        "eligible": true,
+        "evidence": [
+          "bodyweight model"
+        ],
+        "features": {
+          "false_pull_up_during_press": false
+        },
+        "label": "push_up",
+        "router": "bodyweight",
+        "score": 0.644,
+        "source": "bodyweight_router"
+      },
+      "version": "specialist_router_stack_v1",
+      "winner": {
+        "eligible": true,
+        "evidence": [
+          "squat model",
+          "broad squat support"
+        ],
+        "features": {},
+        "label": "squat_back",
+        "router": "squat",
+        "score": 1.341,
+        "source": "squat_router"
+      }
+    },
+    "squat_conf": 0.991,
+    "squat_confident": true,
+    "squat_label": "squat_back",
+    "truly_explosive": false,
+    "user_confirmed": false,
+    "wrist_overhead": 0.0
+  },
+  "exercise_label": "squat_back",
+  "knee_tracking": {
+    "rep_localized": false,
+    "scope": null,
+    "status": "pending"
+  },
+  "overlay_video_url": null,
+  "phase_images": null,
+  "rep_feedback": [
+    {
+      "ascent_frame": 112,
+      "bottom_frame": 107,
+      "breakdown": {
+        "butt_wink": "not_detected",
+        "depth": "good",
+        "heels": "good",
+        "knees": "good",
+        "neck": "good",
+        "torso": "good"
+      },
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "message": "Good squat depth.",
+            "status": "good",
+            "title": "Depth"
+          },
+          {
+            "message": "Strong torso position.",
+            "status": "good",
+            "title": "Torso"
+          },
+          {
+            "message": "Knees track well over the toes.",
+            "status": "good",
+            "title": "Knees"
+          },
+          {
+            "message": "Good foot pressure.",
+            "status": "good",
+            "title": "Heels"
+          },
+          {
+            "message": "Good neutral head position.",
+            "status": "good",
+            "title": "Neck"
+          }
+        ]
+      },
+      "descent_frame": 101,
+      "end_frame": 120,
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ],
+      "grade": "Excellent",
+      "issues": [],
+      "rep": 1,
+      "score": 10.0,
+      "start_frame": 95
+    },
+    {
+      "ascent_frame": 176,
+      "bottom_frame": 172,
+      "breakdown": {
+        "butt_wink": "not_detected",
+        "depth": "good",
+        "heels": "good",
+        "knees": "good",
+        "neck": "good",
+        "torso": "good"
+      },
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "message": "Good squat depth.",
+            "status": "good",
+            "title": "Depth"
+          },
+          {
+            "message": "Strong torso position.",
+            "status": "good",
+            "title": "Torso"
+          },
+          {
+            "message": "Knees track well over the toes.",
+            "status": "good",
+            "title": "Knees"
+          },
+          {
+            "message": "Good foot pressure.",
+            "status": "good",
+            "title": "Heels"
+          },
+          {
+            "message": "Good neutral head position.",
+            "status": "good",
+            "title": "Neck"
+          }
+        ]
+      },
+      "descent_frame": 167,
+      "end_frame": 183,
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ],
+      "grade": "Excellent",
+      "issues": [],
+      "rep": 2,
+      "score": 10.0,
+      "start_frame": 161
+    },
+    {
+      "ascent_frame": 245,
+      "bottom_frame": 239,
+      "breakdown": {
+        "butt_wink": "not_detected",
+        "depth": "good",
+        "heels": "good",
+        "knees": "good",
+        "neck": "good",
+        "torso": "good"
+      },
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "message": "Good squat depth.",
+            "status": "good",
+            "title": "Depth"
+          },
+          {
+            "message": "Strong torso position.",
+            "status": "good",
+            "title": "Torso"
+          },
+          {
+            "message": "Knees track well over the toes.",
+            "status": "good",
+            "title": "Knees"
+          },
+          {
+            "message": "Good foot pressure.",
+            "status": "good",
+            "title": "Heels"
+          },
+          {
+            "message": "Good neutral head position.",
+            "status": "good",
+            "title": "Neck"
+          }
+        ]
+      },
+      "descent_frame": 233,
+      "end_frame": 253,
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ],
+      "grade": "Excellent",
+      "issues": [],
+      "rep": 3,
+      "score": 10.0,
+      "start_frame": 227
+    },
+    {
+      "ascent_frame": 321,
+      "bottom_frame": 316,
+      "breakdown": {
+        "butt_wink": "not_detected",
+        "depth": "good",
+        "heels": "good",
+        "knees": "good",
+        "neck": "good",
+        "torso": "good"
+      },
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "message": "Good squat depth.",
+            "status": "good",
+            "title": "Depth"
+          },
+          {
+            "message": "Strong torso position.",
+            "status": "good",
+            "title": "Torso"
+          },
+          {
+            "message": "Knees track well over the toes.",
+            "status": "good",
+            "title": "Knees"
+          },
+          {
+            "message": "Good foot pressure.",
+            "status": "good",
+            "title": "Heels"
+          },
+          {
+            "message": "Good neutral head position.",
+            "status": "good",
+            "title": "Neck"
+          }
+        ]
+      },
+      "descent_frame": 307,
+      "end_frame": 328,
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ],
+      "grade": "Excellent",
+      "issues": [],
+      "rep": 4,
+      "score": 10.0,
+      "start_frame": 297
+    },
+    {
+      "ascent_frame": 387,
+      "bottom_frame": 383,
+      "breakdown": {
+        "butt_wink": "not_detected",
+        "depth": "good",
+        "heels": "good",
+        "knees": "good",
+        "neck": "good",
+        "torso": "good"
+      },
+      "coaching": {
+        "priority": "Excellent technique. Keep building consistency.",
+        "sections": [
+          {
+            "message": "Good squat depth.",
+            "status": "good",
+            "title": "Depth"
+          },
+          {
+            "message": "Strong torso position.",
+            "status": "good",
+            "title": "Torso"
+          },
+          {
+            "message": "Knees track well over the toes.",
+            "status": "good",
+            "title": "Knees"
+          },
+          {
+            "message": "Good foot pressure.",
+            "status": "good",
+            "title": "Heels"
+          },
+          {
+            "message": "Good neutral head position.",
+            "status": "good",
+            "title": "Neck"
+          }
+        ]
+      },
+      "descent_frame": 378,
+      "end_frame": 393,
+      "feedback": [
+        "Strong squat rep. Keep bracing and driving through the floor."
+      ],
+      "grade": "Excellent",
+      "issues": [],
+      "rep": 5,
+      "score": 10.0,
+      "start_frame": 372
+    }
+  ],
+  "set_summary": {
+    "avg_rep_score": 10.0,
+    "best_rep": 1,
+    "detected_reps": 5,
+    "trend": "Form appears consistent across the set.",
+    "worst_rep": 1
+  }
+}

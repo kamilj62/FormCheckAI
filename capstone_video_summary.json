@@ -1,0 +1,596 @@
+{
+  "root": "/Users/josephkamil/Desktop/Capstone",
+  "manifest": "/Users/josephkamil/Downloads/formcheck_main_merge/capstone_video_manifest.csv",
+  "count": 5800,
+  "total_gb": 5.15,
+  "by_extension": {
+    ".mp4": 5018,
+    ".avi": 755,
+    ".mov": 26,
+    ".webm": 1
+  },
+  "top_folders": [
+    [
+      "videos-OHP",
+      2407
+    ],
+    [
+      "videos-squat",
+      1739
+    ],
+    [
+      "Oly_Data",
+      935
+    ],
+    [
+      "router_challenge_v1",
+      243
+    ],
+    [
+      "HandstandPushups",
+      128
+    ],
+    [
+      "PullUps",
+      100
+    ],
+    [
+      "bench press",
+      61
+    ],
+    [
+      "push-up",
+      56
+    ],
+    [
+      "deadlift",
+      32
+    ],
+    [
+      "pull Up",
+      26
+    ],
+    [
+      "uindy_external_validation",
+      21
+    ],
+    [
+      "strict_press_sources",
+      19
+    ],
+    [
+      "holdout_v1",
+      12
+    ],
+    [
+      "strict_press_clips",
+      11
+    ],
+    [
+      "internet_external_validation",
+      5
+    ],
+    [
+      "_Removed_Datasets",
+      2
+    ],
+    [
+      "data",
+      1
+    ],
+    [
+      "FormCheck_Data",
+      1
+    ],
+    [
+      "front_squat_candidates",
+      1
+    ]
+  ],
+  "folders_with_most_videos": [
+    [
+      "videos-OHP/videos",
+      2367
+    ],
+    [
+      "videos-squat/videos",
+      1739
+    ],
+    [
+      "Oly_Data/raw/not_oly",
+      386
+    ],
+    [
+      "Oly_Data/segmented/clean",
+      222
+    ],
+    [
+      "Oly_Data/segmented/split_jerk",
+      161
+    ],
+    [
+      "HandstandPushups",
+      128
+    ],
+    [
+      "Oly_Data/raw/clean_and_jerk",
+      110
+    ],
+    [
+      "PullUps",
+      100
+    ],
+    [
+      "bench press",
+      61
+    ],
+    [
+      "push-up",
+      56
+    ],
+    [
+      "Oly_Data/raw/snatch_mp4",
+      48
+    ],
+    [
+      "videos-OHP/review_sample",
+      40
+    ],
+    [
+      "deadlift",
+      32
+    ],
+    [
+      "router_challenge_v1/raw/deadlift",
+      32
+    ],
+    [
+      "pull Up",
+      26
+    ],
+    [
+      "router_challenge_v1/raw/push_up",
+      25
+    ],
+    [
+      "router_challenge_v1/review/push_up",
+      25
+    ],
+    [
+      "router_challenge_v1/review/squat_hard_negative",
+      25
+    ],
+    [
+      "router_challenge_v1/review/strict_press_candidates",
+      25
+    ],
+    [
+      "uindy_external_validation/videos",
+      21
+    ],
+    [
+      "strict_press_sources",
+      19
+    ],
+    [
+      "router_challenge_v1/raw/squat_back",
+      13
+    ],
+    [
+      "holdout_v1/snatch",
+      12
+    ],
+    [
+      "router_challenge_v1/hard_negatives/squat_other",
+      12
+    ],
+    [
+      "router_challenge_v1/raw/pull_up",
+      11
+    ]
+  ],
+  "largest_20": [
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/front_squat_candidates/catalyst/catalyst_front_squat.webm",
+      "relative_path": "front_squat_candidates/catalyst/catalyst_front_squat.webm",
+      "name": "catalyst_front_squat.webm",
+      "folder": "front_squat_candidates/catalyst",
+      "top_folder": "front_squat_candidates",
+      "extension": ".webm",
+      "size_mb": 204.94,
+      "modified": "2026-08-01T20:11:23"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/jerk/splitjerk-correct.mov",
+      "relative_path": "Oly_Data/raw/jerk/splitjerk-correct.mov",
+      "name": "splitjerk-correct.mov",
+      "folder": "Oly_Data/raw/jerk",
+      "top_folder": "Oly_Data",
+      "extension": ".mov",
+      "size_mb": 198.33,
+      "modified": "2026-05-03T11:17:23"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/catalyst_press__cfNP_VXs_U.mp4",
+      "relative_path": "strict_press_sources/catalyst_press__cfNP_VXs_U.mp4",
+      "name": "catalyst_press__cfNP_VXs_U.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 187.94,
+      "modified": "2026-08-11T20:26:38"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/data/raw/overhead_squat/correct/OverheadSquats- correct3.mov",
+      "relative_path": "data/raw/overhead_squat/correct/OverheadSquats- correct3.mov",
+      "name": "OverheadSquats- correct3.mov",
+      "folder": "data/raw/overhead_squat/correct",
+      "top_folder": "data",
+      "extension": ".mov",
+      "size_mb": 94.33,
+      "modified": "2026-05-02T04:18:14"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/strict_press_candidates/shoulder_press_19.MOV",
+      "relative_path": "router_challenge_v1/review/strict_press_candidates/shoulder_press_19.MOV",
+      "name": "shoulder_press_19.MOV",
+      "folder": "router_challenge_v1/review/strict_press_candidates",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 71.03,
+      "modified": "2024-12-21T19:45:36"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/real_snatch/snatch- correct.mov",
+      "relative_path": "Oly_Data/raw/real_snatch/snatch- correct.mov",
+      "name": "snatch- correct.mov",
+      "folder": "Oly_Data/raw/real_snatch",
+      "top_folder": "Oly_Data",
+      "extension": ".mov",
+      "size_mb": 67.18,
+      "modified": "2026-06-18T17:01:56"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/squat_back/squat_6.MOV",
+      "relative_path": "router_challenge_v1/raw/squat_back/squat_6.MOV",
+      "name": "squat_6.MOV",
+      "folder": "router_challenge_v1/raw/squat_back",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 65.98,
+      "modified": "2026-07-28T15:19:43"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/squat_hard_negative/squat_6.MOV",
+      "relative_path": "router_challenge_v1/review/squat_hard_negative/squat_6.MOV",
+      "name": "squat_6.MOV",
+      "folder": "router_challenge_v1/review/squat_hard_negative",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 65.98,
+      "modified": "2026-07-28T15:13:23"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/overhead_squat/overhead_squat_crossfit_01.mov",
+      "relative_path": "Oly_Data/raw/overhead_squat/overhead_squat_crossfit_01.mov",
+      "name": "overhead_squat_crossfit_01.mov",
+      "folder": "Oly_Data/raw/overhead_squat",
+      "top_folder": "Oly_Data",
+      "extension": ".mov",
+      "size_mb": 63.42,
+      "modified": "2026-06-18T02:47:09"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/overhead_squat/overhead_squat_crossfit_01.mov",
+      "relative_path": "router_challenge_v1/raw/overhead_squat/overhead_squat_crossfit_01.mov",
+      "name": "overhead_squat_crossfit_01.mov",
+      "folder": "router_challenge_v1/raw/overhead_squat",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 63.42,
+      "modified": "2026-07-28T18:32:01"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/hard_negatives/squat_other/squat_4.MOV",
+      "relative_path": "router_challenge_v1/hard_negatives/squat_other/squat_4.MOV",
+      "name": "squat_4.MOV",
+      "folder": "router_challenge_v1/hard_negatives/squat_other",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 62.73,
+      "modified": "2026-07-28T15:19:44"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/squat_hard_negative/squat_4.MOV",
+      "relative_path": "router_challenge_v1/review/squat_hard_negative/squat_4.MOV",
+      "name": "squat_4.MOV",
+      "folder": "router_challenge_v1/review/squat_hard_negative",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 62.73,
+      "modified": "2026-07-28T15:13:22"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/strict_press_candidates/shoulder_press_20.MOV",
+      "relative_path": "router_challenge_v1/review/strict_press_candidates/shoulder_press_20.MOV",
+      "name": "shoulder_press_20.MOV",
+      "folder": "router_challenge_v1/review/strict_press_candidates",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 62.36,
+      "modified": "2024-12-21T19:45:36"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/squat_back/squat_1.MOV",
+      "relative_path": "router_challenge_v1/raw/squat_back/squat_1.MOV",
+      "name": "squat_1.MOV",
+      "folder": "router_challenge_v1/raw/squat_back",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 61.52,
+      "modified": "2026-07-28T15:19:42"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/squat_hard_negative/squat_1.MOV",
+      "relative_path": "router_challenge_v1/review/squat_hard_negative/squat_1.MOV",
+      "name": "squat_1.MOV",
+      "folder": "router_challenge_v1/review/squat_hard_negative",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 61.52,
+      "modified": "2026-07-28T15:13:21"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/hard_negatives/squat_other/squat_3.MOV",
+      "relative_path": "router_challenge_v1/hard_negatives/squat_other/squat_3.MOV",
+      "name": "squat_3.MOV",
+      "folder": "router_challenge_v1/hard_negatives/squat_other",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 60.91,
+      "modified": "2026-07-28T15:19:44"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/squat_hard_negative/squat_3.MOV",
+      "relative_path": "router_challenge_v1/review/squat_hard_negative/squat_3.MOV",
+      "name": "squat_3.MOV",
+      "folder": "router_challenge_v1/review/squat_hard_negative",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 60.91,
+      "modified": "2026-07-28T15:13:22"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_clips/catalyst_press/strict_press_catalyst_02.mp4",
+      "relative_path": "strict_press_clips/catalyst_press/strict_press_catalyst_02.mp4",
+      "name": "strict_press_catalyst_02.mp4",
+      "folder": "strict_press_clips/catalyst_press",
+      "top_folder": "strict_press_clips",
+      "extension": ".mp4",
+      "size_mb": 57.51,
+      "modified": "2026-08-11T20:35:23"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/squat_back/squat_5.MOV",
+      "relative_path": "router_challenge_v1/raw/squat_back/squat_5.MOV",
+      "name": "squat_5.MOV",
+      "folder": "router_challenge_v1/raw/squat_back",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 56.78,
+      "modified": "2026-07-28T15:19:43"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/router_challenge_v1/review/squat_hard_negative/squat_5.MOV",
+      "relative_path": "router_challenge_v1/review/squat_hard_negative/squat_5.MOV",
+      "name": "squat_5.MOV",
+      "folder": "router_challenge_v1/review/squat_hard_negative",
+      "top_folder": "router_challenge_v1",
+      "extension": ".mov",
+      "size_mb": 56.78,
+      "modified": "2026-07-28T15:13:23"
+    }
+  ],
+  "most_recent_20": [
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/aTaOo0OBWcA.mp4",
+      "relative_path": "strict_press_sources/aTaOo0OBWcA.mp4",
+      "name": "aTaOo0OBWcA.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 3.91,
+      "modified": "2026-08-11T21:45:38"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/xIWUruY9m38.mp4",
+      "relative_path": "strict_press_sources/xIWUruY9m38.mp4",
+      "name": "xIWUruY9m38.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 1.74,
+      "modified": "2026-08-11T21:45:35"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/4UqaLCVaLz8.mp4",
+      "relative_path": "strict_press_sources/4UqaLCVaLz8.mp4",
+      "name": "4UqaLCVaLz8.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 9.32,
+      "modified": "2026-08-11T21:45:33"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/f1J9xfbBxUI.mp4",
+      "relative_path": "strict_press_sources/f1J9xfbBxUI.mp4",
+      "name": "f1J9xfbBxUI.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 3.78,
+      "modified": "2026-08-11T21:45:30"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/S9Sz0mqjlcU.mp4",
+      "relative_path": "strict_press_sources/S9Sz0mqjlcU.mp4",
+      "name": "S9Sz0mqjlcU.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 3.82,
+      "modified": "2026-08-11T21:45:28"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/7J0SN-xHark.mp4",
+      "relative_path": "strict_press_sources/7J0SN-xHark.mp4",
+      "name": "7J0SN-xHark.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 3.43,
+      "modified": "2026-08-11T21:45:26"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/ZHuS_4J_2nM.mp4",
+      "relative_path": "strict_press_sources/ZHuS_4J_2nM.mp4",
+      "name": "ZHuS_4J_2nM.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 2.77,
+      "modified": "2026-08-11T21:45:24"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/y9mohYqDdtE.mp4",
+      "relative_path": "strict_press_sources/y9mohYqDdtE.mp4",
+      "name": "y9mohYqDdtE.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 1.2,
+      "modified": "2026-08-11T21:41:03"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/Y1Nl307H-No.mp4",
+      "relative_path": "strict_press_sources/Y1Nl307H-No.mp4",
+      "name": "Y1Nl307H-No.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 2.52,
+      "modified": "2026-08-11T21:41:00"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/bpa9nTgQnvs.mp4",
+      "relative_path": "strict_press_sources/bpa9nTgQnvs.mp4",
+      "name": "bpa9nTgQnvs.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 7.15,
+      "modified": "2026-08-11T21:40:58"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/Ydgh5w85xtY.mp4",
+      "relative_path": "strict_press_sources/Ydgh5w85xtY.mp4",
+      "name": "Ydgh5w85xtY.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 2.09,
+      "modified": "2026-08-11T21:40:55"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/krY2D_7cyt0.mp4",
+      "relative_path": "strict_press_sources/krY2D_7cyt0.mp4",
+      "name": "krY2D_7cyt0.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 3.32,
+      "modified": "2026-08-11T21:40:52"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_clips/more_sources/strict_press_kyYrTSwOlgU_01.mp4",
+      "relative_path": "strict_press_clips/more_sources/strict_press_kyYrTSwOlgU_01.mp4",
+      "name": "strict_press_kyYrTSwOlgU_01.mp4",
+      "folder": "strict_press_clips/more_sources",
+      "top_folder": "strict_press_clips",
+      "extension": ".mp4",
+      "size_mb": 2.26,
+      "modified": "2026-08-11T21:35:31"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/kyYrTSwOlgU.mp4",
+      "relative_path": "strict_press_sources/kyYrTSwOlgU.mp4",
+      "name": "kyYrTSwOlgU.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 13.4,
+      "modified": "2026-08-11T21:34:40"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/uVDhZalbPAo.mp4",
+      "relative_path": "strict_press_sources/uVDhZalbPAo.mp4",
+      "name": "uVDhZalbPAo.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 1.69,
+      "modified": "2026-08-11T21:29:48"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_clips/crossfit_press/strict_press_crossfit_03.mp4",
+      "relative_path": "strict_press_clips/crossfit_press/strict_press_crossfit_03.mp4",
+      "name": "strict_press_crossfit_03.mp4",
+      "folder": "strict_press_clips/crossfit_press",
+      "top_folder": "strict_press_clips",
+      "extension": ".mp4",
+      "size_mb": 1.11,
+      "modified": "2026-08-11T21:24:47"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_clips/crossfit_press/strict_press_crossfit_02.mp4",
+      "relative_path": "strict_press_clips/crossfit_press/strict_press_crossfit_02.mp4",
+      "name": "strict_press_crossfit_02.mp4",
+      "folder": "strict_press_clips/crossfit_press",
+      "top_folder": "strict_press_clips",
+      "extension": ".mp4",
+      "size_mb": 1.53,
+      "modified": "2026-08-11T21:24:42"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_clips/crossfit_press/strict_press_crossfit_01.mp4",
+      "relative_path": "strict_press_clips/crossfit_press/strict_press_crossfit_01.mp4",
+      "name": "strict_press_crossfit_01.mp4",
+      "folder": "strict_press_clips/crossfit_press",
+      "top_folder": "strict_press_clips",
+      "extension": ".mp4",
+      "size_mb": 1.1,
+      "modified": "2026-08-11T21:24:35"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/xe19t2_6yis.mp4",
+      "relative_path": "strict_press_sources/xe19t2_6yis.mp4",
+      "name": "xe19t2_6yis.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 2.94,
+      "modified": "2026-08-11T21:23:52"
+    },
+    {
+      "path": "/Users/josephkamil/Desktop/Capstone/strict_press_sources/a3YIq6DxsUg.mp4",
+      "relative_path": "strict_press_sources/a3YIq6DxsUg.mp4",
+      "name": "a3YIq6DxsUg.mp4",
+      "folder": "strict_press_sources",
+      "top_folder": "strict_press_sources",
+      "extension": ".mp4",
+      "size_mb": 3.9,
+      "modified": "2026-08-11T21:02:37"
+    }
+  ]
+}

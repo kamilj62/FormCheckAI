@@ -1,0 +1,21 @@
+{
+  "analysis_id": "f0e3174d19774cb2826f8fd5b4d99349",
+  "analysis_mode": "insufficient_data",
+  "confidence": 0.0,
+  "debug": {
+    "frames_processed": 5,
+    "original_frames_processed": 5,
+    "transcoded_retry": true
+  },
+  "exercise_label": "Unknown",
+  "overlay_video_url": null,
+  "phase_images": null,
+  "rep_feedback": [],
+  "set_summary": {
+    "avg_rep_score": 0,
+    "best_rep": null,
+    "detected_reps": 0,
+    "trend": "No clear reps detected.",
+    "worst_rep": null
+  }
+}

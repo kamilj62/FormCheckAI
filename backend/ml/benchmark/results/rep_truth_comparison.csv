@@ -1,0 +1,7 @@
+label,name,relative_path,expected_reps,detected_reps,delta,verdict,review_status,predicted_label,analysis_mode,notes
+thruster,thruster-correct.mov,thruster-correct.mov,3,6,3,overcount,reviewed,thruster,biomechanics_override,visible contact sheet shows three full squat-to-overhead reps; current saved run detected 6
+clean,clean_from_cj_0012.mp4,Oly_Data/segmented/clean/clean_from_cj_0012.mp4,1,0,-1,undercount,reviewed,clean,shape_override,visible contact sheet shows one clean; current saved run detected 0
+squat_back,squat_2.mp4,data/dataset_v2/raw/squat_back/squat_2.mp4,5,5,0,pass,reviewed,squat_back,detailed_rep_analysis,visible contact sheet shows five squats; current saved run detected 5
+split_jerk,Split_Jerk_Front.mp4,uindy_external_validation/videos/Split_Jerk_Front.mp4,4,4,0,pass,reviewed,split_jerk,router_v5,visible contact sheet shows four split jerks; prior spotcheck detected 4
+split_jerk,Split_Jerk_Back.mp4,uindy_external_validation/videos/Split_Jerk_Back.mp4,4,,,missing_result,reviewed,,,visible contact sheet shows four split jerks
+push_press,b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,data/dataset_v2/raw/push_press/b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,5,5,0,pass,reviewed_rep_count_only,push_press,biomechanics_override,visible contact sheet shows five press cycles but movement appears seated or machine-assisted

@@ -1,0 +1,11 @@
+label,video,name,expected_reps,review_status,notes
+deadlift,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/deadlift/deadlift_6.mp4,deadlift_6.mp4,1,reviewed_contact_sheet,one clear floor-to-stand deadlift rep
+squat_front,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Front_Squat.mp4,Front_Squat.mp4,2,reviewed_contact_sheet,two visible front-squat reps after setup
+overhead_squat,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Overhead_Squat.mp4,Overhead_Squat.mp4,2,reviewed_contact_sheet,two visible overhead-squat reps after setup
+pull_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/pull_up/v_PullUps_g02_c02.avi,v_PullUps_g02_c02.avi,2,reviewed_contact_sheet,two visible pull-up cycles
+push_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/push_up/push-up_20.mp4,push-up_20.mp4,1,reviewed_contact_sheet,one visible push-up rep
+handstand_push_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/handstand_push_up/v_HandStandPushups_g01_c01.avi,v_HandStandPushups_g01_c01.avi,1,reviewed_contact_sheet,one visible handstand push-up cycle
+snatch,/Users/josephkamil/Desktop/Capstone/holdout_v1/snatch/9xQp2sldyts_angle2.mp4,9xQp2sldyts_angle2.mp4,1,reviewed_contact_sheet,one clear snatch rep from floor to overhead recovery
+strict_press,/Users/josephkamil/Desktop/Capstone/strict_press_sources/y9mohYqDdtE.mp4,y9mohYqDdtE.mp4,2,reviewed_contact_sheet,two visible strict-press cycles before bar is lowered
+clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v_CleanAndJerk_g01_c01.avi,v_CleanAndJerk_g01_c01.avi,1,reviewed_manual,one clear clean-and-jerk rep; verified backend detects 1 rep
+bench_press,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c01.avi,v_BenchPress_g01_c01.avi,3,reviewed_manual,three visible bench press reps; classification verified after overhead-motion press gate

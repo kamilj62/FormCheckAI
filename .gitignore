@@ -8,6 +8,7 @@ __pycache__/
 .venv/
 .venv_eval/
 .venv_pose/
+.venv-audit/
 
 # Mac
 .DS_Store
@@ -16,6 +17,9 @@ __pycache__/
 FormCheck_Data/
 data/
 models/
+!backend/app/models/
+!backend/app/models/bodyweight_router.joblib
+!backend/app/models/bodyweight_router_labels.joblib
 
 # Videos
 *.mov
@@ -39,6 +43,7 @@ __pycache__/
 backend/.venv/
 backend/.venv312/
 backend/outputs/
+.cache/
 .env
 node_modules/
 .expo/

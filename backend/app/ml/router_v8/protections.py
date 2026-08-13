@@ -9,6 +9,41 @@ class ProtectionResult:
     reason: str | None = None
 
 
+def _vertical_range_ratio(debug: dict[str, Any]) -> float:
+    return float(debug.get("wrist_y_range", 0.0)) / max(
+        float(debug.get("shoulder_y_range", 0.0)),
+        0.001,
+    )
+
+
+def _false_pull_up_barbell_path(
+    *,
+    raw_label: str | None,
+    squat_label: str | None,
+    debug: dict[str, Any],
+) -> bool:
+    barbell_context = (
+        raw_label in {"push_press", "squat", "squat_front"}
+        or squat_label in {"squat_back", "squat_front", "overhead_squat"}
+    )
+    if not barbell_context:
+        return False
+
+    wrist_y_range = float(debug.get("wrist_y_range", 0.0))
+    shoulder_y_range = float(debug.get("shoulder_y_range", 0.0))
+    if wrist_y_range <= 0.0 or shoulder_y_range <= 0.0:
+        return False
+
+    return (
+        int(debug.get("total_frames", 0) or 0) >= 90
+        and float(debug.get("wrist_above_shoulder_ratio", 0.0)) >= 0.65
+        and (
+            float(debug.get("mean_wrist_minus_shoulder_y", 1.0)) > -0.12
+            or _vertical_range_ratio(debug) >= 0.75
+        )
+    )
+
+
 # ------------------------------------------------------------------
 # Bodyweight protections
 # ------------------------------------------------------------------
@@ -94,6 +129,11 @@ def bodyweight_protections(
         (looks_pull_up or push_press_pull_up_signature)
         and not strong_bench_evidence
         and not credible_split_jerk
+        and not _false_pull_up_barbell_path(
+            raw_label=raw_label,
+            squat_label=squat_label,
+            debug=bodyweight_debug,
+        )
     ):
         return ProtectionResult(
             label="pull_up",
@@ -303,6 +343,28 @@ def strength_protections(
             reason="strict_press_pattern_detected",
         )
 
+    controlled_strict_press_pattern = (
+        raw_label == "squat_front"
+        and float(base_conf or 0.0) >= 0.90
+        and bio_label == "push_press"
+        and float(bio_conf or 0.0) >= 0.90
+        and squat_label == "overhead_squat"
+        and float(explosive_score or 0.0) < 15.0
+        and float(bodyweight_debug.get("hip_y_range", 1.0)) <= 0.08
+        and float(bodyweight_debug.get("shoulder_y_range", 1.0)) <= 0.22
+        and float(bodyweight_debug.get("wrist_y_range", 0.0)) >= 0.25
+        and not looks_cj
+        and not looks_split
+        and not looks_thruster
+    )
+
+    if controlled_strict_press_pattern:
+        return ProtectionResult(
+            label="strict_press",
+            confidence=max(float(base_conf or 0.0), float(bio_conf or 0.0), 0.90),
+            reason="controlled_strict_press_pattern",
+        )
+
     push_press_pattern = (
         raw_label == "push_press"
         and bio_label == "push_press"
@@ -350,6 +412,12 @@ def strength_protections(
                 0.001,
             )
         ) >= 1.50
+        and not (
+            squat_label == "overhead_squat"
+            and float(squat_conf or 0.0) >= 0.80
+            and float(explosive_score or 0.0) < 30.0
+            and not looks_thruster
+        )
     )
 
     if strong_push_press_consensus_hold:

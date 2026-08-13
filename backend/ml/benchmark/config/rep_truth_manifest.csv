@@ -1,0 +1,10 @@
+label,video,name,expected_reps,review_status,notes
+thruster,/Users/josephkamil/Desktop/Capstone/thruster-correct.mov,thruster-correct.mov,3,reviewed,visible contact sheet shows three full squat-to-overhead reps; current saved run detected 6
+clean,/Users/josephkamil/Desktop/Capstone/Oly_Data/segmented/clean/clean_from_cj_0012.mp4,clean_from_cj_0012.mp4,1,reviewed,visible contact sheet shows one clean; current saved run detected 0
+squat_back,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/squat_back/squat_2.mp4,squat_2.mp4,5,reviewed,visible contact sheet shows five squats; current saved run detected 5
+split_jerk,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Split_Jerk_Front.mp4,Split_Jerk_Front.mp4,4,reviewed,visible contact sheet shows four split jerks; prior spotcheck detected 4
+split_jerk,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Split_Jerk_Back.mp4,Split_Jerk_Back.mp4,4,reviewed,visible contact sheet shows four split jerks
+push_press,/Users/josephkamil/Desktop/Capstone/data/dataset_v2/raw/push_press/b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,b066cbc1-931a-4af5-b668-36e98e7091b6.mp4,5,reviewed_rep_count_only,visible contact sheet shows five press cycles but movement appears seated or machine-assisted
+deadlift,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/deadlift/deadlift_6.mp4,deadlift_6.mp4,1,reviewed_contact_sheet,one clear floor-to-stand deadlift rep; promoted from expansion pass
+push_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/push_up/push-up_20.mp4,push-up_20.mp4,1,reviewed_contact_sheet,one visible push-up rep; promoted from expansion pass
+handstand_push_up,/Users/josephkamil/Desktop/Capstone/router_challenge_v1/raw/handstand_push_up/v_HandStandPushups_g01_c01.avi,v_HandStandPushups_g01_c01.avi,1,reviewed_contact_sheet,one visible handstand push-up cycle; promoted from expansion pass
