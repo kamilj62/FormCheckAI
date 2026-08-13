@@ -15,6 +15,7 @@ sys.path.insert(0, str(REPO_ROOT / "backend"))
 
 from app.ml.movement_signatures import (
     LABEL_SIGNATURES,
+    MOVEMENT_SIGNATURES,
 )
 
 parser = argparse.ArgumentParser()
@@ -72,6 +73,29 @@ def label_family(label):
     if signature:
         return signature.family
     return ""
+
+
+def canonical_coverage_label(label):
+    """
+    Map manifest aliases to their canonical external movement name.
+
+    Examples:
+      squat_back  -> back_squat
+      squat_front -> front_squat
+
+    Internal/alias labels such as muscle_up are therefore not reported as
+    separate missing coverage when canonical movement variants already exist.
+    """
+    label = str(label or "")
+
+    if label in MOVEMENT_SIGNATURES:
+        return label
+
+    for canonical_label, signature in MOVEMENT_SIGNATURES.items():
+        if label in signature.aliases:
+            return canonical_label
+
+    return label
 
 
 def truthy(value):
@@ -591,7 +615,10 @@ with ThreadPoolExecutor(max_workers=1) as executor:
 
 results = all_results
 
-coverage_stats = Counter(row["label"] for row in rows)
+coverage_stats = Counter(
+    canonical_coverage_label(row["label"])
+    for row in rows
+)
 family_stats = defaultdict(Counter)
 
 for r in results:
@@ -664,7 +691,7 @@ elif total:
 print()
 print("COVERAGE")
 print("-" * 72)
-for label in sorted(LABEL_SIGNATURES):
+for label in sorted(MOVEMENT_SIGNATURES):
     count = coverage_stats[label]
     status = "ok" if count else "missing"
     if 0 < count < 4:
