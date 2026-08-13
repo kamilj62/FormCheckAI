@@ -15,3 +15,4 @@ clean,/Users/josephkamil/Desktop/Capstone/clean-correct.mov,clean-correct.mov,2,
 split_jerk,/Users/josephkamil/Desktop/Capstone/splitjerk-short.mp4,splitjerk-short.mp4,3,reviewed_manual,three visible split jerk reps
 thruster,/Users/josephkamil/Desktop/Capstone/thruster_one_rep_720p.mp4,thruster_one_rep_720p.mp4,1,reviewed_manual,one visible thruster rep
 burpee,/Users/josephkamil/Desktop/Capstone/_Removed_Datasets/generated_or_unsupported/Burpee.mov,Burpee.mov,3,reviewed_manual,three complete visible burpees; clip begins mid-set and opening partial should not count
+bar_muscle_up,/Users/josephkamil/Desktop/Capstone/_Removed_Datasets/generated_or_unsupported/barMuscleUp.mov,barMuscleUp.mov,1,reviewed_manual,one complete bar muscle-up; expected internal analyzer label muscle_up

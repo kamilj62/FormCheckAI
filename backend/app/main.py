@@ -5942,6 +5942,9 @@ def analyze_muscle_up_reps(biomechanics):
         "start_frame": int(frame_numbers[start_idx]),
         "pull_frame": int(frame_numbers[pull_idx]),
         "transition_frame": int(frame_numbers[transition_idx]),
+        # dip_idx is the first stable above-bar support position used by
+        # the muscle-up support grading logic.
+        "support_frame": int(frame_numbers[dip_idx]),
         "dip_frame": int(frame_numbers[dip_idx]),
         "lockout_frame": int(frame_numbers[lockout_idx]),
         "end_frame": int(frame_numbers[end_idx]),
