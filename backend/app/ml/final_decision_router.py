@@ -91,6 +91,7 @@ class FinalMidArbitrationContext:
     looks_split: bool
     looks_strict: bool
     looks_thruster: bool
+    looks_burpee: bool
     strong_front_squat_consensus: bool
     bench_model_consensus: bool
     pull_up_long_squat_barbell_collision: bool
@@ -167,6 +168,7 @@ class FinalArbitrationContext:
     looks_split: bool
     looks_strict: bool
     looks_thruster: bool
+    looks_burpee: bool
     strong_front_squat_consensus: bool
     bench_model_consensus: bool
     squat_knee_range: float
@@ -537,6 +539,7 @@ class FinalCleanBenchPushupContext:
     looks_clean_only: bool
     looks_cj: bool
     looks_split: bool
+    looks_burpee: bool
     strong_front_squat_consensus: bool
     router_v5_label: str | None
     router_v5_debug: dict[str, Any] | None
@@ -1827,6 +1830,7 @@ def select_final_mid_arbitration(
                 looks_clean_only=ctx.looks_clean_only,
                 looks_cj=ctx.looks_cj,
                 looks_split=ctx.looks_split,
+                looks_burpee=ctx.looks_burpee,
                 strong_front_squat_consensus=(
                     ctx.strong_front_squat_consensus
                 ),
@@ -2143,6 +2147,7 @@ def run_final_arbitration(
             looks_split=ctx.looks_split,
             looks_strict=ctx.looks_strict,
             looks_thruster=ctx.looks_thruster,
+            looks_burpee=ctx.looks_burpee,
             strong_front_squat_consensus=ctx.strong_front_squat_consensus,
             bench_model_consensus=ctx.bench_model_consensus,
             pull_up_long_squat_barbell_collision=(
@@ -2218,6 +2223,8 @@ def select_final_clean_bench_pushup_authority(
         and ctx.looks_clean_only
         and not ctx.looks_cj
         and not ctx.looks_split
+        # A verified burpee full-body cycle must outrank clean-shape fallback.
+        and not ctx.looks_burpee
         and not ctx.strong_front_squat_consensus
         and not (
             ctx.raw_label == "bench_press"

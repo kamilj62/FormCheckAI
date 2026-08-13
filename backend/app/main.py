@@ -5956,6 +5956,17 @@ def analyze_muscle_up_reps(biomechanics):
 
 
 def analyze_burpee_reps(biomechanics):
+    """
+    Detect complete burpee cycles as:
+
+        confirmed upright -> floor/plank -> confirmed upright
+
+    Requiring an upright state before the floor phase prevents a clip that
+    begins mid-rep from manufacturing an opening partial rep.
+    """
+    if len(biomechanics) < 10:
+        return [], build_set_summary([])
+
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
@@ -5964,124 +5975,367 @@ def analyze_burpee_reps(biomechanics):
     wrist_y = np.array([
         b.get("wrist_y", 0.0)
         for b in biomechanics
-    ])
+    ], dtype=float)
 
-    if len(biomechanics) < 10:
-        return [], build_set_summary([])
+    elbow = np.array([
+        b.get("elbow_angle", 180.0)
+        for b in biomechanics
+    ], dtype=float)
+
+    knee = np.array([
+        b.get("knee_angle", 180.0)
+        for b in biomechanics
+    ], dtype=float)
+
+    hip_y = np.array([
+        b.get("hip_y", 0.0)
+        for b in biomechanics
+    ], dtype=float)
+
+    shoulder_y = np.array([
+        b.get("shoulder_y", 0.0)
+        for b in biomechanics
+    ], dtype=float)
+
+    torso = np.array([
+        b.get("torso_angle", 0.0)
+        for b in biomechanics
+    ], dtype=float)
 
     n = len(biomechanics)
 
-    start_idx = 0
+    # Small edge-padded smoothing removes one-frame pose jitter without
+    # changing the broad burpee phases.
+    def smooth(x, window=5):
+        if len(x) < window:
+            return x.copy()
+        pad = window // 2
+        padded = np.pad(x, (pad, pad), mode="edge")
+        kernel = np.ones(window, dtype=float) / window
+        return np.convolve(padded, kernel, mode="valid")
 
-    # Hands Down
-    early_end = max(3, int(n * 0.25))
-    hands_down_idx = int(np.argmax(wrist_y[:early_end]))
+    wrist_s = smooth(wrist_y)
+    hip_s = smooth(hip_y)
+    torso_s = smooth(torso)
 
-    # Force ordered phases.
-    plank_idx = min(
-        hands_down_idx + int(n * 0.18),
-        n - 1
+    # ------------------------------------------------------------------
+    # Physical states
+    #
+    # This clip shows a very clear distinction:
+    #   upright/reset: torso tall, hands high in image, hips fully returned
+    #   floor/plank:    torso nearly horizontal and wrists in floor region
+    #
+    # hip_y on the upright state is important here: it prevents the opening
+    # mid-set fragment from being treated as a legitimate starting reset.
+    # ------------------------------------------------------------------
+    upright_mask = (
+        (torso_s >= 70.0)
+        & (wrist_s >= 0.60)
+        & (hip_s >= 0.55)
     )
 
-    jump_in_idx = min(
-        plank_idx + int(n * 0.10),
-        n - 1
+    floor_mask = (
+        (torso_s <= 30.0)
+        & (wrist_s <= 0.30)
     )
 
-    stand_idx = min(
-        jump_in_idx + int(n * 0.08),
-        n - 1
-    )
+    def true_runs(mask, min_len=3):
+        """Return inclusive (start, end) runs that remain true long enough."""
+        runs = []
+        run_start = None
 
-    # Finish = same upright position as stand
-    finish_idx = stand_idx
+        for i, flag in enumerate(mask):
+            if flag and run_start is None:
+                run_start = i
 
-    # Enforce order
-    hands_down_idx = max(hands_down_idx, start_idx)
-    plank_idx = max(plank_idx, hands_down_idx + 1)
-    jump_in_idx = max(jump_in_idx, plank_idx + 1)
-    stand_idx = max(stand_idx, jump_in_idx + 1)
+            if run_start is not None and (not flag or i == len(mask) - 1):
+                run_end = i if flag and i == len(mask) - 1 else i - 1
 
-    hands_down_idx = min(hands_down_idx, n - 1)
-    plank_idx = min(plank_idx, n - 1)
-    jump_in_idx = min(jump_in_idx, n - 1)
-    stand_idx = min(stand_idx, n - 1)
-    finish_idx = min(finish_idx, n - 1)
+                if run_end - run_start + 1 >= min_len:
+                    runs.append((run_start, run_end))
 
-    elbow = np.array([b.get("elbow_angle", 180.0) for b in biomechanics])
-    knee = np.array([b.get("knee_angle", 180.0) for b in biomechanics])
-    hip_y = np.array([b.get("hip_y", 0.0) for b in biomechanics])
-    shoulder_y = np.array([b.get("shoulder_y", 0.0) for b in biomechanics])
-    torso = np.array([b.get("torso_angle", 0.0) for b in biomechanics])
+                run_start = None
 
-    issues = []
-    feedback = []
-    breakdown = {
-        "hands_down": "good",
-        "plank": "good",
-        "jump_in": "good",
-        "stand": "good",
-        "finish": "good",
-    }
+        return runs
 
-    hands_drop = float(wrist_y[hands_down_idx] - wrist_y[start_idx])
-    if hands_drop < 0.08:
-        breakdown["hands_down"] = "high"
-        issues.append("Hands may not reach the floor fully.")
-        feedback.append("Place hands flat on the floor before kicking back.")
+    upright_runs = true_runs(upright_mask, min_len=3)
+    floor_runs = true_runs(floor_mask, min_len=3)
 
-    plank_flatness = float(abs(hip_y[plank_idx] - shoulder_y[plank_idx]))
-    plank_elbow = float(elbow[plank_idx])
-    if plank_flatness > 0.18 or plank_elbow < 150:
-        breakdown["plank"] = "sagging"
-        issues.append("Plank position may be sagging or soft.")
-        feedback.append("Keep your body tight in a straight line through the plank.")
-    elif plank_flatness > 0.12:
-        breakdown["plank"] = "borderline"
-        issues.append("Core could stay tighter in the plank.")
-        feedback.append("Brace your core and avoid letting hips sag.")
+    if not upright_runs or not floor_runs:
+        return [], build_set_summary([])
 
-    jump_knee = float(knee[jump_in_idx])
-    if jump_knee > 155:
-        breakdown["jump_in"] = "stiff"
-        issues.append("Feet may not come under efficiently.")
-        feedback.append("Jump feet closer to your hands before standing.")
+    # ------------------------------------------------------------------
+    # State machine:
+    #
+    # Each rep must have:
+    #   previous upright reset
+    #   -> later floor phase
+    #   -> later upright completion
+    #
+    # Floor phases before the first confirmed upright are ignored.
+    # ------------------------------------------------------------------
+    windows = []
+    floor_cursor = 0
 
-    stand_torso = float(torso[stand_idx])
-    stand_knee = float(knee[stand_idx])
-    if stand_torso > 25 or stand_knee < 155:
-        breakdown["stand"] = "incomplete"
-        issues.append("Stand-up finish may be incomplete.")
-        feedback.append("Stand tall with hips and knees fully extended.")
+    for upright_i in range(len(upright_runs) - 1):
+        pre_start, pre_end = upright_runs[upright_i]
+        post_start, post_end = upright_runs[upright_i + 1]
+
+        # Find the first legitimate floor run between these upright resets.
+        found_floor = None
+
+        while floor_cursor < len(floor_runs):
+            floor_start, floor_end = floor_runs[floor_cursor]
+
+            if floor_end <= pre_end:
+                floor_cursor += 1
+                continue
+
+            if floor_start >= post_start:
+                break
+
+            if floor_start > pre_end and floor_end < post_start:
+                found_floor = (floor_start, floor_end)
+                floor_cursor += 1
+                break
+
+            floor_cursor += 1
+
+        if found_floor is None:
+            continue
+
+        floor_start, floor_end = found_floor
+
+        # Rep starts as athlete leaves the previous upright reset.
+        start_idx = pre_end
+
+        # Deepest floor/plank position within the floor run.
+        floor_slice = slice(floor_start, floor_end + 1)
+        local_floor = int(np.argmin(torso_s[floor_slice]))
+        plank_idx = floor_start + local_floor
+
+        # Hands-down transition = first strong torso descent before plank.
+        hands_down_idx = plank_idx
+        for j in range(start_idx + 1, plank_idx + 1):
+            if torso_s[j] <= 45.0:
+                hands_down_idx = j
+                break
+
+        # Jump-in = deepest knee flexion after floor and before standing.
+        recovery_start = min(plank_idx + 1, post_start)
+        if post_start > recovery_start:
+            jump_in_idx = recovery_start + int(
+                np.argmin(knee[recovery_start:post_start + 1])
+            )
+        else:
+            jump_in_idx = recovery_start
+
+        stand_idx = post_start
+        finish_idx = post_end
+
+        # Reject implausibly short fragments.
+        if finish_idx - start_idx < 20:
+            continue
+
+        windows.append({
+            "start_idx": start_idx,
+            "hands_down_idx": hands_down_idx,
+            "plank_idx": plank_idx,
+            "jump_in_idx": jump_in_idx,
+            "stand_idx": stand_idx,
+            "finish_idx": finish_idx,
+        })
+
+    # --------------------------------------------------------------
+    # Terminal burpee recovery
+    #
+    # A clip may end immediately after the athlete completes the final
+    # stand, leaving too few frames to form the normal 3-frame upright
+    # run. Recover that final rep only when:
+    #   1. there is an unused floor phase after the last counted rep,
+    #   2. the athlete clearly returns toward upright at the clip tail,
+    #   3. the final posture shows meaningful knee extension.
+    #
+    # This does not recover opening partials because a valid prior upright
+    # reset is still required.
+    # --------------------------------------------------------------
+    last_used_end = windows[-1]["finish_idx"] if windows else -1
+
+    # The finish of the most recently counted rep is also the valid
+    # upright/reset state for the next rep. Do not require another
+    # separate upright run after it.
+    if windows:
+        pre_end = last_used_end
+    elif upright_runs:
+        # No completed reps yet: only use a genuine observed upright
+        # reset, which still prevents recovery of an opening partial.
+        pre_end = upright_runs[-1][1]
     else:
-        breakdown["finish"] = "good"
+        pre_end = None
 
-    if breakdown["stand"] == "incomplete":
-        breakdown["finish"] = "incomplete"
+    if pre_end is not None:
+        terminal_floor = None
+        for floor_start, floor_end in floor_runs:
+            if floor_start > pre_end:
+                terminal_floor = (floor_start, floor_end)
+                break
 
-    score = compute_rep_score(issues)
-    score = apply_coach_reward(score, issues, breakdown)
+        if terminal_floor is not None:
+            floor_start, floor_end = terminal_floor
 
-    if not issues:
-        score = max(score, 9.0)
-        feedback = [
-            "Good burpee rep. Move smoothly from the floor position back to a strong standing finish."
-        ]
+            tail_start = min(floor_end + 1, n - 1)
 
-    reps = [{
-        "rep": 1,
-        "start_frame": int(frame_numbers[start_idx]),
-        "hands_down_frame": int(frame_numbers[hands_down_idx]),
-        "plank_frame": int(frame_numbers[plank_idx]),
-        "jump_in_frame": int(frame_numbers[jump_in_idx]),
-        "stand_frame": int(frame_numbers[stand_idx]),
-        "end_frame": int(frame_numbers[finish_idx]),
-        "score": round(score, 1),
-        "grade": grade_score(score),
-        "issues": issues,
-        "breakdown": breakdown,
-        "feedback": feedback,
-    }]
+            if tail_start < n - 1:
+                tail_indices = np.arange(tail_start, n)
+
+                # Strong terminal recovery. Hip threshold is intentionally
+                # omitted here because the final frame can arrive before
+                # the camera-normalized hip position fully settles.
+                terminal_candidates = tail_indices[
+                    (torso_s[tail_indices] >= 70.0)
+                    & (wrist_s[tail_indices] >= 0.60)
+                    & (knee[tail_indices] >= 145.0)
+                ]
+
+                if len(terminal_candidates) > 0:
+                    stand_idx = int(terminal_candidates[0])
+                    finish_idx = n - 1
+
+                    # Deepest floor/plank point.
+                    floor_slice = slice(floor_start, floor_end + 1)
+                    plank_idx = floor_start + int(
+                        np.argmin(torso_s[floor_slice])
+                    )
+
+                    hands_down_idx = plank_idx
+                    for j in range(pre_end + 1, plank_idx + 1):
+                        if torso_s[j] <= 45.0:
+                            hands_down_idx = j
+                            break
+
+                    recovery_start = min(plank_idx + 1, stand_idx)
+
+                    if stand_idx > recovery_start:
+                        jump_in_idx = recovery_start + int(
+                            np.argmin(
+                                knee[recovery_start:stand_idx + 1]
+                            )
+                        )
+                    else:
+                        jump_in_idx = recovery_start
+
+                    if finish_idx - pre_end >= 20:
+                        windows.append({
+                            "start_idx": pre_end,
+                            "hands_down_idx": hands_down_idx,
+                            "plank_idx": plank_idx,
+                            "jump_in_idx": jump_in_idx,
+                            "stand_idx": stand_idx,
+                            "finish_idx": finish_idx,
+                        })
+
+    reps = []
+
+    for rep_num, win in enumerate(windows, start=1):
+        start_idx = win["start_idx"]
+        hands_down_idx = win["hands_down_idx"]
+        plank_idx = win["plank_idx"]
+        jump_in_idx = win["jump_in_idx"]
+        stand_idx = win["stand_idx"]
+        finish_idx = win["finish_idx"]
+
+        issues = []
+        feedback = []
+
+        breakdown = {
+            "hands_down": "good",
+            "plank": "good",
+            "jump_in": "good",
+            "stand": "good",
+            "finish": "good",
+        }
+
+        # Use magnitude rather than direction because image-axis orientation
+        # can vary with camera framing.
+        hands_travel = abs(
+            float(wrist_y[hands_down_idx] - wrist_y[start_idx])
+        )
+
+        if hands_travel < 0.08:
+            breakdown["hands_down"] = "high"
+            issues.append("Hands may not reach the floor fully.")
+            feedback.append(
+                "Place hands flat on the floor before kicking back."
+            )
+
+        plank_flatness = float(
+            abs(hip_y[plank_idx] - shoulder_y[plank_idx])
+        )
+        plank_elbow = float(elbow[plank_idx])
+
+        if plank_flatness > 0.18 or plank_elbow < 90:
+            breakdown["plank"] = "sagging"
+            issues.append("Plank position may be sagging or soft.")
+            feedback.append(
+                "Keep your body tight in a straight line through the plank."
+            )
+        elif plank_flatness > 0.12:
+            breakdown["plank"] = "borderline"
+            issues.append("Core could stay tighter in the plank.")
+            feedback.append(
+                "Brace your core and avoid letting hips sag."
+            )
+
+        jump_knee = float(knee[jump_in_idx])
+
+        if jump_knee > 155:
+            breakdown["jump_in"] = "stiff"
+            issues.append("Feet may not come under efficiently.")
+            feedback.append(
+                "Jump feet closer to your hands before standing."
+            )
+
+        # stand_idx came from a confirmed upright state. Knee extension is
+        # therefore the useful secondary completion check.
+        stand_knee = float(knee[stand_idx])
+
+        if stand_knee < 145:
+            breakdown["stand"] = "incomplete"
+            breakdown["finish"] = "incomplete"
+            issues.append("Stand-up finish may be incomplete.")
+            feedback.append(
+                "Stand tall with hips and knees fully extended."
+            )
+
+        score = compute_rep_score(issues)
+        score = apply_coach_reward(score, issues, breakdown)
+
+        if not issues:
+            score = max(score, 9.0)
+            feedback = [
+                "Good burpee rep. Move smoothly from the floor position "
+                "back to a strong standing finish."
+            ]
+
+        reps.append({
+            "rep": rep_num,
+            "start_frame": int(frame_numbers[start_idx]),
+            "hands_down_frame": int(frame_numbers[hands_down_idx]),
+
+            # Keep a generic floor anchor for RepDetectorSpec/downstream
+            # consumers while retaining the existing burpee phase field.
+            "floor_frame": int(frame_numbers[plank_idx]),
+
+            "plank_frame": int(frame_numbers[plank_idx]),
+            "jump_in_frame": int(frame_numbers[jump_in_idx]),
+            "stand_frame": int(frame_numbers[stand_idx]),
+            "end_frame": int(frame_numbers[finish_idx]),
+            "score": round(score, 1),
+            "grade": grade_score(score),
+            "issues": issues,
+            "breakdown": breakdown,
+            "feedback": feedback,
+        })
 
     return reps, build_set_summary(reps)
 
@@ -12846,6 +13100,7 @@ def analyze_video(
                 looks_split=bool(_looks_split),
                 looks_strict=bool(_looks_strict),
                 looks_thruster=bool(_looks_thruster),
+                looks_burpee=bool(_looks_burpee),
                 strong_front_squat_consensus=(
                     strong_front_squat_consensus
                 ),
