@@ -12566,6 +12566,7 @@ def analyze_video(
                     looks_clean_only=bool(_looks_clean_only),
                     looks_cj=bool(_looks_cj),
                     looks_split=bool(_looks_split),
+                    looks_thruster=bool(_looks_thruster),
                     bodyweight_debug=bodyweight_debug,
                 )
             )
@@ -12614,6 +12615,7 @@ def analyze_video(
                     looks_clean_only=bool(_looks_clean_only),
                     looks_cj=bool(_looks_cj),
                     looks_split=bool(_looks_split),
+                    looks_thruster=bool(_looks_thruster),
                     truly_explosive=bool(_truly_explosive),
                     bodyweight_debug=bodyweight_debug,
                 )
@@ -12658,6 +12660,7 @@ def analyze_video(
                     looks_clean_only=bool(_looks_clean_only),
                     looks_cj=bool(_looks_cj),
                     looks_split=bool(_looks_split),
+                    looks_thruster=bool(_looks_thruster),
                     truly_explosive=bool(_truly_explosive),
                     bodyweight_debug=bodyweight_debug,
                 )
@@ -12750,6 +12753,15 @@ def analyze_video(
             and float(squat_conf or 0.0) >= 0.80
         )
 
+        strong_back_squat_consensus = (
+            raw_label in {"squat", "squat_back"}
+            and float(base_conf or 0.0) >= 0.90
+            and bio_label in {"squat", "squat_back"}
+            and float(bio_conf or 0.0) >= 0.90
+            and squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.90
+        )
+
         final_clean_rescue = (
             router_v5_label == "clean"
             and str((router_v5_debug or {}).get("decision", ""))
@@ -12757,6 +12769,8 @@ def analyze_video(
             and bool(_truly_explosive)
             and float(router_v5_conf or 0.0) >= 0.70
             and not strong_front_squat_consensus
+            and not strong_back_squat_consensus
+            and not bool(_looks_thruster)
         )
 
         if final_clean_rescue:

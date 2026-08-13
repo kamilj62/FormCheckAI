@@ -193,9 +193,15 @@ def simplify_final_classification(
     ):
         return promote(exact_conf, "squat_hierarchy_variant")
 
+    protected_current_non_olympic = (
+        current_label in (SQUAT_LABELS | PRESS_LABELS)
+        and current_conf >= 0.85
+    )
+
     if (
         family == "olympic"
         and label in OLYMPIC_LABELS
+        and not protected_current_non_olympic
         and source in {"router_v5", "olympic_router"}
         and (
             family_margin >= 0.30

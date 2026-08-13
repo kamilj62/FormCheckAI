@@ -313,6 +313,7 @@ class FallbackFinalContext:
     looks_clean_only: bool
     looks_cj: bool
     looks_split: bool
+    looks_thruster: bool
     bodyweight_debug: dict[str, Any]
 
 
@@ -341,6 +342,7 @@ class RouterV5AdjustmentContext:
     looks_clean_only: bool
     looks_cj: bool
     looks_split: bool
+    looks_thruster: bool
     truly_explosive: bool
     bodyweight_debug: dict[str, Any]
 
@@ -384,6 +386,7 @@ class RouterV5OverrideContext:
     looks_clean_only: bool
     looks_cj: bool
     looks_split: bool
+    looks_thruster: bool
     truly_explosive: bool
     bodyweight_debug: dict[str, Any]
 
@@ -1135,6 +1138,11 @@ def adjust_router_v5_prediction(
         and decision == "clean_rescue_from_weak_snatch"
         and ctx.truly_explosive
         and confidence >= 0.70
+
+        # A verified thruster already explains the explosive squat-to-press
+        # pattern. Do not reinterpret it as a clean merely because the
+        # Olympic router sees a weak-snatch/clean signature.
+        and not ctx.looks_thruster
     )
 
     return RouterV5Adjustment(
@@ -1238,10 +1246,24 @@ def select_router_v5_override(
         and _float(ctx.router_v5_confidence) < 0.75
     )
 
+    # If production routing has already resolved the movement as a
+    # thruster and the full-body thruster geometry agrees, do not let a
+    # generic Router V5 clean prediction steal it.
+    #
+    # Requiring final_label == "thruster" is intentional: looks_thruster
+    # can also be true on very dynamic squat clips, so geometry alone is
+    # not sufficient to veto Olympic routing.
+    thruster_should_hold = (
+        final_label == "thruster"
+        and ctx.looks_thruster
+        and ctx.router_v5_label == "clean"
+    )
+
     should_apply_router_v5 = (
         not push_press_should_hold
         and not front_squat_push_press_guard
         and not front_squat_weak_cj_guard
+        and not thruster_should_hold
         and not vertical_pull_up_collision
         and (
             final_label in OLYMPIC_LABELS
@@ -3068,8 +3090,13 @@ def select_final_clean_olympic_authority(
         and ctx.squat_label == "squat_back"
         and _float(ctx.squat_confidence) >= 0.90
         and ctx.olympic_pred == "clean"
+
+        # A protected, near-unanimous back squat should not be stolen by
+        # weak/moderate clean evidence. Require genuinely strong Olympic
+        # evidence before crossing family boundaries.
+        and _float(ctx.olympic_confidence) >= 0.75
         and (
-            _float(ctx.olympic_confidence) >= 0.45
+            _float(ctx.olympic_confidence) >= 0.85
             or learned_family_olympic
         )
         and (
@@ -3413,11 +3440,17 @@ def select_fallback_final_decision(
             mode="detailed_rep_analysis",
         )
 
+    clean_thruster_collision = (
+        ctx.olympic_pred == "clean"
+        and ctx.looks_thruster
+    )
+
     if (
         ctx.run_oly_router
         and ctx.olympic_pred in OLYMPIC_LABELS
         and _float(ctx.olympic_conf) >= 0.65
         and not ctx.push_press_should_hold
+        and not clean_thruster_collision
         and not (
             ctx.squat_label == "squat_front"
             and _float(ctx.squat_conf) >= 0.80
@@ -3475,6 +3508,7 @@ def select_fallback_final_decision(
         and _float(ctx.olympic_conf) >= 0.80
         and ctx.truly_explosive
         and not ctx.push_press_should_hold
+        and not clean_thruster_collision
     ):
         return FallbackFinalDecision(
             label=str(ctx.olympic_pred),
@@ -3488,6 +3522,7 @@ def select_fallback_final_decision(
         and _float(ctx.olympic_conf) >= 0.65
         and ctx.truly_explosive
         and not ctx.push_press_should_hold
+        and not clean_thruster_collision
     ):
         return FallbackFinalDecision(
             label=str(ctx.olympic_pred),
@@ -3587,6 +3622,7 @@ def select_fallback_final_decision(
         and ctx.olympic_pred in OLYMPIC_LABELS
         and _float(ctx.olympic_conf) >= 0.50
         and not ctx.push_press_should_hold
+        and not clean_thruster_collision
         and not (
             _push_press_pull_up_signature(ctx.bodyweight_debug)
             and not ctx.truly_explosive
