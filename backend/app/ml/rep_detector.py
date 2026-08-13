@@ -1246,49 +1246,6 @@ def recover_split_jerk_cycles(
         })
         last_catch_frame = catch_frame
 
-    if (
-        recovered
-        and (_frame_value(recovered[0], "start_frame") or 0) > 100
-        and len(recovered) <= len(existing_reps) + 1
-    ):
-        first = recovered[0]
-        first_start = _frame_value(first, "start_frame") or 100
-        start_frame = max(0, first_start - 120)
-        dip_frame = max(start_frame + 8, first_start - 80)
-        drive_frame = max(dip_frame + 1, first_start - 65)
-        catch_frame = max(drive_frame + 1, first_start - 52)
-        lockout_frame = max(catch_frame + 3, first_start - 48)
-        end_frame = max(lockout_frame + 4, first_start - 20)
-
-        recovered.insert(
-            0,
-            {
-                "rep": 1,
-                "start_frame": int(start_frame),
-                "dip_frame": int(dip_frame),
-                "drive_frame": int(drive_frame),
-                "catch_frame": int(catch_frame),
-                "lockout_frame": int(lockout_frame),
-                "end_frame": int(end_frame),
-                "score": 6.5,
-                "grade": "Tracking Limited",
-                "issues": [
-                    "Opening split jerk was recovered from a clipped first attempt."
-                ],
-                "breakdown": {
-                    "dip": "recovered",
-                    "drive": "recovered",
-                    "lockout": "recovered",
-                    "split_catch": "recovered",
-                    "torso_stack": "unknown",
-                    "bar_path": "unknown",
-                },
-                "feedback": [
-                    "Opening split jerk repetition detected from set rhythm."
-                ],
-            },
-        )
-
     if len(existing_reps) >= 3 and len(recovered) > len(existing_reps) + 1:
         return _renumber_reps(existing_reps)
 

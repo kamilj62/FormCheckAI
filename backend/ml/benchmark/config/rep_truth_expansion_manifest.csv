@@ -11,3 +11,5 @@ clean_and_jerk,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/clean_and_jerk/v
 bench_press,/Users/josephkamil/Desktop/Capstone/Oly_Data/raw/not_oly/v_BenchPress_g01_c01.avi,v_BenchPress_g01_c01.avi,3,reviewed_manual,three visible bench press reps; classification verified after overhead-motion press gate
 push_press,/Users/josephkamil/Desktop/Capstone/videos-OHP/videos/63247_2.mp4,63247_2.mp4,1,reviewed_manual,one visible push press rep
 squat_back,/Users/josephkamil/Desktop/Capstone/uindy_external_validation/videos/Back_Squat.mp4,Back_Squat.mp4,3,reviewed_manual,three visible back squat reps
+clean,/Users/josephkamil/Desktop/Capstone/clean-correct.mov,clean-correct.mov,2,reviewed_manual,two visible clean reps
+split_jerk,/Users/josephkamil/Desktop/Capstone/splitjerk-short.mp4,splitjerk-short.mp4,3,reviewed_manual,three visible split jerk reps
