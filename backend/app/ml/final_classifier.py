@@ -139,6 +139,42 @@ def simplify_final_classification(
             )
         )
 
+        # Prevent a generic thruster hierarchy promotion from stealing a
+        # strongly supported squat when independent press evidence is only
+        # moderate. Real push/strict press consensus is preserved above.
+        strong_squat_vs_weak_thruster = (
+            label == "thruster"
+            and current_label in SQUAT_LABELS
+            and current_conf >= 0.90
+            and bool(press_features.get("deep_squat"))
+            and _float(press_features.get("squat_confidence")) >= 0.95
+            and not strong_push_press
+            and not strong_strict_press
+        )
+
+        # Also preserve a squat that has already passed the dedicated squat
+        # recovery/protection path. This covers camera-angle cases where an
+        # impossible overhead-squat prediction was rejected and the remaining
+        # subtype evidence conditionally supports back squat.
+        recovered_squat_vs_thruster = (
+            label == "thruster"
+            and current_label == "squat_back"
+            and str(current_mode or "") == "squat_router_protected"
+            and current_conf >= 0.65
+            and _float(press_features.get("squat_confidence")) >= 0.65
+            and bool(press_features.get("deep_squat"))
+            and bool(press_features.get("non_horizontal"))
+            and bool(press_features.get("large_vertical_travel"))
+            and bool(press_features.get("upright"))
+            and not strong_push_press
+            and not strong_strict_press
+        )
+
+        strong_squat_vs_weak_thruster = (
+            strong_squat_vs_weak_thruster
+            or recovered_squat_vs_thruster
+        )
+
         protected_current_olympic = (
             current_label in OLYMPIC_LABELS
             and current_conf >= 0.80
@@ -157,6 +193,7 @@ def simplify_final_classification(
 
         if (
             not protected_current_olympic
+            and not strong_squat_vs_weak_thruster
             and family_margin >= 0.25
             and press_margin >= 0.15
             and press_score >= 1.0

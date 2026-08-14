@@ -1596,6 +1596,21 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
     wrist_x = np.array([b.get("wrist_x", 0.0) for b in biomechanics])
     shoulder_x = np.array([b.get("shoulder_x", 0.0) for b in biomechanics])
 
+    # Camera-view geometry used to determine which squat metrics are reliable.
+    left_shoulder_x = np.array([b.get("left_shoulder_x", 0.0) for b in biomechanics])
+    right_shoulder_x = np.array([b.get("right_shoulder_x", 0.0) for b in biomechanics])
+    left_hip_x = np.array([b.get("left_hip_x", 0.0) for b in biomechanics])
+    right_hip_x = np.array([b.get("right_hip_x", 0.0) for b in biomechanics])
+    left_knee_x = np.array([b.get("left_knee_x", 0.0) for b in biomechanics])
+    right_knee_x = np.array([b.get("right_knee_x", 0.0) for b in biomechanics])
+    left_ankle_x = np.array([b.get("left_ankle_x", 0.0) for b in biomechanics])
+    right_ankle_x = np.array([b.get("right_ankle_x", 0.0) for b in biomechanics])
+
+    shoulder_sep = np.abs(left_shoulder_x - right_shoulder_x)
+    hip_sep = np.abs(left_hip_x - right_hip_x)
+    knee_sep = np.abs(left_knee_x - right_knee_x)
+    ankle_sep = np.abs(left_ankle_x - right_ankle_x)
+
     frame_numbers = np.array([
         b.get("frame_number", i)
         for i, b in enumerate(biomechanics)
@@ -10945,6 +10960,7 @@ def predict_squat_variant(seq_base, biomechanics):
         biomechanics
     )
 
+
     bar_pos_valid = (
         bar_debug.get("front_rack_elbow_p25", 0) >= 20
     )
@@ -10978,21 +10994,71 @@ def predict_squat_variant(seq_base, biomechanics):
                 non_overhead,
                 key=lambda item: float(squat_probs[item[0]]),
             )
+
+            raw_fallback_conf = float(squat_probs[fallback_idx])
+            non_overhead_total = sum(
+                float(squat_probs[idx])
+                for idx, _label in non_overhead
+            )
+
+            conditional_fallback_conf = (
+                raw_fallback_conf / non_overhead_total
+                if non_overhead_total > 1e-6
+                else raw_fallback_conf
+            )
+
             squat_label = fallback_label
-            squat_conf = float(squat_probs[fallback_idx])
+            squat_conf = conditional_fallback_conf
+
             bar_debug["overhead_model_rejected"] = True
             bar_debug["overhead_model_fallback"] = fallback_label
+            bar_debug["overhead_fallback_raw_conf"] = round(
+                raw_fallback_conf, 3
+            )
+            bar_debug["overhead_fallback_conditional_conf"] = round(
+                conditional_fallback_conf, 3
+            )
         else:
             bar_debug["overhead_model_rejected"] = False
 
-    # Geometry may refine the learned subtype, but an overhead-squat geometry
-    # override is only allowed when true overhead lockout is actually present.
+    # Camera view matters for front-vs-back rack geometry. In a clear
+    # front/rear view, projected elbow angles can look artificially acute
+    # and falsely resemble a front rack. Prefer the learned squat subtype
+    # in that case. Overhead squat keeps its separate physical validation.
+    shoulder_sep_median = float(np.median([
+        abs(
+            b.get("left_shoulder_x", 0.0)
+            - b.get("right_shoulder_x", 0.0)
+        )
+        for b in biomechanics
+    ]))
+    hip_sep_median = float(np.median([
+        abs(
+            b.get("left_hip_x", 0.0)
+            - b.get("right_hip_x", 0.0)
+        )
+        for b in biomechanics
+    ]))
+
+    clear_front_or_rear_view = (
+        shoulder_sep_median >= 0.10
+        and hip_sep_median >= 0.07
+    )
+
+    bar_debug["clear_front_or_rear_view"] = bool(clear_front_or_rear_view)
+    bar_debug["shoulder_sep_median"] = round(shoulder_sep_median, 4)
+    bar_debug["hip_sep_median"] = round(hip_sep_median, 4)
+
     allow_bar_override = (
         bar_conf >= 0.60
         and bar_pos_valid
         and (
-            bar_label != "overhead_squat"
-            or true_overhead_squat
+            bar_label == "overhead_squat"
+            and true_overhead_squat
+            or (
+                bar_label != "overhead_squat"
+                and not clear_front_or_rear_view
+            )
         )
     )
 
@@ -12588,7 +12654,21 @@ def analyze_video(
         upright_curl_signature = False
         snatch_rescue_from_overhead_squat = False
         router_v8_cj_lock = False
-        clear_squat_should_hold = False
+        # Preserve a physically validated squat fallback when the learned
+        # squat router initially favors overhead squat, but overhead posture is
+        # rejected and the remaining subtype evidence supports back squat.
+        #
+        # This is intentionally narrow so real thrusters / Olympic lifts are
+        # not protected merely because they contain deep knee flexion.
+        clear_squat_should_hold = (
+            squat_label == "squat_back"
+            and float(squat_conf or 0.0) >= 0.65
+            and bool(bar_debug.get("overhead_model_rejected"))
+            and bar_debug.get("overhead_model_fallback") == "squat_back"
+            and bool(bar_debug.get("clear_front_or_rear_view"))
+            and not bool(bar_debug.get("true_overhead_squat"))
+            and float(olympic_conf or 0.0) < 0.60
+        )
         if run_oly_router:
             try:
                 router_v5_label, router_v5_conf, router_v5_debug = route_olympic_lift(
