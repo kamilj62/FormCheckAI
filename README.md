@@ -19,34 +19,54 @@ FormCheck AI allows athletes, coaches, and fitness enthusiasts to upload a lifti
 
 # Latest Release
 
-## v1.3.0 – Functional Fitness Release
+## v1.4.0 – Beta & Production Readiness
 
-### Added
+### Highlights
 
-- Pull-Up Analysis
-- Push-Up Analysis
-- Handstand Push-Up Analysis
-- Bar Muscle-Up Analysis
-- Ring Muscle-Up Analysis
-- Burpee Analysis
-- Front Squat Analysis
-- Overhead Squat Improvements
-- Functional Fitness Phase Images
-- Biomechanics Classification Overrides
-- Olympic Router
-- Squat Router
-- Improved Rep Detection
-- Improved Phase Selection Logic
-- Vercel + AWS Elastic Beanstalk Production Deployment
+- 18 supported exercise categories
+- 18/18 canonical regression benchmark passing
+- Exercise classification and rep-count validation
+- Beta exercise confirmation and correction workflow
+- Real-world classifier feedback collection
+- Versioned beta analysis records
+- Improved Push Press routing and rep recovery
+- Phase Review feedback collection
+- HTTPS production API
+- AWS Elastic Beanstalk backend deployment
+- Vercel API proxy and web deployment
+- React Native / Expo iOS production configuration
+- TestFlight-ready build configuration
 
-### Override Protections
+### Beta Feedback System
 
-- Push-Up ↔ Deadlift
-- Handstand Push-Up ↔ Bench Press
-- Pull-Up ↔ Olympic Lifts
-- Burpee ↔ Clean
-- Thruster ↔ Snatch
-- Push Press ↔ Snatch
+Each analysis receives a unique `analysis_id`.
+
+Users can confirm or correct:
+
+- Exercise classification
+- Rep count
+- Analysis helpfulness
+- Phase Review accuracy
+
+Beta records preserve both:
+
+- `predicted_exercise`
+- `confirmed_exercise`
+
+This allows FormCheck AI to measure real-world classifier accuracy and identify movement-specific confusion patterns without overwriting the original model prediction.
+
+### Current Validation
+
+Canonical regression benchmark:
+
+| Metric | Result |
+|---|---:|
+| Test Cases | 18 |
+| Passed | 18 |
+| Failed | 0 |
+| Accuracy | 100% |
+
+The canonical suite currently covers all supported movement families: squat, press, hinge, Olympic weightlifting, and functional fitness.
 
 ---
 
@@ -273,26 +293,31 @@ Landmark Extraction
       ↓
 Feature Engineering
       ↓
-Movement Classifier
+Base Movement Classifier
       ↓
-Olympic Router
+Movement Routers
+  ├── Squat Router
+  ├── Olympic Router
+  └── Press / Bodyweight Routing
       ↓
-Squat Router
+Biomechanics & Protection Rules
       ↓
-Biomechanics Override Engine
+Final Exercise Classification
       ↓
 Rep Detection
       ↓
 Biomechanics Analysis
       ↓
-Feedback Generation
+Rep Scoring & Coaching Feedback
       ↓
-Phase Images
+Phase Review Images
       ↓
 Overlay Generation
       ↓
-Results
+Results + Beta Feedback
 ```
+
+The routing layer combines learned classifiers with biomechanics-based protections to reduce cross-family misclassification and preserve strong movement-specific signals.
 
 ---
 
@@ -339,25 +364,42 @@ Results
 
 ## Health Check
 
-GET /health
+`GET /health`
 
 ## Analyze Video
 
-POST /analyze
+`POST /analyze`
 
-Returns:
+Returns fields including:
 
-- exercise_label
-- confidence
-- feedback
-- rep_feedback
-- set_summary
-- coaching_zones
-- phase_images
+- `analysis_id`
+- `exercise_label`
+- `confidence`
+- `analysis_mode`
+- `rep_feedback`
+- `set_summary`
+- `coaching_zones`
+- `phase_images`
+- `overlay_video_url`
+
+## Submit Analysis Feedback
+
+`POST /analysis_feedback`
+
+Stores beta validation data such as:
+
+- `predicted_exercise`
+- `confirmed_exercise`
+- `was_corrected`
+- `helpful`
+- `rep_count_correct`
+- `corrected_rep_count`
+- `phase_review_accurate`
+- `phase_review_issue`
 
 ## Generate Overlay
 
-POST /generate_overlay
+`POST /generate_overlay`
 
 ---
 
