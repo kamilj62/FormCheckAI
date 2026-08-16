@@ -1053,11 +1053,66 @@ def recover_push_press_cycles(
         last_lockout_frame = lockout_frame
 
     if len(recovered) > len(existing_reps):
-        recovered = fill_push_press_gap_reps(
-            biomechanics,
-            recovered,
-        )
-        return _renumber_reps(recovered)
+        # Recovery is allowed to increase the rep count only when adjacent
+        # recovered presses contain a genuine return to the rack position.
+        #
+        # Without this guard, a long grinding push press can create multiple
+        # overhead wrist clusters and be incorrectly counted as several reps.
+        recovered = _renumber_reps(recovered)
+
+        recovery_has_valid_resets = True
+
+        for idx in range(len(recovered) - 1):
+            current = recovered[idx]
+            next_rep = recovered[idx + 1]
+
+            current_lockout_frame = int(
+                current.get("lockout_frame", current.get("end_frame", 0))
+            )
+            next_start_frame = int(
+                next_rep.get("start_frame", current_lockout_frame + 1)
+            )
+
+            lo = int(
+                np.searchsorted(
+                    frame_numbers,
+                    current_lockout_frame,
+                    side="right",
+                )
+            )
+            hi = int(
+                np.searchsorted(
+                    frame_numbers,
+                    next_start_frame,
+                    side="left",
+                )
+            )
+
+            lo = max(0, min(lo, n))
+            hi = max(lo, min(hi, n))
+
+            if hi - lo < 3:
+                recovery_has_valid_resets = False
+                break
+
+            rack_offsets = wrist_y[lo:hi] - shoulder_y[lo:hi]
+            rack_like = (
+                (rack_offsets >= -0.02)
+                & (rack_offsets <= 0.08)
+            )
+
+            # Require several frames genuinely back near shoulder/rack height
+            # before treating the next overhead cycle as another repetition.
+            if int(np.sum(rack_like)) < 3:
+                recovery_has_valid_resets = False
+                break
+
+        if recovery_has_valid_resets:
+            recovered = fill_push_press_gap_reps(
+                biomechanics,
+                recovered,
+            )
+            return _renumber_reps(recovered)
 
     return existing_reps
 

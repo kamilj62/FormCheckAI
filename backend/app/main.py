@@ -2864,11 +2864,85 @@ def analyze_push_press_reps(biomechanics, exercise_label="push_press"):
         })
 
 
-    # Preserve genuine consecutive reps while preventing a synthetic
-    # lockout/end frame from extending into the next detected dip.
+    # Preserve genuine consecutive reps while preventing one long,
+    # grinding push press from being split into multiple synthetic reps.
+    #
+    # A new push-press rep requires a real return to the rack position
+    # between detections. If the wrists never return near shoulder/rack
+    # height, treat the next detection as part of the same physical rep.
     if exercise_label == "push_press" and len(reps) > 1:
         reps = sorted(reps, key=lambda r: r.get("start_frame", 0))
 
+        merged_reps = [reps[0]]
+
+        for next_rep in reps[1:]:
+            current = merged_reps[-1]
+
+            boundary_frame = int(next_rep.get("start_frame", 0))
+            boundary_idx = int(
+                np.searchsorted(frame_numbers, boundary_frame, side="left")
+            )
+
+            lo = max(0, boundary_idx - 15)
+            hi = min(len(wrist_y), boundary_idx + 16)
+
+            offsets = wrist_y[lo:hi] - shoulder_y[lo:hi]
+
+            rack_like = (
+                (offsets >= -0.02) &
+                (offsets <= 0.08)
+            )
+
+            # Require several rack-like samples before allowing a new rep.
+            # This prevents a stall/re-press at overhead from becoming
+            # multiple reps while preserving genuine rack resets.
+            rack_reset = int(np.sum(rack_like)) >= 3
+
+            if not rack_reset:
+                current["end_frame"] = max(
+                    int(current.get("end_frame", 0)),
+                    int(next_rep.get("end_frame", 0)),
+                )
+
+                if isinstance(next_rep.get("lockout_frame"), (int, float)):
+                    current["lockout_frame"] = max(
+                        int(current.get("lockout_frame", 0)),
+                        int(next_rep["lockout_frame"]),
+                    )
+                    current["end_frame"] = max(
+                        int(current["end_frame"]),
+                        int(current["lockout_frame"]),
+                    )
+
+                current_issues = list(current.get("issues") or [])
+                for issue in next_rep.get("issues") or []:
+                    if issue not in current_issues:
+                        current_issues.append(issue)
+                current["issues"] = current_issues
+
+                current_feedback = list(current.get("feedback") or [])
+                for item in next_rep.get("feedback") or []:
+                    if item not in current_feedback:
+                        current_feedback.append(item)
+                current["feedback"] = current_feedback
+
+                try:
+                    current["score"] = min(
+                        float(current.get("score", 10.0)),
+                        float(next_rep.get("score", 10.0)),
+                    )
+                    current["grade"] = grade_score(current["score"])
+                except Exception:
+                    pass
+
+                continue
+
+            merged_reps.append(next_rep)
+
+        reps = merged_reps
+
+        # Prevent a synthetic lockout/end frame from extending into the
+        # next genuine rep after rack-reset merging is complete.
         for idx in range(len(reps) - 1):
             current = reps[idx]
             next_rep = reps[idx + 1]
