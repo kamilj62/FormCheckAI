@@ -25,7 +25,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "FormCheck AI uses the camera to record workout videos for form analysis.",
         "NSPhotoLibraryUsageDescription": "FormCheck AI uses your photo library so you can select workout videos for form analysis.",
-        "NSMicrophoneUsageDescription": "FormCheck AI may use the microphone when recording workout videos."
+        "NSMicrophoneUsageDescription": "FormCheck AI may use the microphone when recording workout videos.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     }
   }

@@ -26,7 +26,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 
 const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
-  "http://formcheck-ai-api-v3.eba-pvfk7qtv.us-west-2.elasticbeanstalk.com";
+  "https://formcheck-ai-full-v2.vercel.app/api";
 
 const API_URL = BACKEND_URL;
 
@@ -1488,6 +1488,11 @@ export default function App() {
             ...current,
             confirmed_exercise:
               data.confirmed_exercise ?? current.confirmed_exercise,
+            was_corrected:
+              data.was_corrected !== null &&
+              data.was_corrected !== undefined
+                ? data.was_corrected
+                : current.was_corrected,
             helpful:
               data.helpful !== null && data.helpful !== undefined
                 ? data.helpful
@@ -2614,6 +2619,78 @@ export default function App() {
                   </Text>
 
                   <Text style={styles.betaFeedbackQuestion}>
+                    Was the exercise identified correctly?
+                  </Text>
+
+                  <View style={styles.betaFeedbackRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.betaFeedbackButton,
+                        result.confirmed_exercise &&
+                          result.confirmed_exercise ===
+                            result.exercise_label &&
+                          styles.betaFeedbackButtonActive,
+                      ]}
+                      disabled={feedbackSubmitting}
+                      onPress={async () => {
+                          const currentExercise =
+                            result.exercise_label;
+                          const previousConfirmedExercise =
+                            result.confirmed_exercise;
+
+                          setResult((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  confirmed_exercise: currentExercise,
+                                }
+                              : current
+                          );
+
+                          const saved = await submitAnalysisFeedback({
+                            confirmedExercise: currentExercise,
+                          });
+
+                          if (saved) {
+                            setExerciseCorrectionOpen(false);
+                          } else {
+                            setResult((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    confirmed_exercise:
+                                      previousConfirmedExercise,
+                                  }
+                                : current
+                            );
+                          }
+                        }}
+                    >
+                      <Text
+                        style={[
+                          styles.betaFeedbackButtonText,
+                          result.confirmed_exercise &&
+                            result.confirmed_exercise ===
+                              result.exercise_label &&
+                            styles.betaFeedbackButtonTextActive,
+                        ]}
+                      >
+                        Yes
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.betaFeedbackButton}
+                      disabled={feedbackSubmitting}
+                      onPress={() => setExerciseCorrectionOpen(true)}
+                    >
+                      <Text style={styles.betaFeedbackButtonText}>
+                        No
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.betaFeedbackQuestion}>
                     Was this analysis helpful?
                   </Text>
 
@@ -2782,6 +2859,39 @@ export default function App() {
                         )}
                     </View>
                   )}
+
+                  <TouchableOpacity
+                    style={[
+                      styles.betaFeedbackButton,
+                      {
+                        marginTop: 18,
+                        alignSelf: "stretch",
+                        alignItems: "center",
+                      },
+                    ]}
+                    disabled={feedbackSubmitting}
+                    onPress={async () => {
+                      const saved = await submitAnalysisFeedback({
+                        confirmedExercise: result.confirmed_exercise,
+                        helpful: result.helpful,
+                        repCountCorrect: result.rep_count_correct,
+                        correctedRepCount:
+                          result.rep_count_correct === false
+                            ? result.corrected_rep_count
+                            : undefined,
+                      });
+
+                      if (saved) {
+                        alert("Feedback submitted. Thank you!");
+                      }
+                    }}
+                  >
+                    <Text style={styles.betaFeedbackButtonText}>
+                      {feedbackSubmitting
+                        ? "Submitting..."
+                        : "Submit Feedback"}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -3158,6 +3268,7 @@ export default function App() {
                         ))}
                       </>
                     )}
+
                   </View>
                 )}
             </View>
