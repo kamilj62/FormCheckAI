@@ -183,6 +183,9 @@ def save_beta_analysis_record(analysis_id, result, original_filename=None):
         record = {
             "analysis_id": analysis_id,
             "created_at": datetime.utcnow().isoformat() + "Z",
+            "beta_schema_version": 2,
+            "backend_build": "beta_baseline_20260816",
+            "router_version": "post_fix_20260816",
             "original_filename": original_filename,
             "exercise_label": result.get("exercise_label"),
             "confidence": result.get("confidence"),
