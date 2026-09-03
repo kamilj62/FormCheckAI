@@ -3007,7 +3007,12 @@ export default function App() {
               </View>
             )}
 
-            {
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Review Your Lift</Text>
+              <Text style={styles.sectionSub}>
+                Generate phase-by-phase images to review your setup, movement, and lockout.
+              </Text>
+
               <TouchableOpacity
                 style={[
                   styles.analyzeButton,
@@ -3025,7 +3030,7 @@ export default function App() {
                       : "Generate Phase Review"}
                 </Text>
               </TouchableOpacity>
-            }
+            </View>
 
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Rep Breakdown</Text>
