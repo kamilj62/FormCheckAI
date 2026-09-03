@@ -20,6 +20,7 @@ overlay_jobs = {}
 job_store = {}
 
 from app.phase_engine.squat_v3 import extract_pose_records
+from app.phase_engine.squat_visuals import choose_stable_squat_setup_frame
 
 from app.phase_detection.signal_engine import SignalEngine
 from app.phase_detection.phase_engine import get_phase_images
@@ -7466,10 +7467,25 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
                 + angle(r_sh, r_hip, r_knee)
             ) / 2.0
 
+            shoulder_mid = (
+                (l_sh[0] + r_sh[0]) / 2.0,
+                (l_sh[1] + r_sh[1]) / 2.0,
+            )
+            hip_mid = (
+                (l_hip[0] + r_hip[0]) / 2.0,
+                (l_hip[1] + r_hip[1]) / 2.0,
+            )
+            torso_lean = angle(
+                shoulder_mid,
+                hip_mid,
+                (hip_mid[0], hip_mid[1] - 1.0),
+            )
+
             records.append({
                 "frame": frame_idx,
                 "knee": knee_angle,
                 "hip": hip_angle,
+                "torso_lean": torso_lean,
             })
 
     cap.release()
@@ -7480,22 +7496,11 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
     before = [r for r in records if r["frame"] <= start]
     after = [r for r in records if r["frame"] >= end]
 
-    # Prefer clearly extended hips/knees. If pose geometry is imperfect,
-    # relax the threshold rather than abandoning the visual search entirely.
-    setup_candidates = [
-        r for r in before
-        if r["knee"] >= 165 and r["hip"] >= 150
-    ]
+    # Lockout is already visually working, so preserve its existing behavior.
     lockout_candidates = [
         r for r in after
         if r["knee"] >= 165 and r["hip"] >= 150
     ]
-
-    if not setup_candidates:
-        setup_candidates = [
-            r for r in before
-            if r["knee"] >= 155 and r["hip"] >= 130
-        ]
 
     if not lockout_candidates:
         lockout_candidates = [
@@ -7503,17 +7508,12 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
             if r["knee"] >= 155 and r["hip"] >= 130
         ]
 
-    setup_frame = start
+    setup_frame = choose_stable_squat_setup_frame(
+        before,
+        start=start,
+        fallback=None,
+    )
     lockout_frame = end
-
-    if setup_candidates:
-        setup_frame = max(
-            setup_candidates,
-            key=lambda r: (
-                r["knee"] + r["hip"],
-                start - r["frame"],
-            ),
-        )["frame"]
 
     if lockout_candidates:
         lockout_frame = max(
@@ -7523,6 +7523,12 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
                 r["frame"] - end,
             ),
         )["frame"]
+
+    # A clip can begin mid-rep, leaving no real Setup frame before the
+    # analyzer's start. For squats, the standing lockout posture is also a
+    # valid rack-position reference and is safer than showing a bottom frame.
+    if setup_frame is None:
+        setup_frame = lockout_frame
 
     return {
         "setup": int(setup_frame),
