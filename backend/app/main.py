@@ -7386,19 +7386,29 @@ def create_deadlift_phase_images(input_path, output_dir, rep, sample_every=1):
 
 def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_frames):
     """
-    Experimental biomechanics-based squat visual picker.
-    Not wired into production unless create_squat_phase_images calls it.
-    Returns: setup, descent, bottom, ascent, lockout.
+    Phase Review only.
+
+    Search outside the analyzer's detected squat window for clearer upright
+    setup and lockout frames. Rep detection, scoring, and analyzer anchors are
+    not modified.
     """
     start = max(0, min(int(start), total_frames - 1))
     bottom = max(start, min(int(bottom), total_frames - 1))
     end = max(bottom + 1, min(int(end), total_frames - 1))
 
+    descent_span = max(1, bottom - start)
+    ascent_span = max(1, end - bottom)
+
+    # Scale the visual search window to the athlete's rep tempo instead of
+    # relying on clip-specific frame offsets.
+    search_start = max(0, start - max(24, int(descent_span * 2.0)))
+    search_end = min(
+        total_frames - 1,
+        end + max(24, int(ascent_span * 2.0)),
+    )
+
     fallback = {
         "setup": start,
-        "descent": start + int((bottom - start) * 0.50),
-        "bottom": bottom,
-        "ascent": bottom + int((end - bottom) * 0.50),
         "lockout": end,
     }
 
@@ -7420,8 +7430,11 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
         cosang = max(-1.0, min(1.0, dot / (mag1 * mag2)))
         return math.degrees(math.acos(cosang))
 
-    with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5) as pose:
-        for frame_idx in range(start, end + 1, 2):
+    with mp_pose.Pose(
+        static_image_mode=False,
+        min_detection_confidence=0.5,
+    ) as pose:
+        for frame_idx in range(search_start, search_end + 1, 2):
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
             ret, frame = cap.read()
             if not ret:
@@ -7443,19 +7456,18 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
             l_knee, r_knee = pt(P.LEFT_KNEE), pt(P.RIGHT_KNEE)
             l_ankle, r_ankle = pt(P.LEFT_ANKLE), pt(P.RIGHT_ANKLE)
 
-            hip_y = (l_hip[1] + r_hip[1]) / 2.0
             knee_angle = (
-                angle(l_hip, l_knee, l_ankle) +
-                angle(r_hip, r_knee, r_ankle)
+                angle(l_hip, l_knee, l_ankle)
+                + angle(r_hip, r_knee, r_ankle)
             ) / 2.0
+
             hip_angle = (
-                angle(l_sh, l_hip, l_knee) +
-                angle(r_sh, r_hip, r_knee)
+                angle(l_sh, l_hip, l_knee)
+                + angle(r_sh, r_hip, r_knee)
             ) / 2.0
 
             records.append({
                 "frame": frame_idx,
-                "hip_y": hip_y,
                 "knee": knee_angle,
                 "hip": hip_angle,
             })
@@ -7465,45 +7477,56 @@ def pick_squat_visual_frames_from_video(input_path, start, bottom, end, total_fr
     if len(records) < 5:
         return fallback
 
-    # Bottom = lowest hips, with knee bend as tie-breaker.
-    bottom_rec = max(records, key=lambda r: (r["hip_y"], 180.0 - r["knee"]))
-    bottom_frame = bottom_rec["frame"]
+    before = [r for r in records if r["frame"] <= start]
+    after = [r for r in records if r["frame"] >= end]
 
-    before = [r for r in records if r["frame"] <= bottom_frame]
-    after = [r for r in records if r["frame"] >= bottom_frame]
-
+    # Prefer clearly extended hips/knees. If pose geometry is imperfect,
+    # relax the threshold rather than abandoning the visual search entirely.
     setup_candidates = [
         r for r in before
-        if r["knee"] >= 155 and r["hip"] >= 130
+        if r["knee"] >= 165 and r["hip"] >= 150
     ]
     lockout_candidates = [
         r for r in after
-        if r["knee"] >= 155 and r["hip"] >= 130
+        if r["knee"] >= 165 and r["hip"] >= 150
     ]
 
-    setup_frame = setup_candidates[-1]["frame"] if setup_candidates else start
-    lockout_frame = lockout_candidates[0]["frame"] if lockout_candidates else end
+    if not setup_candidates:
+        setup_candidates = [
+            r for r in before
+            if r["knee"] >= 155 and r["hip"] >= 130
+        ]
 
-    if setup_frame >= bottom_frame:
-        setup_frame = start
-    if lockout_frame <= bottom_frame:
-        lockout_frame = end
+    if not lockout_candidates:
+        lockout_candidates = [
+            r for r in after
+            if r["knee"] >= 155 and r["hip"] >= 130
+        ]
 
-    descent_target = setup_frame + int((bottom_frame - setup_frame) * 0.50)
-    ascent_target = bottom_frame + int((lockout_frame - bottom_frame) * 0.50)
+    setup_frame = start
+    lockout_frame = end
 
-    descent_pool = [r for r in records if setup_frame <= r["frame"] <= bottom_frame]
-    ascent_pool = [r for r in records if bottom_frame <= r["frame"] <= lockout_frame]
+    if setup_candidates:
+        setup_frame = max(
+            setup_candidates,
+            key=lambda r: (
+                r["knee"] + r["hip"],
+                start - r["frame"],
+            ),
+        )["frame"]
 
-    descent_frame = min(descent_pool, key=lambda r: abs(r["frame"] - descent_target))["frame"] if descent_pool else fallback["descent"]
-    ascent_frame = min(ascent_pool, key=lambda r: abs(r["frame"] - ascent_target))["frame"] if ascent_pool else fallback["ascent"]
+    if lockout_candidates:
+        lockout_frame = max(
+            lockout_candidates,
+            key=lambda r: (
+                r["knee"] + r["hip"],
+                r["frame"] - end,
+            ),
+        )["frame"]
 
     return {
-        "setup": setup_frame,
-        "descent": descent_frame,
-        "bottom": bottom_frame,
-        "ascent": ascent_frame,
-        "lockout": lockout_frame,
+        "setup": int(setup_frame),
+        "lockout": int(lockout_frame),
     }
 
 
@@ -7554,12 +7577,22 @@ def create_squat_phase_images(input_path, output_dir, rep, mp_pose, uuid, os, cv
 
     ascent_ratio = 0.62 if is_front_squat_visual else 0.45
 
+    ascent_span = max(1, end - bottom)
+
+    upright_visuals = pick_squat_visual_frames_from_video(
+        input_path,
+        start,
+        bottom,
+        end,
+        total_frames,
+    )
+
     phase_frames = {
-        "setup": visual_setup,
+        "setup": upright_visuals.get("setup", visual_setup),
         "descent": visual_descent,
         "bottom": bottom,
-        "ascent": int(bottom + (end - bottom) * ascent_ratio),
-        "lockout": end,
+        "ascent": int(bottom + ascent_span * ascent_ratio),
+        "lockout": upright_visuals.get("lockout", end),
     }
 
     saved = {}

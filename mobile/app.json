@@ -4,6 +4,12 @@
     "slug": "formcheck-ai",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/app-icon.png",
+    "splash": {
+      "image": "./assets/app-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#061B3A"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -11,23 +17,31 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-video"
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FormCheck AI lets you choose workout videos from your photo library for form analysis.",
+          "cameraPermission": "FormCheck AI uses your camera to record workout videos for form analysis.",
+          "microphonePermission": "FormCheck AI uses your microphone when recording workout videos."
+        }
+      ]
     ],
+    "ios": {
+      "bundleIdentifier": "com.formcheckai.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "FormCheck AI uses your camera to record workout videos for form analysis.",
+        "NSPhotoLibraryUsageDescription": "FormCheck AI lets you choose workout videos from your photo library for form analysis.",
+        "NSMicrophoneUsageDescription": "FormCheck AI uses your microphone when recording workout videos.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "extra": {
       "eas": {
         "projectId": "e8f4bd26-24aa-408f-9e3d-e4cb939b0232"
       }
     },
-    "icon": "./assets/favicon.png",
-    "ios": {
-      "bundleIdentifier": "com.kamilj62.formcheckai",
-      "buildNumber": "1",
-      "infoPlist": {
-        "NSCameraUsageDescription": "FormCheck AI uses the camera to record workout videos for form analysis.",
-        "NSPhotoLibraryUsageDescription": "FormCheck AI uses your photo library so you can select workout videos for form analysis.",
-        "NSMicrophoneUsageDescription": "FormCheck AI may use the microphone when recording workout videos.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
-    }
+    "owner": "kamilj62"
   }
 }

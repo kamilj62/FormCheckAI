@@ -1834,7 +1834,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          <View>
+          <View style={styles.heroCopy}>
             <Text style={styles.eyebrow}>AI Movement Coach</Text>
             <Text style={styles.title}>FormCheck AI</Text>
             <Text style={styles.subtitle}>
@@ -3379,6 +3379,10 @@ const styles = StyleSheet.create({
     gap: 16,
     marginBottom: 14,
   },
+  heroCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
   eyebrow: {
     color: "#86efac",
     fontSize: 12,
@@ -3407,6 +3411,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#86efac",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   logoText: {
     color: "#020617",
