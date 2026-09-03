@@ -2076,7 +2076,25 @@ def analyze_squat_reps(biomechanics, exercise_label="squat_back"):
             score = 10.0
 
             for category, status in breakdown.items():
-                if category in SQUAT_PENALTIES:
+                if category == "knees":
+                    # Use a continuous knee-tracking penalty so reps near a
+                    # threshold do not jump abruptly between fixed scores.
+                    if valgus_score >= 0.98:
+                        knee_penalty = 0.0
+                    elif valgus_score >= 0.85:
+                        knee_penalty = 1.5 * (
+                            (0.98 - valgus_score) / (0.98 - 0.85)
+                        )
+                    elif valgus_score >= 0.50:
+                        knee_penalty = 2.5 + 1.0 * (
+                            (0.85 - valgus_score) / (0.85 - 0.50)
+                        )
+                    else:
+                        knee_penalty = 3.5
+
+                    score -= knee_penalty
+
+                elif category in SQUAT_PENALTIES:
                     score -= SQUAT_PENALTIES[category].get(status, 0.0)
 
             score = round(max(score, 1.0), 1)
